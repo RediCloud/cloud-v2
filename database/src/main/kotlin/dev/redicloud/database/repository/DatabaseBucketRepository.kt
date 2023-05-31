@@ -4,7 +4,7 @@ import dev.redicloud.database.DatabaseConnection
 import org.redisson.api.RBucket
 import org.redisson.client.codec.BaseCodec
 
-class DatabaseBucketRepository<T>(
+open class DatabaseBucketRepository<T>(
     connection: DatabaseConnection,
     name: String,
     codec: BaseCodec? = null
@@ -16,7 +16,10 @@ class DatabaseBucketRepository<T>(
 
     suspend fun delete(identifier: String): Boolean = getHandle(identifier).delete()
 
-    suspend fun getAll() = connection.client!!.buckets
+    suspend fun getAll(): List<T> =
+        connection.client!!.keys.getKeysByPattern("$name:*").mapNotNull { get(it) }
+
+    suspend fun exists(identifier: String): Boolean = getHandle(identifier).isExists
 
     fun getHandle(identifier: String): RBucket<T> {
         if (!connection.isConnected()) throw IllegalStateException("Not connected to database")
