@@ -4,11 +4,8 @@ import dev.redicloud.packets.PacketManager
 import dev.redicloud.utils.ServiceType
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.jvm.ExperimentalReflectionOnLambdas
-import kotlin.reflect.jvm.reflect
 
 class EventManager(val packetManager: PacketManager? = null) {
 
@@ -31,7 +28,7 @@ class EventManager(val packetManager: PacketManager? = null) {
         }
     }
 
-    inline fun <reified T : Any> on(noinline handler: (T) -> Unit) {
+    inline fun <reified T : CloudEvent> listen(noinline handler: (T) -> Unit): InlineEventCaller<T> {
         val listener = InlineEventCaller(handler)
         val objClass = InlineEventCaller::class
         objClass.declaredMemberFunctions.forEach { function ->
@@ -43,12 +40,13 @@ class EventManager(val packetManager: PacketManager? = null) {
                 handlers[eventType]?.sortWith(compareByDescending { it.priority })
             }
         }
+        return listener
     }
 
     fun unregister(listener: Any) {
         val objClass = listener::class
         handlers.values.forEach { list ->
-            list.removeIf { it.listener == listener || it.listener::class == objClass }
+            list.removeIf { it.listener == listener }
         }
     }
 
