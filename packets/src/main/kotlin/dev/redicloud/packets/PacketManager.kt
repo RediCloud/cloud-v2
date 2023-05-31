@@ -14,6 +14,7 @@ class PacketManager(private val databaseConnection: DatabaseConnection, private 
     private val broadcastTopic: RTopic
     private val typedTopics: MutableMap<ServiceType, RTopic> = mutableMapOf()
     val gson = Gson()
+    val listeners = mutableListOf<PacketListener<out AbstractPacket>>()
 
     init {
         if (!databaseConnection.isConnected()) throw IllegalStateException("Database connection is not connected!")
@@ -29,7 +30,13 @@ class PacketManager(private val databaseConnection: DatabaseConnection, private 
             val p = registeredPackets.firstOrNull { it::class.java.name == messageData.clazz }
                 ?: return@MessageListener
             val packet = gson.fromJson(data, p::class.java)
-            //TODO: call
+            packet.received()
+            listeners.forEach {
+                if (it.packetClazz == p::class) {
+                    (it as PacketListener<AbstractPacket>).listener(packet)
+                    //TODO: catch errors and log
+                }
+            }
         }
         serviceTopic.addListener(PackedPacket::class.java, messageListener)
         broadcastTopic.addListener(PackedPacket::class.java, messageListener)
@@ -44,6 +51,16 @@ class PacketManager(private val databaseConnection: DatabaseConnection, private 
 
     fun unregisterPacket(packet: AbstractPacket) {
         registeredPackets.remove(packet)
+    }
+
+    inline fun <reified T : AbstractPacket> listen(noinline handler: (T) -> Unit): PacketListener<T> {
+        val listener = PacketListener(T::class, handler)
+        listeners.add(listener)
+        return listener
+    }
+
+    fun unregisterListener(listener: PacketListener<out AbstractPacket>) {
+        listeners.remove(listener)
     }
 
     suspend fun publishPacket(packet: AbstractPacket, vararg receivers: ServiceId) {

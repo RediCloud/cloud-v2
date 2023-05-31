@@ -9,4 +9,6 @@ abstract class AbstractPacket {
     var sender: ServiceId? = null
     var allowLocalReceiver: Boolean = false
 
+    fun received() {}
+
 }
