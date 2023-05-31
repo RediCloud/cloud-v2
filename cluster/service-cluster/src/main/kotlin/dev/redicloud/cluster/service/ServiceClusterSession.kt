@@ -5,6 +5,7 @@ import java.util.*
 
 data class ServiceClusterSession(
     val serviceId: ServiceId,
-    val sessionStartTime: Long,
+    val startTime: Long,
+    var endTime: Long = -1L,
     val sessionId: UUID = UUID.randomUUID()
 )

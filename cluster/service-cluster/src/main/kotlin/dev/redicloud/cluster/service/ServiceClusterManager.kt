@@ -1,70 +1,51 @@
 package dev.redicloud.cluster.service
 
 import dev.redicloud.database.DatabaseConnection
-import dev.redicloud.packets.PacketManager
+import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.utils.ServiceId
-import org.redisson.api.LocalCachedMapOptions
+import kotlinx.coroutines.runBlocking
 import org.redisson.api.RList
-import org.redisson.api.RMap
-import java.util.*
 
-class ServiceClusterManager(
-    val databaseConnection: DatabaseConnection,
-    val serviceId: ServiceId,
-    val tempId: UUID
-) {
+open class ServiceClusterManager(
+    databaseConnection: DatabaseConnection,
+    val serviceId: ServiceId
+) : DatabaseBucketRepository<CloudService>(databaseConnection, "cluster:service") {
 
-    private val connectedServices: RMap<String, ServiceClusterSession>
-    private val registeredServices: RList<String>
-    private val shutdownThread: Thread
-    private var disconnected: Boolean = true
+    protected val connectedServices: RList<ServiceId>
+    protected val registeredServices: RList<ServiceId>
+    protected val shutdownThread: Thread
 
     init {
-        if (!databaseConnection.isConnected()) throw Exception("Database connection is not connected")
-        connectedServices = databaseConnection.client!!.getLocalCachedMap(
-            "cluster:connected-services",
-            LocalCachedMapOptions
-                .defaults<String, ServiceClusterSession>()
-                .storeMode(LocalCachedMapOptions.StoreMode.LOCALCACHE_REDIS)
-                .syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
-        )
-        registeredServices = databaseConnection.client!!.getList("cluster:registered-services")
+        connectedServices = databaseConnection.client!!.getList("cluster:service:connected")
+        registeredServices = databaseConnection.client!!.getList("cluster:service:registered")
+
         shutdownThread = Thread() {
-            if (disconnected) return@Thread
-            if (!databaseConnection.isConnected()) {
-                throw Exception("Database connection is not connected! Cannot remove service from cluster")
+            runBlocking {
+                if (!databaseConnection.isConnected()) {
+                    throw Exception("Database connection is not connected! Cannot remove service from cluster")
+                }
+                connectedServices.remove(serviceId)
+                val service = getService(serviceId)
+                if(service == null) return@runBlocking
+                if (service.isConnected()) {
+                    service.currentSession()!!.endTime = System.currentTimeMillis()
+                }
+                if (service.unregisterAfterDisconnect()) {
+                    registeredServices.remove(serviceId)
+                    delete(serviceId.toName())
+                }else {
+                    set(serviceId.toName(), service)
+                }
             }
-            connectedServices.remove(serviceId.toName())
         }
     }
 
-    suspend fun connect() {
-        if (!registeredServices.contains(serviceId.toName())) {
-            registeredServices.add(serviceId.toName())
-        }
-        if (connectedServices.containsKey(serviceId.toName())) {
-            //TODO: log
-        }
-        connectedServices[serviceId.toName()] = ServiceClusterSession(serviceId, System.currentTimeMillis(), tempId)
-        disconnected = false
-        Runtime.getRuntime().addShutdownHook(shutdownThread)
-    }
+    suspend fun getService(serviceId: ServiceId): CloudService? = get(serviceId.toName())
 
-    suspend fun disconnect() {
-        disconnected = true
-        if (!connectedServices.containsKey(serviceId.toName())) return
-        connectedServices.remove(serviceId.toName())
-    }
+    suspend fun getRegisteredServices(): List<CloudService> =
+        registeredServices.mapNotNull { getService(it) }
 
-    suspend fun isConnected(): Boolean {
-        val session = connectedServices[serviceId.toName()] ?: return false
-        return session.sessionId == tempId
-    }
-
-    suspend fun isConnected(serviceId: ServiceId) = connectedServices.containsKey(serviceId.toName())
-
-    suspend fun getConnectedServices(): List<ServiceClusterSession> {
-        return connectedServices.values.toList()
-    }
+    suspend fun getConnectedServices(): List<CloudService> =
+        connectedServices.mapNotNull { getService(it) }
 
 }
