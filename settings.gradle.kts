@@ -27,3 +27,6 @@ findProject(":repositories:node-repository")?.name = "node-repository"
 
 include("repositories:server-repository")
 findProject(":repositories:server-repository")?.name = "server-repository"
+
+include("commands:command-api")
+findProject(":commands:command-api")?.name = "command-api"
