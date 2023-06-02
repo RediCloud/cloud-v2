@@ -1,8 +1,9 @@
 plugins {
-    kotlin("jvm") version "1.8.21"
+    `base-script`
 }
+apply(plugin = "dev.redicloud.libloader")
 
-group = "dev.redicloud.cluster.service"
+group = "dev.redicloud.repository.service"
 
 repositories {
     mavenCentral()

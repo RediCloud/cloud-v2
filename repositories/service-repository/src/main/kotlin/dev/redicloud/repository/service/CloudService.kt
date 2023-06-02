@@ -1,30 +1,30 @@
-package dev.redicloud.cluster.service
+package dev.redicloud.repository.service
 
 import dev.redicloud.utils.ServiceId
 import dev.redicloud.utils.ServiceType
 
-data class CloudService(
+abstract class CloudService(
     val serviceId: ServiceId,
-    private val sessions: MutableList<ServiceClusterSession>
+    private val sessions: MutableList<ServiceSession>
 ){
 
-    fun currentSession(): ServiceClusterSession? {
+    fun currentSession(): ServiceSession? {
         if (sessions.isEmpty()) return null
         val last = sessions.last()
         if (last.endTime == -1L) return null
         return last
     }
 
-    fun getSessions(): List<ServiceClusterSession> = sessions.toList()
+    fun getSessions(): List<ServiceSession> = sessions.toList()
 
     fun isConnected(): Boolean = currentSession() != null
 
-    fun firstSession(): ServiceClusterSession? {
+    fun firstSession(): ServiceSession? {
         if (sessions.isEmpty()) return null
         return sessions.first()
     }
 
-    fun addSession(session: ServiceClusterSession) {
+    fun addSession(session: ServiceSession) {
         sessions.add(session)
         sessions.sortBy { it.startTime }
     }
