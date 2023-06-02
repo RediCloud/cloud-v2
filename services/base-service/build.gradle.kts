@@ -1,6 +1,7 @@
 plugins {
-    kotlin("jvm") version "1.8.21"
+    `base-script`
 }
+apply(plugin = "dev.redicloud.libloader")
 
 group = "dev.redicloud.service.base"
 
@@ -12,7 +13,10 @@ dependencies {
     implementation(project(":database"))
     implementation(project(":packets"))
     implementation(project(":utils"))
-    implementation(project(":cluster:service-cluster"))
+    implementation(project(":repositories:service-repository"))
+    implementation(project(":repositories:node-repository"))
+    implementation(project(":repositories:server-repository"))
+    implementation(project(":events"))
 
 
     implementation("org.redisson:redisson:3.21.3")

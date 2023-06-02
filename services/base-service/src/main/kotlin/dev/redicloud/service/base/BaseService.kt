@@ -1,12 +1,13 @@
 package dev.redicloud.service.base
 
+import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.codec.GsonCodec
 import dev.redicloud.database.config.DatabaseConfig
+import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
-import dev.redicloud.service.base.cluster.BaseServiceClusterManager
+import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.utils.ServiceId
-import kotlinx.coroutines.runBlocking
 
 abstract class BaseService(
     databaseConfig: DatabaseConfig,
@@ -14,8 +15,12 @@ abstract class BaseService(
 ) {
 
     val databaseConnection: DatabaseConnection
-    val serviceClusterManager: BaseServiceClusterManager
+
+    val nodeRepository: NodeRepository
+    val serverRepository: ServerRepository
+
     val packetManager: PacketManager
+    val eventManager: EventManager
 
     init {
         databaseConnection = DatabaseConnection(databaseConfig, serviceId, GsonCodec())
@@ -25,10 +30,11 @@ abstract class BaseService(
             throw Exception("Failed to connect to database", e)
         }
 
-        serviceClusterManager = BaseServiceClusterManager(databaseConnection, serviceId)
-        runBlocking { serviceClusterManager.connect() }
+        nodeRepository = NodeRepository(databaseConnection, serviceId)
+        serverRepository = ServerRepository(databaseConnection, serviceId)
 
         packetManager = PacketManager(databaseConnection, serviceId)
+        eventManager = EventManager(packetManager)
     }
 
 }
