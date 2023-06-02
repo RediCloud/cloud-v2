@@ -7,7 +7,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.findAnnotation
 
-class EventManager(val packetManager: PacketManager? = null) {
+class EventManager(val packetManager: PacketManager?) {
 
     val handlers: MutableMap<KClass<*>, MutableList<EventHandlerMethod>> = HashMap()
 
