@@ -6,18 +6,24 @@ pluginManagement {
         mavenCentral()
         maven("https://repo.redicloud.dev/releases/")
     }
-    plugins {
-        id("dev.redicloud.libloader") version ("1.6.6")
-    }
 }
 
 include("database")
 include("packets")
 include("utils")
-
-include("service:base-service")
-findProject(":service:base-service")?.name = "base-service"
-
-include("cluster:service-cluster")
-findProject(":cluster:service-cluster")?.name = "service-cluster"
 include("events")
+
+include("services:base-service")
+findProject(":services:base-service")?.name = "base-service"
+
+include("services:node-service")
+findProject(":services:node-service")?.name = "node-service"
+
+include("repositories:service-repository")
+findProject(":repositories:service-repository")?.name = "service-repository"
+
+include("repositories:node-repository")
+findProject(":repositories:node-repository")?.name = "node-repository"
+
+include("repositories:server-repository")
+findProject(":repositories:server-repository")?.name = "server-repository"
