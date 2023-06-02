@@ -21,10 +21,18 @@ open class DatabaseBucketRepository<T>(
 
     suspend fun exists(identifier: String): Boolean = getHandle(identifier).isExists
 
-    fun getHandle(identifier: String): RBucket<T> {
+    fun getHandle(identifier: String, customIdentifier: Boolean = false): RBucket<T> {
         if (!connection.isConnected()) throw IllegalStateException("Not connected to database")
-        return if (codec != null) connection.client!!.getBucket(toDatabaseIdentifier(identifier), codec)
-        else connection.client!!.getBucket(toDatabaseIdentifier(identifier))
+        val databaseIdentifier = if (customIdentifier) identifier else toDatabaseIdentifier(identifier)
+        return if (codec != null) connection.client!!.getBucket(databaseIdentifier, codec)
+        else connection.client!!.getBucket(databaseIdentifier)
+    }
+
+    fun <X> getUnsafeHandle(identifier: String, customIdentifier: Boolean): RBucket<X> {
+        if (!connection.isConnected()) throw IllegalStateException("Not connected to database")
+        val databaseIdentifier = if (customIdentifier) identifier else toDatabaseIdentifier(identifier)
+        return if (codec != null) connection.client!!.getBucket(databaseIdentifier, codec)
+        else connection.client!!.getBucket(databaseIdentifier)
     }
 
 }

@@ -9,6 +9,6 @@ abstract class DatabaseRepository<T>(val connection: DatabaseConnection, val nam
         if (!connection.isConnected()) throw Exception("Database connection is not connected")
     }
 
-    fun toDatabaseIdentifier(identifier: String): String = "${this.name}:$name"
+    fun toDatabaseIdentifier(identifier: String): String = "${this.name}:$identifier"
 
 }
