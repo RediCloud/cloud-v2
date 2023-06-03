@@ -18,7 +18,6 @@ abstract class CommandBase {
             CommandSubBase(this, it)
         }
         aliases = this::class.findAnnotation<CommandAlias>()?.aliases ?: arrayOf()
-        println("Loaded command $name")
     }
 
     fun getName(): String = name
@@ -29,12 +28,8 @@ abstract class CommandBase {
 
     fun getSubCommands(): List<CommandSubBase> = subCommands.toList()
 
-    fun getPathsWithArguments(): List<String> = listOf(*aliases, name).flatMap { commandName ->
-        subCommands.flatMap { it.getSubPathsWithoutArguments().map { subPath -> "$commandName $subPath" } }
-    }
+    fun getPathsWithArguments(): List<String> = subCommands.flatMap { it.getSubPathsWithoutArguments() }
 
-    fun getPaths(): List<String> = listOf(*aliases, name).flatMap { commandName ->
-        subCommands.flatMap { it.getSubPaths()
-            .map { subPath -> "$commandName $subPath" } } }
+    fun getPaths(): List<String> = subCommands.flatMap { it.getSubPaths() }
 
 }
