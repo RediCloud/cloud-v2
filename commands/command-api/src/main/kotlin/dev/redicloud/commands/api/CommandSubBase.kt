@@ -6,7 +6,7 @@ import kotlin.reflect.jvm.javaMethod
 
 class CommandSubBase(
     val command: CommandBase,
-    function: KFunction<*>
+    val function: KFunction<*>
 ) {
 
     val path: String
@@ -31,6 +31,34 @@ class CommandSubBase(
             if (optionalArguments) throw IllegalStateException("Argument of ${command.getName()}.${path} is required after optional argument")
         }
         aliasePaths = function.findAnnotation<CommandAlias>()?.aliases ?: arrayOf()
+    }
+
+    fun execute(arguments: List<String>): CommandResponse {
+        val parsedArguments = mutableListOf<Any?>()
+        val max = this.arguments.count()
+        val min = this.arguments.count { it.required }
+        if (max < min) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT, "Not enough arguments (min: $min, max: $max)")
+        if (max > this.arguments.count()) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT, "Too many arguments (min: $min, max: $max)")
+        var index = -1
+        this.arguments.forEach {
+            index++
+            if (index >= arguments.count()) {
+                if (it.required) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT, "Not enough arguments (min: $min, max: $max)")
+                parsedArguments.add(null)
+                return@forEach
+            }
+            val argument = arguments[index]
+            val parsedArgument = it.parse(argument)
+                ?: return CommandResponse(CommandResponseType.INVALID_ARGUMENT_TYPE, "Invalid argument $argument or invalid type")
+            parsedArguments.add(parsedArgument)
+        }
+        return try {
+            function.javaMethod!!.invoke(command, *parsedArguments.toTypedArray())
+            CommandResponse(CommandResponseType.SUCCESS, null)
+        }catch (e: Exception) {
+            CommandResponse(CommandResponseType.ERROR,
+                "Error while executing command: ${command.getName()} ${getSubPathsWithoutArguments().joinToString(" ")}", e)
+        }
     }
 
     fun getSubPathsWithoutArguments(): List<String>
