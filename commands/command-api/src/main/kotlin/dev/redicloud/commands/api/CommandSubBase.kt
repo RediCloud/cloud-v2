@@ -13,6 +13,7 @@ class CommandSubBase(
     val description: String
     val arguments: List<CommandArgument>
     val aliasePaths: Array<String>
+    val permission: String?
 
     init {
         path = function.findAnnotation<CommandSubPath>()!!.path
@@ -28,19 +29,24 @@ class CommandSubBase(
                 optionalArguments = true
                 return@forEach
             }
-            if (optionalArguments) throw IllegalStateException("Argument of ${command.getName()}.${path} is required after optional argument")
+            if (optionalArguments && !it.actorArgument) throw IllegalStateException("Argument of ${command.getName()}.${path} is required after optional argument")
         }
         aliasePaths = function.findAnnotation<CommandAlias>()?.aliases ?: arrayOf()
+        permission = function.findAnnotation<CommandPermission>()?.permission
     }
 
-    fun execute(arguments: List<String>): CommandResponse {
+    fun execute(actor: ICommandActor<*>, arguments: List<String>): CommandResponse {
         val parsedArguments = mutableListOf<Any?>()
-        val max = this.arguments.count()
-        val min = this.arguments.count { it.required }
-        if (max < min) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT, "Not enough arguments (min: $min, max: $max)")
-        if (max > this.arguments.count()) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT, "Too many arguments (min: $min, max: $max)")
+        val max = this.arguments.count { !it.actorArgument }
+        val min = this.arguments.count { it.required && !it.actorArgument}
+        if (arguments.size < min) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT, "Not enough arguments (min: $min, max: $max)")
+        if (arguments.size > max) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT, "Too many arguments (min: $min, max: $max)")
         var index = -1
         this.arguments.forEach {
+            if (it.actorArgument) {
+                parsedArguments.add(actor)
+                return@forEach
+            }
             index++
             if (index >= arguments.count()) {
                 if (it.required) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT, "Not enough arguments (min: $min, max: $max)")

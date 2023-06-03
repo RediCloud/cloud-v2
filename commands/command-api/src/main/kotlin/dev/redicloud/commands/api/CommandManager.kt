@@ -12,13 +12,15 @@ open class CommandManager {
         commands.remove(command)
     }
 
-    fun handleInput(input: String): CommandResponse {
+    fun handleInput(actor: ICommandActor<*>, input: String): CommandResponse {
         if (input.isBlank()) return CommandResponse(CommandResponseType.INVALID_COMMAND, "Command cannot be blank")
         val split = input.split(" ")
         val commandName = split[0].lowercase()
         val parameters = split.drop(1)
         val command = commands.firstOrNull { it.getName().lowercase() == commandName }
             ?: return CommandResponse(CommandResponseType.INVALID_COMMAND, "Command $commandName not found")
+
+        if (!actor.hasPermission(command.getPermission())) return CommandResponse(CommandResponseType.PERMISSION, "You do not have permission to execute this command! ${command.getPermission()}")
 
         val possibleFullPaths = command.getPaths()
         val possiblePaths = command.getPathsWithArguments()
@@ -41,6 +43,9 @@ open class CommandManager {
             .firstOrNull { subCommand -> subCommand.getSubPaths()
                 .any { it -> it.lowercase() == matched.first().lowercase() } }
             ?: return CommandResponse(CommandResponseType.INVALID_SUB_PATH, "Invalid sub path for command $commandName ${parameters.joinToString(" ")}")
+
+        if (!actor.hasPermission(subCommand.permission)) return CommandResponse(CommandResponseType.PERMISSION, "You do not have permission to execute this command! ${subCommand.permission}")
+
         val optimalPath = subCommand.getSubPaths().firstOrNull { it.lowercase() == matched.first().lowercase() }!!
         var pathWithoutArgs = ""
         optimalPath.split(" ").forEach {
@@ -49,7 +54,7 @@ open class CommandManager {
             pathWithoutArgs += it
         }
         val arguments = parameters.drop(pathWithoutArgs.split(" ").size)
-        return subCommand.execute(arguments)
+        return subCommand.execute(actor, arguments)
     }
 
     fun getCommands(): List<CommandBase> = commands.toList()

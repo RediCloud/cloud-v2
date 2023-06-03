@@ -18,4 +18,8 @@ annotation class CommandDescription(val description: String)
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-annotation class VisibleForCompletion
+annotation class CommandVisibleForCompletion
+
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+annotation class CommandPermission(val permission: String)
