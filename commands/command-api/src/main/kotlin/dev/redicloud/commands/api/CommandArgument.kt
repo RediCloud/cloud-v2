@@ -25,6 +25,8 @@ class CommandArgument(commandSubBase: CommandSubBase, parameter: Parameter, val 
         }.values.first()
     }
 
+    fun parse(input: String): Any? = parser.parse(input)
+
     fun getPathFormat(): String = if (required) "<$name>" else "[$name]"
 
 }
