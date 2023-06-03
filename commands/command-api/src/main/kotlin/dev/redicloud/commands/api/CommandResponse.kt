@@ -1,6 +1,6 @@
 package dev.redicloud.commands.api
 
-data class CommandResponse(val type: CommandResponseType, val message: String? = null, val exception: Exception? = null)
+data class CommandResponse(val type: CommandResponseType, val message: String? = null, val exception: Throwable? = null)
 
 enum class CommandResponseType {
     SUCCESS,
