@@ -41,7 +41,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
                 list.addAll(possibleSubCommands.first().suggester.suggest(CommandSuggesterContext(input, emptyArray())))
                 possibleSubCommands.first().arguments
                     .filter { it.isThis(input, true) }
-                    .map { it.subCommand.suggester.suggest(CommandSuggesterContext(input, it.annotatedSuggester)) }
+                    .map { it.subCommand.suggester.suggest(CommandSuggesterContext(input, it.suggesterParameter)) }
             }
 
         }
