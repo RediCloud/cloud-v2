@@ -12,6 +12,7 @@ include("database")
 include("packets")
 include("utils")
 include("events")
+include("console")
 
 include("services:base-service")
 findProject(":services:base-service")?.name = "base-service"

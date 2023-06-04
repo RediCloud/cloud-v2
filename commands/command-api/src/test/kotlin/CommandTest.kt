@@ -9,38 +9,11 @@ fun main() {
     }
     commandManager.register(TestCommand())
 
-    println("<=============>")
-    commandManager.getCommands().forEach {
-    println("Command: ${it.getName()}")
-    println("Description: ${it.getDescription()}")
-    println("Aliases: ${it.getAliases().joinToString(", ")}")
-    it.getSubCommands().forEach { sub ->
-        println("Sub command: ${sub.path}")
-        println("\tDescription: ${sub.description}")
-        println("\tAliases: ${sub.aliasePaths.joinToString(", ")}")
-        sub.arguments.forEach { arg ->
-            println("\tArgument: ${arg.name}")
-            println("\t\tRequired: ${arg.required}")
-            println("\t\tType: ${arg.clazz.qualifiedName}")
-        }
+    while (true) {
+        val input = readLine() ?: continue
+        val response = commandManager.handleInput(actor, input)
+        println(response)
     }
-    println("Path without args:")
-    it.getPathsWithArguments().forEach { path ->
-        println("\t$path")
-    }
-        println("Paths with args:")
-        it.getPaths().forEach { path ->
-            println("\t$path")
-        }
-        println("")
-    }
-    println("<=============>")
-
-
-    val response1 = commandManager.handleInput(actor, "test sub1 secondsub1 Ein")
-    val response2 = commandManager.handleInput(actor, "test sub1 ss2 Elias")
-    println(response1)
-    println(response2)
 }
 
 class ConsoleActor() : ICommandActor<UUID> {

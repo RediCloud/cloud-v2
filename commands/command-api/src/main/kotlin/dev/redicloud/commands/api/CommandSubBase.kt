@@ -71,6 +71,65 @@ class CommandSubBase(
         }
     }
 
+    fun parseToOptimalPath(input: String): String? {
+        if (!command.isThis(input, false)) return null
+        val split = input.split(" ")
+        if (split.size < 2) return input
+        val parameters = split.drop(1)
+        val arguments = arguments.filter { !it.actorArgument }
+        val possibleFullPaths = command.getPaths()
+        val matched = possibleFullPaths.toMutableList()
+        var index = -1
+        parameters.forEach {
+            index++
+            val possible = matched.filter { path ->
+                val parameterSplit = path.split(" ")
+                if (parameterSplit.size <= index) return@filter false
+                val parameter = parameterSplit[index].lowercase()
+                if (parameter.isOptionalArgument() || parameter.isRequiredArgument()) return@filter true
+                parameter.lowercase().startsWith(it.lowercase())
+            }
+            matched.clear()
+            matched.addAll(possible)
+        }
+        return matched.firstOrNull()
+    }
+
+    fun isThis(input: String, predicate: Boolean): Boolean {
+        if (!command.isThis(input, false)) return false
+        val split = input.split(" ")
+        if (split.size < 2) return input.endsWith(" ")
+        val parameters = split.drop(1)
+        val arguments = arguments.filter { !it.actorArgument }
+        val possibleFullPaths = command.getPaths()
+        val matched = possibleFullPaths.toMutableList()
+        var index = -1
+        parameters.forEach {
+            index++
+            val possible = matched.filter { path ->
+                val parameterSplit = path.split(" ")
+                if (parameterSplit.size <= index) return@filter false
+                val parameter = parameterSplit[index].lowercase()
+                if (parameter.isOptionalArgument() || parameter.isRequiredArgument()) return@filter true
+                if (predicate) parameter.lowercase().startsWith(it.lowercase()) else parameter.lowercase() == it.lowercase()
+            }
+            matched.clear()
+            matched.addAll(possible)
+        }
+
+        if (matched.size > 2 && !predicate) return false
+
+        return if (predicate) {
+            command.getSubCommands()
+                .any { subCommand -> subCommand.getSubPaths()
+                    .any { path -> matched.any { it.lowercase().startsWith(path.lowercase()) } } }
+        }else {
+            command.getSubCommands()
+                .any { subCommand -> subCommand.getSubPaths()
+                    .any { path -> matched.first().lowercase() == path.lowercase() } }
+        }
+    }
+
     fun getUsage(): String = "${command.getName()} ${getSubPaths().first()}"
 
     fun getSubPathsWithoutArguments(): List<String>

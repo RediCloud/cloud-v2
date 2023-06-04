@@ -23,6 +23,16 @@ abstract class CommandBase {
         permission = this::class.findAnnotation<CommandPermission>()?.permission
     }
 
+    fun isThis(input: String, predicate: Boolean): Boolean {
+        val split = input.split(" ")
+        if (split.isEmpty()) return predicate
+        return if (predicate) {
+            arrayOf(*aliases, name).any { it.lowercase().startsWith(split[0].lowercase()) }
+        } else {
+            arrayOf(*aliases, name).any { it.lowercase() == split[0].lowercase() }
+        }
+    }
+
     fun getName(): String = name
 
     fun getDescription(): String = description
