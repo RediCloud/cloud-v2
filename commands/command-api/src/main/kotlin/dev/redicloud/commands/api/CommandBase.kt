@@ -10,6 +10,7 @@ abstract class CommandBase {
     private var description: String = ""
     private var aliases: Array<String> = arrayOf()
     private var permission: String? = null
+    val suggester: ICommandSuggester = CommandSuggester(this)
 
     internal fun load() {
         name = this::class.findAnnotation<Command>()?.name
@@ -19,7 +20,7 @@ abstract class CommandBase {
             CommandSubBase(this, it)
         }
         aliases = this::class.findAnnotation<CommandAlias>()?.aliases ?: arrayOf()
-        permission = this::class.findAnnotation<CommandPermission>()?.permission ?: null
+        permission = this::class.findAnnotation<CommandPermission>()?.permission
     }
 
     fun getName(): String = name

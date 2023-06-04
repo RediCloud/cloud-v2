@@ -14,10 +14,12 @@ class CommandSubBase(
     val arguments: List<CommandArgument>
     val aliasePaths: Array<String>
     val permission: String?
+    val suggester: ICommandSuggester
 
     init {
         path = function.findAnnotation<CommandSubPath>()!!.path
         description = function.findAnnotation<CommandDescription>()?.description ?: ""
+        suggester = CommandSubPathSuggester(this)
         var index = -1
         arguments = function.javaMethod!!.parameters.map {
             index++
@@ -39,8 +41,10 @@ class CommandSubBase(
         val parsedArguments = mutableListOf<Any?>()
         val max = this.arguments.count { !it.actorArgument }
         val min = this.arguments.count { it.required && !it.actorArgument}
-        if (arguments.size < min) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT, "Not enough arguments (min: $min, max: $max)")
-        if (arguments.size > max) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT, "Too many arguments (min: $min, max: $max)")
+        if (arguments.size < min) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT,
+            "Not enough arguments (min: $min, max: $max)", usage = getUsage())
+        if (arguments.size > max) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT,
+            "Too many arguments (min: $min, max: $max)", usage = getUsage())
         var index = -1
         this.arguments.forEach {
             if (it.actorArgument) {
@@ -67,17 +71,19 @@ class CommandSubBase(
         }
     }
 
+    fun getUsage(): String = "${command.getName()} ${getSubPaths().first()}"
+
     fun getSubPathsWithoutArguments(): List<String>
         = listOf(*aliasePaths, path)
 
     fun getSubPaths(): List<String> {
         val prefixes = listOf(*aliasePaths, path)
         val paths = mutableListOf<String>()
-        val count = arguments.count { !it.required } + 1
         var currentPath = "%prefix%"
         if (arguments.isEmpty()) return prefixes.map { currentPath.replace("%prefix%", it) }
         var currentArgumentIndex = 0
-        while (currentArgumentIndex < arguments.count()) {
+        val arguments = arguments.filter { !it.actorArgument }
+        while (currentArgumentIndex < arguments.count() { !it.actorArgument } ) {
             val currentArgument = arguments[currentArgumentIndex]
             if (currentArgument.required) {
                 currentPath += " ${currentArgument.getPathFormat()}"

@@ -9,8 +9,9 @@ class CommandArgument(commandSubBase: CommandSubBase, parameter: Parameter, val 
     val name: String
     val required: Boolean //TODO
     val clazz: KClass<*>
-    val parser: CommandParser<*>?
+    val parser: CommandArgumentParser<*>?
     val actorArgument: Boolean
+    val suggester: ICommandSuggester
 
     init {
         if (parameter.type.kotlin.superclasses.any { it == ICommandActor::class }) {
@@ -19,18 +20,21 @@ class CommandArgument(commandSubBase: CommandSubBase, parameter: Parameter, val 
             clazz = parameter.type.kotlin
             parser = null
             actorArgument = true
+            suggester = EmptySuggester()
         }else {
             actorArgument = false
             if (!parameter.isAnnotationPresent(CommandParameter::class.java)) {
                 name = parameter.name
                 required = !parameter.isImplicit //TODO check String? and Int? etc.
+                suggester = ICommandSuggester.SUGGESTERS.firstOrNull { it::class == parameter.type.kotlin } ?: EmptySuggester()
             } else {
                 val annotation = parameter.getAnnotation(CommandParameter::class.java)
                 name = annotation.name.ifEmpty { parameter.name }
                 required = annotation.required //TODO check String? and Int? etc.
+                suggester = EmptySuggester()
             }
             clazz = parameter.type.kotlin
-            parser = CommandParser.PARSERS.filter {
+            parser = CommandArgumentParser.PARSERS.filter {
                 it.key.qualifiedName!!.replace("?", "") == clazz.qualifiedName!!.replace("?", "")
             }.values.first()
         }
