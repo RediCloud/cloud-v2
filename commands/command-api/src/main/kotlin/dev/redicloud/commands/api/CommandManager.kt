@@ -15,14 +15,11 @@ abstract class CommandManager<K : ICommandActor<*>> {
         commands.remove(command)
     }
 
-    fun getCommand(input: String): CommandBase? {
-        val split = input.split(" ")
-        if (split.isEmpty()) return null
-        return commands.firstOrNull { it.getName().lowercase() == split[0].lowercase() }
-    }
+    fun getCommand(input: String): CommandBase? = commands.firstOrNull { it.isThis(input, false) }
 
-    fun getSuggester(actor: K, input: String): List<ICommandSuggester> {
-        val list = mutableListOf<ICommandSuggester>()
+    //TODO
+    fun getCompletions(actor: K, input: String): List<String> {
+        val list = mutableListOf<String>()
 
         val split = input.split(" ")
         if (split.isEmpty()) return list
@@ -30,7 +27,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
         val parameters = split.drop(1)
         val command = getCommand(commandName) ?: return list
         if (!actor.hasPermission(command.getPermission())) return list
-        list.add(command.suggester)
+        list.addAll(command.suggester.suggest(CommandSuggesterContext(input, emptyArray())))
 
         val possibleFullPaths = command.getPaths()
 
@@ -52,12 +49,12 @@ abstract class CommandManager<K : ICommandActor<*>> {
             .firstOrNull { subCommand -> subCommand.getSubPaths()
                 .any { it -> it.lowercase() == matched.first().lowercase() } }
         if (subCommand == null || !actor.hasPermission(subCommand.permission)) {
-            list.addAll(command.getSubCommands().filter { actor.hasPermission(it.permission) }.map { it.suggester })
+            list.addAll(command.getSubCommands().filter { actor.hasPermission(it.permission) }
+                .flatMap { it.suggester.suggest(CommandSuggesterContext(input, emptyArray())).toList() })
             return list
         }
 
-        list.add(subCommand.suggester)
-        list.addAll(subCommand.arguments.map { it.suggester }.toList())
+        list.addAll(subCommand.arguments.flatMap { it.suggester.suggest(CommandSuggesterContext(input, emptyArray())).toList() })
 
         return list
     }
@@ -72,30 +69,13 @@ abstract class CommandManager<K : ICommandActor<*>> {
 
         if (!actor.hasPermission(command.getPermission())) return CommandResponse(CommandResponseType.PERMISSION, "You do not have permission to execute this command! ${command.getPermission()}")
 
-        val possibleFullPaths = command.getPaths()
-
-        val matched = possibleFullPaths.toMutableList()
-        var index = -1
-        parameters.forEach {
-            index++
-            val possible = matched.filter { path ->
-                val parameterSplit = path.split(" ")
-                if (parameterSplit.size <= index) return@filter false
-                val parameter = parameterSplit[index].lowercase()
-                parameter == it.lowercase() || parameter.isOptionalArgument() || parameter.isRequiredArgument()
-            }
-            matched.clear()
-            matched.addAll(possible)
-        }
-
         val subCommand = command.getSubCommands()
-            .firstOrNull { subCommand -> subCommand.getSubPaths()
-                .any { it -> it.lowercase() == matched.first().lowercase() } }
+            .firstOrNull { it.isThis(input, false) }
             ?: return CommandResponse(CommandResponseType.INVALID_SUB_PATH, "Invalid sub path for command $commandName ${parameters.joinToString(" ")}")
 
         if (!actor.hasPermission(subCommand.permission)) return CommandResponse(CommandResponseType.PERMISSION, "You do not have permission to execute this command! ${subCommand.permission}")
 
-        val optimalPath = subCommand.getSubPaths().firstOrNull { it.lowercase() == matched.first().lowercase() }!!
+        val optimalPath = subCommand.parseToOptimalPath(input)!!
         var pathWithoutArgs = ""
         optimalPath.split(" ").forEach {
             if (it.isOptionalArgument() || it.isRequiredArgument()) return@forEach
