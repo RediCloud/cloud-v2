@@ -1,10 +1,12 @@
 package dev.redicloud.commands.api
 
+import kotlin.reflect.KClass
+
 
 interface CommandParser<T> {
 
     companion object {
-        val PARSERS = mutableMapOf(
+        val PARSERS = mutableMapOf<KClass<*>, CommandParser<*>>(
             String::class to StringCommandParser(),
             Int::class to IntCommandParser(),
             Long::class to LongCommandParser(),
