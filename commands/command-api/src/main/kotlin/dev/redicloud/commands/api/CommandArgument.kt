@@ -13,6 +13,7 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
     val actorArgument: Boolean
     val annotatedSuggester: ICommandSuggester
     val suggester: CommandArgumentSuggester
+    val suggesterParameter: Array<String>
 
     init {
         if (parameter.type.kotlin.superclasses.any { it == ICommandActor::class }) {
@@ -22,17 +23,20 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
             parser = null
             actorArgument = true
             annotatedSuggester = EmptySuggester()
+            suggesterParameter = arrayOf()
         }else {
             actorArgument = false
             if (!parameter.isAnnotationPresent(CommandParameter::class.java)) {
                 name = parameter.name
                 required = !parameter.isImplicit //TODO check String? and Int? etc.
-                annotatedSuggester = ICommandSuggester.SUGGESTERS.firstOrNull { it::class == parameter.type.kotlin } ?: EmptySuggester()
+                annotatedSuggester = EmptySuggester()
+                suggesterParameter = emptyArray()
             } else {
                 val annotation = parameter.getAnnotation(CommandParameter::class.java)
                 name = annotation.name.ifEmpty { parameter.name }
                 required = annotation.required //TODO check String? and Int? etc.
-                annotatedSuggester = EmptySuggester()
+                annotatedSuggester = ICommandSuggester.SUGGESTERS.firstOrNull { it::class == annotation.suggester } ?: EmptySuggester()
+                suggesterParameter = annotation.suggesterArguments
             }
             clazz = parameter.type.kotlin
             parser = CommandArgumentParser.PARSERS.filter {
