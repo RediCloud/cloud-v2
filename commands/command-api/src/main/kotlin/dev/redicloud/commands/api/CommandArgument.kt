@@ -9,7 +9,7 @@ class CommandArgument(commandSubBase: CommandSubBase, parameter: Parameter, val 
     val name: String
     val required: Boolean //TODO
     val clazz: KClass<*>
-    val parser: CommandParser<*>?
+    val parser: CommandArgumentParser<*>?
     val actorArgument: Boolean
     val suggester: ICommandSuggester
 
@@ -34,7 +34,7 @@ class CommandArgument(commandSubBase: CommandSubBase, parameter: Parameter, val 
                 suggester = EmptySuggester()
             }
             clazz = parameter.type.kotlin
-            parser = CommandParser.PARSERS.filter {
+            parser = CommandArgumentParser.PARSERS.filter {
                 it.key.qualifiedName!!.replace("?", "") == clazz.qualifiedName!!.replace("?", "")
             }.values.first()
         }
