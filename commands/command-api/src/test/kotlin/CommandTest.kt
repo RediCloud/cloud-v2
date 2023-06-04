@@ -58,10 +58,13 @@ class TestCommand() : CommandBase() {
     @CommandSubPath("sub1 secondsub1")
     @CommandAlias(["sub1 ss1"])
     fun sub1(
-        @CommandParameter(name = "message1", required = true) message1: String?,
-        @CommandParameter(name = "message2", required = false) message2: String?,
         actor: ConsoleActor,
-        @CommandParameter(name = "message3", required = false) message3: String?
+        @CommandParameter(name = "message1", required = true) message1: String?,
+        @CommandParameter(name = "message2", required = true) message2: String?,
+        @CommandParameter(name = "message3", required = true) message3: String?,
+        @CommandParameter(name = "intrange", required = true, suggester = IntegerSuggester::class,
+            suggesterArguments = ["1", "100", "20"]) // min: 1, max: 100, step: 20
+        range: Int
     ) {
         println("S1: Actor: ${actor.identifier}")
         println("S1: Message1: $message1")
