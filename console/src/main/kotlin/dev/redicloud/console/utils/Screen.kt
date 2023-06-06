@@ -19,9 +19,15 @@ class Screen(
     fun display() {
         if (isActive()) return
         val oldScreen = console.currentScreen
+        if (oldScreen.allowedCommands.isEmpty() && console.terminal.paused() && !allowedCommands.isEmpty()) {
+            console.terminal.resume()
+        }
+        if (allowedCommands.isEmpty() && !console.terminal.paused()) {
+            console.terminal.pause()
+        }
         console.currentScreen = this
         console.clear()
-        console.eventManager.fireEvent(ScreenChangedEvent(console, this, oldScreen))
+        console.eventManager?.fireEvent(ScreenChangedEvent(console, this, oldScreen))
         history.forEach { print(it) }
         if (storeMessages) {
             queuedMessage.forEach { print(it) }
