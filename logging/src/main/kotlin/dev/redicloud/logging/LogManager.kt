@@ -1,0 +1,20 @@
+package dev.redicloud.logging
+
+import dev.redicloud.utils.logger.fallback.FallbackLoggerFactory
+import java.util.ServiceLoader
+
+private val LOGGER_FACTORY = ServiceLoader.load(LoggerFactory::class.java).firstOrNull() ?: FallbackLoggerFactory()
+
+class LogManager private constructor() {
+
+    companion object {
+        fun rootLogger(): Logger = LOGGER_FACTORY.getLogger(LoggerFactory.ROOT_LOGGER_NAME)
+
+        fun logger(name: String): Logger = LOGGER_FACTORY.getLogger(name)
+
+        fun logger(clazz: Class<*>): Logger = LOGGER_FACTORY.getLogger(clazz.name)
+
+        fun logger(o: Any): Logger = LOGGER_FACTORY.getLogger(o.javaClass.name)
+    }
+
+}
