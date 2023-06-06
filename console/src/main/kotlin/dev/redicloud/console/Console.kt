@@ -1,14 +1,14 @@
 package dev.redicloud.console
 
+import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.commands.ConsoleCommandManager
 import dev.redicloud.console.events.ConsoleRunEvent
-import dev.redicloud.console.utils.AnsiInstaller
-import dev.redicloud.console.utils.ConsoleColor
-import dev.redicloud.console.jline.ConsoleLineReader
-import dev.redicloud.console.jline.IConsole
-import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.jline.ConsoleCompleter
 import dev.redicloud.console.jline.ConsoleHighlighter
+import dev.redicloud.console.jline.ConsoleLineReader
+import dev.redicloud.console.jline.IConsole
+import dev.redicloud.console.utils.AnsiInstaller
+import dev.redicloud.console.utils.ConsoleColor
 import dev.redicloud.console.utils.Screen
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
@@ -32,7 +32,7 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.system.exitProcess
 
 
-class Console(val host: String, val eventManager: EventManager?) : IConsole {
+open class Console(val host: String, val eventManager: EventManager?) : IConsole {
 
     companion object {
         private val LOGGER: Logger = LogManager.logger(Console::class.java)
@@ -42,17 +42,20 @@ class Console(val host: String, val eventManager: EventManager?) : IConsole {
     private val printLock: Lock = ReentrantLock(true)
     private val defaultScreen: Screen = Screen(this, "main")
     private var currentScreen: Screen = defaultScreen
+    private val screens: MutableList<Screen> = mutableListOf(defaultScreen)
     override val commandManager = ConsoleCommandManager(this)
     private val runningAnimations: MutableMap<UUID, AbstractConsoleAnimation> = mutableMapOf()
     internal val terminal: Terminal
     internal val lineReader: ConsoleLineReader
     override var prompt: String = System.getProperty("redicloud.console.promt", "%hc%%user%§8@§f%host% §8➔ §r")
-    private val lineFormat: String = System.getProperty("redicloud.console.lineformat", "§8[§f%time%§8] §f%prefix%§8: §r%message%")
+    private val lineFormat: String =
+        System.getProperty("redicloud.console.lineformat", "§8[§f%time%§8] §f%prefix%§8: §r%message%")
     private val highlightColor: String = System.getProperty("redicloud.console.highlight", "§3")
     private val textColor: String = System.getProperty("redicloud.console.hightlight", "§f")
 
     override var printingEnabled = true
     override var matchingHistorySearch = true
+
     @OptIn(DelicateCoroutinesApi::class)
     private val scope = CoroutineScope(newSingleThreadContext("console-scope"))
 
@@ -99,8 +102,8 @@ class Console(val host: String, val eventManager: EventManager?) : IConsole {
             fun readLine(): String? {
                 try {
                     return lineReader.readLine(prompt)
-                }catch (_: EndOfFileException) {
-                }catch (e: UserInterruptException) {
+                } catch (_: EndOfFileException) {
+                } catch (e: UserInterruptException) {
                     exitProcess(-1)
                 }
                 return null
@@ -172,10 +175,25 @@ class Console(val host: String, val eventManager: EventManager?) : IConsole {
         try {
             screen.display()
             currentScreen = screen
-        }finally {
+        } finally {
             printLock.unlock()
         }
     }
+
+    override fun getScreens(): List<Screen> = screens.toList()
+
+    override fun createScreen(
+        name: String,
+        allowedCommands: List<String>,
+        storeMessages: Boolean,
+        maxStoredMessages: Int,
+        historySize: Int
+    ): Screen {
+        val screen = Screen(this, name, allowedCommands, storeMessages, maxStoredMessages, historySize)
+        screens.add(screen)
+        return screen
+    }
+
 
     override fun switchToDefaultScreen() {
         if (currentScreen == defaultScreen) return
@@ -183,7 +201,7 @@ class Console(val host: String, val eventManager: EventManager?) : IConsole {
         try {
             defaultScreen.display()
             currentScreen = defaultScreen
-        }finally {
+        } finally {
             printLock.unlock()
         }
     }
@@ -195,7 +213,7 @@ class Console(val host: String, val eventManager: EventManager?) : IConsole {
     override fun commandHistory(history: List<String>?) {
         try {
             lineReader.history.purge()
-        }catch (e: IOException) {
+        } catch (e: IOException) {
             LOGGER.severe("Failed to purge console history", e)
         }
         history?.forEach { lineReader.history.add(it) }
@@ -212,6 +230,7 @@ class Console(val host: String, val eventManager: EventManager?) : IConsole {
     override fun disableCommands() {
         commandManager.disableCommands()
     }
+
     override fun writeRaw(rawText: String): Console {
         printLock.lock()
         try {
@@ -228,15 +247,19 @@ class Console(val host: String, val eventManager: EventManager?) : IConsole {
             val content = this.formatText(text, System.lineSeparator())
 
             if (ansiSupported) {
-                this.print("${Ansi.ansi().eraseLine(Ansi.Erase.ALL).toString()}\r$content${Ansi.ansi().reset().toString()}")
-            }else {
+                this.print(
+                    "${Ansi.ansi().eraseLine(Ansi.Erase.ALL).toString()}\r$content${
+                        Ansi.ansi().reset().toString()
+                    }"
+                )
+            } else {
                 this.print("\r$content")
             }
 
             if (!runningAnimations.isEmpty()) {
                 runningAnimations.values.forEach { it.addToCursorUp(1) }
             }
-        }finally {
+        } finally {
             printLock.unlock()
         }
         return this

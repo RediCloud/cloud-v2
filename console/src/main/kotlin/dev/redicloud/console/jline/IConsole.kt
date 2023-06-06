@@ -24,7 +24,17 @@ interface IConsole : AutoCloseable {
 
     fun switchScreen(screen: Screen)
 
+    fun getScreens(): List<Screen>
+
     fun switchToDefaultScreen()
+
+    fun createScreen(
+        name: String,
+        allowedCommands: List<String> = mutableListOf("*"),
+        storeMessages: Boolean = true,
+        maxStoredMessages: Int = 50,
+        historySize: Int = 50
+    ): Screen
 
     fun hasAnimationSupport(): Boolean {
         return hasColorSupport()
