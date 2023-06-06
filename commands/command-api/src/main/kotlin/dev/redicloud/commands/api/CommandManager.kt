@@ -3,6 +3,7 @@ package dev.redicloud.commands.api
 abstract class CommandManager<K : ICommandActor<*>> {
 
     private val commands = mutableListOf<CommandBase>()
+    private val disabledCommands = mutableListOf<CommandBase>()
 
     abstract fun getActor(identifier: K): K
 
@@ -15,6 +16,24 @@ abstract class CommandManager<K : ICommandActor<*>> {
         commands.remove(command)
     }
 
+    fun disableCommands() {
+        disabledCommands.addAll(commands)
+    }
+
+    fun enableCommands() {
+        disabledCommands.clear()
+    }
+
+    fun isDisabled(command: CommandBase): Boolean = disabledCommands.contains(command)
+
+    fun disableCommand(command: CommandBase) {
+        disabledCommands.add(command)
+    }
+
+    fun enableCommand(command: CommandBase) {
+        disabledCommands.remove(command)
+    }
+
     fun getCommand(input: String): CommandBase? = commands.firstOrNull { it.isThis(input, false) }
 
     fun getCompletions(actor: K, input: String): List<String> {
@@ -24,6 +43,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
         if (split.isEmpty()) return list
         val possibleCommands = commands
             .filter { actor.hasPermission(it.getPermission()) }
+            .filter { !isDisabled(it) }
             .filter { it.isThis(input, true) }
 
         if (possibleCommands.isEmpty()) return list
@@ -55,6 +75,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
         val parameters = split.drop(1)
         val command = getCommand(commandName)
             ?: return CommandResponse(CommandResponseType.INVALID_COMMAND, "Command $commandName not found")
+        if (isDisabled(command)) return CommandResponse(CommandResponseType.DISABLED, "Command $commandName is disabled")
 
         if (!actor.hasPermission(command.getPermission())) return CommandResponse(
             CommandResponseType.PERMISSION,
