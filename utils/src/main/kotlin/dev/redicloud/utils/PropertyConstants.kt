@@ -1,6 +1,6 @@
 package dev.redicloud.utils
 
-val CLOUD_VERSION: String = "1.0.0-SNAPSHOT"
+val CLOUD_VERSION: String = "2.0.0-SNAPSHOT"
 
 val USER_NAME: String = System.getProperty("user.name")
 
