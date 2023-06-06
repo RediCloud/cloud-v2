@@ -3,10 +3,7 @@ package dev.redicloud.console
 import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.commands.ConsoleCommandManager
 import dev.redicloud.console.events.ConsoleRunEvent
-import dev.redicloud.console.jline.ConsoleCompleter
-import dev.redicloud.console.jline.ConsoleHighlighter
-import dev.redicloud.console.jline.ConsoleLineReader
-import dev.redicloud.console.jline.IConsole
+import dev.redicloud.console.jline.*
 import dev.redicloud.console.utils.AnsiInstaller
 import dev.redicloud.console.utils.ConsoleColor
 import dev.redicloud.console.utils.Screen
@@ -38,8 +35,10 @@ open class Console(val host: String, val eventManager: EventManager?) : IConsole
         private val LOGGER: Logger = LogManager.logger(Console::class.java)
     }
 
+    internal val currentQuestion: ConsoleQuestion? = null
     private val ansiSupported: Boolean
     private val printLock: Lock = ReentrantLock(true)
+    private val inputReader: MutableList<ConsoleInputReader> = mutableListOf()
     private val defaultScreen: Screen = Screen(this, "main")
     private var currentScreen: Screen = defaultScreen
     private val screens: MutableList<Screen> = mutableListOf(defaultScreen)
@@ -48,7 +47,7 @@ open class Console(val host: String, val eventManager: EventManager?) : IConsole
     internal val terminal: Terminal
     internal val lineReader: ConsoleLineReader
     override var prompt: String = System.getProperty("redicloud.console.promt", "%hc%%user%§8@§f%host% §8➔ §r")
-    private val lineFormat: String =
+    override var lineFormat: String =
         System.getProperty("redicloud.console.lineformat", "§8[§f%time%§8] §f%prefix%§8: §r%message%")
     private val highlightColor: String = System.getProperty("redicloud.console.highlight", "§3")
     private val textColor: String = System.getProperty("redicloud.console.hightlight", "§f")
@@ -69,7 +68,7 @@ open class Console(val host: String, val eventManager: EventManager?) : IConsole
             .encoding(Charsets.UTF_8)
             .build()
         lineReader = ConsoleLineReader(this).apply {
-            completer = ConsoleCompleter(this@Console.commandManager)
+            completer = ConsoleCompleter(this@Console)
             highlighter = ConsoleHighlighter(this@Console)
             option(LineReader.Option.AUTO_GROUP, false)
             option(LineReader.Option.AUTO_MENU_LIST, true)
@@ -86,6 +85,7 @@ open class Console(val host: String, val eventManager: EventManager?) : IConsole
 
         this.updatePrompt()
         this.run()
+        clearScreen()
     }
 
     private fun run() {
@@ -93,7 +93,10 @@ open class Console(val host: String, val eventManager: EventManager?) : IConsole
             eventManager?.fireEvent(ConsoleRunEvent(this@Console))
             var line: String? = null
             while (!Thread.currentThread().isInterrupted) {
-                line = readlnOrNull() ?: continue
+                line = this@Console.lineReader.readLine() ?: continue
+
+                inputReader.forEach { it.acceptInput(line) }
+                inputReader.clear()
 
                 commandManager.handleInput(commandManager.actor, line)
 
@@ -125,10 +128,18 @@ open class Console(val host: String, val eventManager: EventManager?) : IConsole
         this.lineReader.callWidget(LineReader.REDISPLAY)
     }
 
+    fun readNextInput(): String {
+        val reader = ConsoleInputReader()
+        inputReader.add(reader)
+        return reader.readNextInput()
+    }
+
     fun formatText(input: String, ensureEndsWith: String): String {
-        var content = if (ansiSupported) ConsoleColor.toColoredString('§', input) else ConsoleColor.stripColor(
+        val replaced = input
+            .replace("%hc%", this.highlightColor)
+        var content = if (ansiSupported) ConsoleColor.toColoredString('§', replaced) else ConsoleColor.stripColor(
             '§',
-            input
+            replaced
         )
         if (!content.endsWith(ensureEndsWith)) {
             content += ensureEndsWith
@@ -141,11 +152,12 @@ open class Console(val host: String, val eventManager: EventManager?) : IConsole
         java.util.logging.Logger.getLogger(StyleResolver::class.java.name).apply { level = java.util.logging.Level.OFF }
     }
 
-    private fun updatePrompt() {
-        this.prompt = ConsoleColor.toColoredString('§', this.prompt)
-            .replace("%version%", CLOUD_VERSION)
+    public fun updatePrompt() {
+        this.prompt = this.prompt.replace("%version%", CLOUD_VERSION)
             .replace("%user%", USER_NAME)
             .replace("%host%", this.host)
+            .replace("%hc%", highlightColor)
+        this.prompt = formatText(this.prompt, "")
         this.lineReader.setPrompt(this.prompt)
     }
 
@@ -244,19 +256,21 @@ open class Console(val host: String, val eventManager: EventManager?) : IConsole
     override fun forceWriteLine(text: String): Console {
         printLock.lock()
         try {
-            val content = this.formatText(text, System.lineSeparator())
+            val content = this.formatText(textColor + text, System.lineSeparator())
+
+            currentScreen.addLine(content)
 
             if (ansiSupported) {
                 this.print(
-                    "${Ansi.ansi().eraseLine(Ansi.Erase.ALL).toString()}\r$content${
-                        Ansi.ansi().reset().toString()
+                    "${Ansi.ansi().eraseLine(Ansi.Erase.ALL)}\r$content${
+                        Ansi.ansi().reset()
                     }"
                 )
             } else {
                 this.print("\r$content")
             }
 
-            if (!runningAnimations.isEmpty()) {
+            if (runningAnimations.isNotEmpty()) {
                 runningAnimations.values.forEach { it.addToCursorUp(1) }
             }
         } finally {
