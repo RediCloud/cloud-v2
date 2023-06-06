@@ -23,17 +23,17 @@ import org.slf4j.LoggerFactory
 abstract class Console(
     val name: String = "console",
     val configuration: ConsoleConfiguration = ConsoleConfiguration(),
-    val eventManager: EventManager
+    val eventManager: EventManager?
 ) {
 
     val terminal: Terminal
     var logLevel: Level = Level.INFO
     val commandManager = ConsoleCommandManager(this)
 
+    internal val lineReader: LineReader
     private var running = false
     internal var currentScreen: Screen = Screen(this, "main")
     private val screens = mutableListOf<Screen>()
-    private val lineReader: LineReader
     private val loggerListener = LoggerListener(this)
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -62,7 +62,7 @@ abstract class Console(
 
     protected fun run() {
         scope.launch {
-            eventManager.fireEvent(ConsoleRunEvent(this@Console))
+            eventManager?.fireEvent(ConsoleRunEvent(this@Console))
             while (true) {
                 running = true
                 try {
@@ -107,7 +107,7 @@ abstract class Console(
                     }
                 } catch (e: Exception) {
                     running = false
-                    eventManager.fireEvent(ConsoleExitEvent(this@Console))
+                    eventManager?.fireEvent(ConsoleExitEvent(this@Console))
                     onExit(e)
                 }
             }
@@ -126,11 +126,11 @@ abstract class Console(
     ): Screen {
         val screen = Screen(this, name, allowedCommands, storeMessages, maxStoredMessages)
         screens.add(screen)
-        eventManager.fireEvent(ScreenCreatedEvent(screen, this))
+        eventManager?.fireEvent(ScreenCreatedEvent(screen, this))
         return screen
     }
 
-    abstract fun onExit(exception: Exception)
+    abstract fun onExit(exception: Exception?)
 
     fun clear() {
         terminal.writer().print("\u001b[H\u001b[2J")
