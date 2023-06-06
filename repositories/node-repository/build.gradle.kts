@@ -1,8 +1,3 @@
-plugins {
-    `base-script`
-}
-apply(plugin = "dev.redicloud.libloader")
-
 group = "dev.redicloud.repository.node"
 
 repositories {
@@ -10,7 +5,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":repositories:service-repository"))
-    implementation(project(":utils"))
-    implementation(project(":database"))
+    compileOnly(project(":repositories:service-repository"))
+    compileOnly(project(":utils"))
+    compileOnly(project(":database"))
 }

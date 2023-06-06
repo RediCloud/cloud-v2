@@ -1,8 +1,3 @@
-plugins {
-    `base-script`
-}
-apply(plugin = "dev.redicloud.libloader")
-
 group = "dev.redicloud.commands.api"
 
 repositories {
@@ -10,9 +5,5 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
-}
-
-kotlin {
-    jvmToolchain(8)
+    dependency("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
 }

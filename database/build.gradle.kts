@@ -1,8 +1,3 @@
-plugins {
-    `base-script`
-}
-apply(plugin = "dev.redicloud.libloader")
-
 group = "dev.redicloud.database"
 
 repositories {
@@ -10,8 +5,8 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":utils"))
+    compileOnly(project(":utils"))
 
-    implementation("org.redisson:redisson:3.21.3")
-    implementation("com.google.code.gson:gson:2.10.1")
+    dependency("org.redisson:redisson:${Versions.redisson}")
+    dependency("com.google.code.gson:gson:${Versions.gson}")
 }

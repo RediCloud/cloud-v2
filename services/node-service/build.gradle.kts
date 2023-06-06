@@ -1,26 +1,27 @@
 import dev.redicloud.libloader.plugin.LibraryLoader
 
-plugins {
-    `base-script`
-}
 apply(plugin = "dev.redicloud.libloader")
 
 group = "dev.redicloud.service.node"
+
+the(LibraryLoader.LibraryLoaderConfig::class).mainClass.set("dev.redicloud.service.node.bootstrap.NodeBootstrapKt")
+the(LibraryLoader.LibraryLoaderConfig::class).doBootstrapShade.set(true)
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation(project(":services:base-service"))
-    implementation(project(":repositories:node-repository"))
-    implementation(project(":repositories:service-repository"))
-    implementation(project(":database"))
-    implementation(project(":utils"))
+    shade(project(":services:base-service"))
+    shade(project(":repositories:node-repository"))
+    shade(project(":repositories:service-repository"))
+    shade(project(":database"))
+    shade(project(":utils"))
+    shade(project(":events"))
+    shade(project(":console"))
+    shade(project(":packets"))
+    shade(project(":commands:command-api"))
 
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
-}
-
-the(LibraryLoader.LibraryLoaderConfig::class).apply {
-    this.mainClass.set("dev.redicloud.service.node.bootstrap.NodeLibLoaderBoostrap")
+    dependency("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
+    dependency("org.jline:jline-terminal-jansi:3.23.0")
 }

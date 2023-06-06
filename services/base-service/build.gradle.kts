@@ -1,8 +1,3 @@
-plugins {
-    `base-script`
-}
-apply(plugin = "dev.redicloud.libloader")
-
 group = "dev.redicloud.service.base"
 
 repositories {
@@ -10,19 +5,15 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":database"))
-    implementation(project(":packets"))
-    implementation(project(":utils"))
-    implementation(project(":repositories:service-repository"))
-    implementation(project(":repositories:node-repository"))
-    implementation(project(":repositories:server-repository"))
-    implementation(project(":events"))
+    compileOnly(project(":database"))
+    compileOnly(project(":packets"))
+    compileOnly(project(":utils"))
+    compileOnly(project(":repositories:service-repository"))
+    compileOnly(project(":repositories:node-repository"))
+    compileOnly(project(":repositories:server-repository"))
+    compileOnly(project(":events"))
 
 
-    implementation("org.redisson:redisson:3.21.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
-}
-
-kotlin {
-    jvmToolchain(8)
+    dependency("org.redisson:redisson:3.21.3")
+    dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
 }

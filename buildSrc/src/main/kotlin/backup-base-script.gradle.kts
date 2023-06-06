@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm")
 }
-apply(plugin = "dev.redicloud.libloader")
 
 repositories {
     maven("https://repo.redicloud.dev/releases")

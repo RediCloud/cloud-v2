@@ -1,8 +1,3 @@
-plugins {
-    `base-script`
-}
-apply(plugin = "dev.redicloud.libloader")
-
 group = "dev.redicloud.repository.service"
 
 repositories {
@@ -10,10 +5,10 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":utils"))
-    implementation(project(":database"))
-    implementation(project(":packets"))
+    compileOnly(project(":utils"))
+    compileOnly(project(":database"))
+    compileOnly(project(":packets"))
 
-    implementation("org.redisson:redisson:3.21.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    dependency("org.redisson:redisson:3.21.3")
+    dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
 }
