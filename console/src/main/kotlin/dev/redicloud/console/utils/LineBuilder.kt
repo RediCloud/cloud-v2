@@ -58,17 +58,7 @@ class LineBuilder(private val consoleConfiguration: ConsoleConfiguration?) {
     }
 
     fun text(text: String): LineBuilder {
-        val words = text.split(" ")
-        val builder = StringBuilder()
-        for (word in words) {
-            if (consoleConfiguration?.wordHighlight?.contains(word.lowercase()) == true) {
-                builder.append(consoleConfiguration.wordHighlight[word.lowercase()]!!)
-            } else {
-                builder.append(defaultDesign.apply(word))
-            }
-            builder.append(" ")
-        }
-        entries.add(builder.toString())
+        entries.add(defaultDesign.apply(text))
         return this
     }
 
@@ -88,6 +78,11 @@ class LineBuilder(private val consoleConfiguration: ConsoleConfiguration?) {
 
     fun newLine(): LineBuilder {
         entries.add("\n")
+        return this
+    }
+
+    fun tab(): LineBuilder {
+        entries.add("\t")
         return this
     }
 
