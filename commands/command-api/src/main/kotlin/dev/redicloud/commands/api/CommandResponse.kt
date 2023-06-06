@@ -4,6 +4,7 @@ data class CommandResponse(val type: CommandResponseType, val message: String? =
 
 enum class CommandResponseType {
     SUCCESS,
+    DISABLED,
     ERROR,
     PERMISSION,
     INVALID_COMMAND,

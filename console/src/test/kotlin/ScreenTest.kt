@@ -5,22 +5,9 @@ import dev.redicloud.console.utils.Screen
 import dev.redicloud.event.EventManager
 
 fun main() {
-    val console = object : Console("test", eventManager = EventManager(null)) {
-        init {
-            run()
-            createScreen("test1")
-            createScreen("test2")
-        }
-        override fun onExit(exception: Exception?) {
-            exception?.printStackTrace()
-            print("Exiting...")
-        }
-    }
+    val console = Console("testNode", null)
     CommandArgumentParser.PARSERS[Screen::class] = ScreenArgumentParser(console)
     console.commandManager.register(ScreenCommand(console))
-    while (console.isRunning()) {
-        Thread.sleep(5000)
-    }
 }
 
 class ScreenArgumentParser(val console: Console) : CommandArgumentParser<Screen> {

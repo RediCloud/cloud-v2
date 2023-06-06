@@ -19,10 +19,10 @@ class PacketManager(private val databaseConnection: DatabaseConnection, private 
     init {
         if (!databaseConnection.isConnected()) throw IllegalStateException("Database connection is not connected!")
 
-        serviceTopic = databaseConnection.client!!.getTopic(serviceId.toName())
-        broadcastTopic = databaseConnection.client!!.getTopic("service")
+        serviceTopic = databaseConnection.getClient().getTopic(serviceId.toName())
+        broadcastTopic = databaseConnection.getClient().getTopic("service")
         ServiceType.values().forEach {
-            typedTopics[it] = databaseConnection.client!!.getTopic(it.name.lowercase())
+            typedTopics[it] = databaseConnection.getClient().getTopic(it.name.lowercase())
         }
 
         val messageListener = MessageListener<PackedPacket> { _, messageData ->
@@ -67,7 +67,7 @@ class PacketManager(private val databaseConnection: DatabaseConnection, private 
         packet.sender = serviceId
         val packedPacket = PackedPacket(gson.toJson(packet), packet::class.java.name)
         receivers.forEach {
-            val targetTopic = databaseConnection.client!!.getTopic(it.toName())
+            val targetTopic = databaseConnection.getClient().getTopic(it.toName())
             targetTopic.publish(packedPacket)
         }
     }

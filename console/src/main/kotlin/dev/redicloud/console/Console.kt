@@ -1,149 +1,319 @@
 package dev.redicloud.console
 
-import ch.qos.logback.classic.Level
-import ch.qos.logback.classic.Logger
-import dev.redicloud.commands.api.CommandResponseType
+import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.commands.ConsoleCommandManager
-import dev.redicloud.console.events.ConsoleExitEvent
 import dev.redicloud.console.events.ConsoleRunEvent
-import dev.redicloud.console.events.screen.ScreenCreatedEvent
-import dev.redicloud.console.utils.*
+import dev.redicloud.console.jline.*
+import dev.redicloud.console.utils.AnsiInstaller
+import dev.redicloud.console.utils.ConsoleColor
+import dev.redicloud.console.utils.Screen
 import dev.redicloud.event.EventManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.newSingleThreadContext
+import dev.redicloud.logging.LogManager
+import dev.redicloud.logging.Logger
+import dev.redicloud.utils.CLOUD_VERSION
+import dev.redicloud.utils.USER_NAME
+import kotlinx.coroutines.*
+import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.AnsiConsole
+import org.jline.reader.EndOfFileException
 import org.jline.reader.LineReader
-import org.jline.reader.LineReaderBuilder
+import org.jline.reader.UserInterruptException
 import org.jline.terminal.Terminal
 import org.jline.terminal.TerminalBuilder
-import org.slf4j.LoggerFactory
+import org.jline.utils.InfoCmp
+import org.jline.utils.StyleResolver
+import java.io.IOException
+import java.util.*
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.system.exitProcess
 
-abstract class Console(
-    val name: String = "console",
-    val configuration: ConsoleConfiguration = ConsoleConfiguration(),
-    val eventManager: EventManager?
-) {
 
-    val terminal: Terminal
-    var logLevel: Level = Level.INFO
-    val commandManager = ConsoleCommandManager(this)
+open class Console(val host: String, val eventManager: EventManager?) : IConsole {
 
-    internal val lineReader: LineReader
-    private var running = false
-    internal var currentScreen: Screen = Screen(this, "main")
-    private val screens = mutableListOf<Screen>()
-    private val loggerListener = LoggerListener(this)
-
-    @OptIn(DelicateCoroutinesApi::class)
-    private val scope = CoroutineScope(newSingleThreadContext("$name-console-scope"))
-
-    init {
-        terminal = TerminalBuilder.builder()
-            .name(name)
-            .system(true) //TODO
-            .encoding(Charsets.UTF_8)
-            .build()
-        lineReader = LineReaderBuilder.builder()
-            .terminal(terminal)
-            .highlighter(ConsoleHighlighter(this.configuration))
-            .completer(ConsoleCompleter(this.commandManager))
-            .build()
-
-        (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger).addAppender(loggerListener)
-
-        screens.add(currentScreen)
-
-        AnsiConsole.systemInstall()
+    companion object {
+        private val LOGGER: Logger = LogManager.logger(Console::class.java)
     }
 
-    fun isRunning() = running
+    internal val currentQuestion: ConsoleQuestion? = null
+    private val ansiSupported: Boolean
+    private val printLock: Lock = ReentrantLock(true)
+    private val inputReader: MutableList<ConsoleInputReader> = mutableListOf()
+    private val defaultScreen: Screen = Screen(this, "main")
+    private var currentScreen: Screen = defaultScreen
+    private val screens: MutableList<Screen> = mutableListOf(defaultScreen)
+    override val commandManager = ConsoleCommandManager(this)
+    private val runningAnimations: MutableMap<UUID, AbstractConsoleAnimation> = mutableMapOf()
+    internal val terminal: Terminal
+    internal val lineReader: ConsoleLineReader
+    override var prompt: String = System.getProperty("redicloud.console.promt", "%hc%%user%§8@§f%host% §8➔ §r")
+    override var lineFormat: String =
+        System.getProperty("redicloud.console.lineformat", "§8[§f%time%§8] §f%prefix%§8: §r%message%")
+    private val highlightColor: String = System.getProperty("redicloud.console.highlight", "§3")
+    private val textColor: String = System.getProperty("redicloud.console.hightlight", "§f")
 
-    protected fun run() {
+    override var printingEnabled = true
+    override var matchingHistorySearch = true
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private val scope = CoroutineScope(newSingleThreadContext("console-scope"))
+
+    init {
+        ansiSupported = AnsiInstaller().install()
+
+        disableJLineLogger()
+
+        terminal = TerminalBuilder.builder()
+            .system(true)
+            .encoding(Charsets.UTF_8)
+            .build()
+        lineReader = ConsoleLineReader(this).apply {
+            completer = ConsoleCompleter(this@Console)
+            highlighter = ConsoleHighlighter(this@Console)
+            option(LineReader.Option.AUTO_GROUP, false)
+            option(LineReader.Option.AUTO_MENU_LIST, true)
+            option(LineReader.Option.AUTO_FRESH_LINE, true)
+            option(LineReader.Option.EMPTY_WORD_OPTIONS, false)
+            option(LineReader.Option.HISTORY_TIMESTAMPED, false)
+            option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
+
+            variable(LineReader.BELL_STYLE, "none")
+            variable(LineReader.HISTORY_SIZE, 500)
+            variable(LineReader.COMPLETION_STYLE_LIST_BACKGROUND, "inverse")
+            //TODO History file
+        }
+
+        this.updatePrompt()
+        this.run()
+        clearScreen()
+    }
+
+    private fun run() {
         scope.launch {
             eventManager?.fireEvent(ConsoleRunEvent(this@Console))
-            while (true) {
-                running = true
+            var line: String? = null
+            while (!Thread.currentThread().isInterrupted) {
+                line = this@Console.lineReader.readLine() ?: continue
+
+                inputReader.forEach { it.acceptInput(line) }
+                inputReader.clear()
+
+                commandManager.handleInput(commandManager.actor, line)
+
+                runningAnimations.forEach { (_, animation) -> animation.addToCursorUp(1) }
+            }
+            fun readLine(): String? {
                 try {
-                    val line = lineReader.readLine("${configuration.inputPrefix} ")
-                    if (currentScreen.allowedCommands.isEmpty()) {
-                        print { text("You are not allowed to use any commands in this screen") }
-                        continue
-                    }
-                    val command = commandManager.getCommand(line.lowercase())
-                    if (command != null && !currentScreen.isCommandAllowed(command)) {
-                        print { text("You are not allowed to use this command in this screen") }
-                        continue
-                    }
-                    val response = commandManager.handleInput(commandManager.actor, line)
-                    when (response.type) {
-                        CommandResponseType.ERROR -> print {
-                            prefix("ERROR")
-                            text(response.message!!)
-                            throwable(response.throwable!!)
-                        }
-                        CommandResponseType.INVALID_ARGUMENT_COUNT -> print {
-                            prefix("COMMAND")
-                            text("Invalid argument count! Usage: '${response.usage}'")
-                        }
-                        CommandResponseType.PERMISSION -> print {
-                            prefix("COMMAND")
-                            text("You don't have the permission to use this command!")
-                        }
-                        CommandResponseType.INVALID_COMMAND -> print {
-                            prefix("COMMAND")
-                            text("Invalid command! Use 'help' to get a list of all commands")
-                        }
-                        CommandResponseType.INVALID_ARGUMENT_TYPE -> print {
-                            prefix("COMMAND")
-                            text("Invalid argument type! Usage: '${response.usage}'")
-                        }
-                        CommandResponseType.INVALID_SUB_PATH -> print {
-                            prefix("COMMAND")
-                            text("Invalid sub path! Use '${command!!.getName()} help' to get a list of all sub paths")
-                        }
-                        else -> {}
-                    }
-                } catch (e: Exception) {
-                    running = false
-                    eventManager?.fireEvent(ConsoleExitEvent(this@Console))
-                    onExit(e)
+                    return lineReader.readLine(prompt)
+                } catch (_: EndOfFileException) {
+                } catch (e: UserInterruptException) {
+                    exitProcess(-1)
                 }
+                return null
             }
         }
     }
 
-    fun getScreens(): List<Screen> = screens.toList()
+    private fun print(text: String) {
+        this.lineReader.terminal.puts(InfoCmp.Capability.carriage_return)
+        this.lineReader.terminal.puts(InfoCmp.Capability.clr_eol)
+        this.lineReader.terminal.writer().print(text)
+        this.lineReader.terminal.flush()
+        redisplay()
+    }
 
-    fun getCurrentScreen(): Screen = currentScreen
+    private fun redisplay() {
+        if (!this.lineReader.isReading) return
+        this.lineReader.callWidget(LineReader.REDRAW_LINE)
+        this.lineReader.callWidget(LineReader.REDISPLAY)
+    }
 
-    fun createScreen(
+    fun readNextInput(): String {
+        val reader = ConsoleInputReader()
+        inputReader.add(reader)
+        return reader.readNextInput()
+    }
+
+    fun formatText(input: String, ensureEndsWith: String): String {
+        val replaced = input
+            .replace("%hc%", this.highlightColor)
+        var content = if (ansiSupported) ConsoleColor.toColoredString('§', replaced) else ConsoleColor.stripColor(
+            '§',
+            replaced
+        )
+        if (!content.endsWith(ensureEndsWith)) {
+            content += ensureEndsWith
+        }
+        return content
+    }
+
+    private fun disableJLineLogger() {
+        java.util.logging.Logger.getLogger("org.jline").apply { level = java.util.logging.Level.OFF }
+        java.util.logging.Logger.getLogger(StyleResolver::class.java.name).apply { level = java.util.logging.Level.OFF }
+    }
+
+    public fun updatePrompt() {
+        this.prompt = this.prompt.replace("%version%", CLOUD_VERSION)
+            .replace("%user%", USER_NAME)
+            .replace("%host%", this.host)
+            .replace("%hc%", highlightColor)
+        this.prompt = formatText(this.prompt, "")
+        this.lineReader.setPrompt(this.prompt)
+    }
+
+    override fun runningAnimations(): List<AbstractConsoleAnimation> = runningAnimations.values.toList()
+
+    override fun startAnimation(animation: AbstractConsoleAnimation) {
+        animation.console = this
+
+        val uniqueId = UUID.randomUUID()
+        runningAnimations[uniqueId] = animation
+
+        scope.launch {
+            animation.run()
+            runningAnimations.remove(uniqueId)
+            animation.console = null
+            animation.handleDone();
+        }
+    }
+
+    override fun animationRunning(): Boolean = runningAnimations.isNotEmpty()
+
+    override fun getCurrentScreen(): Screen = currentScreen
+
+    override fun switchScreen(screen: Screen) {
+        if (screen == currentScreen) return
+        printLock.lock()
+        try {
+            screen.display()
+            currentScreen = screen
+        } finally {
+            printLock.unlock()
+        }
+    }
+
+    override fun getScreens(): List<Screen> = screens.toList()
+
+    override fun createScreen(
         name: String,
-        allowedCommands: List<String> = mutableListOf("*"),
-        storeMessages: Boolean = true,
-        maxStoredMessages: Int = 50
+        allowedCommands: List<String>,
+        storeMessages: Boolean,
+        maxStoredMessages: Int,
+        historySize: Int
     ): Screen {
-        val screen = Screen(this, name, allowedCommands, storeMessages, maxStoredMessages)
+        val screen = Screen(this, name, allowedCommands, storeMessages, maxStoredMessages, historySize)
         screens.add(screen)
-        eventManager?.fireEvent(ScreenCreatedEvent(screen, this))
         return screen
     }
 
-    abstract fun onExit(exception: Exception?)
 
-    fun clear() {
-        terminal.writer().print("\u001b[H\u001b[2J")
-        terminal.flush()
+    override fun switchToDefaultScreen() {
+        if (currentScreen == defaultScreen) return
+        printLock.lock()
+        try {
+            defaultScreen.display()
+            currentScreen = defaultScreen
+        } finally {
+            printLock.unlock()
+        }
     }
 
-    fun print(lineBuilder: LineBuilder) {
-        terminal.writer().print(lineBuilder.getContent())
-        terminal.flush()
+
+    override fun commandHistory(): List<String> =
+        lineReader.history.map { it.line() }.toList()
+
+    override fun commandHistory(history: List<String>?) {
+        try {
+            lineReader.history.purge()
+        } catch (e: IOException) {
+            LOGGER.severe("Failed to purge console history", e)
+        }
+        history?.forEach { lineReader.history.add(it) }
     }
 
-    fun print(lineBuilder: LineBuilder.() -> Unit) {
-        print(LineBuilder.builder(this).apply { lineBuilder() })
+    override fun commandInputValue(commandInputValue: String) {
+        lineReader.buffer.write(commandInputValue)
+    }
+
+    override fun enableCommands() {
+        commandManager.enableCommands()
+    }
+
+    override fun disableCommands() {
+        commandManager.disableCommands()
+    }
+
+    override fun writeRaw(rawText: String): Console {
+        printLock.lock()
+        try {
+            this.print(formatText(rawText, ""))
+            return this
+        } finally {
+            printLock.unlock()
+        }
+    }
+
+    override fun forceWriteLine(text: String): Console {
+        printLock.lock()
+        try {
+            val content = this.formatText(textColor + text, System.lineSeparator())
+
+            currentScreen.addLine(content)
+
+            if (ansiSupported) {
+                this.print(
+                    "${Ansi.ansi().eraseLine(Ansi.Erase.ALL)}\r$content${
+                        Ansi.ansi().reset()
+                    }"
+                )
+            } else {
+                this.print("\r$content")
+            }
+
+            if (runningAnimations.isNotEmpty()) {
+                runningAnimations.values.forEach { it.addToCursorUp(1) }
+            }
+        } finally {
+            printLock.unlock()
+        }
+        return this
+    }
+
+    override fun writeLine(text: String): Console {
+        if (!printingEnabled) return this
+        forceWriteLine(text)
+        return this
+    }
+
+    override fun hasColorSupport(): Boolean = ansiSupported
+
+    override fun resetPrompt() {
+        prompt = System.getProperty("redicloud.console.promt", "%hc%%user%§8@§f%host% §8➔ §r")
+        updatePrompt()
+    }
+
+    override fun removePrompt() {
+        prompt = ""
+        updatePrompt()
+    }
+
+    override fun emptyPrompt() {
+        prompt = ConsoleColor.DEFAULT.toString()
+        updatePrompt()
+    }
+
+    override fun clearScreen() {
+        terminal.puts(InfoCmp.Capability.clear_screen)
+        terminal.flush()
+        this.redisplay()
+    }
+
+    @Throws(Exception::class)
+    override fun close() {
+        this.scope.cancel()
+        terminal.flush()
+        terminal.close()
+        AnsiConsole.systemUninstall()
     }
 
 }

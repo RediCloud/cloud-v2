@@ -7,9 +7,8 @@ import java.util.UUID
 class ConsoleActor(val console: Console, override val identifier: UUID) : ICommandActor<UUID> {
 
     override fun hasPermission(permission: String?): Boolean = true
-    override fun sendMessage(message: String) = console.print {
-        prefix("COMMAND")
-        text(message)
+    override fun sendMessage(text: String) {
+        console.writeLine(text)
     }
 
 }

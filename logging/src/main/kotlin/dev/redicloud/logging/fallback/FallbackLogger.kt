@@ -1,8 +1,8 @@
 package dev.redicloud.logging.fallback
 
-import dev.redicloud.utils.logger.LogManager
-import dev.redicloud.utils.logger.LogRecordDispatcher
-import dev.redicloud.utils.logger.Logger
+import dev.redicloud.logging.LogManager
+import dev.redicloud.logging.LogRecordDispatcher
+import dev.redicloud.logging.Logger
 import java.util.*
 import java.util.logging.Filter
 import java.util.logging.Handler

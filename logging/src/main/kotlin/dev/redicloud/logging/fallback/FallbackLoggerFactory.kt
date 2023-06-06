@@ -1,7 +1,7 @@
 package dev.redicloud.logging.fallback
 
-import dev.redicloud.utils.logger.Logger
-import dev.redicloud.utils.logger.LoggerFactory
+import dev.redicloud.logging.LoggerFactory
+import dev.redicloud.logging.Logger
 import java.util.logging.LogManager
 
 class FallbackLoggerFactory : LoggerFactory {

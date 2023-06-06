@@ -43,7 +43,17 @@ class FloatCommandArgumentParser : CommandArgumentParser<Float> {
 }
 
 class BooleanCommandArgumentParser : CommandArgumentParser<Boolean> {
-    override fun parse(parameter: String): Boolean? = parameter.toBooleanStrictOrNull()
+    override fun parse(parameter: String): Boolean? {
+        return when (parameter.lowercase()) {
+            "true" -> true
+            "yes" -> true
+            "y" -> true
+            "false" -> false
+            "no" -> false
+            "n" -> false
+            else -> null
+        }
+    }
 }
 
 class ByteCommandArgumentParser : CommandArgumentParser<Byte> {

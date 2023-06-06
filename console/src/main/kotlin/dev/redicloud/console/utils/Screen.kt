@@ -13,47 +13,39 @@ class Screen(
     val historySize: Int = 50
 ) {
 
-    private val history = mutableListOf<LineBuilder>()
-    private val queuedMessage = mutableListOf<LineBuilder>()
+    private val history = mutableListOf<String>()
+    private val queuedMessage = mutableListOf<String>()
 
     fun display() {
         if (isActive()) return
-        val oldScreen = console.currentScreen
-        if (oldScreen.allowedCommands.isEmpty() && console.terminal.paused() && !allowedCommands.isEmpty()) {
-            console.terminal.resume()
+        val oldScreen = console.getCurrentScreen()
+        console.commandManager.enableCommands()
+        console.commandManager.getCommands().forEach {
+            if (!isCommandAllowed(it)) console.commandManager.disableCommand(it)
         }
-        if (allowedCommands.isEmpty() && !console.terminal.paused()) {
-            console.terminal.pause()
-        }
-        console.currentScreen = this
-        console.clear()
+        console.clearScreen()
         console.eventManager?.fireEvent(ScreenChangedEvent(console, this, oldScreen))
-        history.forEach { print(it) }
+        history.forEach { console.writeLine(it) }
         if (storeMessages) {
-            queuedMessage.forEach { print(it) }
+            queuedMessage.forEach { console.writeLine(it) }
             queuedMessage.clear()
         }
     }
 
     fun isDefault(): Boolean = name == "main"
 
-    fun isActive() = console.currentScreen == this
+    fun isActive() = console.getCurrentScreen() == this
 
-    fun print(line: LineBuilder) {
+    fun addLine(text: String) {
         if (!isActive()) {
             if (storeMessages) {
-                queuedMessage.add(line)
+                queuedMessage.add(text)
                 if (queuedMessage.size > maxStoredMessages) queuedMessage.removeFirst()
             }
             return
         }
-        history.add(line)
+        history.add(text)
         if (history.size > historySize) history.removeFirst()
-        console.print(line)
-    }
-
-    fun print(lineBuilder: LineBuilder.() -> Unit) {
-        print(LineBuilder.builder(console).apply(lineBuilder))
     }
 
     fun isCommandAllowed(command: CommandBase): Boolean = allowedCommands.contains("*")
