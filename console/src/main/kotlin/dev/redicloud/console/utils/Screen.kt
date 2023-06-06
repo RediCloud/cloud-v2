@@ -36,7 +36,7 @@ class Screen(
 
     fun isActive() = console.getCurrentScreen() == this
 
-    fun writeLine(text: String) {
+    fun addLine(text: String) {
         if (!isActive()) {
             if (storeMessages) {
                 queuedMessage.add(text)
@@ -46,7 +46,6 @@ class Screen(
         }
         history.add(text)
         if (history.size > historySize) history.removeFirst()
-        console.writeLine(text)
     }
 
     fun isCommandAllowed(command: CommandBase): Boolean = allowedCommands.contains("*")
