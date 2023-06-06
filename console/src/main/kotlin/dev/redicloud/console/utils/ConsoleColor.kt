@@ -43,12 +43,14 @@ enum class ConsoleColor(
             val contentBuilder = StringBuilder(convertRGBColors(triggerChar, input))
             var breakIndex = contentBuilder.length - 1
             for (i in 0 until breakIndex) {
-                if (contentBuilder[i] == triggerChar) {
+                val current = contentBuilder[i]
+                if (current == triggerChar) {
                     val format = LOOKUP.indexOf(contentBuilder[i + 1])
                     if (format != -1) {
                         val ansiCode = VALUES[format].ansiCode
                         contentBuilder.delete(i, i + 2).insert(i, ansiCode)
                         breakIndex += ansiCode.length - 2
+                        return toColoredString(triggerChar, contentBuilder.toString())
                     }
                 }
             }
