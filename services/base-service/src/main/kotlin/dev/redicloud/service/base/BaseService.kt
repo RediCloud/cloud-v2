@@ -3,14 +3,14 @@ package dev.redicloud.service.base
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.codec.GsonCodec
-import dev.redicloud.database.config.DatabaseConfig
+import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.utils.ServiceId
 
 abstract class BaseService(
-    databaseConfig: DatabaseConfig,
+    databaseConfiguration: DatabaseConfiguration,
     serviceId: ServiceId
 ) {
 
@@ -23,7 +23,7 @@ abstract class BaseService(
     val eventManager: EventManager
 
     init {
-        databaseConnection = DatabaseConnection(databaseConfig, serviceId, GsonCodec())
+        databaseConnection = DatabaseConnection(databaseConfiguration, serviceId, GsonCodec())
         try {
             databaseConnection.connect()
         } catch (e: Exception) {

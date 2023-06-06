@@ -18,8 +18,8 @@ abstract class ServiceRepository<T : CloudService>(
     protected val shutdownThread: Thread
 
     init {
-        connectedServices = databaseConnection.client!!.getList("service:connected")
-        registeredServices = databaseConnection.client!!.getList("service:registered")
+        connectedServices = databaseConnection.getClient().getList("service:connected")
+        registeredServices = databaseConnection.getClient().getList("service:registered")
 
         shutdownThread = Thread() {
             runBlocking {
