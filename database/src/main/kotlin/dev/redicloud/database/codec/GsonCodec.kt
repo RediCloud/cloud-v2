@@ -40,7 +40,7 @@ class GsonCodec : BaseCodec() {
             throw e
         }
     }
-    private val decoder: Decoder<Any> = Decoder { buf: ByteBuf?, state: State? ->
+    private val decoder: Decoder<Any> = Decoder { buf: ByteBuf?, _: State? ->
         ByteBufInputStream(buf).use { stream ->
             val json = stream.readUTF()
             val jsonObject = gson.fromJson(json, JsonObject::class.java)
