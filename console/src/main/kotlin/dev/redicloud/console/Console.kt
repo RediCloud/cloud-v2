@@ -7,6 +7,8 @@ import dev.redicloud.console.utils.ConsoleColor
 import dev.redicloud.console.jline.ConsoleLineReader
 import dev.redicloud.console.jline.IConsole
 import dev.redicloud.console.animation.AbstractConsoleAnimation
+import dev.redicloud.console.jline.ConsoleCompleter
+import dev.redicloud.console.jline.ConsoleHighlighter
 import dev.redicloud.console.utils.Screen
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
@@ -38,7 +40,6 @@ class Console(val host: String, val eventManager: EventManager?) : IConsole {
 
     private val ansiSupported: Boolean
     private val printLock: Lock = ReentrantLock(true)
-
     private val defaultScreen: Screen = Screen(this, "main")
     private var currentScreen: Screen = defaultScreen
     override val commandManager = ConsoleCommandManager(this)
@@ -64,7 +65,9 @@ class Console(val host: String, val eventManager: EventManager?) : IConsole {
             .system(true)
             .encoding(Charsets.UTF_8)
             .build()
-        lineReader = ConsoleLineReader(terminal).apply {
+        lineReader = ConsoleLineReader(this).apply {
+            completer = ConsoleCompleter(this@Console.commandManager)
+            highlighter = ConsoleHighlighter(this@Console)
             option(LineReader.Option.AUTO_GROUP, false)
             option(LineReader.Option.AUTO_MENU_LIST, true)
             option(LineReader.Option.AUTO_FRESH_LINE, true)
