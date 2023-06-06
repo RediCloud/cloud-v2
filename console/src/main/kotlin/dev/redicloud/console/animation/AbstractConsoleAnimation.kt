@@ -55,12 +55,4 @@ abstract class AbstractConsoleAnimation(
         this.finishHandlers.clear()
     }
 
-    fun staticCursor() = this.staticCursor
-
-    fun getStartInstant() = this.startInstant
-
-    fun getUpdateInterval() = this.updateInterval
-
-    fun getConsole() = this.console
-
 }
