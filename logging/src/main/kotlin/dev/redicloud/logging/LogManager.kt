@@ -1,9 +1,9 @@
 package dev.redicloud.logging
 
-import dev.redicloud.utils.logger.fallback.FallbackLoggerFactory
+import dev.redicloud.logging.fallback.FallbackLoggerFactory
 import java.util.ServiceLoader
 
-private val LOGGER_FACTORY = ServiceLoader.load(LoggerFactory::class.java).firstOrNull() ?: FallbackLoggerFactory()
+private val LOGGER_FACTORY: LoggerFactory = ServiceLoader.load(LoggerFactory::class.java).firstOrNull() ?: FallbackLoggerFactory()
 
 class LogManager private constructor() {
 
