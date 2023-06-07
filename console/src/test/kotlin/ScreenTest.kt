@@ -2,7 +2,6 @@ import dev.redicloud.commands.api.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.Screen
-import dev.redicloud.event.EventManager
 
 fun main() {
     val console = Console("testNode", null)
