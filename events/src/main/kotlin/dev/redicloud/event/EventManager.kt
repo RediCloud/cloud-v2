@@ -1,7 +1,7 @@
 package dev.redicloud.event
 
 import dev.redicloud.packets.PacketManager
-import dev.redicloud.utils.ServiceType
+import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberFunctions
@@ -35,6 +35,21 @@ class EventManager(val packetManager: PacketManager?) {
             val annotation = function.findAnnotation<CloudEventListener>()
             if (annotation != null) {
                 val eventType = T::class
+                val handlerMethod = EventHandlerMethod(listener, function, annotation.priority)
+                handlers.getOrPut(eventType) { mutableListOf() }.add(handlerMethod)
+                handlers[eventType]?.sortWith(compareByDescending { it.priority })
+            }
+        }
+        return listener
+    }
+
+    fun <T : CloudEvent> listen(clazz: KClass<T>, handler: (T) -> Unit): InlineEventCaller<T> {
+        val listener = InlineEventCaller(handler)
+        val objClass = InlineEventCaller::class
+        objClass.declaredMemberFunctions.forEach { function ->
+            val annotation = function.findAnnotation<CloudEventListener>()
+            if (annotation != null) {
+                val eventType = clazz
                 val handlerMethod = EventHandlerMethod(listener, function, annotation.priority)
                 handlers.getOrPut(eventType) { mutableListOf() }.add(handlerMethod)
                 handlers[eventType]?.sortWith(compareByDescending { it.priority })
