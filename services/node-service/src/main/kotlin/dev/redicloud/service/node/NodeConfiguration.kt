@@ -1,5 +1,7 @@
 package dev.redicloud.service.node
 
+import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.utils.service.ServiceType
 import dev.redicloud.utils.prettyPrintGson
 import java.io.File
 import java.util.UUID
@@ -9,6 +11,8 @@ data class NodeConfiguration (
     val uniqueId: UUID,
     val hostAddress: String
 ) {
+
+    private var cachedServiceId: ServiceId? = null
 
     companion object {
         fun fromFile(file: File): NodeConfiguration {
@@ -21,6 +25,12 @@ data class NodeConfiguration (
         if (file.exists()) file.delete()
         file.createNewFile()
         file.writeText(prettyPrintGson.toJson(this))
+    }
+
+    fun toServiceId(): ServiceId {
+        if (cachedServiceId != null) return cachedServiceId!!
+        cachedServiceId = ServiceId(uniqueId, ServiceType.NODE)
+        return cachedServiceId!!
     }
 
 }
