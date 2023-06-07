@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
-class CloudTaskManager(val eventManager: EventManager, val packetManager: PacketManager) {
+class CloudTaskManager(internal val eventManager: EventManager, internal val packetManager: PacketManager) {
 
     private val tasks = ConcurrentHashMap<UUID, CloudTask>()
 
@@ -32,6 +32,8 @@ class CloudTaskManager(val eventManager: EventManager, val packetManager: Packet
     fun unregister(task: CloudTask): CloudTask? = unregister(task.id)
 
     fun builder(): CloudTaskExecutorBuilder = CloudTaskExecutorBuilder(this)
+
+    fun getTasks(): List<CloudTask> = tasks.values.toList()
 
 }
 

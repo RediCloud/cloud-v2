@@ -1,6 +1,8 @@
 package dev.redicloud.tasks
 
+import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
+import dev.redicloud.packets.PacketManager
 import dev.redicloud.tasks.executor.CloudTaskExecutor
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -19,6 +21,7 @@ abstract class CloudTask() {
     private var executors: MutableList<CloudTaskExecutor> = mutableListOf()
     private var executeCount: Int = 0
     private var started = false
+    private lateinit var taskManager: CloudTaskManager
 
     abstract suspend fun execute(): Boolean
 
@@ -38,10 +41,15 @@ abstract class CloudTask() {
     }
 
     fun start(manager: CloudTaskManager) {
+        taskManager = manager
         if (canceled) return
         started = true
         executors.forEach { it.run(manager) }
     }
+
+    fun getEventManager(): EventManager = taskManager.eventManager
+
+    fun getPacketManager(): PacketManager = taskManager.packetManager
 
     fun getExecutors(): List<CloudTaskExecutor> = executors.toList()
 
