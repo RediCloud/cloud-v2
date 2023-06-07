@@ -1,4 +1,4 @@
-package dev.redicloud.utils
+package dev.redicloud.utils.service
 
 import java.util.UUID
 

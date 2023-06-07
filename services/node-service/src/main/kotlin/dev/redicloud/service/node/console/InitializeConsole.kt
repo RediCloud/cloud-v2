@@ -10,6 +10,8 @@ import dev.redicloud.database.config.DatabaseNode
 import dev.redicloud.database.config.toFile
 import dev.redicloud.service.node.NodeConfiguration
 import dev.redicloud.utils.*
+import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.utils.service.ServiceType
 import java.util.*
 
 class InitializeConsole() : Console("unknown", null) {
@@ -133,7 +135,7 @@ class InitializeConsole() : Console("unknown", null) {
         updatePrompt()
         sendHeader()
         nodeConfiguration = checkNode()
-        serviceId = ServiceId(nodeConfiguration!!.uniqueId, ServiceType.NODE)
+        serviceId = nodeConfiguration!!.toServiceId()
         databaseConfiguration = checkDatabase(serviceId!!)
     }
 

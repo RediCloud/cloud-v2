@@ -1,4 +1,4 @@
-package dev.redicloud.utils
+package dev.redicloud.utils.service
 
 enum class ServiceType {
 

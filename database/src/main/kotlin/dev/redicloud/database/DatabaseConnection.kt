@@ -5,14 +5,11 @@ import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.database.repository.DatabaseRepository
 import dev.redicloud.logging.LogManager
-import dev.redicloud.utils.ServiceId
+import dev.redicloud.utils.service.ServiceId
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
 import org.redisson.client.codec.BaseCodec
 import org.redisson.config.Config
-import org.slf4j.LoggerFactory
-import java.util.logging.Level
-import java.util.logging.Logger
 
 class DatabaseConnection(config: DatabaseConfiguration, serviceId: ServiceId, val codec: BaseCodec = GsonCodec(), test: Boolean = false) {
 
