@@ -37,7 +37,7 @@ class ConsoleHighlighter(private val console: Console) : Highlighter {
 
     override fun highlight(reader: LineReader?, buffer: String?): AttributedString {
         if (!enabled) return default.highlight(reader, buffer)
-        return default.highlight(reader, console.formatText(buffer ?: "", ""))
+        return default.highlight(reader, console.formatText(buffer ?: "", "", false))
     }
 
     override fun setErrorPattern(errorPattern: Pattern?) = default.setErrorPattern(errorPattern)

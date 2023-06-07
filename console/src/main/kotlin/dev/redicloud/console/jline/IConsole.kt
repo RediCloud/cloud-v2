@@ -12,8 +12,9 @@ interface IConsole : AutoCloseable {
     var printingEnabled: Boolean
     var matchingHistorySearch: Boolean
     var prompt: String
-    var lineFormat: String
     val commandManager: ConsoleCommandManager
+    var lineFormat: String
+    val saveLogToFile: Boolean
 
     fun runningAnimations(): List<AbstractConsoleAnimation>
 
