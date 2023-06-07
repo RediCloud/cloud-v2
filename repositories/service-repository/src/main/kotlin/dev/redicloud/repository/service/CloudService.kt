@@ -1,7 +1,7 @@
 package dev.redicloud.repository.service
 
-import dev.redicloud.utils.ServiceId
-import dev.redicloud.utils.ServiceType
+import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.utils.service.ServiceType
 
 abstract class CloudService(
     val serviceId: ServiceId,
@@ -15,6 +15,11 @@ abstract class CloudService(
         return last
     }
 
+    fun isSuspended(): Boolean {
+        val current = currentSession() ?: return false
+        return current.suspended
+    }
+
     fun getSessions(): List<ServiceSession> = sessions.toList()
 
     fun isConnected(): Boolean = currentSession() != null
@@ -24,9 +29,21 @@ abstract class CloudService(
         return sessions.first()
     }
 
-    fun addSession(session: ServiceSession) {
+    private fun addSession(session: ServiceSession) {
         sessions.add(session)
         sessions.sortBy { it.startTime }
+    }
+
+    fun startSession(ipAddress: String): ServiceSession {
+        val session = ServiceSession(this.serviceId, System.currentTimeMillis(), ipAddress = ipAddress)
+        addSession(session)
+        return session
+    }
+
+    fun endSession(session: ServiceSession? = null): ServiceSession {
+        val current = session ?: currentSession() ?: throw IllegalStateException("No session is currently active")
+        current.endTime = System.currentTimeMillis()
+        return current
     }
 
     fun unregisterAfterDisconnect(): Boolean =
