@@ -21,6 +21,7 @@ dependencies {
     shade(project(":packets"))
     shade(project(":commands:command-api"))
     shade(project(":logging"))
+    shade(project(":tasks"))
     shade("dev.redicloud.libloader:libloader-bootstrap:1.6.7")
 
     dependency("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
