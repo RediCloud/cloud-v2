@@ -4,6 +4,7 @@ import dev.redicloud.service.node.NodeService
 import dev.redicloud.service.node.console.InitializeConsole
 
 fun main(args: Array<String>) {
+    println("Starting node service...")
     val preConsole = InitializeConsole()
     val databaseConfiguration = preConsole.databaseConfiguration!!
     val serviceId = preConsole.serviceId!!

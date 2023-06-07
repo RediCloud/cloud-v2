@@ -12,7 +12,7 @@ import dev.redicloud.service.node.NodeConfiguration
 import dev.redicloud.utils.*
 import java.util.*
 
-class InitializeConsole : Console("unknown", null) {
+class InitializeConsole() : Console("unknown", null) {
 
     private val nodeNameQuestion = ConsoleQuestion(
         question = "What should be the name of this node?",
@@ -128,42 +128,41 @@ class InitializeConsole : Console("unknown", null) {
 
     init {
         disableCommands()
-        lineFormat = ""
-        writeLine("Starting node service...")
-        sendHeader()
+        lineFormat = "\t%message%"
         emptyPrompt()
         updatePrompt()
+        sendHeader()
         nodeConfiguration = checkNode()
         serviceId = ServiceId(nodeConfiguration!!.uniqueId, ServiceType.NODE)
         databaseConfiguration = checkDatabase(serviceId!!)
     }
 
     private fun sendHeader() {
-        writeLine("\t")
-        writeLine("\t")
-        writeLine("\t")
-        writeLine("\t§f _______                 __   _      %hc%______  __                         __  ")
-        writeLine("\t§f|_   __ \\               |  ] (_)   %hc%.' ___  |[  |                       |  ] ")
-        writeLine("\t§f  | |__) |  .---.   .--.| |  __   %hc%/ .'   \\_| | |  .--.   __   _    .--.| |  ")
-        writeLine("\t§f  |  __ /  / /__\\\\/ /'`\\' | [  |%hc%  | |        | |/ .'`\\ \\[  | | | / /'`\\' |  ")
-        writeLine("\t§f _| |  \\ \\_| \\__.,| \\__/  |  | |%hc%  \\ `.___.'\\ | || \\__. | | \\_/ |,| \\__/  |  ")
-        writeLine("\t§f|____| |___|'.__.' '.__.;__][___]  %hc%`.____ .'[___]'.__.'  '.__.'_/ '.__.;__] ")
-        writeLine("\t§fA redis based cluster cloud system for Minecraft")
-        writeLine("\t")
-        writeLine("\t")
-        writeLine("\t§8» §fVersion§8: %hc%$CLOUD_VERSION §8| §fGit: %hc%------")
-        writeLine("\t§8» §fDiscord§8: %hc%https://discord.gg/g2HV52VV4G")
-        writeLine("\t")
-        writeLine("\t")
-        writeLine("\t§8» §fPre-Checks§8:")
-        writeLine("\t§f‾‾‾‾‾‾‾‾‾‾‾‾‾")
-        writeLine("\t§8• §fLibraries §8» ${checkLibs()}")
-        writeLine("\t§8• §fNo-Root-User §8» ${checkUser()}")
-        writeLine("\t§8• §fJava-Version §8» ${checkJava()}")
-        writeLine("\t")
-        writeLine("\t")
+        writeLine("")
+        writeLine("")
+        writeLine("")
+        writeLine("§f _______                 __   _      %hc%______  __                         __  ")
+        writeLine("§f|_   __ \\               |  ] (_)   %hc%.' ___  |[  |                       |  ] ")
+        writeLine("§f  | |__) |  .---.   .--.| |  __   %hc%/ .'   \\_| | |  .--.   __   _    .--.| |  ")
+        writeLine("§f  |  __ /  / /__\\\\/ /'`\\' | [  |%hc%  | |        | |/ .'`\\ \\[  | | | / /'`\\' |  ")
+        writeLine("§f _| |  \\ \\_| \\__.,| \\__/  |  | |%hc%  \\ `.___.'\\ | || \\__. | | \\_/ |,| \\__/  |  ")
+        writeLine("§f|____| |___|'.__.' '.__.;__][___]  %hc%`.____ .'[___]'.__.'  '.__.'_/ '.__.;__] ")
+        writeLine("§fA redis based cluster cloud system for Minecraft")
+        writeLine("")
+        writeLine("")
+        writeLine("§8» §fVersion§8: %hc%$CLOUD_VERSION §8| §fGit: %hc%------")
+        writeLine("§8» §fDiscord§8: %hc%https://discord.gg/g2HV52VV4G")
+        writeLine("")
+        writeLine("")
+        writeLine("§8» §fPre-Checks§8:")
+        writeLine("§f‾‾‾‾‾‾‾‾‾‾‾‾‾")
+        writeLine("§8• §fLibraries §8» ${checkLibs()}")
+        writeLine("§8• §fNo-Root-User §8» ${checkUser()}")
+        writeLine("§8• §fJava-Version §8» ${checkJava()}")
+        writeLine("")
+        writeLine("")
         if (System.getProperty("redicloud.skip.animation") != null) {
-            writeLine("\t§8» §fStarting in 5 seconds...")
+            writeLine("§8» §fStarting in 5 seconds...")
             Thread.sleep(5000)
         }
     }
@@ -198,19 +197,19 @@ class InitializeConsole : Console("unknown", null) {
     private fun checkNode(): NodeConfiguration {
         val nodeFile = NODE_JSON.getFile()
         if (!nodeFile.exists()) {
-            writeLine("\tNode file not found! Starting node setup in 5 seconds...")
+            writeLine("Node file not found! Starting node setup in 5 seconds...")
             Thread.sleep(5000)
             return nodeSetup()
         }
         return try {
             val config = NodeConfiguration.fromFile(nodeFile)
-            writeLine("\t§8» §fNode Information§8:")
-            writeLine("\t§f‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
-            writeLine("\t§8• §fName §8» %hc%${config.nodeName}")
-            writeLine("\t§8• §fHost-Address §8» %hc%${config.hostAddress}")
-            writeLine("\t§8• §fID §8» %hc%${config.uniqueId}")
-            writeLine("\t")
-            writeLine("\t")
+            writeLine("§8» §fNode Information§8:")
+            writeLine("§f‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
+            writeLine("§8• §fName §8» %hc%${config.nodeName}")
+            writeLine("§8• §fHost-Address §8» %hc%${config.hostAddress}")
+            writeLine("§8• §fID §8» %hc%${config.uniqueId}")
+            writeLine("")
+            writeLine("")
             config
         } catch (e: Exception) {
             writeLine("§cError while reading node file! Starting node setup in 5 seconds...")
@@ -242,7 +241,8 @@ class InitializeConsole : Console("unknown", null) {
         NODE_JSON.create()
         config.toFile(NODE_JSON.getFile())
         switchToDefaultScreen()
-        writeLine("\tYou finished the node setup!")
+        emptyPrompt()
+        writeLine("You finished the node setup!")
         Thread.sleep(2000)
         return config
     }
@@ -250,7 +250,7 @@ class InitializeConsole : Console("unknown", null) {
     private fun checkDatabase(serviceId: ServiceId): DatabaseConfiguration {
         val databaseFile = DATABASE_JSON.getFile()
         if (!databaseFile.exists()) {
-            writeLine("\tDatabase file not found! Starting database setup in 5 seconds...")
+            writeLine("Database file not found! Starting database setup in 5 seconds...")
             Thread.sleep(5000)
             return databaseSetup()
         }
@@ -268,10 +268,10 @@ class InitializeConsole : Console("unknown", null) {
                 Thread.sleep(10000)
                 return checkDatabase(serviceId)
             }
-            writeLine("\tDatabase connection successful!")
+            writeLine("Database connection successful!")
             return config
         } catch (e: Exception) {
-            writeLine("\t§cError while reading database file! Starting database setup in 5 seconds...")
+            writeLine("§cError while reading database file! Starting database setup in 5 seconds...")
             Thread.sleep(5000)
             return databaseSetup()
         }
@@ -282,10 +282,8 @@ class InitializeConsole : Console("unknown", null) {
             val connection = DatabaseConnection(config, serviceId)
             connection.connect()
             connection.disconnect()
-            Thread.sleep(100000)
             null
         } catch (e: Exception) {
-            Thread.sleep(100000)
             e
         }
     }
@@ -325,7 +323,8 @@ class InitializeConsole : Console("unknown", null) {
         DATABASE_JSON.create()
         config.toFile(DATABASE_JSON.getFile())
         switchToDefaultScreen()
-        writeLine("\tYou finished the database setup!")
+        emptyPrompt()
+        writeLine("You finished the database setup!")
         Thread.sleep(2000)
         return checkDatabase(ServiceId(UUID.randomUUID(), ServiceType.NODE))
     }
