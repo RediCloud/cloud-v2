@@ -4,7 +4,7 @@ import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.service.base.BaseService
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.events.NodeDisconnectEvent
-import dev.redicloud.service.node.events.NodeSuspendEvent
+import dev.redicloud.service.node.events.NodeSuspendedEvent
 import dev.redicloud.service.node.repository.connect
 import dev.redicloud.service.node.repository.disconnect
 import dev.redicloud.service.node.tasks.NodeChooseMasterTask
@@ -42,7 +42,7 @@ class NodeService(databaseConfiguration: DatabaseConfiguration, val configuratio
         taskManager.builder()
             .task(NodeChooseMasterTask(nodeRepository))
             .event(NodeDisconnectEvent::class)
-            .event(NodeSuspendEvent::class)
+            .event(NodeSuspendedEvent::class)
             .register()
         taskManager.builder()
             .task(NodePingTask(this))
@@ -51,7 +51,7 @@ class NodeService(databaseConfiguration: DatabaseConfiguration, val configuratio
             .register()
         taskManager.builder()
             .task(NodeSelfSuspendTask(this))
-            .event(NodeSuspendEvent::class)
+            .event(NodeSuspendedEvent::class)
             .period(10.seconds)
             .register()
     }

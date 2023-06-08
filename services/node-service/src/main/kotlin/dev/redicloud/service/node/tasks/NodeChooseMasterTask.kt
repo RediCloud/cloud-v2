@@ -16,7 +16,7 @@ class NodeChooseMasterTask(val nodeRepository: NodeRepository) : CloudTask() {
         if (node.serviceId != nodeRepository.serviceId) return false
         node.master = true
         nodeRepository.updateNode(node)
-        getEventManager().fireEvent(NodeMasterChangedEvent(node))
+        getEventManager().fireEvent(NodeMasterChangedEvent(node, null))
         return true
     }
 
