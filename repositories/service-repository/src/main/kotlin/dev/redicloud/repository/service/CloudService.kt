@@ -5,8 +5,11 @@ import dev.redicloud.utils.service.ServiceType
 
 abstract class CloudService(
     val serviceId: ServiceId,
+    val name: String,
     private val sessions: MutableList<ServiceSession>
 ){
+
+    fun getIdentifyingName(): String = "$name#${serviceId.id}"
 
     fun currentSession(): ServiceSession? {
         if (sessions.isEmpty()) return null

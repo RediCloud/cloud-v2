@@ -6,10 +6,11 @@ import dev.redicloud.utils.service.ServiceId
 
 class CloudNode(
     serviceId: ServiceId,
+    name: String,
     sessions: MutableList<ServiceSession>,
     private val hostedServers: MutableList<ServiceId>,
     var master: Boolean
-) : CloudService(serviceId, sessions) {
+) : CloudService(serviceId, name, sessions) {
 
     fun getHostedServers(): List<ServiceId> = hostedServers.toList()
 
