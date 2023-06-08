@@ -6,6 +6,16 @@ import java.nio.file.Paths
 
 private val cloudPath: String = System.getProperty("redicloud.cloud.path") ?: Paths.get("").toAbsolutePath().toString()
 
+val NODE_JSON = CloudFile("node.json")
+val TEMP_FOLDER = CloudFile("tmp", folder = true)
+val STATIC_FOLDER = CloudFile("static", folder = true)
+val STORAGE_FOLDER = CloudFile("storage", folder = true)
+val LOG_FOLDER = CloudFile("logs", "storage", folder = true)
+val CONSOLE_HISTORY_FILE = CloudFile(".console.history", "storage/storage")
+val MINECRAFT_VERSIONS_FOLDER = CloudFile("versions", "storage", folder = true)
+val CACHED_TEMPLATES = CloudFile("cachedTemplates", "storage", folder = true)
+val DATABASE_JSON = CloudFile("database.json", "storage")
+
 class CloudFile(val name: String, val parent: String = "", val folder: Boolean = false) {
     fun getFile(): File {
         val path = if (parent.isEmpty()) {
@@ -43,13 +53,3 @@ class CloudFile(val name: String, val parent: String = "", val folder: Boolean =
     }
 
 }
-
-val NODE_JSON = CloudFile("node.json")
-val TEMP_FOLDER = CloudFile("tmp", folder = true)
-val STATIC_FOLDER = CloudFile("static", folder = true)
-val STORAGE_FOLDER = CloudFile("storage", folder = true)
-val LOG_FOLDER = CloudFile("logs", "storage", folder = true)
-val CONSOLE_HISTORY_FILE = CloudFile(".console.history", "storage/storage")
-val MINECRAFT_VERSIONS_FOLDER = CloudFile("versions", "storage", folder = true)
-val CACHED_TEMPLATES = CloudFile("cachedTemplates", "storage", folder = true)
-val DATABASE_JSON = CloudFile("database.json", "storage")

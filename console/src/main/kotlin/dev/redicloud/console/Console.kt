@@ -106,7 +106,7 @@ open class Console(val host: String, val eventManager: EventManager?, override v
         val consoleFormatter = if (hasColorSupport()) {
             ColoredConsoleLogFormatter(this) { lineFormat }
         } else LogFormatter(true) { lineFormat }
-        val logFileWithPattern = "${LOG_FOLDER.getFile().absolutePath}/node-%d.log"
+        val logFileWithPattern = "${LOG_FOLDER.getFile().absolutePath}/node-%g.log"
         LOG_FOLDER.createIfNotExists()
         clearHandlers(rootLogger)
         rootLogger.level = Level.SEVERE
