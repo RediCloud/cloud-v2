@@ -12,21 +12,29 @@ class NodeConsole(nodeConfiguration: NodeConfiguration, eventManager: EventManag
     Console(nodeConfiguration.nodeName, eventManager, true) {
 
     private val onSuspendNode = eventManager.listen<NodeSuspendedEvent> {
-        writeLine("Node ${it.node.getIdentifyingName()} was suspended by ${it.suspender.getIdentifyingName()}!")
+        writeLine("${it.node.getIdentifyingName()}§8: §4● §8(%tc%suspended by ${it.suspender.getIdentifyingName(false)}§8)")
     }
 
     private val onNodeConnect = eventManager.listen<NodeConnectEvent> {
         if (it.node.serviceId == nodeConfiguration.toServiceId()) return@listen
-        writeLine("Node %hc%${it.node.getIdentifyingName()} connected to the cluster!")
+        writeLine("${it.node.getIdentifyingName()}§8: §2● §8(%tc%connected to the cluster§8)")
     }
 
     private val onNodeDisconnect = eventManager.listen<NodeDisconnectEvent> {
         if (it.node.serviceId == nodeConfiguration.toServiceId()) return@listen
-        writeLine("Node ${it.node.getIdentifyingName()} disconnected from the cluster!")
+        writeLine("${it.node.getIdentifyingName()}§8: §c● §8(%tc%disconnected from the cluster§8)")
     }
 
     private val onNodeMasterChange = eventManager.listen<NodeMasterChangedEvent> {
-        writeLine("Node ${it.node.getIdentifyingName()} is now the master node!")
+        writeLine("${it.node.getIdentifyingName()}§8: §6● §8(%tc%new master§8)")
+    }
+
+    init {
+        this.sendHeader()
+    }
+
+    override fun handleUserInterrupt(e: Exception) {
+        commandManager.getCommand("exit")!!.getSubCommand("")!!.execute(commandManager.actor, emptyList())
     }
 
 }
