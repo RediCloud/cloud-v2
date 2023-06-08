@@ -55,7 +55,7 @@ interface IConsole : AutoCloseable {
 
     fun disableCommands()
 
-    fun writeRaw(rawText: String, level: String = "§fINFO", lineFormat: Boolean = true): Console
+    fun writeRaw(rawText: String, level: String = "§f   INFO", lineFormat: Boolean = true): Console
 
     fun forceWriteLine(text: String): Console
 

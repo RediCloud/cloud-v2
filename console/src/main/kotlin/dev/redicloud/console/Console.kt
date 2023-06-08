@@ -203,7 +203,7 @@ open class Console(
         return reader.readNextInput()
     }
 
-    fun formatText(input: String, ensureEndsWith: String, useLineFormat: Boolean = true, level: String = "§fINFO"): String {
+    fun formatText(input: String, ensureEndsWith: String, useLineFormat: Boolean = true, level: String = "§f   INFO"): String {
         val l = if (useLineFormat) lineFormat.replace("%message%", input) else input
         val formatted = l
             .replace("%level%", level)
