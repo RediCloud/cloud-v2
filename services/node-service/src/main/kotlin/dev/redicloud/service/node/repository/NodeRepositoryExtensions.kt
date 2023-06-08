@@ -28,6 +28,7 @@ suspend fun NodeRepository.disconnect(nodeService: NodeService) {
     val serviceId = nodeService.configuration.toServiceId()
     val node = getNode(serviceId) ?: return
     node.endSession()
+    updateNode(node)
     nodeService.eventManager.fireEvent(NodeDisconnectEvent(node))
     LOGGER.info("Disconnected from node cluster!")
 }
