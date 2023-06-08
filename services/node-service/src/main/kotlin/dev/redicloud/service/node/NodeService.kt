@@ -1,7 +1,9 @@
 package dev.redicloud.service.node
 
+import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.service.base.BaseService
+import dev.redicloud.service.node.commands.ExitCommand
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.events.NodeDisconnectEvent
 import dev.redicloud.service.node.events.NodeSuspendedEvent
@@ -13,18 +15,28 @@ import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.seconds
 
-class NodeService(databaseConfiguration: DatabaseConfiguration, val configuration: NodeConfiguration)
-    : BaseService(databaseConfiguration, configuration.toServiceId()) {
+class NodeService(
+    databaseConfiguration: DatabaseConfiguration,
+    databaseConnection: DatabaseConnection,
+    val configuration: NodeConfiguration
+) : BaseService(databaseConfiguration, databaseConnection, configuration.toServiceId()) {
 
     private val console: NodeConsole = NodeConsole(configuration, eventManager)
 
+    companion object {
+        lateinit var INSTANCE: NodeService
+    }
+
+
     init {
+        INSTANCE = this
         runBlocking {
             initShutdownHook()
 
             nodeRepository.connect(this@NodeService)
 
             registerTasks()
+            registerCommands()
         }
     }
 
@@ -41,23 +53,30 @@ class NodeService(databaseConfiguration: DatabaseConfiguration, val configuratio
     private fun registerTasks() {
         taskManager.builder()
             .task(NodeChooseMasterTask(nodeRepository))
+            .instant()
             .event(NodeDisconnectEvent::class)
             .event(NodeSuspendedEvent::class)
             .register()
         taskManager.builder()
             .task(NodePingTask(this))
+            .instant()
             .event(NodeDisconnectEvent::class)
             .period(10.seconds)
             .register()
         taskManager.builder()
             .task(NodeSelfSuspendTask(this))
+            .instant()
             .event(NodeSuspendedEvent::class)
             .period(10.seconds)
             .register()
     }
 
+    private fun registerCommands() {
+        console.commandManager.register(ExitCommand())
+    }
+
     private fun initShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(Thread { this.shutdown()})
+        Runtime.getRuntime().addShutdownHook(Thread { this.shutdown() })
     }
 
 }
