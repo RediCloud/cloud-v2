@@ -92,6 +92,7 @@ class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManage
         executors.add(EventBasedCloudExecutor(task, manager.eventManager, events))
         executors.add(PacketBasedCloudExecutor(task, manager.packetManager, packets))
         if (instant) executors.add(InstantCloudExecutor(task))
+        executors.forEach { task.addExecutor(it) }
         manager.register(task)
         return task
     }

@@ -54,6 +54,10 @@ abstract class CloudTask() {
 
     fun getExecutors(): List<CloudTaskExecutor> = executors.toList()
 
+    internal fun addExecutor(executor: CloudTaskExecutor) {
+        executors.add(executor)
+    }
+
     fun isCanceled(): Boolean = canceled
     fun isStarted(): Boolean = started
 
