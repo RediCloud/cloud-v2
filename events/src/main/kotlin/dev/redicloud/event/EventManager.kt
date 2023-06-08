@@ -1,5 +1,6 @@
 package dev.redicloud.event
 
+import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.runBlocking
@@ -8,6 +9,10 @@ import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.findAnnotation
 
 class EventManager(val packetManager: PacketManager?) {
+
+    companion object {
+        val LOGGER = LogManager.logger(EventManager::class)
+    }
 
     val handlers: MutableMap<KClass<*>, MutableList<EventHandlerMethod>> = HashMap()
 
@@ -99,7 +104,11 @@ class EventManager(val packetManager: PacketManager?) {
             else -> {
                 val eventType = event::class
                 handlers[eventType]?.forEach { handlerMethod ->
-                    handlerMethod.function.call(handlerMethod.listener, event)
+                    try {
+                        handlerMethod.function.call(handlerMethod.listener, event)
+                    }catch (e: Exception) {
+                        LOGGER.severe("Error while calling event handler", e)
+                    }
                 }
                 return
             }
