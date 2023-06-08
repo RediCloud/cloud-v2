@@ -4,6 +4,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
 
     private val commands = mutableListOf<CommandBase>()
     private val disabledCommands = mutableListOf<CommandBase>()
+    private var allDisabled = false
 
     abstract fun getActor(identifier: K): K
 
@@ -18,13 +19,15 @@ abstract class CommandManager<K : ICommandActor<*>> {
 
     fun disableCommands() {
         disabledCommands.addAll(commands)
+        allDisabled = true
     }
 
     fun enableCommands() {
         disabledCommands.clear()
+        allDisabled = false
     }
 
-    fun isDisabled(command: CommandBase): Boolean = disabledCommands.contains(command)
+    fun isDisabled(command: CommandBase): Boolean = disabledCommands.contains(command) || allDisabled
 
     fun disableCommand(command: CommandBase) {
         disabledCommands.add(command)
@@ -32,7 +35,10 @@ abstract class CommandManager<K : ICommandActor<*>> {
 
     fun enableCommand(command: CommandBase) {
         disabledCommands.remove(command)
+        allDisabled = false
     }
+
+    fun areCommandsDisabled(): Boolean = allDisabled
 
     fun getCommand(input: String): CommandBase? = commands.firstOrNull { it.isThis(input, false) }
 
@@ -69,29 +75,29 @@ abstract class CommandManager<K : ICommandActor<*>> {
     }
 
     fun handleInput(actor: K, input: String): CommandResponse {
-        if (input.isBlank()) return CommandResponse(CommandResponseType.INVALID_COMMAND, "Command cannot be blank")
+        if (input.isBlank()) return CommandResponse(CommandResponseType.BLANK_INPUT, "Command cannot be blank")
         val split = input.split(" ")
         val commandName = split[0].lowercase()
         val parameters = split.drop(1)
         val command = getCommand(commandName)
-            ?: return CommandResponse(CommandResponseType.INVALID_COMMAND, "Command $commandName not found")
-        if (isDisabled(command)) return CommandResponse(CommandResponseType.DISABLED, "Command $commandName is disabled")
+            ?: return CommandResponse(CommandResponseType.INVALID_COMMAND, "Command '$commandName' not found")
+        if (isDisabled(command)) return CommandResponse(CommandResponseType.DISABLED, "Command '$commandName' is disabled")
 
         if (!actor.hasPermission(command.getPermission())) return CommandResponse(
             CommandResponseType.PERMISSION,
-            "You do not have permission to execute this command! ${command.getPermission()}"
+            "You do not have permission to execute this command! (${command.getPermission()})"
         )
 
         val subCommand = command.getSubCommands()
             .firstOrNull { it.isThis(input, false) }
             ?: return CommandResponse(
                 CommandResponseType.INVALID_SUB_PATH,
-                "Invalid sub path for command $commandName ${parameters.joinToString(" ")}"
+                "Invalid sub path for command '$commandName' ${parameters.joinToString(" ")}"
             )
 
         if (!actor.hasPermission(subCommand.permission)) return CommandResponse(
             CommandResponseType.PERMISSION,
-            "You do not have permission to execute this command! ${subCommand.permission}"
+            "You do not have permission to execute this command! (${subCommand.permission})"
         )
 
         val optimalPath = subCommand.parseToOptimalPath(input)!!
