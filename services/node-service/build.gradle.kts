@@ -14,6 +14,7 @@ dependencies {
     shade(project(":services:base-service"))
     shade(project(":repositories:node-repository"))
     shade(project(":repositories:service-repository"))
+    shade(project(":repositories:server-repository"))
     shade(project(":database"))
     shade(project(":utils"))
     shade(project(":events"))
