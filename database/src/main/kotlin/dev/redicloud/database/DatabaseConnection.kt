@@ -11,7 +11,7 @@ import org.redisson.api.RedissonClient
 import org.redisson.client.codec.BaseCodec
 import org.redisson.config.Config
 
-class DatabaseConnection(config: DatabaseConfiguration, serviceId: ServiceId, val codec: BaseCodec = GsonCodec(), test: Boolean = false) {
+class DatabaseConnection(config: DatabaseConfiguration, serviceId: ServiceId, val codec: BaseCodec = GsonCodec()) {
 
     companion object {
         private val LOGGER = LogManager.logger(DatabaseConnection::class)
@@ -51,7 +51,7 @@ class DatabaseConnection(config: DatabaseConfiguration, serviceId: ServiceId, va
 
     fun isConnected(): Boolean {
         if (client == null) return false
-        return client!!.isShuttingDown
+        return !client!!.isShuttingDown
     }
 
     fun getClient(): RedissonClient = client!!
