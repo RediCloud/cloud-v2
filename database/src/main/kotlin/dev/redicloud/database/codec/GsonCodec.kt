@@ -2,6 +2,7 @@ package dev.redicloud.database.codec
 
 import com.google.gson.*
 import com.google.gson.annotations.Expose
+import dev.redicloud.utils.fixKotlinAnnotations
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufInputStream
@@ -13,18 +14,7 @@ import org.redisson.client.protocol.Encoder
 
 class GsonCodec : BaseCodec() {
 
-    private val gson: Gson = GsonBuilder().addSerializationExclusionStrategy(object : ExclusionStrategy {
-        override fun shouldSkipField(f: FieldAttributes?): Boolean =
-            f?.getAnnotation(Expose::class.java)?.serialize == false
-
-        override fun shouldSkipClass(p0: Class<*>?): Boolean = p0?.getAnnotation(Expose::class.java)?.serialize == false
-    }).addDeserializationExclusionStrategy(object : ExclusionStrategy {
-        override fun shouldSkipField(f: FieldAttributes?): Boolean =
-            f?.getAnnotation(Expose::class.java)?.deserialize == false
-
-        override fun shouldSkipClass(clazz: Class<*>?): Boolean =
-            clazz?.getAnnotation(Expose::class.java)?.deserialize == false
-    }).setPrettyPrinting().create()
+    private val gson: Gson = GsonBuilder().fixKotlinAnnotations().setPrettyPrinting().create()
 
     private val encoder: Encoder = Encoder { `in`: Any ->
         val out = ByteBufAllocator.DEFAULT.buffer()
