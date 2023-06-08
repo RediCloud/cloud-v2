@@ -25,7 +25,7 @@ class EventBasedCloudExecutor(
 
     private fun listener(clazz: KClass<out CloudEvent>) {
         val listener = eventManager.listen(clazz) {
-            cloudTask.preExecute()
+            cloudTask.preExecute(this)
         }
         listeners.add(listener)
     }

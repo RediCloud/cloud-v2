@@ -15,7 +15,7 @@ class PeriodicallyCloudTaskExecutor(
         while (i < maxExecutions || maxExecutions == -1) {
             delay(period)
             i++
-            cloudTask.preExecute()
+            cloudTask.preExecute(this)
         }
     }
 

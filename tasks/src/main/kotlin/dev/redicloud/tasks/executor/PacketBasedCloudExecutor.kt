@@ -28,7 +28,7 @@ class PacketBasedCloudExecutor(
 
     private fun listener(clazz: KClass<out AbstractPacket>) {
         val listener = packetManager.listen(clazz) {
-            cloudTask.preExecute()
+            cloudTask.preExecute(this)
         }
         listeners.add(listener)
     }

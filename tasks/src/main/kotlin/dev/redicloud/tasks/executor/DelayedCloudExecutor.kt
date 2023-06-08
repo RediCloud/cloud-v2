@@ -8,7 +8,7 @@ class DelayedCloudExecutor(task: CloudTask, val delay: Duration) : CloudTaskExec
 
     override suspend fun run() {
         delay(delay)
-        cloudTask.preExecute()
+        cloudTask.preExecute(this)
     }
 
 }

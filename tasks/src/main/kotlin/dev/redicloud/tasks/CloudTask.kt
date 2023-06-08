@@ -26,16 +26,17 @@ abstract class CloudTask() {
     abstract suspend fun execute(): Boolean
 
     @OptIn(DelicateCoroutinesApi::class)
-    internal fun preExecute() {
+    internal fun preExecute(source: CloudTaskExecutor) {
         if (canceled) return
         try {
             GlobalScope.launch {
+                LOGGER.log(Level.FINEST, "Cloud task (${this::class.simpleName}) execute by ${source::class.simpleName}")
                 if (execute()) {
                     cancel()
                 }
             }
         }catch (e: Exception) {
-            LOGGER.log(Level.SEVERE, "Error while executing cloud task", e)
+            LOGGER.log(Level.SEVERE, "Error while executing cloud task (${this::class.simpleName}) by ${source::class.simpleName}", e)
         }
         executeCount++
     }
@@ -59,6 +60,7 @@ abstract class CloudTask() {
     fun cancel() {
         canceled = true
         executors.forEach { it.cancel() }
+        LOGGER.log(Level.FINEST, "Canceled task ${this::class.simpleName}")
     }
 
 }

@@ -43,9 +43,15 @@ class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManage
     private var executors: MutableList<CloudTaskExecutor> = mutableListOf()
     private var events: MutableList<KClass<out CloudEvent>> = mutableListOf()
     private var packets: MutableList<KClass<out AbstractPacket>> = mutableListOf()
+    private var instant: Boolean = false
 
     fun task(task: CloudTask): CloudTaskExecutorBuilder {
         this.task = task
+        return this
+    }
+
+    fun instant(): CloudTaskExecutorBuilder {
+        this.instant = true
         return this
     }
 
@@ -79,12 +85,13 @@ class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManage
 
     fun register(): CloudTask {
         if (this.task == null) throw IllegalStateException("Task must be set")
-        if (this.executors.isEmpty() && this.events.isEmpty() && this.packets.isEmpty()) {
+        if (this.executors.isEmpty() && this.events.isEmpty() && this.packets.isEmpty() && !instant) {
             throw IllegalStateException("At least one executor must be set")
         }
         val task = this.task!!
         executors.add(EventBasedCloudExecutor(task, manager.eventManager, events))
         executors.add(PacketBasedCloudExecutor(task, manager.packetManager, packets))
+        if (instant) executors.add(InstantCloudExecutor(task))
         manager.register(task)
         return task
     }
