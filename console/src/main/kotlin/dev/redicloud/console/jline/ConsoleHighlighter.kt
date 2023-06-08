@@ -8,9 +8,8 @@ import org.jline.reader.impl.DefaultHighlighter
 import org.jline.utils.AttributedString
 import java.util.regex.Pattern
 
-class ConsoleHighlighter(private val console: Console) : Highlighter {
+class ConsoleHighlighter(private val console: Console) : DefaultHighlighter() {
 
-    private val default = DefaultHighlighter()
     private val enabled = System.getProperty("redicloud.console.highlight.enabled", "true").toBoolean()
     private val words = System.getProperty(
         "redicloud.console.highlight.words",
@@ -28,21 +27,30 @@ class ConsoleHighlighter(private val console: Console) : Highlighter {
                 "started:green"
     ).split(";").map { it.split(":") }
         .associate {
-            it[0] to try {
-                (ConsoleColor.valueOf(it[1].uppercase()))
+            Pattern.compile(it[0]) to try {
+                ConsoleColor.valueOf(it[1].uppercase()).ansiCode
             } catch (e: Exception) {
-                ConsoleColor.WHITE
+                it[1]
             }
         }
 
     override fun highlight(reader: LineReader?, buffer: String?): AttributedString {
-        if (!enabled) return default.highlight(reader, buffer)
-        return default.highlight(reader, console.formatText(buffer ?: "", "", false))
+        if (!enabled || reader == null || buffer == null) return super.highlight(reader, buffer)
+
+        val builder = StringBuilder()
+        var prevEnd = 0
+
+        words.forEach { pattern, replacement ->
+            val matcher = pattern.matcher(buffer)
+            while (matcher.find()) {
+                builder.append(buffer, prevEnd, matcher.start())
+                builder.append(replacement)
+                prevEnd = matcher.end()
+            }
+        }
+        builder.append(buffer.substring(prevEnd))
+        return super.highlight(reader, console.formatText(builder.toString(), "", false))
     }
-
-    override fun setErrorPattern(errorPattern: Pattern?) = default.setErrorPattern(errorPattern)
-
-    override fun setErrorIndex(errorIndex: Int) = default.setErrorIndex(errorIndex)
 
 
 }
