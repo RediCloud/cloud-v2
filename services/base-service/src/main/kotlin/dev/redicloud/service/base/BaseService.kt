@@ -12,9 +12,11 @@ import dev.redicloud.service.base.packets.ServicePingPacket
 import dev.redicloud.service.base.packets.ServicePingResponse
 import dev.redicloud.tasks.CloudTaskManager
 import dev.redicloud.utils.service.ServiceId
+import kotlin.system.exitProcess
 
 abstract class BaseService(
     databaseConfiguration: DatabaseConfiguration,
+    _databaseConnection: DatabaseConnection?,
     val serviceId: ServiceId
 ) {
 
@@ -33,14 +35,20 @@ abstract class BaseService(
     val taskManager: CloudTaskManager
 
     init {
-        databaseConnection = DatabaseConnection(databaseConfiguration, serviceId, GsonCodec())
-        try {
-            databaseConnection.connect()
-        } catch (e: Exception) {
-            throw Exception("Failed to connect to database", e)
+        databaseConnection = if (_databaseConnection != null && _databaseConnection.isConnected()) {
+            _databaseConnection
+        } else {
+            DatabaseConnection(databaseConfiguration, serviceId, GsonCodec())
         }
+        try {
+            if (!databaseConnection.isConnected()) databaseConnection.connect()
+        } catch (e: Exception) {
+            LOGGER.severe("Failed to connect to database", e)
+            exitProcess(-1)
+        }
+
         packetManager = PacketManager(databaseConnection, serviceId)
-        eventManager = EventManager(packetManager)
+        eventManager = EventManager("base-event-manager", packetManager)
         taskManager = CloudTaskManager(eventManager, packetManager)
 
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager)
@@ -52,6 +60,7 @@ abstract class BaseService(
     open fun shutdown() {
         SHUTTINGDOWN = true
         taskManager.getTasks().forEach { it.cancel() }
+        packetManager.disconnect()
         databaseConnection.disconnect()
     }
 

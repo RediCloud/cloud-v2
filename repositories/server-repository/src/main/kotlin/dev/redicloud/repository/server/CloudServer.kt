@@ -6,5 +6,6 @@ import dev.redicloud.utils.service.ServiceId
 
 class CloudServer(
     serviceId: ServiceId,
+    name: String,
     sessions: MutableList<ServiceSession>
-) : CloudService(serviceId, sessions)
+) : CloudService(serviceId, name, sessions)

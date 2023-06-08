@@ -9,12 +9,12 @@ abstract class CloudService(
     private val sessions: MutableList<ServiceSession>
 ){
 
-    fun getIdentifyingName(): String = "$name#${serviceId.id}"
+    fun getIdentifyingName(colored: Boolean = true): String = if (colored) "%hc%$name§8#%tc%${serviceId.id}" else "$name#${serviceId.id}"
 
     fun currentSession(): ServiceSession? {
         if (sessions.isEmpty()) return null
         val last = sessions.last()
-        if (last.endTime == -1L) return null
+        if (last.endTime != -1L) return null
         return last
     }
 
