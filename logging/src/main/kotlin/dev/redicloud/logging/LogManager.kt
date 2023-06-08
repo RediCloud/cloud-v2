@@ -9,7 +9,11 @@ private val LOGGER_FACTORY: LoggerFactory = ServiceLoader.load(LoggerFactory::cl
 class LogManager private constructor() {
 
     companion object {
-        fun rootLogger(): Logger = LOGGER_FACTORY.getLogger(LoggerFactory.ROOT_LOGGER_NAME)
+        fun rootLogger(): Logger {
+            val root = LOGGER_FACTORY.getLogger(LoggerFactory.ROOT_LOGGER_NAME)
+            root.resourceBundle = getDefaultLoggingBundle()
+            return root
+        }
 
         fun logger(name: String): Logger = LOGGER_FACTORY.getLogger(name)
 

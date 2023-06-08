@@ -15,6 +15,7 @@ interface IConsole : AutoCloseable {
     val commandManager: ConsoleCommandManager
     var lineFormat: String
     val saveLogToFile: Boolean
+    val uninstallAnsiOnClose: Boolean
 
     fun runningAnimations(): List<AbstractConsoleAnimation>
 
@@ -27,6 +28,8 @@ interface IConsole : AutoCloseable {
     fun switchScreen(screen: Screen)
 
     fun getScreens(): List<Screen>
+
+    fun getScreen(name: String): Screen?
 
     fun switchToDefaultScreen()
 
@@ -52,7 +55,7 @@ interface IConsole : AutoCloseable {
 
     fun disableCommands()
 
-    fun writeRaw(rawText: String): Console
+    fun writeRaw(rawText: String, level: String = "§fINFO", lineFormat: Boolean = true): Console
 
     fun forceWriteLine(text: String): Console
 

@@ -14,17 +14,17 @@ class ConsoleHighlighter(private val console: Console) : DefaultHighlighter() {
     private val words = System.getProperty(
         "redicloud.console.highlight.words",
         "success:red;" +
-                "warn:yellow;" +
-                "info:white;" +
-                "debug:blue;" +
-                "fail:red;" +
-                "fatal:darK_red;" +
-                "trace:blue;" +
-                "running:green;" +
-                "stopped:red;" +
-                "starting:yellow;" +
-                "stopping:yellow;" +
-                "started:green"
+            "warn:yellow;" +
+            "info:white;" +
+            "debug:blue;" +
+            "fail:red;" +
+            "fatal:darK_red;" +
+            "trace:blue;" +
+            "running:green;" +
+            "stopped:red;" +
+            "starting:yellow;" +
+            "stopping:yellow;" +
+            "started:green"
     ).split(";").map { it.split(":") }
         .associate {
             Pattern.compile(it[0]) to try {
@@ -40,7 +40,7 @@ class ConsoleHighlighter(private val console: Console) : DefaultHighlighter() {
         val builder = StringBuilder()
         var prevEnd = 0
 
-        words.forEach { pattern, replacement ->
+        words.forEach { (pattern, replacement) ->
             val matcher = pattern.matcher(buffer)
             while (matcher.find()) {
                 builder.append(buffer, prevEnd, matcher.start())

@@ -32,7 +32,12 @@ class FallbackLogger(val javaLogger: java.util.logging.Logger) : Logger(javaLogg
         javaLogger.level = level
     }
 
-    override fun getResourceBundle(): ResourceBundle = javaLogger.resourceBundle
+    override fun getResourceBundle(): ResourceBundle {
+        if (javaLogger.resourceBundle == null) {
+            javaLogger.resourceBundle = LogManager.rootLogger().resourceBundle
+        }
+        return javaLogger.resourceBundle
+    }
 
     override fun setResourceBundle(bundle: ResourceBundle?) {
         javaLogger.resourceBundle = bundle
