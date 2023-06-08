@@ -5,5 +5,5 @@ data class DatabaseNode(
     val port: Int,
     val ssl: Boolean = false
 ) {
-    fun toConnectionString(): String = "redis://${if (ssl) "s" else ""}://$hostname:$port"
+    fun toConnectionString(): String = "redis${if (ssl) "s" else ""}://$hostname:$port"
 }
