@@ -20,12 +20,17 @@ class NodeService(databaseConfiguration: DatabaseConfiguration, val configuratio
 
     init {
         runBlocking {
+            initShutdownHook()
+
             nodeRepository.connect(this@NodeService)
+
             registerTasks()
         }
     }
 
     override fun shutdown() {
+        if (SHUTTINGDOWN) return
+        SHUTTINGDOWN = true
         LOGGER.info("Shutting down node service...")
         runBlocking {
             nodeRepository.disconnect(this@NodeService)
@@ -49,6 +54,10 @@ class NodeService(databaseConfiguration: DatabaseConfiguration, val configuratio
             .event(NodeSuspendEvent::class)
             .period(10.seconds)
             .register()
+    }
+
+    private fun initShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(Thread { this.shutdown()})
     }
 
 }

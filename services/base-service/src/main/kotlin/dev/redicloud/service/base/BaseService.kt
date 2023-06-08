@@ -20,6 +20,7 @@ abstract class BaseService(
 
     companion object {
         val LOGGER = LogManager.logger(BaseService::class)
+        var SHUTTINGDOWN = false
     }
 
     val databaseConnection: DatabaseConnection
@@ -49,6 +50,7 @@ abstract class BaseService(
     }
 
     open fun shutdown() {
+        SHUTTINGDOWN = true
         taskManager.getTasks().forEach { it.cancel() }
         databaseConnection.disconnect()
     }
