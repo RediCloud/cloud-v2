@@ -158,13 +158,17 @@ open class Console(
                 inputReader.clear()
 
                 if (!commandManager.areCommandsDisabled()) {
-                    val response = commandManager.handleInput(commandManager.actor, line)
-                    if (response.message != null && response.type != CommandResponseType.BLANK_INPUT
-                        && response.type != CommandResponseType.ERROR) {
-                        commandManager.actor.sendMessage(response.message!!)
-                    }
-                    if (response.throwable != null && response.type == CommandResponseType.ERROR) {
-                        LOGGER.severe(response.message!!, response.throwable!!)
+                    try {
+                        val response = commandManager.handleInput(commandManager.actor, line)
+                        if (response.message != null && response.type != CommandResponseType.BLANK_INPUT
+                            && response.type != CommandResponseType.ERROR) {
+                            commandManager.actor.sendMessage(response.message!!)
+                        }
+                        if (response.throwable != null && response.type == CommandResponseType.ERROR) {
+                            LOGGER.severe(response.message!!, response.throwable!!)
+                        }
+                    }catch (e: Exception) {
+                        LOGGER.severe("Error while routing/processing command", e)
                     }
                 }
 
