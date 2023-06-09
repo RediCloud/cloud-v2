@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
+import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.fixKotlinAnnotations
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
@@ -45,10 +46,11 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
                 ?: return@MessageListener
             LOGGER.finest("Receive packet ${p::class.simpleName} in channel $channel")
             val packet = gson.fromJson(data, p::class.java)
+            if (!packet.allowLocalReceiver && packet.sender == serviceId) return@MessageListener
             packet.manager = this
             packet.received()
             packetsOfLast3Seconds.add(packet)
-            GlobalScope.launch {
+            defaultScope.launch {
                 delay(3.seconds)
                 packetsOfLast3Seconds.remove(packet)
             }
