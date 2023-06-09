@@ -3,6 +3,7 @@ package dev.redicloud.service.node.commands
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.service.node.NodeService
+import dev.redicloud.utils.defaultScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -19,7 +20,7 @@ class ExitCommand : CommandBase() {
         if (!confirmed) {
             actor.sendMessage("§cTo shutdown the node enter the command again within 10 seconds!")
             confirmed = true
-            GlobalScope.launch {
+            defaultScope.launch {
                 delay(10000)
                 confirmed = false
             }
