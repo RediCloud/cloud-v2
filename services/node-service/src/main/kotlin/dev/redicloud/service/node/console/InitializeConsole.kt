@@ -146,7 +146,7 @@ class InitializeConsole() : Console(
         updatePrompt()
         sendHeader()
         LogManager.rootLogger().filter = Filter { record
-            -> record.level != Level.INFO && !record.loggerName.startsWith("org.redisson") }
+            -> record.level != Level.INFO && !record.message.contains("org.redisson") }
         nodeConfiguration = checkNode()
         serviceId = nodeConfiguration!!.toServiceId()
         databaseConnection = checkDatabase(serviceId!!)
