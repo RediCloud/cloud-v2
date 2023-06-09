@@ -37,11 +37,15 @@ class ConsoleHighlighter(private val console: Console) : DefaultHighlighter() {
     override fun highlight(reader: LineReader?, buffer: String?): AttributedString {
         if (!enabled || reader == null || buffer == null) return super.highlight(reader, buffer)
 
+        val lastInput = reader.buffer.toString().split(" ").lastOrNull()
+
+        if (lastInput == buffer) return super.highlight(reader, buffer)
+
         val builder = StringBuilder()
         var prevEnd = 0
 
         words.forEach { (pattern, replacement) ->
-            val matcher = pattern.matcher(buffer)
+            val matcher = pattern.matcher(buffer.lowercase())
             while (matcher.find()) {
                 builder.append(buffer, prevEnd, matcher.start())
                 builder.append(replacement)
