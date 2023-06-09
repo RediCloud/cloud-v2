@@ -6,6 +6,7 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.service.node.NodeService
 import dev.redicloud.service.node.events.NodeConnectEvent
 import dev.redicloud.service.node.events.NodeDisconnectEvent
+import dev.redicloud.service.node.events.NodeMasterChangedEvent
 import dev.redicloud.service.node.events.NodeSuspendedEvent
 import dev.redicloud.utils.service.ServiceId
 
@@ -28,6 +29,7 @@ suspend fun NodeRepository.disconnect(nodeService: NodeService) {
     val serviceId = nodeService.configuration.toServiceId()
     val node = getNode(serviceId) ?: return
     node.endSession()
+    if (node.master) node.master = false
     updateNode(node)
     nodeService.eventManager.fireEvent(NodeDisconnectEvent(node))
     LOGGER.info("Disconnected from node cluster!")
