@@ -29,8 +29,7 @@ abstract class ServiceRepository<T : CloudService>(
                     throw Exception("Database connection is not connected! Cannot remove service from cluster")
                 }
                 connectedServices.remove(serviceId)
-                val service = getService(serviceId) as T?
-                if(service == null) return@runBlocking
+                val service = getService(serviceId) as T? ?: return@runBlocking
                 if (service.isConnected()) {
                     service.currentSession()!!.endTime = System.currentTimeMillis()
                 }
@@ -52,11 +51,23 @@ abstract class ServiceRepository<T : CloudService>(
 
     suspend fun createService(cloudService: CloudService): CloudService {
         getUnsafeHandle<CloudService>(cloudService.serviceId.toDatabaseIdentifier(), true).set(cloudService)
+        if (cloudService.isConnected() && !connectedServices.contains(cloudService.serviceId)) {
+            connectedServices.add(cloudService.serviceId)
+        }
+        registeredServices.add(cloudService.serviceId)
         return cloudService
     }
 
     suspend fun updateService(cloudService: CloudService): CloudService {
         getUnsafeHandle<CloudService>(cloudService.serviceId.toDatabaseIdentifier(), true).set(cloudService)
+        if (cloudService.isConnected() && !connectedServices.contains(cloudService.serviceId)) {
+            connectedServices.add(cloudService.serviceId)
+        }else if(!cloudService.isConnected()) {
+            connectedServices.remove(cloudService.serviceId)
+        }
+        if (!registeredServices.contains(cloudService.serviceId)) {
+            registeredServices.add(cloudService.serviceId)
+        }
         return cloudService
     }
 
