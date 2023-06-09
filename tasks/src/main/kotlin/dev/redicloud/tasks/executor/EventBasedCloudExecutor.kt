@@ -16,7 +16,7 @@ class EventBasedCloudExecutor(
 
     override suspend fun run() {
         events.forEach { listener(it) }
-        onFinished {
+        cloudTask.onFinished {
             listeners.forEach {
                 eventManager.unregister(it)
             }

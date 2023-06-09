@@ -19,7 +19,7 @@ class PacketBasedCloudExecutor(
 
     override suspend fun run() {
         packets.forEach { listener(it) }
-        onFinished {
+        cloudTask.onFinished {
             listeners.forEach {
                 packetManager.unregisterListener(it)
             }

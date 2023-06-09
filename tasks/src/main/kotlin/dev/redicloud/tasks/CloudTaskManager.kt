@@ -2,6 +2,7 @@ package dev.redicloud.tasks
 
 import dev.redicloud.event.CloudEvent
 import dev.redicloud.event.EventManager
+import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.AbstractPacket
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.tasks.executor.*
@@ -15,7 +16,11 @@ import kotlin.time.Duration
 
 class CloudTaskManager(internal val eventManager: EventManager, internal val packetManager: PacketManager) {
 
-    private val tasks = ConcurrentHashMap<UUID, CloudTask>()
+    companion object {
+        val LOGGER = LogManager.logger(CloudTaskManager::class)
+    }
+
+    internal val tasks = ConcurrentHashMap<UUID, CloudTask>()
 
     @OptIn(DelicateCoroutinesApi::class)
     internal val scope = CoroutineScope(newFixedThreadPoolContext(2, "CloudTaskManager"))
@@ -27,7 +32,11 @@ class CloudTaskManager(internal val eventManager: EventManager, internal val pac
         return task.id
     }
 
-    fun unregister(id: UUID): CloudTask? = tasks.remove(id)
+    fun unregister(id: UUID): CloudTask? {
+        val task = tasks.remove(id)
+        task?.cancel()
+        return task
+    }
 
     fun unregister(task: CloudTask): CloudTask? = unregister(task.id)
 
