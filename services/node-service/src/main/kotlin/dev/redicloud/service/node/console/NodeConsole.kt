@@ -12,7 +12,7 @@ class NodeConsole(nodeConfiguration: NodeConfiguration, eventManager: EventManag
     Console(nodeConfiguration.nodeName, eventManager, true) {
 
     private val onSuspendNode = eventManager.listen<NodeSuspendedEvent> {
-        writeLine("${it.node.getIdentifyingName()}§8: §4● §8(%tc%suspended by ${it.suspender.getIdentifyingName(false)}§8)")
+        writeLine("${it.node.getIdentifyingName()}§8: §4● §8(%tc%suspended by ${it.suspender.getIdentifyingName(false)} because node is reachable§8)")
     }
 
     private val onNodeConnect = eventManager.listen<NodeConnectEvent> {
