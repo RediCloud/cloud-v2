@@ -19,7 +19,7 @@ class PacketBasedCloudExecutor(
 
     override suspend fun run() {
         packets.forEach { listener(it) }
-        onFinished {
+        cloudTask.onFinished {
             listeners.forEach {
                 packetManager.unregisterListener(it)
             }
@@ -28,7 +28,7 @@ class PacketBasedCloudExecutor(
 
     private fun listener(clazz: KClass<out AbstractPacket>) {
         val listener = packetManager.listen(clazz) {
-            cloudTask.preExecute()
+            cloudTask.preExecute(this)
         }
         listeners.add(listener)
     }

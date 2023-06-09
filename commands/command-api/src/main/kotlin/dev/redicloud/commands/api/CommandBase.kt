@@ -41,6 +41,10 @@ abstract class CommandBase {
 
     fun getSubCommands(): List<CommandSubBase> = subCommands.toList()
 
+    fun getSubCommand(subPath: String): CommandSubBase? = subCommands.firstOrNull {
+        it.isThis("$name $subPath", false)
+    }
+
     fun getPathsWithArguments(): List<String> = subCommands.flatMap { it.getSubPathsWithoutArguments() }
 
     fun getPaths(): List<String> = subCommands.flatMap { it.getSubPaths() }

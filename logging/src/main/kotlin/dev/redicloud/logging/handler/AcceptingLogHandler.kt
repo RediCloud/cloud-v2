@@ -4,7 +4,7 @@ import java.util.logging.Formatter
 import java.util.logging.Level
 import java.util.logging.LogRecord
 
-class AcceptingLogHandler(val block: (String) -> Unit) : AbstractLogHandler() {
+class AcceptingLogHandler(val block: (LogRecord, String) -> Unit) : AbstractLogHandler() {
 
     init {
         this.level = Level.ALL
@@ -13,7 +13,7 @@ class AcceptingLogHandler(val block: (String) -> Unit) : AbstractLogHandler() {
 
     override fun publish(record: LogRecord) {
         if (!super.isLoggable(record)) return
-        this.block(super.getFormatter().format(record))
+        this.block(record, super.getFormatter().format(record))
     }
 
     fun withFormatter(formatter: Formatter): AcceptingLogHandler {

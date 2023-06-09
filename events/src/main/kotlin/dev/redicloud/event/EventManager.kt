@@ -1,18 +1,30 @@
 package dev.redicloud.event
 
+import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
-import dev.redicloud.utils.ServiceType
+import dev.redicloud.utils.gson
+import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.findAnnotation
 
-class EventManager(val packetManager: PacketManager?) {
+class EventManager(val identifier: String, val packetManager: PacketManager?) {
+
+    companion object {
+        val LOGGER = LogManager.logger(EventManager::class)
+        private val MANAGERS = mutableMapOf<String, EventManager>()
+
+        fun getManager(identifier: String): EventManager? = MANAGERS[identifier]
+    }
 
     val handlers: MutableMap<KClass<*>, MutableList<EventHandlerMethod>> = HashMap()
 
     init {
-        packetManager?.registerPacket(CloudEventPacket(object : CloudEvent() {}))
+        MANAGERS[identifier] = this
+        if (packetManager != null && !packetManager.isPacketRegistered(CloudEventPacket::class)) {
+            packetManager.registerPacket(CloudEventPacket("", "", ""))
+        }
     }
 
     fun register(listener: Any) {
@@ -43,6 +55,21 @@ class EventManager(val packetManager: PacketManager?) {
         return listener
     }
 
+    fun <T : CloudEvent> listen(clazz: KClass<T>, handler: (T) -> Unit): InlineEventCaller<T> {
+        val listener = InlineEventCaller(handler)
+        val objClass = InlineEventCaller::class
+        objClass.declaredMemberFunctions.forEach { function ->
+            val annotation = function.findAnnotation<CloudEventListener>()
+            if (annotation != null) {
+                val eventType = clazz
+                val handlerMethod = EventHandlerMethod(listener, function, annotation.priority)
+                handlers.getOrPut(eventType) { mutableListOf() }.add(handlerMethod)
+                handlers[eventType]?.sortWith(compareByDescending { it.priority })
+            }
+        }
+        return listener
+    }
+
     fun unregister(listener: Any) {
         val objClass = listener::class
         handlers.values.forEach { list ->
@@ -52,46 +79,107 @@ class EventManager(val packetManager: PacketManager?) {
 
     fun fireEvent(event: CloudEvent) {
         val fireType = event.fireType
+        LOGGER.finest("Firing event ${event::class.simpleName} with fire type $fireType")
         when (event.fireType) {
             EventFireType.GLOBAL -> {
-                if (!isSerializable(event)) {
-                    throw IllegalArgumentException("Event is not serializable and cannot be fired globally")
+                runBlocking {
+                    try {
+                        packetManager?.publishAll(
+                            CloudEventPacket(
+                                gson.toJson(event),
+                                event::class.qualifiedName!!,
+                                identifier
+                            )
+                        )
+                        fireLocalEvent(event)
+                    } catch (e: Exception) {
+                        LOGGER.severe(
+                            "Error while publishing global event (Make sure ${event::class.simpleName} is serializable)",
+                            e
+                        )
+                    }
                 }
-                runBlocking { packetManager?.publishAll(CloudEventPacket(event)) }
                 return
             }
+
             EventFireType.CLIENT -> {
-                if (!isSerializable(event)) {
-                    throw IllegalArgumentException("Event is not serializable and cannot be fired to a client")
+                runBlocking {
+                    try {
+                        packetManager?.publish(
+                            CloudEventPacket(
+                                gson.toJson(event),
+                                event::class.qualifiedName!!,
+                                identifier
+                            ), ServiceType.CLIENT
+                        )
+                        fireLocalEvent(event)
+                    } catch (e: Exception) {
+                        LOGGER.severe(
+                            "Error while publishing client event (Make sure ${event::class.simpleName} is serializable)",
+                            e
+                        )
+                    }
                 }
-                runBlocking { packetManager?.publish(CloudEventPacket(event), ServiceType.CLIENT) }
                 return
             }
+
             EventFireType.SERVER -> {
-                if (!isSerializable(event)) {
-                    throw IllegalArgumentException("Event is not serializable and cannot be fired to a server")
+                runBlocking {
+                    try {
+                        packetManager?.publish(
+                            CloudEventPacket(
+                                gson.toJson(event),
+                                event::class.qualifiedName!!,
+                                identifier
+                            ), ServiceType.SERVER
+                        )
+                        fireLocalEvent(event)
+                    } catch (e: Exception) {
+                        LOGGER.severe(
+                            "Error while publishing server event (Make sure ${event::class.simpleName} is serializable)",
+                            e
+                        )
+                    }
                 }
-                runBlocking { packetManager?.publish(CloudEventPacket(event), ServiceType.SERVER) }
                 return
             }
+
             EventFireType.NODE -> {
-                if (!isSerializable(event)) {
-                    throw IllegalArgumentException("Event is not serializable and cannot be fired to a node")
+                runBlocking {
+                    try {
+                        packetManager?.publish(
+                            CloudEventPacket(
+                                gson.toJson(event),
+                                event::class.qualifiedName!!,
+                                identifier
+                            ), ServiceType.NODE
+                        )
+                        fireLocalEvent(event)
+                    } catch (e: Exception) {
+                        LOGGER.severe(
+                            "Error while publishing node event (Make sure ${event::class.simpleName} is serializable)",
+                            e
+                        )
+                    }
                 }
-                runBlocking { packetManager?.publish(CloudEventPacket(event), ServiceType.NODE) }
                 return
             }
+
             else -> {
-                val eventType = event::class
-                handlers[eventType]?.forEach { handlerMethod ->
-                    handlerMethod.function.call(handlerMethod.listener, event)
-                }
-                return
+                fireLocalEvent(event)
             }
         }
     }
 
-    fun isSerializable(event: CloudEvent): Boolean =
-        try { packetManager?.gson?.toJson(event) != null }catch (e: Exception) { false }
+    internal fun fireLocalEvent(event: CloudEvent) {
+        val eventType = event::class
+        handlers[eventType]?.forEach { handlerMethod ->
+            try {
+                handlerMethod.function.call(handlerMethod.listener, event)
+            } catch (e: Exception) {
+                LOGGER.severe("Error while calling event handler", e)
+            }
+        }
+    }
 
 }

@@ -59,7 +59,7 @@ class CommandSubBase(
             }
             val argument = arguments[index]
             val parsedArgument = it.parse(argument)
-                ?: return CommandResponse(CommandResponseType.INVALID_ARGUMENT_TYPE, "Invalid argument $argument or invalid type")
+                ?: return CommandResponse(CommandResponseType.INVALID_ARGUMENT_TYPE, "Invalid argument '$argument' or invalid type")
             parsedArguments.add(parsedArgument)
         }
         return try {
@@ -98,14 +98,14 @@ class CommandSubBase(
     fun isThis(input: String, predicate: Boolean): Boolean {
         if (!command.isThis(input, false)) return false
         val split = input.split(" ")
+        if (split.size == 1 && path.isEmpty()) return true
         if (split.size < 2) return input.endsWith(" ")
         val parameters = split.drop(1)
-        val arguments = arguments.filter { !it.actorArgument }
         val possibleFullPaths = command.getPaths()
         val matched = possibleFullPaths.toMutableList()
-        var index = -1
+        var index = -1 //After forEach: 0
         parameters.forEach {
-            index++
+            index++ //Current 0
             val possible = matched.filter { path ->
                 val parameterSplit = path.split(" ")
                 if (parameterSplit.size <= index) return@filter false
@@ -118,6 +118,8 @@ class CommandSubBase(
         }
 
         if (matched.size > 2 && !predicate) return false
+
+        if (matched.isEmpty()) return false
 
         return if (predicate) {
             command.getSubCommands()

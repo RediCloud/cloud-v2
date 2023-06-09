@@ -8,11 +8,23 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.database.config.DatabaseNode
 import dev.redicloud.database.config.toFile
+import dev.redicloud.logging.LogManager
+import dev.redicloud.logging.getLogLevelByProperty
 import dev.redicloud.service.node.NodeConfiguration
 import dev.redicloud.utils.*
+import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.utils.service.ServiceType
 import java.util.*
+import java.util.logging.Filter
+import java.util.logging.Level
+import java.util.logging.LogRecord
+import kotlin.system.exitProcess
 
-class InitializeConsole() : Console("unknown", null) {
+class InitializeConsole() : Console(
+    "unknown", null, logLevel = getLogLevelByProperty() ?: Level.SEVERE, uninstallAnsiOnClose = false
+) {
+
+    private val logger = LogManager.logger(this)
 
     private val nodeNameQuestion = ConsoleQuestion(
         question = "What should be the name of this node?",
@@ -125,6 +137,7 @@ class InitializeConsole() : Console("unknown", null) {
     internal var serviceId: ServiceId? = null
     internal var nodeConfiguration: NodeConfiguration? = null
     internal var databaseConfiguration: DatabaseConfiguration? = null
+    internal var databaseConnection: DatabaseConnection? = null
 
     init {
         disableCommands()
@@ -132,37 +145,27 @@ class InitializeConsole() : Console("unknown", null) {
         emptyPrompt()
         updatePrompt()
         sendHeader()
+        LogManager.rootLogger().filter = Filter { record
+            -> record.level != Level.INFO && !record.message.contains("org.redisson") }
         nodeConfiguration = checkNode()
-        serviceId = ServiceId(nodeConfiguration!!.uniqueId, ServiceType.NODE)
-        databaseConfiguration = checkDatabase(serviceId!!)
+        serviceId = nodeConfiguration!!.toServiceId()
+        databaseConnection = checkDatabase(serviceId!!)
     }
 
-    private fun sendHeader() {
-        writeLine("")
-        writeLine("")
-        writeLine("")
-        writeLine("§f _______                 __   _      %hc%______  __                         __  ")
-        writeLine("§f|_   __ \\               |  ] (_)   %hc%.' ___  |[  |                       |  ] ")
-        writeLine("§f  | |__) |  .---.   .--.| |  __   %hc%/ .'   \\_| | |  .--.   __   _    .--.| |  ")
-        writeLine("§f  |  __ /  / /__\\\\/ /'`\\' | [  |%hc%  | |        | |/ .'`\\ \\[  | | | / /'`\\' |  ")
-        writeLine("§f _| |  \\ \\_| \\__.,| \\__/  |  | |%hc%  \\ `.___.'\\ | || \\__. | | \\_/ |,| \\__/  |  ")
-        writeLine("§f|____| |___|'.__.' '.__.;__][___]  %hc%`.____ .'[___]'.__.'  '.__.'_/ '.__.;__] ")
-        writeLine("§fA redis based cluster cloud system for Minecraft")
-        writeLine("")
-        writeLine("")
-        writeLine("§8» §fVersion§8: %hc%$CLOUD_VERSION §8| §fGit: %hc%------")
-        writeLine("§8» §fDiscord§8: %hc%https://discord.gg/g2HV52VV4G")
-        writeLine("")
-        writeLine("")
+    override fun sendHeader() {
+        super.sendHeader()
         writeLine("§8» §fPre-Checks§8:")
         writeLine("§f‾‾‾‾‾‾‾‾‾‾‾‾‾")
         writeLine("§8• §fLibraries §8» ${checkLibs()}")
         writeLine("§8• §fNo-Root-User §8» ${checkUser()}")
         writeLine("§8• §fJava-Version §8» ${checkJava()}")
+        writeLine("§8• §fLog-Level §8» %hc%${logger.level.name}")
         writeLine("")
         writeLine("")
-        if (System.getProperty("redicloud.skip.animation") != null) {
+        if (System.getProperty("redicloud.skip.animation") == null) {
             writeLine("§8» §fStarting in 5 seconds...")
+            writeLine("")
+            writeLine("")
             Thread.sleep(5000)
         }
     }
@@ -230,6 +233,8 @@ class InitializeConsole() : Console("unknown", null) {
         writeLine("    §8» §fNode Setup§8:")
         writeLine("    §f‾‾‾‾‾‾‾‾‾‾‾‾‾")
         writeLine("")
+        prompt = "\t\t%hc%» %tc%"
+        updatePrompt()
         val nodeName: String = nodeNameQuestion.ask(this)
         writeLine("")
         writeLine("")
@@ -247,7 +252,8 @@ class InitializeConsole() : Console("unknown", null) {
         return config
     }
 
-    private fun checkDatabase(serviceId: ServiceId): DatabaseConfiguration {
+    private fun checkDatabase(serviceId: ServiceId): DatabaseConnection {
+        emptyPrompt()
         val databaseFile = DATABASE_JSON.getFile()
         if (!databaseFile.exists()) {
             writeLine("Database file not found! Starting database setup in 5 seconds...")
@@ -255,40 +261,46 @@ class InitializeConsole() : Console("unknown", null) {
             return databaseSetup()
         }
         try {
-            val config = DatabaseConfiguration.fromFile(databaseFile)
-            val error = testDatabase(config, serviceId)
+            databaseConfiguration = DatabaseConfiguration.fromFile(databaseFile)
+            val p = testDatabase(databaseConfiguration!!, serviceId)
+            val error = p.second
             if (error != null) {
+                switchScreen(getScreen("database-test") ?: createScreen("database-test"))
                 clearScreen()
-                writeLine("§cError while testing database connection!")
+                logger.severe("§cError while testing database connection!", error)
+                prompt = "\t\t%hc%» %tc%"
+                updatePrompt()
                 val databaseSetup: Boolean = ask("Do you want to start the database setup again? (yes/no)")
                 if (databaseSetup) {
                     return databaseSetup()
                 }
+                emptyPrompt()
                 writeLine("Retrying in 10 seconds...")
                 Thread.sleep(10000)
                 return checkDatabase(serviceId)
             }
             writeLine("Database connection successful!")
-            return config
+            return p.first
         } catch (e: Exception) {
             writeLine("§cError while reading database file! Starting database setup in 5 seconds...")
+            logger.log(Level.FINE, "Reading file error: ${databaseFile.absolutePath}", e)
             Thread.sleep(5000)
             return databaseSetup()
         }
     }
 
-    private fun testDatabase(config: DatabaseConfiguration, serviceId: ServiceId): Throwable? {
+    private fun testDatabase(config: DatabaseConfiguration, serviceId: ServiceId): Pair<DatabaseConnection, Throwable?> {
+        emptyPrompt()
+        val connection = DatabaseConnection(config, serviceId)
         return try {
-            val connection = DatabaseConnection(config, serviceId)
             connection.connect()
-            connection.disconnect()
-            null
+            connection to null
         } catch (e: Exception) {
-            e
+            connection to e
         }
     }
 
-    private fun databaseSetup(): DatabaseConfiguration {
+    private fun databaseSetup(): DatabaseConnection {
         if (getCurrentScreen().name == "database-setup") {
             clearScreen()
         }else {
@@ -299,6 +311,8 @@ class InitializeConsole() : Console("unknown", null) {
         writeLine("    §8» §fDatabase Setup§8:")
         writeLine("    §f‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
         writeLine("")
+        prompt = "\t\t%hc%» %tc%"
+        updatePrompt()
         val useToken: Boolean = databaseNodeTokenQuestion.ask(this)
         if (useToken) {
             writeLine("§cIts currently not possible to use a token!")

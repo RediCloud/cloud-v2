@@ -8,4 +8,5 @@ dependencies {
     compileOnly(project(":repositories:service-repository"))
     compileOnly(project(":utils"))
     compileOnly(project(":database"))
+    compileOnly(project(":packets"))
 }

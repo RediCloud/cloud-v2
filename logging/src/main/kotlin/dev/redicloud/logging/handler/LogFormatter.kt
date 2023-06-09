@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat
 import java.util.logging.Formatter
 import java.util.logging.LogRecord
 
-class LogFormatter(val lineSeparator: Boolean, val format: (() -> String) = { "%message%" }) : Formatter() {
+class LogFormatter(val lineSeparator: Boolean) : Formatter() {
 
     companion object {
         val CLEAN = LogFormatter(false)
@@ -15,10 +15,7 @@ class LogFormatter(val lineSeparator: Boolean, val format: (() -> String) = { "%
     }
 
     override fun format(record: LogRecord): String {
-        val builder = StringBuilder()
-            builder.append(format().replace("%date%", DATE_FORMAT.format(record.millis))
-                .replace("%level%", record.level.localizedName)
-                .replace("%message%", super.formatMessage(record)))
+        val builder = StringBuilder().append(super.formatMessage(record))
         if (lineSeparator) builder.append(System.lineSeparator())
         if (record.thrown != null) {
             val writer = StringWriter()

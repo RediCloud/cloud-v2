@@ -1,6 +1,7 @@
 package dev.redicloud.console.utils
 
 import org.fusesource.jansi.Ansi
+import java.util.logging.Level
 import java.util.regex.Pattern
 
 
@@ -119,4 +120,37 @@ enum class ConsoleColor(
             } else null
         }
     }
+}
+
+fun getLevelColor(level: Level): ConsoleColor {
+    return when(level) {
+        Level.INFO -> ConsoleColor.WHITE
+        Level.WARNING -> ConsoleColor.YELLOW
+        Level.SEVERE -> ConsoleColor.RED
+        else -> {
+            if (level.intValue() >= Level.FINEST.intValue() && level.intValue() <= Level.FINE.intValue()) {
+                ConsoleColor.BLUE
+            }else {
+                ConsoleColor.WHITE
+            }
+        }
+    }
+}
+
+private val LEVEL_NAME_LENGTH = 7
+fun getNormedLevelName(level: Level, spaces: Boolean = true): String {
+    var name = when(level) {
+        Level.INFO -> "INFO"
+        Level.WARNING -> "WARN"
+        Level.SEVERE -> "ERROR"
+        Level.FINE -> "DEBUG"
+        Level.FINER -> "TRACE"
+        Level.FINEST -> "TRACE"
+        else -> level.name
+        // CONSOLE
+    }
+    while (name.length < LEVEL_NAME_LENGTH) {
+        name = " $name"
+    }
+    return name
 }

@@ -2,6 +2,7 @@ package dev.redicloud.tasks
 
 import dev.redicloud.event.CloudEvent
 import dev.redicloud.event.EventManager
+import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.AbstractPacket
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.tasks.executor.*
@@ -13,9 +14,13 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
-class CloudTaskManager(val eventManager: EventManager, val packetManager: PacketManager) {
+class CloudTaskManager(internal val eventManager: EventManager, internal val packetManager: PacketManager) {
 
-    private val tasks = ConcurrentHashMap<UUID, CloudTask>()
+    companion object {
+        val LOGGER = LogManager.logger(CloudTaskManager::class)
+    }
+
+    internal val tasks = ConcurrentHashMap<UUID, CloudTask>()
 
     @OptIn(DelicateCoroutinesApi::class)
     internal val scope = CoroutineScope(newFixedThreadPoolContext(2, "CloudTaskManager"))
@@ -27,11 +32,17 @@ class CloudTaskManager(val eventManager: EventManager, val packetManager: Packet
         return task.id
     }
 
-    fun unregister(id: UUID): CloudTask? = tasks.remove(id)
+    fun unregister(id: UUID): CloudTask? {
+        val task = tasks.remove(id)
+        task?.cancel()
+        return task
+    }
 
     fun unregister(task: CloudTask): CloudTask? = unregister(task.id)
 
     fun builder(): CloudTaskExecutorBuilder = CloudTaskExecutorBuilder(this)
+
+    fun getTasks(): List<CloudTask> = tasks.values.toList()
 
 }
 
@@ -41,9 +52,15 @@ class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManage
     private var executors: MutableList<CloudTaskExecutor> = mutableListOf()
     private var events: MutableList<KClass<out CloudEvent>> = mutableListOf()
     private var packets: MutableList<KClass<out AbstractPacket>> = mutableListOf()
+    private var instant: Boolean = false
 
     fun task(task: CloudTask): CloudTaskExecutorBuilder {
         this.task = task
+        return this
+    }
+
+    fun instant(): CloudTaskExecutorBuilder {
+        this.instant = true
         return this
     }
 
@@ -77,12 +94,14 @@ class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManage
 
     fun register(): CloudTask {
         if (this.task == null) throw IllegalStateException("Task must be set")
-        if (this.executors.isEmpty() && this.events.isEmpty() && this.packets.isEmpty()) {
+        if (this.executors.isEmpty() && this.events.isEmpty() && this.packets.isEmpty() && !instant) {
             throw IllegalStateException("At least one executor must be set")
         }
         val task = this.task!!
         executors.add(EventBasedCloudExecutor(task, manager.eventManager, events))
         executors.add(PacketBasedCloudExecutor(task, manager.packetManager, packets))
+        if (instant) executors.add(InstantCloudExecutor(task))
+        executors.forEach { task.addExecutor(it) }
         manager.register(task)
         return task
     }

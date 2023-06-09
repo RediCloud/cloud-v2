@@ -12,6 +12,8 @@ dependencies {
     compileOnly(project(":repositories:node-repository"))
     compileOnly(project(":repositories:server-repository"))
     compileOnly(project(":events"))
+    compileOnly(project(":tasks"))
+    compileOnly(project(":logging"))
 
 
     dependency("org.redisson:redisson:3.21.3")
