@@ -1,9 +1,11 @@
 package dev.redicloud.service.node.console
 
 import dev.redicloud.console.Console
+import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.jline.ConsoleQuestion
 import dev.redicloud.console.jline.ConsoleQuestionCondition
 import dev.redicloud.console.jline.ask
+import dev.redicloud.console.utils.ConsoleColor
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.database.config.DatabaseNode
@@ -154,7 +156,7 @@ class InitializeConsole() : Console(
 
     override fun sendHeader() {
         super.sendHeader()
-        writeLine("§8» §fPre-Checks§8:")
+        writeLine("§8» §fChecks§8:")
         writeLine("§f‾‾‾‾‾‾‾‾‾‾‾‾‾")
         writeLine("§8• §fLibraries §8» ${checkLibs()}")
         writeLine("§8• §fNo-Root-User §8» ${checkUser()}")

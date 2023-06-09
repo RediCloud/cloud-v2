@@ -21,17 +21,19 @@ interface IConsole : AutoCloseable {
 
     fun startAnimation(animation: AbstractConsoleAnimation)
 
+    fun cancelAnimations()
+
     fun animationRunning(): Boolean
 
     fun getCurrentScreen(): Screen
 
-    fun switchScreen(screen: Screen)
+    fun switchScreen(screen: Screen, cancelAnimations: Boolean = true)
 
     fun getScreens(): List<Screen>
 
     fun getScreen(name: String): Screen?
 
-    fun switchToDefaultScreen()
+    fun switchToDefaultScreen(cancelAnimations: Boolean = true)
 
     fun createScreen(
         name: String,
@@ -55,7 +57,7 @@ interface IConsole : AutoCloseable {
 
     fun disableCommands()
 
-    fun writeRaw(rawText: String, level: String = "§f   INFO", lineFormat: Boolean = true): Console
+    fun writeRaw(rawText: String, level: String = "§f   INFO", lineFormat: Boolean = true, cursorUp: Boolean = false): Console
 
     fun forceWriteLine(text: String): Console
 

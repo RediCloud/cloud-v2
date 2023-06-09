@@ -6,13 +6,15 @@ import java.time.Instant
 
 abstract class AbstractConsoleAnimation(
     val updateInterval: Long,
-    val staticCursor: Boolean
+    val staticCursor: Boolean,
+    val console: Console
 ) : Runnable {
 
     protected val finishHandlers: MutableList<() -> Unit> = mutableListOf()
+    protected val startHandlers: MutableList<() -> Unit> = mutableListOf()
     protected var cursorUp = 0
     protected var startInstant: Instant? = null
-    var console: Console? = null
+    internal var running = false
 
     fun addToCursorUp(amount: Int) {
         if (!staticCursor) cursorUp += amount
@@ -22,25 +24,32 @@ abstract class AbstractConsoleAnimation(
         finishHandlers.add(handler)
     }
 
+    fun addStartHandler(handler: () -> Unit) {
+        startHandlers.add(handler)
+    }
+
+    fun isRunning(): Boolean = running
+
     protected fun print(vararg input: String) {
-        if (this.console == null) throw IllegalStateException("Console is null")
         if (input.isEmpty()) return
-        var ansi = Ansi.ansi().saveCursorPosition().cursorDown(this.cursorUp).eraseLine(Ansi.Erase.ALL)
+        var ansi = Ansi.ansi().saveCursorPosition().cursorUp(this.cursorUp).eraseLine(Ansi.Erase.ALL)
         input.forEach { ansi = ansi.a(it) }
-        this.console!!.writeRaw(ansi.restoreCursorPosition().toString())
+        this.console.writeRaw(ansi.restoreCursorPosition().toString())
     }
 
     protected fun eraseLastLine() {
-        this.console!!.writeRaw(Ansi.ansi().reset().cursorUp(1).eraseLine().toString())
+        this.console.writeRaw(Ansi.ansi().reset().cursorUp(1).eraseLine().toString())
     }
 
     protected abstract fun handleTick(): Boolean
 
     override fun run() {
-        if (console == null) throw IllegalStateException("Console is null")
         this.startInstant = Instant.now()
-        this.console!!.forceWriteLine(System.lineSeparator())
-        while (!Thread.currentThread().isInterrupted && !this.handleTick()) {
+        this.console.forceWriteLine(System.lineSeparator())
+        var first = false
+        while (!Thread.currentThread().isInterrupted && !this.handleTick() && running) {
+            if (!first) this.startHandlers.forEach { it() }
+            first = true
             try {
                 Thread.sleep(this.updateInterval)
             }catch (e: InterruptedException) {

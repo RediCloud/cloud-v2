@@ -8,7 +8,7 @@ class ConsoleActor(val console: Console, override val identifier: UUID) : IComma
 
     override fun hasPermission(permission: String?): Boolean = true
     override fun sendMessage(text: String) {
-        console.writeRaw(text, "§fCOMMAND", true)
+        console.writeRaw(text, "§fCOMMAND", true, cursorUp = true)
     }
 
 }

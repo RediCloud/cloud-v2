@@ -12,10 +12,7 @@ import dev.redicloud.logging.handler.AcceptingLogHandler
 import dev.redicloud.logging.handler.LogFileHandler
 import dev.redicloud.logging.handler.LogFormatter
 import dev.redicloud.logging.handler.ThreadRecordDispatcher
-import dev.redicloud.utils.CLOUD_VERSION
-import dev.redicloud.utils.CONSOLE_HISTORY_FILE
-import dev.redicloud.utils.LOG_FOLDER
-import dev.redicloud.utils.USER_NAME
+import dev.redicloud.utils.*
 import kotlinx.coroutines.*
 import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.AnsiConsole
@@ -27,8 +24,6 @@ import org.jline.terminal.TerminalBuilder
 import org.jline.utils.InfoCmp
 import org.jline.utils.StyleResolver
 import java.io.IOException
-import java.io.PrintWriter
-import java.io.StringWriter
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.locks.Lock
@@ -60,7 +55,7 @@ open class Console(
     private val screens: MutableList<Screen> = mutableListOf(defaultScreen)
     override val commandManager = ConsoleCommandManager(this)
     override var lineFormat: String = System.getProperty("redicloud.console.lineformat", "§8[§f%time%§8] %level%§8: %tc%%message%")
-    private val runningAnimations: MutableMap<UUID, AbstractConsoleAnimation> = mutableMapOf()
+    private val runningAnimations: MutableMap<UUID, Pair<Job, AbstractConsoleAnimation>> = mutableMapOf()
     internal val terminal: Terminal
     internal val lineReader: ConsoleLineReader
     override var prompt: String = System.getProperty("redicloud.console.promt", "§8• %hc%%user%§8@§f%host% §8➔ §r")
@@ -154,6 +149,8 @@ open class Console(
             while (!Thread.currentThread().isInterrupted) {
                 line = readLineInput() ?: continue
 
+                runningAnimations.forEach { (_, animation) -> animation.second.addToCursorUp(1) }
+
                 inputReader.forEach { it.acceptInput(line) }
                 inputReader.clear()
 
@@ -171,8 +168,6 @@ open class Console(
                         LOGGER.severe("Error while routing/processing command", e)
                     }
                 }
-
-                runningAnimations.forEach { (_, animation) -> animation.addToCursorUp(1) }
             }
         }
     }
@@ -237,19 +232,28 @@ open class Console(
         this.lineReader.setPrompt(this.prompt)
     }
 
-    override fun runningAnimations(): List<AbstractConsoleAnimation> = runningAnimations.values.toList()
+    override fun runningAnimations(): List<AbstractConsoleAnimation> = runningAnimations.values.map { it.second }
 
     override fun startAnimation(animation: AbstractConsoleAnimation) {
-        animation.console = this
-
         val uniqueId = UUID.randomUUID()
-        runningAnimations[uniqueId] = animation
-
-        scope.launch {
+        var started = false
+        animation.addStartHandler { started = true }
+        val job = defaultScope.launch {
+            animation.running = true
             animation.run()
             runningAnimations.remove(uniqueId)
-            animation.console = null
+            animation.running = false
             animation.handleDone();
+        }
+        runningAnimations[uniqueId] = job to animation
+        while (!started) Thread.sleep(10)
+    }
+
+    override fun cancelAnimations() {
+        runningAnimations.forEach {
+            it.value.first.cancel()
+            it.value.second.running = false
+            it.value.second.handleDone()
         }
     }
 
@@ -257,10 +261,11 @@ open class Console(
 
     override fun getCurrentScreen(): Screen = currentScreen
 
-    override fun switchScreen(screen: Screen) {
+    override fun switchScreen(screen: Screen, cancelAnimations: Boolean) {
         if (screen == currentScreen) return
         printLock.lock()
         try {
+            if (cancelAnimations) cancelAnimations()
             screen.display()
             currentScreen = screen
         } finally {
@@ -285,11 +290,11 @@ open class Console(
         return screen
     }
 
-
-    override fun switchToDefaultScreen() {
+    override fun switchToDefaultScreen(cancelAnimations: Boolean) {
         if (currentScreen == defaultScreen) return
         printLock.lock()
         try {
+            if (cancelAnimations) cancelAnimations()
             defaultScreen.display()
             currentScreen = defaultScreen
         } finally {
@@ -327,16 +332,20 @@ open class Console(
         try {
             s.split("\n").forEach {
                 this.print(formatText(it, "\n", true, getLevelColor(logRecord.level).ansiCode + getNormedLevelName(logRecord.level)))
+                runningAnimations.values.forEach { it.second.addToCursorUp(1) }
             }
         } finally {
             printLock.unlock()
         }
     }
 
-    override fun writeRaw(rawText: String, level: String, lineFormat: Boolean): Console {
+    override fun writeRaw(rawText: String, level: String, lineFormat: Boolean, cursorUp: Boolean): Console {
         printLock.lock()
         try {
             this.print(formatText(rawText, "", lineFormat, level))
+            if (cursorUp) {
+                runningAnimations.values.forEach { it.second.addToCursorUp(1) }
+            }
             return this
         } finally {
             printLock.unlock()
@@ -358,10 +367,7 @@ open class Console(
             } else {
                 this.print("\r$content")
             }
-
-            if (runningAnimations.isNotEmpty()) {
-                runningAnimations.values.forEach { it.addToCursorUp(1) }
-            }
+            runningAnimations.values.forEach { it.second.addToCursorUp(1) }
         } finally {
             printLock.unlock()
         }
@@ -399,6 +405,7 @@ open class Console(
 
     @Throws(Exception::class)
     override fun close() {
+        cancelAnimations()
         this.scope.cancel()
         terminal.flush()
         terminal.close()
