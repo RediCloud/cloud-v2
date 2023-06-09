@@ -65,7 +65,6 @@ class NodeService(
             .register()
         taskManager.builder()
             .task(NodeSelfSuspendTask(this))
-            .instant()
             .event(NodeSuspendedEvent::class)
             .period(10.seconds)
             .register()

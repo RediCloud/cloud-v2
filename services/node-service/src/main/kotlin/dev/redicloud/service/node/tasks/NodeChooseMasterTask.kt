@@ -8,7 +8,7 @@ class NodeChooseMasterTask(val nodeRepository: NodeRepository) : CloudTask() {
 
     override suspend fun execute(): Boolean {
         val nodes = nodeRepository.getConnectedNodes()
-        if (nodes.any { it.master }) return true
+        if (nodes.any { it.master }) return false
 
         val sessions = nodes.mapNotNull { it.currentSession() }
         val oldest = sessions.minByOrNull { it.startTime }?.serviceId ?: return false
@@ -17,7 +17,7 @@ class NodeChooseMasterTask(val nodeRepository: NodeRepository) : CloudTask() {
         node.master = true
         nodeRepository.updateNode(node)
         getEventManager().fireEvent(NodeMasterChangedEvent(node, null))
-        return true
+        return false
     }
 
 }
