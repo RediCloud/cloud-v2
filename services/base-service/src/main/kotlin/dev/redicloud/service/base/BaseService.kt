@@ -1,5 +1,8 @@
 package dev.redicloud.service.base
 
+import dev.redicloud.commands.api.CommandArgumentParser
+import dev.redicloud.commands.api.CommandSuggester
+import dev.redicloud.commands.api.ICommandSuggester
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.codec.GsonCodec
@@ -7,9 +10,15 @@ import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
+import dev.redicloud.repository.node.CloudNode
+import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.service.base.packets.ServicePingPacket
 import dev.redicloud.service.base.packets.ServicePingResponse
+import dev.redicloud.service.base.parser.CloudNodeParser
+import dev.redicloud.service.base.parser.CloudServerParser
+import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
+import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
 import dev.redicloud.tasks.CloudTaskManager
 import dev.redicloud.utils.service.ServiceId
 import kotlin.system.exitProcess
@@ -54,6 +63,8 @@ abstract class BaseService(
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager)
 
+        this.registerParsers()
+        this.registerSuggesters()
         this.registerPackets()
     }
 
@@ -64,9 +75,19 @@ abstract class BaseService(
         databaseConnection.disconnect()
     }
 
+    private fun registerParsers() {
+        CommandArgumentParser.PARSERS[CloudNode::class] = CloudNodeParser(this.nodeRepository)
+        CommandArgumentParser.PARSERS[CloudServer::class] = CloudServerParser(this.serverRepository)
+    }
+
+    private fun registerSuggesters() {
+        ICommandSuggester.SUGGESTERS.add(RegisteredCloudNodeSuggester(this.nodeRepository))
+        ICommandSuggester.SUGGESTERS.add(ConnectedCloudNodeSuggester(this.nodeRepository))
+    }
+
     private fun registerPackets() {
         packetManager.registerPacket(ServicePingPacket())
-        packetManager.registerPacket(ServicePingResponse())
+        packetManager.registerPacket(ServicePingResponse(-1L))
     }
 
 }
