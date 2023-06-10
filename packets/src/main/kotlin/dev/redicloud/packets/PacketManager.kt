@@ -54,7 +54,8 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
                 delay(3.seconds)
                 packetsOfLast3Seconds.remove(packet)
             }
-            packetResponses.forEach {
+            //TODO
+            ArrayList(packetResponses).forEach {
                 try {
                     it.handle(packet)
                 }catch (e: Exception) {

@@ -30,7 +30,7 @@ class PacketResponse(val packetManager: PacketManager, val packet: AbstractPacke
     }
 
     fun waitBlocking(): AbstractPacket? {
-        val timeOut = System.currentTimeMillis() + timeOut.inWholeMilliseconds
+        val timeOut = System.currentTimeMillis() + this.timeOut.inWholeMilliseconds
         if (!packetManager.packetResponses.contains(this)) packetManager.packetResponses.add(this)
         while (responses.isEmpty()) {
             if (System.currentTimeMillis() > timeOut) {
@@ -38,7 +38,7 @@ class PacketResponse(val packetManager: PacketManager, val packet: AbstractPacke
                 timeOutJob?.cancel()
                 return null
             }
-            Thread.sleep(timeOut / 15)
+            Thread.sleep(this.timeOut.inWholeMilliseconds / 15)
         }
         return responses.first()
     }
@@ -49,7 +49,7 @@ class PacketResponse(val packetManager: PacketManager, val packet: AbstractPacke
     }
 
     internal fun handle(packet: AbstractPacket) {
-        if (packet.referenceId != packet.packetId) return
+        if (packet.referenceId != this.packet.packetId) return
         responses.add(packet)
         val newMap = ConcurrentHashMap(responseQueue)
         newMap.forEach { (block, count) ->

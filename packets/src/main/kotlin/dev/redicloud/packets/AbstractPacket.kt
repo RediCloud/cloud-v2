@@ -14,6 +14,11 @@ abstract class AbstractPacket {
 
     open fun received() {}
 
+    fun asAnswerOf(packet: AbstractPacket): AbstractPacket {
+        referenceId = packet.packetId
+        return this
+    }
+
     suspend fun respond(packet: AbstractPacket) {
         if (sender == null) return
         if (manager == null) return
