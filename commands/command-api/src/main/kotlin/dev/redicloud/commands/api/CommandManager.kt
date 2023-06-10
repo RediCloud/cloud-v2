@@ -92,7 +92,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
             .firstOrNull { it.isThis(input, false) }
             ?: return CommandResponse(
                 CommandResponseType.INVALID_SUB_PATH,
-                "Invalid sub path for command '$commandName' ${parameters.joinToString(" ")}"
+                "Invalid sub path for command '$commandName${if(parameters.isEmpty()) "" else (" ${parameters.joinToString(" ")}").removeLastSpaces()}'"
             )
 
         if (!actor.hasPermission(subCommand.permission)) return CommandResponse(
