@@ -4,6 +4,7 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.service.base.BaseService
 import dev.redicloud.service.node.commands.ExitCommand
+import dev.redicloud.service.node.commands.ClusterCommand
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.events.NodeDisconnectEvent
 import dev.redicloud.service.node.events.NodeSuspendedEvent
@@ -72,6 +73,7 @@ class NodeService(
 
     private fun registerCommands() {
         console.commandManager.register(ExitCommand())
+        console.commandManager.register(ClusterCommand(this))
     }
 
     private fun initShutdownHook() {
