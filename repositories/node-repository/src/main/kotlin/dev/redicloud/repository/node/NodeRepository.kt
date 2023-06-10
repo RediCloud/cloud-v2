@@ -31,6 +31,9 @@ class NodeRepository(databaseConnection: DatabaseConnection, serviceId: ServiceI
         = getConnectedNodes().firstOrNull { it.master }
 
     suspend fun getConnectedNodes(): List<CloudNode> =
-        getConnectedServices().filter { it.serviceId.type == ServiceType.NODE } as List<CloudNode>
+        getConnectedServices().filter { it.serviceId.type == ServiceType.NODE }.toList() as List<CloudNode>
+
+    suspend fun getRegisteredNodes(): List<CloudNode> =
+        getRegisteredServices().filter { it.serviceId.type == ServiceType.NODE }.toList() as List<CloudNode>
 
 }
