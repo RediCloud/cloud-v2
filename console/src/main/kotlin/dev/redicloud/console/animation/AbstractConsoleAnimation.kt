@@ -15,6 +15,7 @@ abstract class AbstractConsoleAnimation(
     protected var cursorUp = 0
     protected var startInstant: Instant? = null
     internal var running = false
+    protected var firstMessage = false
 
     fun addToCursorUp(amount: Int) {
         if (!staticCursor) cursorUp += amount
@@ -30,15 +31,13 @@ abstract class AbstractConsoleAnimation(
 
     fun isRunning(): Boolean = running
 
-    protected fun print(vararg input: String) {
-        if (input.isEmpty()) return
-        var ansi = Ansi.ansi().saveCursorPosition().cursorUp(this.cursorUp).eraseLine(Ansi.Erase.ALL)
-        input.forEach { ansi = ansi.a(it) }
-        this.console.writeRaw(ansi.restoreCursorPosition().toString())
+    protected fun print(input: String) {
+        val ansi = Ansi.ansi().saveCursorPosition().cursorUp(this.cursorUp).eraseLine(Ansi.Erase.ALL)
+        this.console.writeRaw(input, ensureEndsWith = "\n", eraseLine = false, ansi = ansi, restoreCursor = true)
     }
 
     protected fun eraseLastLine() {
-        this.console.writeRaw(Ansi.ansi().reset().cursorUp(1).eraseLine().toString())
+        this.console.writeRaw(Ansi.ansi().reset().cursorUp(1).eraseLine().toString(), eraseLine = false)
     }
 
     protected abstract fun handleTick(): Boolean

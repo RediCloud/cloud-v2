@@ -4,6 +4,7 @@ import dev.redicloud.console.Console
 import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.commands.ConsoleCommandManager
 import dev.redicloud.console.utils.Screen
+import org.fusesource.jansi.Ansi
 
 
 interface IConsole : AutoCloseable {
@@ -57,7 +58,16 @@ interface IConsole : AutoCloseable {
 
     fun disableCommands()
 
-    fun writeRaw(rawText: String, level: String = "§f   INFO", lineFormat: Boolean = true, cursorUp: Boolean = false): Console
+    fun writeRaw(
+        rawText: String,
+         ensureEndsWith: String = "",
+         level: String = "§f INFO",
+         lineFormat: Boolean = true,
+         cursorUp: Boolean = false,
+         eraseLine: Boolean = true,
+         ansi: Ansi? = null,
+        restoreCursor: Boolean = false
+    ): Console
 
     fun forceWriteLine(text: String): Console
 

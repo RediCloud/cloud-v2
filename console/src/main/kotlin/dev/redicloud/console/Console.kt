@@ -202,7 +202,7 @@ open class Console(
         return reader.readNextInput()
     }
 
-    fun formatText(input: String, ensureEndsWith: String, useLineFormat: Boolean = true, level: String = "§f   INFO"): String {
+    fun formatText(input: String, ensureEndsWith: String, useLineFormat: Boolean = true, level: String = "§f INFO", ansi: Ansi? = null, restoreCursor: Boolean = false): String {
         val l = if (useLineFormat) lineFormat.replace("%message%", input) else input
         val formatted = l
             .replace("%level%", level)
@@ -216,7 +216,16 @@ open class Console(
             '§',
             formatted
         )
-        if (!content.endsWith(ensureEndsWith)) {
+        var endWith = content.endsWith(ensureEndsWith)
+        if (ansi != null) {
+            var a = ansi.a(content)
+            if (restoreCursor) {
+                endWith = true
+                a = a.restoreCursorPosition()
+            }
+            content = a.toString()
+        }
+        if (!endWith) {
             content += ensureEndsWith
         }
         return content
@@ -339,10 +348,19 @@ open class Console(
         }
     }
 
-    override fun writeRaw(rawText: String, level: String, lineFormat: Boolean, cursorUp: Boolean): Console {
+    override fun writeRaw(rawText: String, ensureEndsWith: String, level: String, lineFormat: Boolean, cursorUp: Boolean, eraseLine: Boolean, ansi: Ansi?, restoreCursor: Boolean): Console {
         printLock.lock()
         try {
-            this.print(formatText(rawText, "", lineFormat, level))
+            val content = formatText(rawText, ensureEndsWith, lineFormat, level, ansi, restoreCursor)
+            if (ansiSupported && eraseLine) {
+                this.print(
+                    "${Ansi.ansi().eraseLine(Ansi.Erase.ALL)}\r$content${
+                        Ansi.ansi().reset()
+                    }"
+                )
+            } else {
+                this.print(content)
+            }
             if (cursorUp) {
                 runningAnimations.values.forEach { it.second.addToCursorUp(1) }
             }
@@ -365,7 +383,7 @@ open class Console(
                     }"
                 )
             } else {
-                this.print("\r$content")
+                this.print(content)
             }
             runningAnimations.values.forEach { it.second.addToCursorUp(1) }
         } finally {

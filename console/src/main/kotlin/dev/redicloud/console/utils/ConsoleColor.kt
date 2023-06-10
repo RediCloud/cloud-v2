@@ -137,7 +137,7 @@ fun getLevelColor(level: Level): ConsoleColor {
     }
 }
 
-private val LEVEL_NAME_LENGTH = 7
+private val LEVEL_NAME_LENGTH = 5
 fun getNormedLevelName(level: Level, spaces: Boolean = true): String {
     var name = when(level) {
         Level.INFO -> "INFO"
@@ -147,7 +147,7 @@ fun getNormedLevelName(level: Level, spaces: Boolean = true): String {
         Level.FINER -> "TRACE"
         Level.FINEST -> "TRACE"
         else -> level.name
-        // CONSOLE
+        // COMMAND
     }
     while (name.length < LEVEL_NAME_LENGTH) {
         name = " $name"
