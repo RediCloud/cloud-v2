@@ -10,7 +10,6 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
     val required: Boolean //TODO
     val clazz: KClass<*>
     val parser: CommandArgumentParser<*>?
-    val actorArgument: Boolean
     val annotatedSuggester: ICommandSuggester
     val suggester: CommandArgumentSuggester
     val suggesterParameter: Array<String>
@@ -18,14 +17,12 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
     init {
         if (parameter.type.kotlin.superclasses.any { it == ICommandActor::class }) {
             name = "_actor"
-            required = true
+            required = false
             clazz = parameter.type.kotlin
             parser = null
-            actorArgument = true
             annotatedSuggester = EmptySuggester()
             suggesterParameter = arrayOf()
         }else {
-            actorArgument = false
             if (!parameter.isAnnotationPresent(CommandParameter::class.java)) {
                 name = parameter.name
                 required = !parameter.isImplicit //TODO check String? and Int? etc.
@@ -41,14 +38,16 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
             clazz = parameter.type.kotlin
             parser = CommandArgumentParser.PARSERS.filter {
                 it.key.qualifiedName!!.replace("?", "") == clazz.qualifiedName!!.replace("?", "")
-            }.values.first()
+            }.values.firstOrNull() ?: throw IllegalStateException("No parser found for ${clazz.qualifiedName} in arguments of '${subCommand.command.getName()} ${subCommand.path}'")
         }
         suggester = CommandArgumentSuggester(this)
     }
 
+    fun isActorArgument(): Boolean = name == "_actor"
+
     fun isThis(input: String, predict: Boolean): Boolean {
         if (!subCommand.isThis(input, false)) return false
-        if (actorArgument) return false
+        if (isActorArgument()) return false
         if (input.isEmpty()) return false
         var argumentPath = input.lowercase()
         subCommand.getSubPathsWithoutArguments().forEach {
