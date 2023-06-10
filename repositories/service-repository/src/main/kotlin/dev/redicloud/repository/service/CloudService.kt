@@ -18,6 +18,11 @@ abstract class CloudService(
         return last
     }
 
+    fun currentOrLastsession(): ServiceSession? {
+        if (sessions.isEmpty()) return null
+        return sessions.last()
+    }
+
     fun isSuspended(): Boolean {
         val current = currentSession() ?: return false
         return current.suspended
@@ -25,7 +30,7 @@ abstract class CloudService(
 
     fun getSessions(): List<ServiceSession> = sessions.toList()
 
-    fun isConnected(): Boolean = currentSession() != null
+    fun isConnected(): Boolean = currentSession() != null && !isSuspended()
 
     fun firstSession(): ServiceSession? {
         if (sessions.isEmpty()) return null
