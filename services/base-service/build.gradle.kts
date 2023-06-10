@@ -14,6 +14,7 @@ dependencies {
     compileOnly(project(":events"))
     compileOnly(project(":tasks"))
     compileOnly(project(":logging"))
+    compileOnly(project(":commands:command-api"))
 
 
     dependency("org.redisson:redisson:3.21.3")
