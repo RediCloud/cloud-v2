@@ -11,7 +11,8 @@ suspend fun ServiceRepository<*>.pingService(serviceId: ServiceId): Long {
     val start = System.currentTimeMillis()
     val response = packetManager.publish(ServicePingPacket(), serviceId)
         .withTimeOut(5.seconds)
-        .waitBlocking() ?: return -1L
+        .waitBlocking()
+        ?: return -1L
     if (response !is ServicePingResponse) return -1L
-    return start - System.currentTimeMillis()
+    return response.receivedPingTime - start
 }

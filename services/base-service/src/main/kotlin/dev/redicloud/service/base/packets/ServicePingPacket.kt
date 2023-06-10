@@ -7,8 +7,9 @@ import kotlinx.coroutines.launch
 
 class ServicePingPacket : AbstractPacket() {
     override fun received() {
+        val s = System.currentTimeMillis()
         defaultScope.launch {
-            getManager()!!.publish(ServicePingResponse(), sender!!)
+            getManager()!!.publish(ServicePingResponse(s).asAnswerOf(this@ServicePingPacket), sender!!)
         }
     }
 }
