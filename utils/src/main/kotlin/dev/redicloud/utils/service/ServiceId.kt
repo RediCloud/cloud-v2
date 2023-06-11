@@ -20,7 +20,7 @@ fun String.isServiceId(): Boolean {
     return try {
         ServiceId.fromString(this)
         true
-    } catch (e: IllegalArgumentException) {
+    } catch (e: Exception) {
         false
     }
 }

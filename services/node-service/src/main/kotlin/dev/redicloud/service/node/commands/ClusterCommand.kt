@@ -57,6 +57,10 @@ class ClusterCommand(private val nodeService: NodeService) : CommandBase() {
         actor: ConsoleActor,
         @CommandParameter("node", true, ConnectedCloudNodeSuggester::class) node: CloudNode
     ) {
+        if (!node.isConnected()) {
+            actor.sendMessage("${node.getIdentifyingName()} is not connected to the cluster!")
+            return
+        }
         sendPingMessage(node, actor, "${node.getIdentifyingName()} §8> §7")
     }
 
