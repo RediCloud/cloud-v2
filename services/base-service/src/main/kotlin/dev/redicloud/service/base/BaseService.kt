@@ -1,7 +1,6 @@
 package dev.redicloud.service.base
 
 import dev.redicloud.commands.api.CommandArgumentParser
-import dev.redicloud.commands.api.CommandSuggester
 import dev.redicloud.commands.api.ICommandSuggester
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.database.DatabaseConnection
@@ -13,7 +12,8 @@ import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
-import dev.redicloud.repository.server.version.MinecraftVersion
+import dev.redicloud.repository.server.version.ServerVersionRepository
+import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.service.base.packets.ServicePingPacket
 import dev.redicloud.service.base.packets.ServicePingResponse
 import dev.redicloud.service.base.parser.CloudNodeParser
@@ -41,6 +41,7 @@ abstract class BaseService(
 
     val nodeRepository: NodeRepository
     val serverRepository: ServerRepository
+    val serverVersionRepository: ServerVersionRepository
 
     val packetManager: PacketManager
     val eventManager: EventManager
@@ -48,7 +49,7 @@ abstract class BaseService(
 
     init {
         runBlocking {
-            MinecraftVersion.loadIfNotLoaded()
+            ServerVersion.loadIfNotLoaded()
             JavaVersion.loadIfNotLoaded()
         }
         databaseConnection = if (_databaseConnection != null && _databaseConnection.isConnected()) {
@@ -68,6 +69,7 @@ abstract class BaseService(
         taskManager = CloudTaskManager(eventManager, packetManager)
 
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager)
+        serverVersionRepository = ServerVersionRepository(databaseConnection)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager)
 
         this.registerParsers()
