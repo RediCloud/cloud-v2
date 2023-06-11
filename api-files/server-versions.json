@@ -306,5 +306,15 @@
     "supportedJavaVersion": [
       "17"
     ]
+  },
+  {
+    "name": "3.2.0-SNAPSHOT",
+    "protocolId": 763,
+    "supportedJavaVersion": [
+      "17",
+      "8",
+      "16"
+    ],
+    "versionType": "VELOCITY"
   }
 ]
