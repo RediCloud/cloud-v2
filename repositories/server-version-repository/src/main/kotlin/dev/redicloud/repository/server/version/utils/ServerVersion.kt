@@ -1,6 +1,7 @@
 package dev.redicloud.repository.server.version.utils
 
 import com.google.gson.annotations.Expose
+import com.google.gson.reflect.TypeToken
 import dev.redicloud.utils.prettyPrintGson
 import dev.redicloud.utils.versions.JavaVersion
 import khttp.get
@@ -24,8 +25,9 @@ class ServerVersion(
 
         suspend fun loadOnlineVersions() {
             CACHED_MINECRAFT_VERSIONS.clear()
-            val json = get("https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/server-versions.json").jsonObject.toString()
-            val list = prettyPrintGson.fromJson(json, List::class.java) as List<ServerVersion>
+            val json = get("https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/server-versions.json").text
+            val type = object : TypeToken<ArrayList<ServerVersion>>() {}.type
+            val list: List<ServerVersion> = prettyPrintGson.fromJson(json, type)
             CACHED_MINECRAFT_VERSIONS.addAll(list)
         }
         suspend fun loadIfNotLoaded() {

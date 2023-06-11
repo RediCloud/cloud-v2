@@ -1,6 +1,9 @@
 package dev.redicloud.utils.versions
 
+import com.google.gson.JsonArray
+import com.google.gson.reflect.TypeToken
 import dev.redicloud.utils.prettyPrintGson
+import org.json.JSONArray
 
 data class JavaVersion(val version: String, val id: Int) {
     companion object {
@@ -17,8 +20,10 @@ data class JavaVersion(val version: String, val id: Int) {
 
         suspend fun loadOnlineVersions() {
             CACHED_JAVA_VERSIONS.clear()
-            val json = khttp.get("https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/java-versions.json").jsonObject.toString()
-            val list = prettyPrintGson.fromJson(json, List::class.java) as List<JavaVersion>
+            val json =
+                khttp.get("https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/java-versions.json").text
+            val type = object : TypeToken<ArrayList<JavaVersion>>() {}.type
+            val list: List<JavaVersion> = prettyPrintGson.fromJson(json, type)
             CACHED_JAVA_VERSIONS.addAll(list)
         }
 
