@@ -22,7 +22,7 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
         private val LOGGER = LogManager.logger(PacketManager::class.java)
     }
 
-    private val registeredPackets = mutableListOf<AbstractPacket>()
+    private val registeredPackets = mutableListOf<KClass<out AbstractPacket>>()
     private val serviceTopic: RTopic
     private val broadcastTopic: RTopic
     private val typedTopics: MutableMap<ServiceType, RTopic> = mutableMapOf()
@@ -42,10 +42,10 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
 
         val messageListener = MessageListener<PackedPacket> { channel, messageData ->
             val data = messageData.data
-            val p = registeredPackets.firstOrNull { it::class.java.name == messageData.clazz }
+            val p = registeredPackets.firstOrNull { it.qualifiedName == messageData.clazz }
                 ?: return@MessageListener
-            LOGGER.finest("Receive packet ${p::class.simpleName} in channel $channel")
-            val packet = gson.fromJson(data, p::class.java)
+            LOGGER.finest("Receive packet ${p.simpleName} in channel $channel")
+            val packet = gson.fromJson(data, p.java)
             if (!packet.allowLocalReceiver && packet.sender == serviceId) return@MessageListener
             packet.manager = this
             packet.received()
@@ -59,15 +59,15 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
                 try {
                     it.handle(packet)
                 }catch (e: Exception) {
-                    LOGGER.severe("Error while handling packet response ${p::class.java.simpleName}!", e)
+                    LOGGER.severe("Error while handling packet response ${packet::class.java.simpleName}!", e)
                 }
             }
             listeners.forEach {
-                if (it.packetClazz == p::class) {
+                if (packet::class == it.packetClazz) {
                     try {
                         (it as PacketListener<AbstractPacket>).listener(packet)
                     } catch (e: Exception) {
-                        LOGGER.severe("Error while handling packet ${p::class.java.simpleName}!", e)
+                        LOGGER.severe("Error while handling packet ${packet::class.java.simpleName}!", e)
                     }
                 }
             }
@@ -89,19 +89,15 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
         return registeredPackets.any { it::class == packetClazz }
     }
 
-    fun isPacketRegistered(packet: AbstractPacket): Boolean {
-        return registeredPackets.contains(packet)
-    }
-
     fun isPacketRegistered(clazz: Class<out AbstractPacket>): Boolean {
         return registeredPackets.any { it::class.java == clazz }
     }
 
-    fun registerPacket(packet: AbstractPacket) {
+    fun registerPacket(packet: KClass<out AbstractPacket>) {
         registeredPackets.add(packet)
     }
 
-    fun unregisterPacket(packet: AbstractPacket) {
+    fun unregisterPacket(packet: KClass<out AbstractPacket>) {
         registeredPackets.remove(packet)
     }
 
