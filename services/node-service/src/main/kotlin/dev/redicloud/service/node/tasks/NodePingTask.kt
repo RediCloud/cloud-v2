@@ -2,7 +2,7 @@ package dev.redicloud.service.node.tasks
 
 import dev.redicloud.service.base.repository.pingService
 import dev.redicloud.service.node.NodeService
-import dev.redicloud.service.node.repository.suspendNode
+import dev.redicloud.service.node.repository.node.suspendNode
 import dev.redicloud.tasks.CloudTask
 import dev.redicloud.utils.service.ServiceId
 import kotlinx.coroutines.delay
