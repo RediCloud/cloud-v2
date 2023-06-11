@@ -1,11 +1,9 @@
 package dev.redicloud.service.node.console
 
 import dev.redicloud.console.Console
-import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.jline.ConsoleQuestion
 import dev.redicloud.console.jline.ConsoleQuestionCondition
 import dev.redicloud.console.jline.ask
-import dev.redicloud.console.utils.ConsoleColor
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.database.config.DatabaseNode
@@ -16,11 +14,10 @@ import dev.redicloud.service.node.NodeConfiguration
 import dev.redicloud.utils.*
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.utils.versions.*
 import java.util.*
 import java.util.logging.Filter
 import java.util.logging.Level
-import java.util.logging.LogRecord
-import kotlin.system.exitProcess
 
 class InitializeConsole() : Console(
     "unknown", null, logLevel = getLogLevelByProperty() ?: Level.SEVERE, uninstallAnsiOnClose = false
@@ -190,9 +187,9 @@ class InitializeConsole() : Console(
     }
 
     private fun checkJava(): String {
-        return if (supportedJavaVersions.contains(getJavaVersion())) {
+        return if (isJavaVersionSupported(getJavaVersion())) {
             "§2✓ §8(§fJava: %hc%${System.getProperty("java.version")}§8)"
-        } else if (notTestedJavaVersions.contains(getJavaVersion())) {
+        } else if (isJavaVersionNotSupported(getJavaVersion())) {
             "§e§l~ §8(§eJava: ${System.getProperty("java.version")}§8| §enot tested§8)"
         } else {
             "§4✘ §8(§cJava: %${System.getProperty("java.version")}§8| §cnot supported§8)"

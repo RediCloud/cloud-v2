@@ -13,6 +13,7 @@ import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
+import dev.redicloud.repository.server.version.MinecraftVersion
 import dev.redicloud.service.base.packets.ServicePingPacket
 import dev.redicloud.service.base.packets.ServicePingResponse
 import dev.redicloud.service.base.parser.CloudNodeParser
@@ -21,6 +22,8 @@ import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
 import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
 import dev.redicloud.tasks.CloudTaskManager
 import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.utils.versions.JavaVersion
+import kotlinx.coroutines.runBlocking
 import kotlin.system.exitProcess
 
 abstract class BaseService(
@@ -44,6 +47,10 @@ abstract class BaseService(
     val taskManager: CloudTaskManager
 
     init {
+        runBlocking {
+            MinecraftVersion.loadIfNotLoaded()
+            JavaVersion.loadIfNotLoaded()
+        }
         databaseConnection = if (_databaseConnection != null && _databaseConnection.isConnected()) {
             _databaseConnection
         } else {
