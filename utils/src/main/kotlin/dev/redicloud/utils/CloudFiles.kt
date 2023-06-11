@@ -8,6 +8,7 @@ private val cloudPath: String = System.getProperty("redicloud.cloud.path") ?: Pa
 
 val NODE_JSON = CloudFile("node.json")
 val TEMP_FOLDER = CloudFile("tmp", folder = true)
+val TEMP_SERVER_VERSION_FOLDER = CloudFile("server-version", "tmp", folder = true)
 val STATIC_FOLDER = CloudFile("static", folder = true)
 val STORAGE_FOLDER = CloudFile("storage", folder = true)
 val LOG_FOLDER = CloudFile("logs", "storage", folder = true)
