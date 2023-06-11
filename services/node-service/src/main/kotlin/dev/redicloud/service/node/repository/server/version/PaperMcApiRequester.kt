@@ -8,8 +8,12 @@ import khttp.get
 class PaperMcApiRequester(val type: CloudServerVersionType) {
 
     init {
-        if (type != CloudServerVersionType.VELOCITY && type != CloudServerVersionType.PAPER && type != CloudServerVersionType.FOLIA)
+        if (type != CloudServerVersionType.VELOCITY
+            && type != CloudServerVersionType.PAPER
+            && type != CloudServerVersionType.FOLIA
+            && type != CloudServerVersionType.WATERFALL) {
             throw IllegalArgumentException("This server version is not available on papermc api")
+        }
     }
 
     companion object {
