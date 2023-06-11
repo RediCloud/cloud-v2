@@ -2,8 +2,10 @@ package dev.redicloud.repository.template.file
 
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
+import dev.redicloud.packets.PacketManager
+import dev.redicloud.repository.node.NodeRepository
 
-class FileTemplateRepository(databaseConnection: DatabaseConnection) :
+class FileTemplateRepository(databaseConnection: DatabaseConnection, val packetManager: PacketManager, val nodeRepository: NodeRepository) :
     DatabaseBucketRepository<FileTemplate>(databaseConnection, "file-template") {
 
     suspend fun getTemplate(name: String, prefix: String): FileTemplate? {
