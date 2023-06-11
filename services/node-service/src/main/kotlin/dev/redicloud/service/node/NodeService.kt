@@ -25,13 +25,7 @@ class NodeService(
 
     private val console: NodeConsole = NodeConsole(configuration, eventManager)
 
-    companion object {
-        lateinit var INSTANCE: NodeService
-    }
-
-
     init {
-        INSTANCE = this
         runBlocking {
             this@NodeService.initShutdownHook()
 
@@ -78,7 +72,7 @@ class NodeService(
     }
 
     private fun registerCommands() {
-        console.commandManager.register(ExitCommand())
+        console.commandManager.register(ExitCommand(this))
         console.commandManager.register(ClusterCommand(this))
     }
 
