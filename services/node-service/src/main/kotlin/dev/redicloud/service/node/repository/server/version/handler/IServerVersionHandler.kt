@@ -25,13 +25,13 @@ interface IServerVersionHandler {
 
     suspend fun patch(version: CloudServerVersion)
 
-    fun isPatched(version: CloudServerVersion): Boolean = version.libPattern != null && File(".patched", getFolder(version).absolutePath).exists()
+    fun isPatched(version: CloudServerVersion): Boolean = version.libPattern != null && File(getFolder(version).absolutePath, ".patched").exists()
 
     fun isPatchVersion(version: CloudServerVersion): Boolean = version.libPattern != null
 
-    fun getJar(version: CloudServerVersion): File = File("$version.name.jar", getFolder(version).absolutePath)
+    fun getJar(version: CloudServerVersion): File = File(getFolder(version).absolutePath, "$version.name.jar")
 
-    fun getFolder(version: CloudServerVersion): File = File(version.name, MINECRAFT_VERSIONS_FOLDER.getFile().absolutePath)
+    fun getFolder(version: CloudServerVersion): File = File(MINECRAFT_VERSIONS_FOLDER.getFile().absolutePath, version.name)
 
     companion object {
         private val CACHE = mutableMapOf<CloudServerVersionType, IServerVersionHandler>()

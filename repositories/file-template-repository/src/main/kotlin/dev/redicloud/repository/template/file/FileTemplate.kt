@@ -6,7 +6,7 @@ import java.io.File
 data class FileTemplate(val name: String, val prefix: String, val inherited: MutableList<String>) {
 
     fun getFolder(): File {
-        val parent = File(prefix, TEMPLATE_FOLDER.getFile().absolutePath)
+        val parent = File(TEMPLATE_FOLDER.getFile().absolutePath, prefix)
         return File(name, parent.absolutePath)
     }
 
