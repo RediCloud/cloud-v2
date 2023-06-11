@@ -33,3 +33,5 @@ include("commands:command-api")
 findProject(":commands:command-api")?.name = "command-api"
 include("logging")
 include("tasks")
+include("repositories:server-version-repository")
+findProject(":repositories:server-version-repository")?.name = "server-version-repository"
