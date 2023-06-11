@@ -24,7 +24,7 @@ class ServerVersion(
 
         suspend fun loadOnlineVersions() {
             CACHED_MINECRAFT_VERSIONS.clear()
-            val json = get("https://github.com/RediCloud/cloud-v2/api-files/minecraft-versions.json").jsonObject.toString()
+            val json = get("https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/server-versions.json").jsonObject.toString()
             val list = prettyPrintGson.fromJson(json, List::class.java) as List<ServerVersion>
             CACHED_MINECRAFT_VERSIONS.addAll(list)
         }

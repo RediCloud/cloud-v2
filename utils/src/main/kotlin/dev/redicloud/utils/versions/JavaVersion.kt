@@ -17,7 +17,7 @@ data class JavaVersion(val version: String, val id: Int) {
 
         suspend fun loadOnlineVersions() {
             CACHED_JAVA_VERSIONS.clear()
-            val json = khttp.get("https://github.com/RediCloud/cloud-v2/api-files/java-versions.json").jsonObject.toString()
+            val json = khttp.get("https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/java-versions.json").jsonObject.toString()
             val list = prettyPrintGson.fromJson(json, List::class.java) as List<JavaVersion>
             CACHED_JAVA_VERSIONS.addAll(list)
         }
