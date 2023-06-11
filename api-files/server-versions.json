@@ -315,6 +315,6 @@
       "8",
       "16"
     ],
-    "versionType": "VELOCITY"
+    "versionType": ["VELOCITY"]
   }
 ]
