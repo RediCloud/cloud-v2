@@ -85,7 +85,7 @@ class CommandSubBase(
 
     fun parseToOptimalPath(input: String): String? {
         if (!command.isThis(input, false)) return null
-        val split = input.split(" ")
+        val split = input.removeLastSpaces().split(" ")
         if (split.size < 2) return input
         val parameters = split.drop(1)
         val arguments = arguments.filter { !it.isActorArgument() }
@@ -111,9 +111,9 @@ class CommandSubBase(
         if (!command.isThis(input, false)) return false
         val split = if (predicate) input.split(" ") else input.removeLastSpaces().split(" ")
         if (split.size == 1 && path.isEmpty()) return true
-        if (split.size < 2) return input.endsWith(" ")
+        if (split.size < 2 && predicate) return input.endsWith(" ")
         val parameters = split.drop(1)
-        val possibleFullPaths = command.getPaths()
+        val possibleFullPaths = getSubPaths()
         val matched = possibleFullPaths.toMutableList()
         var index = -1
         parameters.forEach {
@@ -129,19 +129,7 @@ class CommandSubBase(
             matched.addAll(possible)
         }
 
-        if (matched.size > 2 && !predicate) return false
-
-        if (matched.isEmpty()) return false
-
-        return if (predicate) {
-            command.getSubCommands()
-                .any { subCommand -> subCommand.getSubPaths()
-                    .any { path -> matched.any { it.lowercase().startsWith(path.lowercase()) } } }
-        }else {
-            command.getSubCommands()
-                .any { subCommand -> subCommand.getSubPaths()
-                    .any { path -> matched.first().lowercase() == path.lowercase() } }
-        }
+        return matched.isNotEmpty()
     }
 
     fun getUsage(): String = "${command.getName()} ${getSubPaths().first()}"

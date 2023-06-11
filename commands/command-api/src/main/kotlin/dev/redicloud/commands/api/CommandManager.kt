@@ -76,7 +76,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
 
     fun handleInput(actor: K, input: String): CommandResponse {
         if (input.isBlank()) return CommandResponse(CommandResponseType.BLANK_INPUT, "Command cannot be blank")
-        val split = input.split(" ")
+        val split = input.removeLastSpaces().split(" ")
         val commandName = split[0].lowercase()
         val parameters = split.drop(1)
         val command = getCommand(commandName)
