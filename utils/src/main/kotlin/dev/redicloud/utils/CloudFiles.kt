@@ -1,7 +1,6 @@
 package dev.redicloud.utils
 
 import java.io.File
-import java.nio.file.Path
 import java.nio.file.Paths
 
 private val cloudPath: String = System.getProperty("redicloud.cloud.path") ?: Paths.get("").toAbsolutePath().toString()
@@ -14,7 +13,7 @@ val STORAGE_FOLDER = CloudFile("storage", folder = true)
 val LOG_FOLDER = CloudFile("logs", "storage", folder = true)
 val CONSOLE_HISTORY_FILE = CloudFile(".console.history", "storage/logs")
 val MINECRAFT_VERSIONS_FOLDER = CloudFile("versions", "storage", folder = true)
-val CACHED_TEMPLATES = CloudFile("cachedTemplates", "storage", folder = true)
+val TEMPLATE_FOLDER = CloudFile("templates", "storage", folder = true)
 val DATABASE_JSON = CloudFile("database.json", "storage")
 
 class CloudFile(val name: String, val parent: String = "", val folder: Boolean = false) {
