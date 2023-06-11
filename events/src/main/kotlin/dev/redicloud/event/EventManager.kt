@@ -5,6 +5,7 @@ import dev.redicloud.packets.PacketManager
 import dev.redicloud.utils.gson
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.findAnnotation
@@ -19,11 +20,12 @@ class EventManager(val identifier: String, val packetManager: PacketManager?) {
     }
 
     val handlers: MutableMap<KClass<*>, MutableList<EventHandlerMethod>> = HashMap()
+    private val lock = ReentrantLock(true)
 
     init {
         MANAGERS[identifier] = this
         if (packetManager != null && !packetManager.isPacketRegistered(CloudEventPacket::class)) {
-            packetManager.registerPacket(CloudEventPacket("", "", ""))
+            packetManager.registerPacket(CloudEventPacket::class)
         }
     }
 
@@ -34,39 +36,26 @@ class EventManager(val identifier: String, val packetManager: PacketManager?) {
             if (annotation != null) {
                 val eventType = function.parameters.first().type.classifier as KClass<*>
                 val handlerMethod = EventHandlerMethod(listener, function, annotation.priority)
-                handlers.getOrPut(eventType) { mutableListOf() }.add(handlerMethod)
-                handlers[eventType]?.sortWith(compareByDescending<EventHandlerMethod> { it.priority })
+                lock.lock()
+                try {
+                    handlers.getOrPut(eventType) { mutableListOf() }.add(handlerMethod)
+                    handlers[eventType]?.sortWith(compareByDescending<EventHandlerMethod> { it.priority })
+                }finally {
+                    lock.unlock()
+                }
             }
         }
     }
 
     inline fun <reified T : CloudEvent> listen(noinline handler: (T) -> Unit): InlineEventCaller<T> {
         val listener = InlineEventCaller(handler)
-        val objClass = InlineEventCaller::class
-        objClass.declaredMemberFunctions.forEach { function ->
-            val annotation = function.findAnnotation<CloudEventListener>()
-            if (annotation != null) {
-                val eventType = T::class
-                val handlerMethod = EventHandlerMethod(listener, function, annotation.priority)
-                handlers.getOrPut(eventType) { mutableListOf() }.add(handlerMethod)
-                handlers[eventType]?.sortWith(compareByDescending { it.priority })
-            }
-        }
+        register(listener)
         return listener
     }
 
     fun <T : CloudEvent> listen(clazz: KClass<T>, handler: (T) -> Unit): InlineEventCaller<T> {
         val listener = InlineEventCaller(handler)
-        val objClass = InlineEventCaller::class
-        objClass.declaredMemberFunctions.forEach { function ->
-            val annotation = function.findAnnotation<CloudEventListener>()
-            if (annotation != null) {
-                val eventType = clazz
-                val handlerMethod = EventHandlerMethod(listener, function, annotation.priority)
-                handlers.getOrPut(eventType) { mutableListOf() }.add(handlerMethod)
-                handlers[eventType]?.sortWith(compareByDescending { it.priority })
-            }
-        }
+        register(listener)
         return listener
     }
 
