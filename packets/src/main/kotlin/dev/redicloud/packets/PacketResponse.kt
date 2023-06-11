@@ -16,7 +16,7 @@ class PacketResponse(val packetManager: PacketManager, val packet: AbstractPacke
     private val responses = mutableListOf<AbstractPacket?>()
     private var timeOutJob: Job? = null
 
-    fun waitForResponse(responseCount: Int, block: (AbstractPacket?) -> Unit): PacketResponse {
+    fun waitForResponse(responseCount: Int = 1, block: (AbstractPacket?) -> Unit): PacketResponse {
         responseQueue[block] = responseCount
         if (!packetManager.packetResponses.contains(this)) packetManager.packetResponses.add(this)
         packetManager.packetsOfLast3Seconds.filter { it.referenceId == packet.packetId }.forEach {
