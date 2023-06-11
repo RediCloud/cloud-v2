@@ -74,7 +74,7 @@ abstract class BaseService(
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager)
         serverVersionRepository = ServerVersionRepository(databaseConnection)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager)
-        fileTemplateRepository = FileTemplateRepository(databaseConnection)
+        fileTemplateRepository = FileTemplateRepository(databaseConnection, packetManager, nodeRepository)
 
         this.registerParsers()
         this.registerSuggesters()
@@ -99,8 +99,8 @@ abstract class BaseService(
     }
 
     private fun registerPackets() {
-        packetManager.registerPacket(ServicePingPacket())
-        packetManager.registerPacket(ServicePingResponse(-1L))
+        packetManager.registerPacket(ServicePingPacket::class)
+        packetManager.registerPacket(ServicePingResponse::class)
     }
 
 }
