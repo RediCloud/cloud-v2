@@ -8,8 +8,9 @@ import dev.redicloud.service.node.commands.ClusterCommand
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.events.NodeDisconnectEvent
 import dev.redicloud.service.node.events.NodeSuspendedEvent
-import dev.redicloud.service.node.repository.connect
-import dev.redicloud.service.node.repository.disconnect
+import dev.redicloud.service.node.repository.node.connect
+import dev.redicloud.service.node.repository.node.disconnect
+import dev.redicloud.service.node.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.service.node.tasks.NodeChooseMasterTask
 import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
@@ -32,12 +33,13 @@ class NodeService(
     init {
         INSTANCE = this
         runBlocking {
-            initShutdownHook()
+            this@NodeService.initShutdownHook()
 
             nodeRepository.connect(this@NodeService)
 
-            registerTasks()
-            registerCommands()
+            this@NodeService.registerServerVersionHandlers()
+            this@NodeService.registerTasks()
+            this@NodeService.registerCommands()
         }
     }
 
@@ -69,6 +71,10 @@ class NodeService(
             .event(NodeSuspendedEvent::class)
             .period(10.seconds)
             .register()
+    }
+
+    private fun registerServerVersionHandlers() {
+        IServerVersionHandler.registerHandler(this.serverVersionRepository)
     }
 
     private fun registerCommands() {

@@ -5,7 +5,7 @@ repositories {
 }
 
 dependencies {
-    shade(project(":utils"))
+    compileOnly(project(":utils"))
 
     dependency("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
 }
