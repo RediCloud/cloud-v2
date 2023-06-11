@@ -33,6 +33,7 @@ allprojects {
         dependency("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
         dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinxCoroutines}")
         dependency("org.redisson:redisson:${Versions.redisson}")
+        dependency("com.github.jkcclemens:khttp:${Versions.khttp}")
     }
 
     tasks {

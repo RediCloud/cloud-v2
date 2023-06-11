@@ -7,4 +7,5 @@ object Versions {
     const val kotlinxCoroutines= "1.7.1"
     const val redisson = "3.21.3"
     const val slf4j = "2.0.7"
+    const val khttp = "0.1.0"
 }
