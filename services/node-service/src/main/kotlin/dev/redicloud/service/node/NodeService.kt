@@ -8,15 +8,20 @@ import dev.redicloud.service.base.events.NodeSuspendedEvent
 import dev.redicloud.service.node.commands.ClusterCommand
 import dev.redicloud.service.node.commands.ExitCommand
 import dev.redicloud.service.node.console.NodeConsole
+import dev.redicloud.service.node.packets.*
 import dev.redicloud.service.node.repository.node.connect
 import dev.redicloud.service.node.repository.node.disconnect
 import dev.redicloud.service.node.repository.server.version.handler.IServerVersionHandler
+import dev.redicloud.service.node.repository.template.file.connectFileWatcher
+import dev.redicloud.service.node.repository.template.file.pullTemplates
 import dev.redicloud.service.node.tasks.NodeChooseMasterTask
 import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
+import dev.redicloud.service.node.tasks.file.FileReadTransferTask
 import dev.redicloud.utils.TEMPLATE_FOLDER
 import dev.redicloud.utils.TEMP_FOLDER
 import kotlinx.coroutines.runBlocking
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class NodeService(
@@ -36,6 +41,7 @@ class NodeService(
             this@NodeService.registerPreTasks()
             this@NodeService.registerServerVersionHandlers()
             this@NodeService.registerPackets()
+            this@NodeService.initTemplateFiles()
             this@NodeService.registerCommands()
             this@NodeService.registerTasks()
         }
@@ -82,7 +88,41 @@ class NodeService(
     }
 
     private fun registerPackets() {
+        this.packetManager.registerPacket(FileDeletePacket::class)
+        this.packetManager.registerPacket(FileTransferChunkPacket::class)
+        this.packetManager.registerPacket(FileTransferStartPacket::class)
+        this.packetManager.registerPacket(FileTransferRequestResponse::class)
+        this.packetManager.registerPacket(FileTransferRequestPacket::class)
+    }
 
+    private suspend fun initTemplateFiles() {
+
+        val master = this.nodeRepository.getMasterNode()
+        if (master == null || serviceId == master.serviceId) {
+            fileTemplateRepository.connectFileWatcher()
+            return
+        }
+
+        taskManager.builder()
+            .task(FileReadTransferTask())
+            .packet(FileTransferChunkPacket::class)
+            .period(1.minutes)
+            .register()
+
+        LOGGER.info("Pulling templates from ${master.getIdentifyingName()}...")
+        val pair = this.fileTemplateRepository.pullTemplates()
+        if (pair?.first == null) {
+            if (pair?.second == null) {
+                LOGGER.warning("Cant pull templates from cluster!")
+            }else {
+                LOGGER.warning("Cant pull templates from cluster because pull request timed!")
+            }
+            fileTemplateRepository.connectFileWatcher()
+            return
+        }
+        val node = this.nodeRepository.getNode(pair.second)!!
+        LOGGER.info("Successfully pulled template files from ${node.getIdentifyingName()}!")
+        fileTemplateRepository.connectFileWatcher()
     }
 
     private fun registerServerVersionHandlers() {
