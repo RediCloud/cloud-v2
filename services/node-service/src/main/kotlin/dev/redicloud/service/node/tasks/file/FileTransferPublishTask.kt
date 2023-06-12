@@ -34,6 +34,17 @@ class FileTransferPublishTask(
 
     override suspend fun execute(): Boolean {
         if (PUBLISH_QUEUE.isEmpty()) return false
+
+        val toRemove = mutableListOf<FileTransferRequest>()
+        PUBLISH_QUEUE.forEach {request ->
+            if (PUBLISH_QUEUE.filter { it.requestTime > request.requestTime }.any { it.file == request.file } ) {
+                toRemove.add(request)
+            }
+        }
+        toRemove.forEach { PUBLISH_QUEUE.remove(it) }
+
+        if (PUBLISH_QUEUE.isEmpty()) return false
+
         lock.lock()
 
         val request = PUBLISH_QUEUE.peek()
@@ -48,6 +59,7 @@ class FileTransferPublishTask(
             }
 
             val templateCloudPath = toUniversalPath(targetFile)
+
             if (!targetFile.exists()) {
                 packetManager.publish(FileDeletePacket(toUniversalPath(targetFile)), ServiceType.NODE)
                 request.block(null)
@@ -84,7 +96,7 @@ class FileTransferPublishTask(
                 return false
             }
 
-            val startPacket = FileTransferStartPacket(packets.size, chunkSize, transferId, templateCloudPath)
+            val startPacket = FileTransferStartPacket(packets.size, chunkSize, transferId, templateCloudPath, fileSize, targetFile.isDirectory, request.deleteTargetBeforeUnzip)
             if (request.singleTarget != null) {
                 packetManager.publish(startPacket, request.singleTarget)
             }else {

@@ -11,11 +11,44 @@ fun zipFile(sourceFilePath: String, zipFilePath: String) {
 
     ZipOutputStream(BufferedOutputStream(FileOutputStream(zipFile))).use { zipOut ->
         if (sourceFile.isFile) {
-            zipFile(sourceFile, sourceFile.name, zipOut)
+            zipSingleFile(sourceFile, sourceFile.name, zipOut)
         } else if (sourceFile.isDirectory) {
-            sourceFile.listFiles()?.forEach { file ->
-                zipFile(file, file.name, zipOut)
+            zipDirectory(sourceFile, zipOut, sourceFile.name)
+        }
+    }
+}
+
+private fun zipSingleFile(file: File, fileName: String, zipOut: ZipOutputStream) {
+    FileInputStream(file).use { fileIn ->
+        BufferedInputStream(fileIn).use { bufferedIn ->
+            val entry = ZipEntry(fileName)
+            zipOut.putNextEntry(entry)
+
+            val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+            var bytesRead = bufferedIn.read(buffer)
+
+            while (bytesRead != -1) {
+                zipOut.write(buffer, 0, bytesRead)
+                bytesRead = bufferedIn.read(buffer)
             }
+
+            zipOut.closeEntry()
+        }
+    }
+}
+
+private fun zipDirectory(directory: File, zipOut: ZipOutputStream, baseDir: String) {
+    directory.listFiles()?.forEach { file ->
+        val entryName = if (baseDir.isNotEmpty()) {
+            baseDir + File.separator + file.name
+        } else {
+            file.name
+        }
+
+        if (file.isFile) {
+            zipSingleFile(file, entryName, zipOut)
+        } else if (file.isDirectory) {
+            zipDirectory(file, zipOut, entryName)
         }
     }
 }
@@ -48,8 +81,12 @@ fun unzipFile(zipFilePath: String, destinationFolderPath: String) {
                 entryFile.parentFile?.mkdirs()
 
                 FileOutputStream(entryFile).use { fileOut ->
-                    BufferedOutputStream(fileOut).use { bufferedOut ->
-                        zipIn.copyTo(bufferedOut, DEFAULT_BUFFER_SIZE)
+                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                    var bytesRead = zipIn.read(buffer)
+
+                    while (bytesRead != -1) {
+                        fileOut.write(buffer, 0, bytesRead)
+                        bytesRead = zipIn.read(buffer)
                     }
                 }
             }

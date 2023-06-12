@@ -3,13 +3,14 @@ package dev.redicloud.service.node.tasks.file
 import dev.redicloud.logging.LogManager
 import dev.redicloud.service.node.packets.FileTransferChunkPacket
 import dev.redicloud.service.node.packets.FileTransferStartPacket
+import dev.redicloud.service.node.repository.template.file.FILE_WATCHER_LOCK
 import dev.redicloud.tasks.CloudTask
 import dev.redicloud.utils.TEMP_FILE_TRANSFER_FOLDER
 import dev.redicloud.utils.toCloudFile
 import dev.redicloud.utils.unzipFile
 import java.io.File
 import java.io.FileOutputStream
-import java.util.UUID
+import java.util.*
 import kotlin.time.Duration.Companion.minutes
 
 class FileReadTransferTask : CloudTask() {
@@ -23,7 +24,7 @@ class FileReadTransferTask : CloudTask() {
     }
 
     override suspend fun execute(): Boolean {
-        val timeOuted = RECEIVED_STARTS.filter { it.value.receiveTime!!+timeout < System.currentTimeMillis() }
+        val timeOuted = RECEIVED_STARTS.filter { it.value.receiveTime!! + timeout < System.currentTimeMillis() }
         timeOuted.forEach { RECEIVED_STARTS.remove(it.key) }
 
         val canceled = RECEIVED_CHUNKS.filter { !RECEIVED_STARTS.containsKey(it.key) }
@@ -33,29 +34,45 @@ class FileReadTransferTask : CloudTask() {
             val indexSize = startPacket.index
             val received = RECEIVED_CHUNKS
             val length = startPacket.chunkSize
-            if (indexSize != (RECEIVED_CHUNKS[startPacket.transferId]?.count { it.transferId == startPacket.transferId } ?: 0)) return@forEach
+            if (indexSize != (RECEIVED_CHUNKS[startPacket.transferId]?.count { it.transferId == startPacket.transferId }
+                    ?: 0)) return@forEach
             val folder = File(TEMP_FILE_TRANSFER_FOLDER.getFile().absolutePath, startPacket.transferId.toString())
             folder.mkdirs()
             val zip = File(folder.absolutePath, "data.zip")
 
+            FILE_WATCHER_LOCK.lock()
             try {
                 val outputStream = FileOutputStream(zip)
-                for (id in 1 until indexSize) {
-                    val packet = RECEIVED_CHUNKS[startPacket.transferId]!!.firstOrNull { it.chunkIndex == id }!!
+                for (id in 0 until indexSize) {
+                    val packet = RECEIVED_CHUNKS[startPacket.transferId]!!.firstOrNull { it.chunkIndex == id + 1 }!!
                     outputStream.write(packet.data)
                 }
                 outputStream.close()
 
-                val targetFile = toCloudFile(startPacket.cloudPath)
-                if (targetFile.isDirectory) {
-                    targetFile.deleteRecursively()
-                }else {
-                    targetFile.delete()
+                val realTarget = toCloudFile(startPacket.cloudPath)
+                if (!realTarget.exists() && startPacket.isFolder) {
+                    realTarget.mkdirs()
+                }else if(!realTarget.parentFile.exists()) {
+                    realTarget.parentFile.mkdirs()
                 }
-
-                unzipFile(zip.absolutePath, targetFile.absolutePath)
-            }catch (e: Exception) {
+                val zipSize = zip.length()
+                val expectedSize = startPacket.fileSize
+                if (zipSize != expectedSize) {
+                    logger.severe("Failed to transfer file ${startPacket.cloudPath} because the file size is not equal to the expected size (${zip.length()} != ${startPacket.fileSize})")
+                } else {
+                    if (startPacket.deleteTargetBeforeUnzip && realTarget.exists()) {
+                        if (realTarget.isFile) {
+                            realTarget.delete()
+                        }else {
+                            realTarget.deleteRecursively()
+                        }
+                    }
+                    unzipFile(zip.absolutePath, realTarget.parentFile.absolutePath)
+                }
+            } catch (e: Exception) {
                 logger.severe("Failed to write bytes of transfer ${startPacket.transferId}", e)
+            } finally {
+                FILE_WATCHER_LOCK.unlock()
             }
             folder.delete()
 

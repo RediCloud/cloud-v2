@@ -44,9 +44,9 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
             val data = messageData.data
             val p = registeredPackets.firstOrNull { it.qualifiedName == messageData.clazz }
                 ?: return@MessageListener
-            LOGGER.finest("Receive packet ${p.simpleName} in channel $channel")
             val packet = gson.fromJson(data, p.java)
             if (!packet.allowLocalReceiver && packet.sender == serviceId) return@MessageListener
+            LOGGER.finest("Received packet ${p.simpleName} in channel $channel")
             packet.manager = this
             packet.received()
             packetsOfLast3Seconds.add(packet)

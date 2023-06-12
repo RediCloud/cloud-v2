@@ -58,10 +58,12 @@ class NodeService(
     }
 
     private suspend fun initTemplateFiles() {
-        fileTemplateRepository.connectFileWatcher()
 
-        val master = this.nodeRepository.getMasterNode() ?: return
-        if (serviceId == master.serviceId) return
+        val master = this.nodeRepository.getMasterNode()
+        if (master == null || serviceId == master.serviceId) {
+            fileTemplateRepository.connectFileWatcher()
+            return
+        }
 
         taskManager.builder()
             .task(FileReadTransferTask())
@@ -77,10 +79,12 @@ class NodeService(
             }else {
                 LOGGER.warning("Cant pull templates from cluster because pull request timed!")
             }
+            fileTemplateRepository.connectFileWatcher()
             return
         }
         val node = this.nodeRepository.getNode(pair.second)!!
         LOGGER.info("Successfully pulled template files from ${node.getIdentifyingName()}!")
+        fileTemplateRepository.connectFileWatcher()
     }
 
     private fun registerTasks() {

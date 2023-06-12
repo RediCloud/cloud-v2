@@ -8,7 +8,10 @@ class FileTransferStartPacket(
     val index: Int,
     val chunkSize: Long,
     val transferId: UUID,
-    val cloudPath: String
+    val cloudPath: String,
+    val fileSize: Long,
+    val isFolder: Boolean,
+    val deleteTargetBeforeUnzip: Boolean
 ) : AbstractPacket() {
 
     var receiveTime: Long? = null
