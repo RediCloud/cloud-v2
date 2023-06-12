@@ -3,11 +3,11 @@ package dev.redicloud.service.node
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.service.base.BaseService
+import dev.redicloud.service.base.events.NodeDisconnectEvent
+import dev.redicloud.service.base.events.NodeSuspendedEvent
 import dev.redicloud.service.node.commands.ClusterCommand
 import dev.redicloud.service.node.commands.ExitCommand
 import dev.redicloud.service.node.console.NodeConsole
-import dev.redicloud.service.node.events.NodeDisconnectEvent
-import dev.redicloud.service.node.events.NodeSuspendedEvent
 import dev.redicloud.service.node.packets.*
 import dev.redicloud.service.node.repository.node.connect
 import dev.redicloud.service.node.repository.node.disconnect
@@ -18,7 +18,7 @@ import dev.redicloud.service.node.tasks.NodeChooseMasterTask
 import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
 import dev.redicloud.service.node.tasks.file.FileReadTransferTask
-import dev.redicloud.service.node.tasks.file.FileTransferPublishTask
+import dev.redicloud.utils.TEMPLATE_FOLDER
 import dev.redicloud.utils.TEMP_FOLDER
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.minutes
@@ -38,6 +38,7 @@ class NodeService(
 
             nodeRepository.connect(this@NodeService)
 
+            this@NodeService.registerPreTasks()
             this@NodeService.registerServerVersionHandlers()
             this@NodeService.registerPackets()
             this@NodeService.initTemplateFiles()
@@ -55,6 +56,43 @@ class NodeService(
             super.shutdown()
             TEMP_FOLDER.getFile().deleteRecursively()
         }
+    }
+
+    private fun registerTasks() {
+        taskManager.builder()
+            .task(NodeChooseMasterTask(nodeRepository))
+            .instant()
+            .event(NodeDisconnectEvent::class)
+            .event(NodeSuspendedEvent::class)
+            .register()
+        taskManager.builder()
+            .task(NodePingTask(this))
+            .instant()
+            .event(NodeDisconnectEvent::class)
+            .period(10.seconds)
+            .register()
+        taskManager.builder()
+            .task(NodeSelfSuspendTask(this))
+            .event(NodeSuspendedEvent::class)
+            .period(10.seconds)
+            .register()
+    }
+
+    private fun registerPreTasks() {
+        taskManager.builder()
+            .task(NodeChooseMasterTask(nodeRepository))
+            .instant()
+            .event(NodeDisconnectEvent::class)
+            .event(NodeSuspendedEvent::class)
+            .register()
+    }
+
+    private fun registerPackets() {
+        this.packetManager.registerPacket(FileDeletePacket::class)
+        this.packetManager.registerPacket(FileTransferChunkPacket::class)
+        this.packetManager.registerPacket(FileTransferStartPacket::class)
+        this.packetManager.registerPacket(FileTransferRequestResponse::class)
+        this.packetManager.registerPacket(FileTransferRequestPacket::class)
     }
 
     private suspend fun initTemplateFiles() {
@@ -85,39 +123,6 @@ class NodeService(
         val node = this.nodeRepository.getNode(pair.second)!!
         LOGGER.info("Successfully pulled template files from ${node.getIdentifyingName()}!")
         fileTemplateRepository.connectFileWatcher()
-    }
-
-    private fun registerTasks() {
-        taskManager.builder()
-            .task(NodeChooseMasterTask(nodeRepository))
-            .instant()
-            .event(NodeDisconnectEvent::class)
-            .event(NodeSuspendedEvent::class)
-            .register()
-        taskManager.builder()
-            .task(NodePingTask(this))
-            .instant()
-            .event(NodeDisconnectEvent::class)
-            .period(10.seconds)
-            .register()
-        taskManager.builder()
-            .task(NodeSelfSuspendTask(this))
-            .event(NodeSuspendedEvent::class)
-            .period(10.seconds)
-            .register()
-        taskManager.builder()
-            .task(FileTransferPublishTask(this.databaseConnection, this.nodeRepository, this.packetManager))
-            .packet(FileTransferRequestPacket::class)
-            .period(10.seconds)
-            .register()
-    }
-
-    private fun registerPackets() {
-        this.packetManager.registerPacket(FileDeletePacket::class)
-        this.packetManager.registerPacket(FileTransferChunkPacket::class)
-        this.packetManager.registerPacket(FileTransferStartPacket::class)
-        this.packetManager.registerPacket(FileTransferRequestResponse::class)
-        this.packetManager.registerPacket(FileTransferRequestPacket::class)
     }
 
     private fun registerServerVersionHandlers() {

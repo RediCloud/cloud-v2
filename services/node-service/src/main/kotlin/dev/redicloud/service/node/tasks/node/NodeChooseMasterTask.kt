@@ -1,7 +1,7 @@
 package dev.redicloud.service.node.tasks
 
 import dev.redicloud.repository.node.NodeRepository
-import dev.redicloud.service.node.events.NodeMasterChangedEvent
+import dev.redicloud.service.base.events.NodeMasterChangedEvent
 import dev.redicloud.tasks.CloudTask
 
 class NodeChooseMasterTask(val nodeRepository: NodeRepository) : CloudTask() {

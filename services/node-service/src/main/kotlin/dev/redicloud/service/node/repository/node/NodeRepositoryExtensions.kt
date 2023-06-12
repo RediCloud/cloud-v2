@@ -4,9 +4,9 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.service.node.NodeService
-import dev.redicloud.service.node.events.NodeConnectEvent
-import dev.redicloud.service.node.events.NodeDisconnectEvent
-import dev.redicloud.service.node.events.NodeSuspendedEvent
+import dev.redicloud.service.base.events.NodeConnectEvent
+import dev.redicloud.service.base.events.NodeDisconnectEvent
+import dev.redicloud.service.base.events.NodeSuspendedEvent
 import dev.redicloud.utils.service.ServiceId
 
 val LOGGER = LogManager.logger(NodeRepository::class)
