@@ -27,13 +27,17 @@ fun toUniversalPath(file: File): String {
 }
 
 class CloudFile(val name: String, val parent: String = "", val folder: Boolean = false) {
-    fun getFile(): File {
-        val path = if (parent.isEmpty()) {
+
+    fun getCloudPath(): String {
+        return if (parent.isEmpty()) {
             cloudPath + File.separator + name
         }else {
             cloudPath + File.separator + parent + File.separator + name
         }
-        return File(path)
+    }
+
+    fun getFile(): File {
+        return File(getCloudPath())
     }
 
     fun createIfNotExists(): File {
