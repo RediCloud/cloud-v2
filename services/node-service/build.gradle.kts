@@ -29,4 +29,5 @@ dependencies {
 
     dependency("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
     dependency("org.jline:jline-terminal-jansi:3.23.0")
+    dependency("org.apache.zookeeper:zookeeper:3.8.1")
 }
