@@ -1,9 +1,11 @@
 package dev.redicloud.service.node.tasks.file
 
 import dev.redicloud.logging.LogManager
+import dev.redicloud.repository.template.file.FileTemplateRepository
 import dev.redicloud.service.node.packets.FileTransferChunkPacket
 import dev.redicloud.service.node.packets.FileTransferStartPacket
 import dev.redicloud.service.node.repository.template.file.FILE_WATCHER_LOCK
+import dev.redicloud.service.node.repository.template.file.watchDirectory
 import dev.redicloud.tasks.CloudTask
 import dev.redicloud.utils.TEMP_FILE_TRANSFER_FOLDER
 import dev.redicloud.utils.toCloudFile
@@ -13,7 +15,7 @@ import java.io.FileOutputStream
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
 
-class FileReadTransferTask : CloudTask() {
+class FileReadTransferTask(val fileTemplateRepository: FileTemplateRepository) : CloudTask() {
 
     private val logger = LogManager.logger(this)
     private val timeout = 5.minutes.inWholeMilliseconds
@@ -68,6 +70,7 @@ class FileReadTransferTask : CloudTask() {
                         }
                     }
                     unzipFile(zip.absolutePath, realTarget.parentFile.absolutePath)
+                    fileTemplateRepository.watchDirectory(realTarget.parentFile)
                 }
             } catch (e: Exception) {
                 logger.severe("Failed to write bytes of transfer ${startPacket.transferId}", e)

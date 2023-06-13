@@ -2,6 +2,7 @@ package dev.redicloud.service.node.packets
 
 import dev.redicloud.packets.AbstractPacket
 import dev.redicloud.service.node.repository.template.file.FILE_WATCHER_LOCK
+import dev.redicloud.service.node.repository.template.file.REGISTERED_PATHS
 import java.io.File
 
 class FileDeletePacket(val cloudPath: String) : AbstractPacket() {
@@ -16,6 +17,7 @@ class FileDeletePacket(val cloudPath: String) : AbstractPacket() {
             }else {
                 file.deleteRecursively()
             }
+            REGISTERED_PATHS.remove(file.toPath())
         }finally {
             FILE_WATCHER_LOCK.unlock()
         }

@@ -1,5 +1,6 @@
 package dev.redicloud.service.node.repository.template.file
 
+import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketListener
 import dev.redicloud.repository.template.file.FileTemplateRepository
 import dev.redicloud.service.node.packets.FileTransferRequestPacket
@@ -13,42 +14,63 @@ import java.io.File
 import java.nio.file.*
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.isAccessible
 import kotlin.time.Duration.Companion.seconds
 
-private var watchService: WatchService? = null
+internal var WATCH_SERVICE: WatchService? = null
 private var watcherScope: CoroutineScope? = null
 private var fileRequestListener: PacketListener<FileTransferRequestPacket>? = null
 val FILE_WATCHER_LOCK = ReentrantLock(true)
+private val logger = LogManager.Companion.logger(FileTemplateRepository::class)
+
+internal val REGISTERED_PATHS = mutableListOf<Path>()
 
 fun FileTemplateRepository.connectFileWatcher() {
     val storage = STORAGE_FOLDER.getFile().toPath()
     STORAGE_FOLDER.createIfNotExists()
     TEMPLATE_FOLDER.createIfNotExists()
 
-    watchService = FileSystems.getDefault().newWatchService()
-    storage.register(
-        watchService!!,
-        StandardWatchEventKinds.ENTRY_CREATE,
-        StandardWatchEventKinds.ENTRY_DELETE,
-        StandardWatchEventKinds.ENTRY_MODIFY
-    )
+    WATCH_SERVICE = FileSystems.getDefault().newWatchService()
+    watchDirectory(storage.toFile())
     val templateFolder = TEMPLATE_FOLDER.getFile()
+    watchDirectory(templateFolder)
 
     @OptIn(DelicateCoroutinesApi::class)
     watcherScope = CoroutineScope(newSingleThreadContext("template-file-watcher"))
     watcherScope!!.launch {
         while (true) {
-            val key = watchService!!.take()
-            val events = key.pollEvents()
-            if (!FILE_WATCHER_LOCK.isLocked) {
-                events.forEach { event ->
-                    val eventPath = event.context() as Path
-                    val file = Paths.get(storage.toUri()).resolve(eventPath).toFile()
-                    if (!isInFile(templateFolder, file)) return@forEach
-                    publish(file, null, 0)
+            try {
+                val key = WATCH_SERVICE!!.take()
+                val dir: Path = key.watchable() as Path
+                val events = key.pollEvents()
+                if (!FILE_WATCHER_LOCK.isLocked && events.isNotEmpty()) {
+                    var folderCreated = false
+                    events.forEach { event ->
+                        val localCreated = folderCreated
+                        folderCreated = false
+                        val kind = event.kind()
+                        val eventPath = event.context() as Path
+                        val file = dir.resolve(eventPath).toFile()
+                        if (!isInFile(templateFolder, file)) return@forEach
+                        if (kind == StandardWatchEventKinds.ENTRY_MODIFY && file.isDirectory && !localCreated) {
+                            return@forEach
+                        }
+                        if (kind == StandardWatchEventKinds.ENTRY_CREATE && file.isDirectory) {
+                            watchDirectory(file, true)
+                            folderCreated = true
+                        }
+                        if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                            REGISTERED_PATHS.remove(eventPath)
+                        }
+                        publish(file, null, 0)
+                    }
                 }
+                key.reset()
+            }catch (e: Exception) {
+                if (e is ClosedWatchServiceException) return@launch
+                logger.severe("Error in file watcher!", e)
             }
-            key.reset()
         }
     }
     fileRequestListener = packetManager.listen<FileTransferRequestPacket> { request ->
@@ -66,9 +88,25 @@ fun FileTemplateRepository.connectFileWatcher() {
     }
 }
 
+internal fun FileTemplateRepository.watchDirectory(file: File, force: Boolean = false) {
+    if (!file.exists() || file.isFile) return
+    if (WATCH_SERVICE == null) return
+    val path = file.toPath()
+    if (!REGISTERED_PATHS.contains(path) || force) {
+        path.register(
+            WATCH_SERVICE!!,
+            StandardWatchEventKinds.ENTRY_CREATE,
+            StandardWatchEventKinds.ENTRY_DELETE,
+            StandardWatchEventKinds.ENTRY_MODIFY
+        )
+        REGISTERED_PATHS.add(path)
+    }
+    file.listFiles()?.forEach { watchDirectory(it, force) }
+}
+
 fun FileTemplateRepository.disconnectFileWatcher() {
     watcherScope?.cancel()
-    watchService?.close()
+    WATCH_SERVICE?.close()
     fileRequestListener?.let { packetManager.unregisterListener(it) }
 }
 

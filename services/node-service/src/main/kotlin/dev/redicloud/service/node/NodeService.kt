@@ -13,11 +13,13 @@ import dev.redicloud.service.node.repository.node.connect
 import dev.redicloud.service.node.repository.node.disconnect
 import dev.redicloud.service.node.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.service.node.repository.template.file.connectFileWatcher
+import dev.redicloud.service.node.repository.template.file.disconnectFileWatcher
 import dev.redicloud.service.node.repository.template.file.pullTemplates
 import dev.redicloud.service.node.tasks.NodeChooseMasterTask
 import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
 import dev.redicloud.service.node.tasks.file.FileReadTransferTask
+import dev.redicloud.service.node.tasks.file.FileTransferPublishTask
 import dev.redicloud.utils.TEMPLATE_FOLDER
 import dev.redicloud.utils.TEMP_FOLDER
 import kotlinx.coroutines.runBlocking
@@ -53,6 +55,7 @@ class NodeService(
         LOGGER.info("Shutting down node service...")
         runBlocking {
             nodeRepository.disconnect(this@NodeService)
+            fileTemplateRepository.disconnectFileWatcher()
             super.shutdown()
             TEMP_FOLDER.getFile().deleteRecursively()
         }
@@ -75,6 +78,11 @@ class NodeService(
             .task(NodeSelfSuspendTask(this))
             .event(NodeSuspendedEvent::class)
             .period(10.seconds)
+            .register()
+        taskManager.builder()
+            .task(FileTransferPublishTask(this.databaseConnection, this.nodeRepository, this.packetManager))
+            .packet(FileTransferRequestPacket::class)
+            .period(5.seconds)
             .register()
     }
 
@@ -104,12 +112,13 @@ class NodeService(
         }
 
         taskManager.builder()
-            .task(FileReadTransferTask())
+            .task(FileReadTransferTask(this.fileTemplateRepository))
             .packet(FileTransferChunkPacket::class)
             .period(1.minutes)
             .register()
 
         LOGGER.info("Pulling templates from ${master.getIdentifyingName()}...")
+        fileTemplateRepository.connectFileWatcher()
         val pair = this.fileTemplateRepository.pullTemplates()
         if (pair?.first == null) {
             if (pair?.second == null) {
@@ -122,7 +131,6 @@ class NodeService(
         }
         val node = this.nodeRepository.getNode(pair.second)!!
         LOGGER.info("Successfully pulled template files from ${node.getIdentifyingName()}!")
-        fileTemplateRepository.connectFileWatcher()
     }
 
     private fun registerServerVersionHandlers() {

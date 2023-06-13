@@ -3,9 +3,7 @@ package dev.redicloud.utils
 import java.io.File
 
 fun isInFile(folder: File, file: File): Boolean {
-    if (!folder.isDirectory) {
-        throw IllegalArgumentException("The folder is not a valid folder.")
-    }
+    if (!folder.isDirectory) return false
 
     if (folder == file || folder == file.parentFile) return true
 

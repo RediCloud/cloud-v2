@@ -47,7 +47,7 @@ class FileTransferPublishTask(
 
         lock.lock()
 
-        val request = PUBLISH_QUEUE.peek()
+        val request = PUBLISH_QUEUE.peek() ?: return false
         val targetFile = request.file
         PUBLISH_QUEUE.remove(request)
 

@@ -27,6 +27,5 @@ dependencies {
     shade(project(":tasks"))
     shade("dev.redicloud.libloader:libloader-bootstrap:1.6.7")
 
-    dependency("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
     dependency("org.jline:jline-terminal-jansi:3.23.0")
 }
