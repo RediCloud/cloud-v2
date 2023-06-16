@@ -5,3 +5,4 @@ import kotlinx.coroutines.Dispatchers
 
 
 val defaultScope = CoroutineScope(Dispatchers.Default)
+val ioScope = CoroutineScope(Dispatchers.IO)

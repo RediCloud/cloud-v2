@@ -15,6 +15,7 @@ dependencies {
     shade(project(":repositories:node-repository"))
     shade(project(":repositories:service-repository"))
     shade(project(":repositories:server-repository"))
+    shade(project(":repositories:file-template-repository"))
     shade(project(":repositories:server-version-repository"))
     shade(project(":database"))
     shade(project(":utils"))
@@ -24,8 +25,9 @@ dependencies {
     shade(project(":commands:command-api"))
     shade(project(":logging"))
     shade(project(":tasks"))
+    shade(project(":file-cluster"))
     shade("dev.redicloud.libloader:libloader-bootstrap:1.6.7")
 
-    dependency("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
-    dependency("org.jline:jline-terminal-jansi:3.23.0")
+    compileOnly("org.jline:jline-terminal-jansi:3.23.0")
+    compileOnly("com.jcraft:jsch:0.1.55")
 }

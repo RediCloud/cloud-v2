@@ -1,30 +1,43 @@
 package dev.redicloud.utils
 
 import java.io.File
-import java.nio.file.Path
 import java.nio.file.Paths
 
-private val cloudPath: String = System.getProperty("redicloud.cloud.path") ?: Paths.get("").toAbsolutePath().toString()
+val CLOUD_PATH: String = System.getProperty("redicloud.cloud.path") ?: Paths.get("").toAbsolutePath().toString()
 
 val NODE_JSON = CloudFile("node.json")
 val TEMP_FOLDER = CloudFile("tmp", folder = true)
 val TEMP_SERVER_VERSION_FOLDER = CloudFile("server-version", "tmp", folder = true)
+val TEMP_FILE_TRANSFER_FOLDER = CloudFile("file-transfer", "tmp", folder = true)
 val STATIC_FOLDER = CloudFile("static", folder = true)
 val STORAGE_FOLDER = CloudFile("storage", folder = true)
 val LOG_FOLDER = CloudFile("logs", "storage", folder = true)
 val CONSOLE_HISTORY_FILE = CloudFile(".console.history", "storage/logs")
 val MINECRAFT_VERSIONS_FOLDER = CloudFile("versions", "storage", folder = true)
-val CACHED_TEMPLATES = CloudFile("cachedTemplates", "storage", folder = true)
+val TEMPLATE_FOLDER = CloudFile("templates", "storage", folder = true)
 val DATABASE_JSON = CloudFile("database.json", "storage")
 
+fun toCloudFile(universalPath: String): File {
+    return File(CLOUD_PATH, universalPath)
+}
+
+fun toUniversalPath(file: File): String {
+    val path = file.absolutePath.replace(CLOUD_PATH, "")
+    return if (path.startsWith(File.separator)) path.replaceFirst(File.separator, "") else path
+}
+
 class CloudFile(val name: String, val parent: String = "", val folder: Boolean = false) {
-    fun getFile(): File {
-        val path = if (parent.isEmpty()) {
-            cloudPath + File.separator + name
+
+    fun getCloudPath(): String {
+        return if (parent.isEmpty()) {
+            CLOUD_PATH + File.separator + name
         }else {
-            cloudPath + File.separator + parent + File.separator + name
+            CLOUD_PATH + File.separator + parent + File.separator + name
         }
-        return File(path)
+    }
+
+    fun getFile(): File {
+        return File(getCloudPath())
     }
 
     fun createIfNotExists(): File {

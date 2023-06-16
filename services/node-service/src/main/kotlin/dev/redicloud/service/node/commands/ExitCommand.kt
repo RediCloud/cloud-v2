@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 @Command("exit")
 @CommandAlias(["stop", "quit"])
 @CommandDescription("Stops the node service")
-class ExitCommand : CommandBase() {
+class ExitCommand(private val nodeService: NodeService) : CommandBase() {
 
     private var confirmed = System.getProperty("redicloud.exit.confirm", "false").toBoolean()
 
@@ -26,7 +26,7 @@ class ExitCommand : CommandBase() {
             }
             return
         }
-        NodeService.INSTANCE.shutdown()
+        nodeService.shutdown()
     }
 
 }

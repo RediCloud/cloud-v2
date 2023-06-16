@@ -14,6 +14,8 @@ import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.ServerVersionRepository
 import dev.redicloud.repository.server.version.utils.ServerVersion
+import dev.redicloud.repository.template.file.FileTemplate
+import dev.redicloud.repository.template.file.FileTemplateRepository
 import dev.redicloud.service.base.packets.ServicePingPacket
 import dev.redicloud.service.base.packets.ServicePingResponse
 import dev.redicloud.service.base.parser.CloudNodeParser
@@ -42,6 +44,7 @@ abstract class BaseService(
     val nodeRepository: NodeRepository
     val serverRepository: ServerRepository
     val serverVersionRepository: ServerVersionRepository
+    val fileTemplateRepository: FileTemplateRepository
 
     val packetManager: PacketManager
     val eventManager: EventManager
@@ -71,6 +74,7 @@ abstract class BaseService(
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager)
         serverVersionRepository = ServerVersionRepository(databaseConnection)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager)
+        fileTemplateRepository = FileTemplateRepository(databaseConnection, packetManager, nodeRepository)
 
         this.registerParsers()
         this.registerSuggesters()
@@ -79,6 +83,8 @@ abstract class BaseService(
 
     open fun shutdown() {
         SHUTTINGDOWN = true
+        nodeRepository.shutdownAction.run()
+        serverRepository.shutdownAction.run()
         taskManager.getTasks().forEach { it.cancel() }
         packetManager.disconnect()
         databaseConnection.disconnect()
@@ -95,8 +101,8 @@ abstract class BaseService(
     }
 
     private fun registerPackets() {
-        packetManager.registerPacket(ServicePingPacket())
-        packetManager.registerPacket(ServicePingResponse(-1L))
+        packetManager.registerPacket(ServicePingPacket::class)
+        packetManager.registerPacket(ServicePingResponse::class)
     }
 
 }

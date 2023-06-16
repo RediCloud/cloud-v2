@@ -35,3 +35,6 @@ include("logging")
 include("tasks")
 include("repositories:server-version-repository")
 findProject(":repositories:server-version-repository")?.name = "server-version-repository"
+include("repositories:file-template-repository")
+findProject(":repositories:file-template-repository")?.name = "file-template-repository"
+include("file-cluster")

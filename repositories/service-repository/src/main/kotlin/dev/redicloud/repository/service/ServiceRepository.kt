@@ -17,13 +17,13 @@ abstract class ServiceRepository<T : CloudService>(
 
     protected val connectedServices: RList<ServiceId>
     protected val registeredServices: RList<ServiceId>
-    protected val shutdownThread: Thread
+    val shutdownAction: Runnable
 
     init {
         connectedServices = databaseConnection.getClient().getList("service:connected")
         registeredServices = databaseConnection.getClient().getList("service:registered")
 
-        shutdownThread = Thread() {
+        shutdownAction = Runnable {
             runBlocking {
                 if (!databaseConnection.isConnected()) {
                     throw Exception("Database connection is not connected! Cannot remove service from cluster")

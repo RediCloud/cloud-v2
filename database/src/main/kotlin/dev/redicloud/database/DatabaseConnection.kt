@@ -11,7 +11,7 @@ import org.redisson.api.RedissonClient
 import org.redisson.client.codec.BaseCodec
 import org.redisson.config.Config
 
-class DatabaseConnection(config: DatabaseConfiguration, serviceId: ServiceId, val codec: BaseCodec = GsonCodec()) {
+class DatabaseConnection(config: DatabaseConfiguration, val serviceId: ServiceId, val codec: BaseCodec = GsonCodec()) {
 
     companion object {
         private val LOGGER = LogManager.logger(DatabaseConnection::class)

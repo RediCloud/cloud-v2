@@ -3,10 +3,10 @@ package dev.redicloud.service.node.console
 import dev.redicloud.console.Console
 import dev.redicloud.event.EventManager
 import dev.redicloud.service.node.NodeConfiguration
-import dev.redicloud.service.node.events.NodeConnectEvent
-import dev.redicloud.service.node.events.NodeDisconnectEvent
-import dev.redicloud.service.node.events.NodeMasterChangedEvent
-import dev.redicloud.service.node.events.NodeSuspendedEvent
+import dev.redicloud.service.base.events.NodeConnectEvent
+import dev.redicloud.service.base.events.NodeDisconnectEvent
+import dev.redicloud.service.base.events.NodeMasterChangedEvent
+import dev.redicloud.service.base.events.NodeSuspendedEvent
 
 class NodeConsole(nodeConfiguration: NodeConfiguration, eventManager: EventManager) :
     Console(nodeConfiguration.nodeName, eventManager, true) {
