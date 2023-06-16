@@ -20,7 +20,7 @@ class EventManager(val identifier: String, val packetManager: PacketManager?) {
     }
 
     val handlers: MutableMap<KClass<*>, MutableList<EventHandlerMethod>> = HashMap()
-    private val lock = ReentrantLock(true)
+    val lock = ReentrantLock(true)
 
     init {
         MANAGERS[identifier] = this
@@ -49,13 +49,39 @@ class EventManager(val identifier: String, val packetManager: PacketManager?) {
 
     inline fun <reified T : CloudEvent> listen(noinline handler: (T) -> Unit): InlineEventCaller<T> {
         val listener = InlineEventCaller(handler)
-        register(listener)
+        InlineEventCaller::class.declaredMemberFunctions.forEach { function ->
+            val annotation = function.findAnnotation<CloudEventListener>()
+            if (annotation != null) {
+                val eventType = T::class
+                val handlerMethod = EventHandlerMethod(listener, function, annotation.priority)
+                lock.lock()
+                try {
+                    handlers.getOrPut(eventType) { mutableListOf() }.add(handlerMethod)
+                    handlers[eventType]?.sortWith(compareByDescending<EventHandlerMethod> { it.priority })
+                }finally {
+                    lock.unlock()
+                }
+            }
+        }
         return listener
     }
 
     fun <T : CloudEvent> listen(clazz: KClass<T>, handler: (T) -> Unit): InlineEventCaller<T> {
         val listener = InlineEventCaller(handler)
-        register(listener)
+        InlineEventCaller::class.declaredMemberFunctions.forEach { function ->
+            val annotation = function.findAnnotation<CloudEventListener>()
+            if (annotation != null) {
+                val eventType = clazz
+                val handlerMethod = EventHandlerMethod(listener, function, annotation.priority)
+                lock.lock()
+                try {
+                    handlers.getOrPut(eventType) { mutableListOf() }.add(handlerMethod)
+                    handlers[eventType]?.sortWith(compareByDescending<EventHandlerMethod> { it.priority })
+                }finally {
+                    lock.unlock()
+                }
+            }
+        }
         return listener
     }
 
