@@ -1,5 +1,7 @@
 package dev.redicloud.service.node
 
+import dev.redicloud.cluster.file.FileCluster
+import dev.redicloud.cluster.file.FileNodeRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.service.base.BaseService
@@ -8,22 +10,14 @@ import dev.redicloud.service.base.events.NodeSuspendedEvent
 import dev.redicloud.service.node.commands.ClusterCommand
 import dev.redicloud.service.node.commands.ExitCommand
 import dev.redicloud.service.node.console.NodeConsole
-import dev.redicloud.service.node.packets.*
 import dev.redicloud.service.node.repository.node.connect
 import dev.redicloud.service.node.repository.node.disconnect
 import dev.redicloud.service.node.repository.server.version.handler.IServerVersionHandler
-import dev.redicloud.service.node.repository.template.file.connectFileWatcher
-import dev.redicloud.service.node.repository.template.file.disconnectFileWatcher
-import dev.redicloud.service.node.repository.template.file.pullTemplates
 import dev.redicloud.service.node.tasks.NodeChooseMasterTask
 import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
-import dev.redicloud.service.node.tasks.file.FileReadTransferTask
-import dev.redicloud.service.node.tasks.file.FileTransferPublishTask
-import dev.redicloud.utils.TEMPLATE_FOLDER
 import dev.redicloud.utils.TEMP_FOLDER
 import kotlinx.coroutines.runBlocking
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class NodeService(
@@ -32,18 +26,23 @@ class NodeService(
     val configuration: NodeConfiguration
 ) : BaseService(databaseConfiguration, databaseConnection, configuration.toServiceId()) {
 
-    private val console: NodeConsole = NodeConsole(configuration, eventManager)
+    val console: NodeConsole = NodeConsole(configuration, eventManager)
+    val fileNodeRepository: FileNodeRepository
+    val fileCluster: FileCluster
 
     init {
+        fileNodeRepository = FileNodeRepository(databaseConnection, packetManager)
+        fileCluster = FileCluster(configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
+
         runBlocking {
             this@NodeService.initShutdownHook()
 
             nodeRepository.connect(this@NodeService)
 
             this@NodeService.registerPreTasks()
+            this@NodeService.connectFileCluster()
             this@NodeService.registerServerVersionHandlers()
             this@NodeService.registerPackets()
-            this@NodeService.initTemplateFiles()
             this@NodeService.registerCommands()
             this@NodeService.registerTasks()
         }
@@ -54,8 +53,8 @@ class NodeService(
         SHUTTINGDOWN = true
         LOGGER.info("Shutting down node service...")
         runBlocking {
+            fileCluster.disconnect(true)
             nodeRepository.disconnect(this@NodeService)
-            fileTemplateRepository.disconnectFileWatcher()
             super.shutdown()
             TEMP_FOLDER.getFile().deleteRecursively()
         }
@@ -79,11 +78,6 @@ class NodeService(
             .event(NodeSuspendedEvent::class)
             .period(10.seconds)
             .register()
-        taskManager.builder()
-            .task(FileTransferPublishTask(this.databaseConnection, this.nodeRepository, this.packetManager))
-            .packet(FileTransferRequestPacket::class)
-            .period(5.seconds)
-            .register()
     }
 
     private fun registerPreTasks() {
@@ -96,41 +90,17 @@ class NodeService(
     }
 
     private fun registerPackets() {
-        this.packetManager.registerPacket(FileDeletePacket::class)
-        this.packetManager.registerPacket(FileTransferChunkPacket::class)
-        this.packetManager.registerPacket(FileTransferStartPacket::class)
-        this.packetManager.registerPacket(FileTransferRequestResponse::class)
-        this.packetManager.registerPacket(FileTransferRequestPacket::class)
     }
 
-    private suspend fun initTemplateFiles() {
-
-        val master = this.nodeRepository.getMasterNode()
-        if (master == null || serviceId == master.serviceId) {
-            fileTemplateRepository.connectFileWatcher()
+    private suspend fun connectFileCluster() {
+        try {
+            this.fileCluster.connect()
+            LOGGER.info("Connected to file cluster on port ${this.fileCluster.port}!")
+        }catch (e: Exception) {
+            LOGGER.severe("Failed to connect to file cluster!", e)
+            this.shutdown()
             return
         }
-
-        taskManager.builder()
-            .task(FileReadTransferTask(this.fileTemplateRepository))
-            .packet(FileTransferChunkPacket::class)
-            .period(1.minutes)
-            .register()
-
-        LOGGER.info("Pulling templates from ${master.getIdentifyingName()}...")
-        fileTemplateRepository.connectFileWatcher()
-        val pair = this.fileTemplateRepository.pullTemplates()
-        if (pair?.first == null) {
-            if (pair?.second == null) {
-                LOGGER.warning("Cant pull templates from cluster!")
-            }else {
-                LOGGER.warning("Cant pull templates from cluster because pull request timed!")
-            }
-            fileTemplateRepository.connectFileWatcher()
-            return
-        }
-        val node = this.nodeRepository.getNode(pair.second)!!
-        LOGGER.info("Successfully pulled template files from ${node.getIdentifyingName()}!")
     }
 
     private fun registerServerVersionHandlers() {
