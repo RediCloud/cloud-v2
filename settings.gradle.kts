@@ -38,3 +38,5 @@ findProject(":repositories:server-version-repository")?.name = "server-version-r
 include("repositories:file-template-repository")
 findProject(":repositories:file-template-repository")?.name = "file-template-repository"
 include("file-cluster")
+include("repositories:configuration-template-repository")
+findProject(":repositories:configuration-template-repository")?.name = "configuration-template-repository"
