@@ -25,7 +25,9 @@ dependencies {
     shade(project(":commands:command-api"))
     shade(project(":logging"))
     shade(project(":tasks"))
+    shade(project(":file-cluster"))
     shade("dev.redicloud.libloader:libloader-bootstrap:1.6.7")
 
-    dependency("org.jline:jline-terminal-jansi:3.23.0")
+    compileOnly("org.jline:jline-terminal-jansi:3.23.0")
+    compileOnly("com.jcraft:jsch:0.1.55")
 }
