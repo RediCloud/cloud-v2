@@ -19,6 +19,8 @@ abstract class CloudTask() {
     private lateinit var taskManager: CloudTaskManager
     private val finishListener = mutableListOf<() -> Unit>()
 
+    //TODO: optional one at time execution, check via locks
+
     abstract suspend fun execute(): Boolean
 
     internal fun preExecute(source: CloudTaskExecutor) {
