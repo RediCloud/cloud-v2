@@ -83,6 +83,8 @@ abstract class BaseService(
 
     open fun shutdown() {
         SHUTTINGDOWN = true
+        nodeRepository.shutdownAction.run()
+        serverRepository.shutdownAction.run()
         taskManager.getTasks().forEach { it.cancel() }
         packetManager.disconnect()
         databaseConnection.disconnect()
