@@ -2,17 +2,12 @@ package dev.redicloud.utils
 
 import java.net.ServerSocket
 
-fun getFreePort(startPort: Int, endPort: Int): Int {
-    var port = -1
+fun findFreePort(startPort: Int, endPort: Int): Int {
+    return (startPort..endPort).toMutableList().also { it.shuffle() }.firstOrNull { isPortFree(it) } ?: -1
+}
 
-    for (currentPort in startPort..endPort) {
-        if (isPortFree(currentPort)) {
-            port = currentPort
-            break
-        }
-    }
-
-    return port
+fun findFreePort(range: IntRange): Int {
+    return range.toMutableList().also { it.shuffle() }.firstOrNull { isPortFree(it) } ?: -1
 }
 
 fun isPortFree(port: Int): Boolean {
