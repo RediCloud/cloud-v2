@@ -1,4 +1,4 @@
-group = "dev.redicloud.repository.server.version"
+group = "dev.redicloud.repository.template.file"
 
 dependencies {
     compileOnly(project(":utils"))
