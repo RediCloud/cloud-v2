@@ -2,5 +2,6 @@ package dev.redicloud.service.base.events
 
 import dev.redicloud.event.EventFireType
 import dev.redicloud.repository.node.CloudNode
+import dev.redicloud.utils.service.ServiceId
 
-class NodeMasterChangedEvent(node: CloudNode, val oldMaster: CloudNode?) : NodeEvent(node, EventFireType.GLOBAL)
+class NodeMasterChangedEvent(serviceId: ServiceId, val oldMaster: CloudNode?) : NodeEvent(serviceId, EventFireType.GLOBAL)

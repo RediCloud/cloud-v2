@@ -30,8 +30,11 @@ class IPFilter(
         }
     }
     private val onNodeSuspend = eventManager.listen<NodeSuspendedEvent> {
-        val ipAddress = it.node.currentOrLastsession()?.ipAddress ?: return@listen
-        allowedIpCache.remove(ipAddress)
+        runBlocking {
+            val fileNode = fileNodeRepository.getFileNode(it.serviceId) ?: return@runBlocking
+            val ipAddress = fileNode.hostname
+            allowedIpCache.remove(ipAddress)
+        }
     }
 
     init {

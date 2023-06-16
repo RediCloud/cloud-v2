@@ -13,7 +13,7 @@ import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.repository.node.connect
 import dev.redicloud.service.node.repository.node.disconnect
 import dev.redicloud.service.node.repository.server.version.handler.IServerVersionHandler
-import dev.redicloud.service.node.tasks.NodeChooseMasterTask
+import dev.redicloud.service.node.tasks.node.NodeChooseMasterTask
 import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
 import dev.redicloud.utils.TEMP_FOLDER
@@ -26,7 +26,7 @@ class NodeService(
     val configuration: NodeConfiguration
 ) : BaseService(databaseConfiguration, databaseConnection, configuration.toServiceId()) {
 
-    val console: NodeConsole = NodeConsole(configuration, eventManager)
+    val console: NodeConsole = NodeConsole(configuration, eventManager, nodeRepository)
     val fileNodeRepository: FileNodeRepository
     val fileCluster: FileCluster
 

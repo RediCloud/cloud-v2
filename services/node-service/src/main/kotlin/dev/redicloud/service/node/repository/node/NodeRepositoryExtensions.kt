@@ -20,7 +20,7 @@ suspend fun NodeRepository.connect(nodeService: NodeService) {
     }
     node.startSession(nodeService.configuration.hostAddress)
     updateNode(node)
-    nodeService.eventManager.fireEvent(NodeConnectEvent(node))
+    nodeService.eventManager.fireEvent(NodeConnectEvent(node.serviceId))
     LOGGER.info("Connected to node cluster!")
 }
 
@@ -30,7 +30,7 @@ suspend fun NodeRepository.disconnect(nodeService: NodeService) {
     node.endSession()
     if (node.master) node.master = false
     updateNode(node)
-    nodeService.eventManager.fireEvent(NodeDisconnectEvent(node))
+    nodeService.eventManager.fireEvent(NodeDisconnectEvent(node.serviceId))
     LOGGER.info("Disconnected from node cluster!")
 }
 
@@ -40,5 +40,5 @@ suspend fun NodeRepository.suspendNode(nodeService: NodeService, serviceId: Serv
     val currentSession = node.currentSession() ?: return
     currentSession.suspended = true
     updateNode(node)
-    nodeService.eventManager.fireEvent(NodeSuspendedEvent(node, getNode(this.serviceId)!!))
+    nodeService.eventManager.fireEvent(NodeSuspendedEvent(node.serviceId, getNode(this.serviceId)!!))
 }
