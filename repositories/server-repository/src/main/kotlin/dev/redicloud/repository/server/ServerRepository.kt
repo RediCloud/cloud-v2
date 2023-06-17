@@ -9,7 +9,6 @@ import dev.redicloud.utils.service.ServiceType
 class ServerRepository(databaseConnection: DatabaseConnection, serviceId: ServiceId, packetManager: PacketManager)
     : ServiceRepository<CloudServer>(databaseConnection, serviceId, ServiceType.SERVER, packetManager) {
 
-
     suspend fun getServer(serviceId: ServiceId): CloudServer? =
         get(serviceId.id.toString())
 
