@@ -13,5 +13,6 @@ data class ConfigurationTemplate(
     var maxStartedServicesGlobally: Int = -1,
     var minStartedServicesPerNode: Int = 0,
     var maxStartedServicesPerNode: Int = -1,
-    var percentToStartNewService: Double = 90.0
+    var percentToStartNewService: Double = 90.0,
+    var serverSplitter: String = "-"
 )
