@@ -6,9 +6,10 @@ import dev.redicloud.tasks.executor.CloudTaskExecutor
 import dev.redicloud.utils.defaultScope
 import kotlinx.coroutines.launch
 import java.util.*
+import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
 
-abstract class CloudTask() {
+abstract class CloudTask(private val useLock: Boolean = true) {
 
 
     val id: UUID = UUID.randomUUID()
@@ -18,16 +19,20 @@ abstract class CloudTask() {
     private var started = false
     private lateinit var taskManager: CloudTaskManager
     private val finishListener = mutableListOf<() -> Unit>()
-
-    //TODO: optional one at time execution, check via locks
+    private val lock = ReentrantLock()
 
     abstract suspend fun execute(): Boolean
 
     internal fun preExecute(source: CloudTaskExecutor) {
         if (canceled) return
         defaultScope.launch {
+            if (useLock) lock.lock()
+            if (canceled) return@launch
             try {
-                CloudTaskManager.LOGGER.log(Level.FINEST, "Cloud task ${this@CloudTask::class.simpleName} execute by ${source::class.simpleName}")
+                CloudTaskManager.LOGGER.log(
+                    Level.FINEST,
+                    "Cloud task ${this@CloudTask::class.simpleName} execute by ${source::class.simpleName}"
+                )
                 if (execute()) {
                     cancel()
                 }
@@ -37,6 +42,8 @@ abstract class CloudTask() {
                     "Error while executing cloud task (${this::class.simpleName}) by ${source::class.simpleName}",
                     e
                 )
+            } finally {
+                if (useLock) lock.unlock()
             }
         }
         executeCount++
