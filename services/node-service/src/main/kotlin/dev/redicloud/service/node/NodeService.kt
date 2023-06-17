@@ -62,12 +62,6 @@ class NodeService(
 
     private fun registerTasks() {
         taskManager.builder()
-            .task(NodeChooseMasterTask(nodeRepository))
-            .instant()
-            .event(NodeDisconnectEvent::class)
-            .event(NodeSuspendedEvent::class)
-            .register()
-        taskManager.builder()
             .task(NodePingTask(this))
             .instant()
             .event(NodeDisconnectEvent::class)
