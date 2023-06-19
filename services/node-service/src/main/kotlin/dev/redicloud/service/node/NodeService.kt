@@ -12,7 +12,7 @@ import dev.redicloud.service.node.commands.ExitCommand
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.repository.node.connect
 import dev.redicloud.service.node.repository.node.disconnect
-import dev.redicloud.service.node.repository.server.version.handler.IServerVersionHandler
+import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.service.node.tasks.node.NodeChooseMasterTask
 import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
@@ -33,11 +33,15 @@ class NodeService(
     init {
         fileNodeRepository = FileNodeRepository(databaseConnection, packetManager)
         fileCluster = FileCluster(configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
-
         runBlocking {
             this@NodeService.initShutdownHook()
 
             nodeRepository.connect(this@NodeService)
+            try { memoryCheck() } catch (e: Exception) {
+                LOGGER.severe("Error while checking memory", e)
+                shutdown()
+                return@runBlocking
+            }
 
             this@NodeService.registerPreTasks()
             this@NodeService.connectFileCluster()
@@ -81,6 +85,11 @@ class NodeService(
             .event(NodeDisconnectEvent::class)
             .event(NodeSuspendedEvent::class)
             .register()
+    }
+
+    private suspend fun memoryCheck() {
+        val thisNode = nodeRepository.getNode(this.serviceId)!!
+        if (thisNode.maxMemory < Runtime.getRuntime().freeMemory()) throw IllegalStateException("Not enough memory available! Please increase the max memory of this node!")
     }
 
     private fun registerPackets() {
