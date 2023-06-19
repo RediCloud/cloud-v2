@@ -5,4 +5,5 @@ dependencies {
     compileOnly(project(":database"))
     compileOnly(project(":packets"))
     compileOnly(project(":repositories:node-repository"))
+    compileOnly(project(":repositories:server-version-repository"))
 }
