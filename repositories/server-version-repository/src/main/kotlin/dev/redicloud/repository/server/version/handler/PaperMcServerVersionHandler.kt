@@ -1,6 +1,8 @@
-package dev.redicloud.service.node.repository.server.version.handler
+package dev.redicloud.repository.server.version.handler
 
 import dev.redicloud.repository.server.version.CloudServerVersion
+import dev.redicloud.repository.server.version.ServerVersionRepository
+import dev.redicloud.repository.server.version.requester.PaperMcApiRequester
 import dev.redicloud.repository.server.version.utils.CloudServerVersionType
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.TEMP_SERVER_VERSION_FOLDER
@@ -11,32 +13,47 @@ import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.minutes
 
-class ServerVersionHandler(override val type: CloudServerVersionType) : IServerVersionHandler {
+class PaperMcServerVersionHandler(
+    val serverVersionRepository: ServerVersionRepository,
+    override val type: CloudServerVersionType
+) : IServerVersionHandler {
+
+    private val requester = PaperMcApiRequester(type)
 
     override suspend fun download(version: CloudServerVersion, force: Boolean): File {
         val jar = getJar(version)
         if (jar.exists() && !force) return jar
-        if (version.customDownloadUrl == null) throw NullPointerException("Download url of ${version.name} is null")
 
-        val response = get(version.customDownloadUrl!!)
-        if (response.statusCode != 200) throw IllegalStateException(
-            "Download of ${version.name} is not available (${response.statusCode}):\n" +
-                    response.text
-        )
+        val buildId = requester.getLatestBuild(version.version)
+        if (buildId == -1) throw NullPointerException("Cant find build for ${version.name}")
+
+        val url = requester.getDownloadUrl(version.version, buildId)
+        val response = get(url)
+        if (response.statusCode != 200) throw IllegalStateException("Download of ${version.version} is not available (${response.statusCode}):\n${response.text}")
 
         val folder = getFolder(version)
         if (folder.exists()) folder.deleteRecursively()
         folder.mkdirs()
         if (jar.exists()) jar.delete()
         jar.writeBytes(response.content)
+
+        version.buildId = buildId.toString()
+        serverVersionRepository.updateVersion(version)
+
         return jar
     }
 
-    override suspend fun isUpdateAvailable(version: CloudServerVersion): Boolean = false
+    override suspend fun isUpdateAvailable(version: CloudServerVersion): Boolean {
+        val currentId = version.buildId ?: return true
+        val latest = requester.getLatestBuild(version.version)
+        if (latest == -1) throw NullPointerException("Cant find build for ${version.name}")
+        return latest > currentId.toInt()
+    }
 
-    override suspend fun getVersions(): List<ServerVersion> = emptyList()
+    override suspend fun getVersions(): List<ServerVersion> = requester.getVersions()
 
-    override suspend fun getBuilds(version: ServerVersion): List<String> = emptyList()
+    override suspend fun getBuilds(version: ServerVersion): List<String> =
+        requester.getBuilds(version).map { it.toString() }
 
     override suspend fun update(version: CloudServerVersion): File {
         download(version, true)
@@ -75,4 +92,6 @@ class ServerVersionHandler(override val type: CloudServerVersionType) : IServerV
         versionDir.deleteRecursively()
         tempDir.copyRecursively(versionDir, true)
     }
+
+
 }

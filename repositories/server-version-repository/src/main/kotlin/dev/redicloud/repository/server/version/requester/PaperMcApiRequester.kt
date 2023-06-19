@@ -1,4 +1,4 @@
-package dev.redicloud.service.node.repository.server.version
+package dev.redicloud.repository.server.version.requester
 
 import dev.redicloud.repository.server.version.utils.CloudServerVersionType
 import dev.redicloud.repository.server.version.utils.ServerVersion
