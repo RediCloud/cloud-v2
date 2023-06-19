@@ -74,7 +74,7 @@ abstract class BaseService(
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager)
         serverVersionRepository = ServerVersionRepository(databaseConnection)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager)
-        fileTemplateRepository = FileTemplateRepository(databaseConnection, packetManager, nodeRepository)
+        fileTemplateRepository = FileTemplateRepository(databaseConnection, nodeRepository)
 
         this.registerParsers()
         this.registerSuggesters()
