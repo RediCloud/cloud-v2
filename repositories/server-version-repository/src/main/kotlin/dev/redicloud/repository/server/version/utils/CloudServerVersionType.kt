@@ -11,6 +11,10 @@ enum class CloudServerVersionType {
     FOLIA,
     MINESTOM,
     LIMBO,
-    CUSTOM
+    CUSTOM;
+
+    fun isCraftBukkitBased(): Boolean {
+        return this == PAPER || this == SPIGOT || this == BUKKIT
+    }
 
 }
