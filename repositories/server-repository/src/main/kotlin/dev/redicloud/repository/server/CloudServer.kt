@@ -9,5 +9,7 @@ class CloudServer(
     serviceId: ServiceId,
     val configurationTemplate: ConfigurationTemplate,
     val id: Int,
-    sessions: MutableList<ServiceSession>
+    val hostNodeId: ServiceId,
+    sessions: MutableList<ServiceSession>,
+    var state: CloudServerState = CloudServerState.UNKNOWN
 ) : CloudService(serviceId, "${configurationTemplate.name}${configurationTemplate.serverSplitter}$id", sessions)
