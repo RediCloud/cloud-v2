@@ -16,7 +16,9 @@ suspend fun NodeRepository.connect(nodeService: NodeService) {
     val node = if (existsNode(serviceId)) {
         getNode(serviceId)!!
     } else {
-        createNode(CloudNode(serviceId, nodeService.configuration.nodeName, mutableListOf(), mutableListOf(), false))
+        val memory = (Runtime.getRuntime().freeMemory() * 0.9).toLong()
+        if (memory < 1024) throw IllegalStateException("There must be at least 1GB of free memory to start a node!")
+        createNode(CloudNode(serviceId, nodeService.configuration.nodeName, mutableListOf(), mutableListOf(), false, memory))
     }
     node.startSession(nodeService.configuration.hostAddress)
     updateNode(node)
