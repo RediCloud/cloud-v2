@@ -23,6 +23,9 @@ class ServerRepository(databaseConnection: DatabaseConnection, serviceId: Servic
     suspend fun createServer(cloudServer: CloudServer): CloudServer
         = createService(cloudServer) as CloudServer
 
+    suspend fun deleteServer(cloudServer: CloudServer)
+        = delete(cloudServer.serviceId.id.toString())
+
     suspend fun getConnectedServers(): List<CloudServer> =
         getConnectedServices().filter { it.serviceId.type == ServiceType.SERVER }.toList() as List<CloudServer>
 
