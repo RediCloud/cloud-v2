@@ -13,10 +13,12 @@ class ServerVersion(
     private val supportedJavaVersion: Array<String> = emptyArray()
 ) {
 
+    fun isUnknown(): Boolean = name == "unknown"
+
     @Expose(deserialize = false, serialize = false)
     private val cachedJavaVersions = supportedJavaVersion.mapNotNull { JavaVersion.parse(it) }
 
-    fun isSupported(version: JavaVersion): Boolean = cachedJavaVersions.contains(version) || supportedJavaVersion.isEmpty()
+    fun isSupported(version: JavaVersion): Boolean = (cachedJavaVersions.contains(version) || supportedJavaVersion.isEmpty()) && !isUnknown()
 
     companion object {
         private val CACHED_MINECRAFT_VERSIONS = mutableListOf<ServerVersion>()
