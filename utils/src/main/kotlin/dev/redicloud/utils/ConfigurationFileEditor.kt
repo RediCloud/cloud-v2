@@ -12,12 +12,12 @@ class ConfigurationFileEditor(
         const val YAML_SPLITTER = ": "
         const val PROPERTIES_SPLITTER = "="
         const val TOML_SPLITTER = " = "
-        fun ofFile(file: File): ConfigurationFileEditor {
+        fun ofFile(file: File): ConfigurationFileEditor? {
             val keyValueSplitter = when(file.extension) {
                 "yml" -> ConfigurationFileEditor.YAML_SPLITTER
                 "properties" -> ConfigurationFileEditor.PROPERTIES_SPLITTER
                 "toml" -> TOML_SPLITTER
-                else -> throw IllegalArgumentException("File extension '${file.extension}' is not supported")
+                else -> return null
             }
             return ConfigurationFileEditor(file.readLines(StandardCharsets.UTF_8), keyValueSplitter)
         }
