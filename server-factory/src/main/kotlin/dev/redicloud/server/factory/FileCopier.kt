@@ -27,17 +27,18 @@ class FileCopier(
     val serviceId = ServiceId(serverUniqueId, ServiceType.SERVER)
     val configurationTemplate = serverProcess.configurationTemplate
     val serverVersion: CloudServerVersion
-    val templates: MutableList<FileTemplate> = mutableListOf()
+    val templates: List<FileTemplate>
     val workDirectory: File
     private val logger = LogManager.logger(FileCopier::class)
 
     init {
+        // get server version
         serverVersion = runBlocking { serverVersionRepository.getVersion(configurationTemplate.serverVersionId) }
             ?: throw Exception("Server version ${configurationTemplate.serverVersionId} not found!")
-        configurationTemplate.fileTemplateIds.forEach {
-            val template = runBlocking { fileTemplateRepository.getTemplate(it) } ?: throw Exception("Template $it not found!")
-            templates.add(template)
-        }
+        // get templates by given configuration template and collect also inherited templates
+        templates = configurationTemplate.fileTemplateIds.mapNotNull { runBlocking { fileTemplateRepository.getTemplate(it) } }
+            .flatMap { runBlocking { fileTemplateRepository.collectTemplates(it) } }
+        // create work directory
         workDirectory = if(configurationTemplate.static) {
             File(STATIC_FOLDER.getFile().absolutePath, serverUniqueId.toString())
         }else {
@@ -46,6 +47,9 @@ class FileCopier(
         workDirectory.mkdirs()
     }
 
+    /**
+     * Copies all files for the server version to the work directory
+     */
     suspend fun copyVersionFiles() {
         logger.fine("Copying files for $serviceId of version ${serverVersion.name}")
         val versionHandler = IServerVersionHandler.getHandler(serverVersion.type)
@@ -56,17 +60,17 @@ class FileCopier(
             versionHandler.patch(serverVersion)
         }
         versionHandler.getFolder(serverVersion).copyRecursively(workDirectory)
+        versionHandler.type.doFileEdits(workDirectory)
     }
 
+    /**
+     * Copies all templates to the work directory
+     */
     suspend fun copyTemplates() {
         logger.fine("Copying templates for $serviceId")
         templates.forEach {
             it.getFolder().copyRecursively(workDirectory)
         }
-    }
-
-    suspend fun editFiles() {
-        //TODO set port, server name, etc.
     }
 
 }
