@@ -9,7 +9,7 @@ import khttp.get
 class ServerVersion(
     val name: String,
     val protocolId: Int,
-    val versionType: Array<CloudServerVersionType> = CloudServerVersionType.values(),
+    val versionType: Array<CloudServerVersionType> = CloudServerVersionType.VALUES.toTypedArray(),
     private val supportedJavaVersion: Array<String> = emptyArray()
 ) {
 
