@@ -11,6 +11,7 @@ import dev.redicloud.repository.temlate.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.file.FileTemplateRepository
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
+import kotlinx.coroutines.cancel
 import org.redisson.api.RQueue
 import java.util.*
 
@@ -53,7 +54,7 @@ class ServerFactory(
             if (startedAmountOfTemplateOnNode >= configurationTemplate.maxStartedServicesPerNode && configurationTemplate.maxStartedServicesPerNode != -1) return TooMuchServicesOfTemplateOnNodeStartResult()
         }
 
-        val serverProcess = ServerProcess(configurationTemplate)
+        val serverProcess = ServerProcess(configurationTemplate, serverRepository)
         var cloudServer: CloudServer? = null
         try {
             processes.add(serverProcess)
@@ -90,6 +91,13 @@ class ServerFactory(
     //TODO: events
     suspend fun stop(serviceId: ServiceId, force: Boolean = true) {
         //TODO: stop service
+    }
+
+    suspend fun shutdown() {
+        processes.forEach {
+            stop(it.cloudServer!!.serviceId)
+        }
+        ServiceProcessHandler.PROCESS_SCOPE.cancel()
     }
 
     private suspend fun getForServer(configuration: ConfigurationTemplate): Int {

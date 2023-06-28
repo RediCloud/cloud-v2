@@ -10,6 +10,7 @@ import dev.redicloud.repository.server.version.utils.CloudServerVersionType
 import dev.redicloud.repository.temlate.configuration.ConfigurationTemplate
 import dev.redicloud.utils.CLOUD_PATH
 import dev.redicloud.utils.findFreePort
+import kotlinx.coroutines.runBlocking
 
 class ServerProcess(
     val configurationTemplate: ConfigurationTemplate,
@@ -18,9 +19,10 @@ class ServerProcess(
 
     val port = findFreePort(configurationTemplate.startPort, !configurationTemplate.static)
     var process: Process? = null
+    var handler: ServiceProcessHandler? = null
     private val logger = LogManager.logger(ServerProcess::class)
     internal lateinit var fileCopier: FileCopier
-    private var cloudServer: CloudServer? = null
+    internal var cloudServer: CloudServer? = null
 
     //TODO: events
     suspend fun start(cloudServer: CloudServer) {
@@ -28,13 +30,16 @@ class ServerProcess(
         val processBuilder = ProcessBuilder()
         processBuilder.environment()["REDICLOUD_SERVICE_ID"] = cloudServer.serviceId.toName()
         processBuilder.environment()["REDICLOUD_PATH"] = CLOUD_PATH
+        processBuilder.environment()["REDICLOUD_PORT"] = port.toString()
         processBuilder.environment()["REDICLOUD_LOG_LEVEL"] = getDefaultLogLevel().localizedName
         processBuilder.environment().putAll(configurationTemplate.environments)
         processBuilder.command(
             startCommand()
         )
         processBuilder.directory(fileCopier.workDirectory)
-        process = processBuilder.start() //TODO: listene to process streams
+        process = processBuilder.start()
+        handler = ServiceProcessHandler(process!!, cloudServer)
+        handler!!.onExit { runBlocking { stop(false) } }
         cloudServer.state = CloudServerState.STARTING
         serverRepository.updateServer(cloudServer)
         logger.fine("Started server process ${cloudServer.serviceId.toName()}")
