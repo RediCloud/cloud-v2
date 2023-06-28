@@ -6,10 +6,10 @@ import java.util.UUID
 
 class CloudServerVersion(
     val uniqueId: UUID,
-    val type: CloudServerVersionType,
-    val name: String,
-    val customDownloadUrl: String?,
-    val libPattern: String?,
+    var type: CloudServerVersionType,
+    var name: String,
+    var customDownloadUrl: String?,
+    var libPattern: String?,
     var buildId: String?,
-    val version: ServerVersion
+    var version: ServerVersion
 )
