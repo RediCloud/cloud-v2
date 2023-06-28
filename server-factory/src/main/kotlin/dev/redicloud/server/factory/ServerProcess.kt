@@ -25,29 +25,43 @@ class ServerProcess(
     internal var cloudServer: CloudServer? = null
 
     //TODO: events
+    /**
+     * Starts the server process
+     * @param cloudServer the cloud server instance
+     */
     suspend fun start(cloudServer: CloudServer) {
         this.cloudServer = cloudServer
         val processBuilder = ProcessBuilder()
+        // set environment variables
         processBuilder.environment()["REDICLOUD_SERVICE_ID"] = cloudServer.serviceId.toName()
         processBuilder.environment()["REDICLOUD_PATH"] = CLOUD_PATH
         processBuilder.environment()["REDICLOUD_PORT"] = port.toString()
         processBuilder.environment()["REDICLOUD_LOG_LEVEL"] = getDefaultLogLevel().localizedName
         processBuilder.environment().putAll(configurationTemplate.environments)
+        // set command
         processBuilder.command(
             startCommand()
         )
+        // set working directory
         processBuilder.directory(fileCopier.workDirectory)
         process = processBuilder.start()
+        // create handler and listen for exit
         handler = ServiceProcessHandler(process!!, cloudServer)
         handler!!.onExit { runBlocking { stop(false) } }
+
         cloudServer.state = CloudServerState.STARTING
         serverRepository.updateServer(cloudServer)
+
         logger.fine("Started server process ${cloudServer.serviceId.toName()}")
     }
 
     //TODO: events
+    /**
+     * Stops the server process
+     */
     suspend fun stop(force: Boolean) {
         logger.fine("Stopped server process ${configurationTemplate.uniqueId}")
+
         if (cloudServer != null) {
             cloudServer!!.state = CloudServerState.STOPPING
             serverRepository.updateServer(cloudServer!!)
@@ -65,6 +79,7 @@ class ServerProcess(
             cloudServer!!.state = CloudServerState.STOPPED
             serverRepository.updateServer(cloudServer!!)
         }
+
         logger.fine("Stopped server process ${configurationTemplate.uniqueId}")
 
         if (cloudServer?.unregisterAfterDisconnect() == true) {
@@ -72,6 +87,10 @@ class ServerProcess(
         }
     }
 
+    /**
+     * Creates the command to start the server with based server version type configurations
+     * provide also placeholders like %PORT% or %SERVICE_ID%
+     */
     private fun startCommand(): List<String> {
 
         val list = mutableListOf<String>(
@@ -80,19 +99,20 @@ class ServerProcess(
             "-Xms${configurationTemplate.maxMemory}M",
             "-Xmx${configurationTemplate.maxMemory}M",
         )
-        if (fileCopier.serverVersion.type.isCraftBukkitBased()) {
-            list.add("-Dcom.mojang.eula.agree=true")
-            list.add("-Djline.terminal=jline.UnsupportedTerminal")
-        }
+        fileCopier.serverVersion.type.jvmArguments.forEach { list.add(replacePlaceholders(it)) }
         list.add("-jar")
         val versionHandler = IServerVersionHandler.getHandler(fileCopier.serverVersion.type)
         val jarToExecute = versionHandler.getJar(fileCopier.serverVersion)
         list.add(jarToExecute.absolutePath)
-        if (fileCopier.serverVersion.type.isCraftBukkitBased()) {
-            list.add("nogui")
-            list.add("-Djline.terminal=jline.UnsupportedTerminal")
-        }
+        fileCopier.serverVersion.type.programmArguments.forEach { list.add(replacePlaceholders(it)) }
         list.addAll(configurationTemplate.programmArguments)
         return list
     }
+
+    private fun replacePlaceholders(text: String): String =
+        text.replace("%PORT%", port.toString())
+            .replace("%SERVICE_ID%", cloudServer?.serviceId?.toName() ?: "unknown")
+            .replace("%SERVICE_NAME%", cloudServer?.serviceId?.toName() ?: "unknown")
+            .replace("%HOSTNAME%", cloudServer?.currentOrLastsession()?.ipAddress ?: "127.0.0.1")
+
 }
