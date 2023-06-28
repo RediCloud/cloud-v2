@@ -14,7 +14,6 @@ import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.ServerVersionRepository
 import dev.redicloud.repository.server.version.utils.ServerVersion
-import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.FileTemplateRepository
 import dev.redicloud.service.base.packets.ServicePingPacket
 import dev.redicloud.service.base.packets.ServicePingResponse
@@ -22,6 +21,8 @@ import dev.redicloud.service.base.parser.CloudNodeParser
 import dev.redicloud.service.base.parser.CloudServerParser
 import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
 import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
+import dev.redicloud.service.base.suggester.CloudServerVersionSuggester
+import dev.redicloud.service.base.suggester.ServerVersionSuggester
 import dev.redicloud.tasks.CloudTaskManager
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.versions.JavaVersion
@@ -98,6 +99,8 @@ abstract class BaseService(
     private fun registerSuggesters() {
         ICommandSuggester.SUGGESTERS.add(RegisteredCloudNodeSuggester(this.nodeRepository))
         ICommandSuggester.SUGGESTERS.add(ConnectedCloudNodeSuggester(this.nodeRepository))
+        ICommandSuggester.SUGGESTERS.add(CloudServerVersionSuggester(this.serverVersionRepository))
+        ICommandSuggester.SUGGESTERS.add(ServerVersionSuggester())
     }
 
     private fun registerPackets() {
