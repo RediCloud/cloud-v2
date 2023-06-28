@@ -40,4 +40,21 @@ class FileTemplateRepository(
 
     suspend fun getTemplates(): List<FileTemplate> = getAll()
 
+    suspend fun collectTemplates(
+        vararg templates: FileTemplate
+    ): List<FileTemplate> {
+        val collectedTemplates = mutableListOf<FileTemplate>()
+        templates.forEach { fileTemplate ->
+            val template = getTemplate(fileTemplate.uniqueId)
+                ?: throw Exception("Template ${fileTemplate.uniqueId} not found!")
+            collectedTemplates.add(template)
+            collectedTemplates.addAll(
+                collectTemplates(
+                    *template.inherited.mapNotNull { getTemplate(it) }.toTypedArray()
+                )
+            )
+        }
+        return collectedTemplates
+    }
+
 }

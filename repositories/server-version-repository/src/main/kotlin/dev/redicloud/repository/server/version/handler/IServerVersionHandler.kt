@@ -10,12 +10,13 @@ import java.io.File
 interface IServerVersionHandler {
 
     val type: CloudServerVersionType
+    var lastUpdateCheck: Long
 
     suspend fun download(version: CloudServerVersion, force: Boolean): File
 
     fun isDownloaded(version: CloudServerVersion): Boolean = getJar(version).exists()
 
-    suspend fun isUpdateAvailable(version: CloudServerVersion): Boolean
+    suspend fun isUpdateAvailable(version: CloudServerVersion, force: Boolean = false): Boolean
 
     suspend fun getVersions(): List<ServerVersion>
 
@@ -36,18 +37,20 @@ interface IServerVersionHandler {
     companion object {
         private val CACHE = mutableMapOf<CloudServerVersionType, IServerVersionHandler>()
 
-        fun getHandler(type: CloudServerVersionType): IServerVersionHandler = CACHE[type]!!
+        fun getHandler(type: CloudServerVersionType): IServerVersionHandler = CACHE[type] ?: throw IllegalStateException("No handler for type $type")
 
         fun registerHandler(serverVersionRepository: ServerVersionRepository) {
-            CloudServerVersionType.values().forEach {
+            CloudServerVersionType.VALUES.forEach {
+                if (CACHE.containsKey(it)) return@forEach
                 val handler = when(it) {
                     CloudServerVersionType.VELOCITY, CloudServerVersionType.PAPER, CloudServerVersionType.FOLIA,
-                        CloudServerVersionType.WATERFALL,
+                    CloudServerVersionType.WATERFALL,
                     -> PaperMcServerVersionHandler(serverVersionRepository, it)
                     else -> {
                         ServerVersionHandler(it)
                     }
                 }
+                CACHE[it] = handler
             }
         }
     }

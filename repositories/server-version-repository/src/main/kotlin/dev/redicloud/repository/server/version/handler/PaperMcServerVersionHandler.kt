@@ -15,7 +15,8 @@ import kotlin.time.Duration.Companion.minutes
 
 class PaperMcServerVersionHandler(
     val serverVersionRepository: ServerVersionRepository,
-    override val type: CloudServerVersionType
+    override val type: CloudServerVersionType,
+    override var lastUpdateCheck: Long = System.currentTimeMillis()
 ) : IServerVersionHandler {
 
     private val requester = PaperMcApiRequester(type)
@@ -39,14 +40,17 @@ class PaperMcServerVersionHandler(
 
         version.buildId = buildId.toString()
         serverVersionRepository.updateVersion(version)
+        lastUpdateCheck = System.currentTimeMillis()
 
         return jar
     }
 
-    override suspend fun isUpdateAvailable(version: CloudServerVersion): Boolean {
+    override suspend fun isUpdateAvailable(version: CloudServerVersion, force: Boolean): Boolean {
+        if (!force && System.currentTimeMillis() - lastUpdateCheck < 5.minutes.inWholeMilliseconds) return false
         val currentId = version.buildId ?: return true
         val latest = requester.getLatestBuild(version.version)
         if (latest == -1) throw NullPointerException("Cant find build for ${version.name}")
+        lastUpdateCheck = System.currentTimeMillis()
         return latest > currentId.toInt()
     }
 
