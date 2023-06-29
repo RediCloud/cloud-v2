@@ -13,6 +13,8 @@ import kotlin.time.Duration.Companion.minutes
 
 class ServerVersionHandler(override val type: CloudServerVersionType) : IServerVersionHandler {
 
+    override var lastUpdateCheck: Long = -1
+
     override suspend fun download(version: CloudServerVersion, force: Boolean): File {
         val jar = getJar(version)
         if (jar.exists() && !force) return jar
@@ -32,7 +34,9 @@ class ServerVersionHandler(override val type: CloudServerVersionType) : IServerV
         return jar
     }
 
-    override suspend fun isUpdateAvailable(version: CloudServerVersion): Boolean = false
+    override suspend fun isUpdateAvailable(version: CloudServerVersion, force: Boolean): Boolean {
+        return false
+    }
 
     override suspend fun getVersions(): List<ServerVersion> = emptyList()
 

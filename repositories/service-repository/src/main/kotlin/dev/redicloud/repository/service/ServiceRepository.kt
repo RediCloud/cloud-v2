@@ -54,7 +54,9 @@ abstract class ServiceRepository<T : CloudService>(
         if (cloudService.isConnected() && !connectedServices.contains(cloudService.serviceId)) {
             connectedServices.add(cloudService.serviceId)
         }
-        registeredServices.add(cloudService.serviceId)
+        if (!registeredServices.contains(cloudService.serviceId)) {
+            registeredServices.add(cloudService.serviceId)
+        }
         return cloudService
     }
 

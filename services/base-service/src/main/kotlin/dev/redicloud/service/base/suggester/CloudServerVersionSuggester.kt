@@ -1,6 +1,6 @@
 package dev.redicloud.service.base.suggester
 
-import dev.redicloud.commands.api.CommandSuggesterContext
+import dev.redicloud.commands.api.CommandContext
 import dev.redicloud.commands.api.ICommandSuggester
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.ServerVersionRepository
@@ -13,6 +13,6 @@ class CloudServerVersionSuggester(
 
     private val easyCache = EasyCache<List<CloudServerVersion>, Unit>(5.seconds) { serverVersionRepository.getAll() }
 
-    override fun suggest(context: CommandSuggesterContext): Array<String> =
+    override fun suggest(context: CommandContext): Array<String> =
         easyCache.get()?.map { it.name }?.toTypedArray() ?: emptyArray()
 }

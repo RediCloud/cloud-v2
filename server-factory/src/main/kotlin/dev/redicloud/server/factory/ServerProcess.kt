@@ -7,7 +7,7 @@ import dev.redicloud.repository.server.CloudServerState
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.CloudServerVersionType
-import dev.redicloud.repository.temlate.configuration.ConfigurationTemplate
+import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.utils.CLOUD_PATH
 import dev.redicloud.utils.findFreePort
 import kotlinx.coroutines.runBlocking

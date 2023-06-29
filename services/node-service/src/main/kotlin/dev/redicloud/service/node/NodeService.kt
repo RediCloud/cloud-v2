@@ -90,7 +90,8 @@ class NodeService(
 
     private suspend fun memoryCheck() {
         val thisNode = nodeRepository.getNode(this.serviceId)!!
-        if (thisNode.maxMemory < Runtime.getRuntime().freeMemory()) throw IllegalStateException("Not enough memory available! Please increase the max memory of this node!")
+        if (thisNode.maxMemory < 1024) throw IllegalStateException("Max memory of this node is too low! Please increase the max memory of this node!")
+        if (thisNode.maxMemory > Runtime.getRuntime().freeMemory()) throw IllegalStateException("Not enough memory available! Please increase the max memory of this node!")
     }
 
     private fun registerPackets() {
@@ -114,7 +115,7 @@ class NodeService(
     private fun registerCommands() {
         console.commandManager.register(ExitCommand(this))
         console.commandManager.register(ClusterCommand(this))
-        console.commandManager.register(CloudServerVersionCommand(this.serverVersionRepository))
+        console.commandManager.register(CloudServerVersionCommand(this.serverVersionRepository, this.configurationTemplateRepository, this.serverRepository))
     }
 
     private fun initShutdownHook() {

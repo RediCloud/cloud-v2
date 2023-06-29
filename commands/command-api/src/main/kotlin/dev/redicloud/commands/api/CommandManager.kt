@@ -5,6 +5,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
     private val commands = mutableListOf<CommandBase>()
     private val disabledCommands = mutableListOf<CommandBase>()
     private var allDisabled = false
+    var helpFormatter: ICommandHelpFormatter = DefaultHelpFormatter(this)
 
     abstract fun getActor(identifier: K): K
 
@@ -55,7 +56,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
         if (possibleCommands.isEmpty()) return list
 
         if (possibleCommands.size == 1) {
-            list.addAll(possibleCommands.first().suggester.suggest(CommandSuggesterContext(input, emptyArray())))
+            list.addAll(possibleCommands.first().suggester.suggest(CommandContext(input, emptyArray())))
         }
 
         possibleCommands.forEach { command ->
@@ -64,10 +65,10 @@ abstract class CommandManager<K : ICommandActor<*>> {
                 .filter { actor.hasPermission(it.permission) }
 
             if (possibleSubCommands.size == 1) {
-                list.addAll(possibleSubCommands.first().suggester.suggest(CommandSuggesterContext(input, emptyArray())))
+                list.addAll(possibleSubCommands.first().suggester.suggest(CommandContext(input, emptyArray())))
                 possibleSubCommands.first().arguments
                     .filter { it.isThis(input, true) }
-                    .map { it.subCommand.suggester.suggest(CommandSuggesterContext(input, it.suggesterParameter)) }
+                    .map { it.subCommand.suggester.suggest(CommandContext(input, it.suggesterParameter)) }
             }
 
         }
@@ -80,7 +81,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
         val commandName = split[0].lowercase()
         val parameters = split.drop(1)
         val command = getCommand(commandName)
-            ?: return CommandResponse(CommandResponseType.INVALID_COMMAND, "Command '$commandName' not found")
+            ?: return helpFormatter.formatHelp(actor, CommandContext(input, emptyArray()))
         if (isDisabled(command)) return CommandResponse(CommandResponseType.DISABLED, "Command '$commandName' is disabled")
 
         if (!actor.hasPermission(command.getPermission())) return CommandResponse(
@@ -89,11 +90,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
         )
 
         val subCommand = command.getSubCommands()
-            .firstOrNull { it.isThis(input, false) }
-            ?: return CommandResponse(
-                CommandResponseType.INVALID_SUB_PATH,
-                "Invalid sub path for command '$commandName${if(parameters.isEmpty()) "" else (" ${parameters.joinToString(" ")}").removeLastSpaces()}'"
-            )
+            .firstOrNull { it.isThis(input, false) } ?: return helpFormatter.formatHelp(actor, CommandContext(input, emptyArray()))
 
         if (!actor.hasPermission(subCommand.permission)) return CommandResponse(
             CommandResponseType.PERMISSION,
@@ -101,14 +98,40 @@ abstract class CommandManager<K : ICommandActor<*>> {
         )
 
         val optimalPath = subCommand.parseToOptimalPath(input)!!
-        var pathWithoutArgs = ""
+        val argumentIndexes = mutableListOf<Int>()
+        var index = -1
         optimalPath.split(" ").forEach {
-            if (it.isOptionalArgument() || it.isRequiredArgument()) return@forEach
-            if (pathWithoutArgs.isNotBlank()) pathWithoutArgs += " "
-            pathWithoutArgs += it
+            index++
+            if (it.isOptionalArgument() || it.isRequiredArgument()) argumentIndexes.add(index)
         }
-        val arguments = parameters.drop(pathWithoutArgs.split(" ").size)
+        val arguments = parameters.filterIndexed { i, _ -> argumentIndexes.contains(i) }
         return subCommand.execute(actor, arguments)
+    }
+
+    fun helpPaths(commandBase: CommandBase, parameterInput: String): List<CommandSubBase> {
+        val instantResult = commandBase.getSubCommand(parameterInput)
+        if (instantResult != null) return listOf(instantResult)
+        val results = commandBase.getSubCommands().toMutableList()
+        var storedLastResults = results.toList()
+        var currentInput = parameterInput.removeFirstSpaces()
+        while ((storedLastResults.size > 2 && results.isNotEmpty())) {
+            if (results.isNotEmpty()) storedLastResults = results.toList()
+            results.clear()
+            commandBase.getSubCommands().forEach {
+                if (it.isThis("${commandBase.getName()} $currentInput", true)) {
+                    results.add(it)
+                }else {
+                    results.remove(it)
+                }
+            }
+            val split = currentInput.removeLastSpaces().split(" ").toMutableList()
+            if (split.isEmpty()) return if (results.isEmpty()) storedLastResults else results
+            split.removeLast()
+            if (split.isEmpty()) return if (results.isEmpty()) storedLastResults else results
+            currentInput = split.joinToString(separator = " ")
+        }
+
+        return if (results.isEmpty()) storedLastResults else results
     }
 
     fun getCommands(): List<CommandBase> = commands.toList()

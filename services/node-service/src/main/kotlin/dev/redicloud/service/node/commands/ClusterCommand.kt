@@ -56,7 +56,7 @@ class ClusterCommand(private val nodeService: NodeService) : CommandBase() {
         }
     }
 
-    @CommandSubPath("ping")
+    @CommandSubPath("ping <node>")
     @CommandDescription("Ping a node")
     fun ping(
         actor: ConsoleActor,
@@ -69,7 +69,7 @@ class ClusterCommand(private val nodeService: NodeService) : CommandBase() {
         sendPingMessage(node, actor, "${node.getIdentifyingName()} §8> §7")
     }
 
-    @CommandSubPath("templates push")
+    @CommandSubPath("templates push <node>")
     @CommandDescription("Push templates to the cluster")
     fun pushTemplates(
         actor: ConsoleActor,
@@ -83,7 +83,7 @@ class ClusterCommand(private val nodeService: NodeService) : CommandBase() {
     }
 
     private val suspendConfirm = mutableListOf<ServiceId>()
-    @CommandSubPath("suspend")
+    @CommandSubPath("suspend <node>")
     @CommandDescription("Suspend a node")
     fun suspend(
         actor: ConsoleActor,

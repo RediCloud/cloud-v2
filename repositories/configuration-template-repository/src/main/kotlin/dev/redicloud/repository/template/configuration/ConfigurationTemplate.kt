@@ -1,4 +1,4 @@
-package dev.redicloud.repository.temlate.configuration
+package dev.redicloud.repository.template.configuration
 
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.versions.JavaVersion

@@ -79,7 +79,7 @@ class CommandSubBase(
             CommandResponse(CommandResponseType.SUCCESS, null)
         }catch (e: Exception) {
             CommandResponse(CommandResponseType.ERROR,
-                "Error while executing command: ${command.getName()} ${getSubPathsWithoutArguments().joinToString(" ")}", e)
+                "Error while executing command: ${command.getName()} $path", e)
         }
     }
 
@@ -113,9 +113,19 @@ class CommandSubBase(
         if (split.size == 1 && path.isEmpty()) return true
         if (split.size < 2 && predicate) return input.endsWith(" ")
         val parameters = split.drop(1)
+        if (parameters.isEmpty()) return predicate
         val possibleFullPaths = getSubPaths()
         val matched = possibleFullPaths.toMutableList()
         var index = -1
+        val counts = mutableListOf<Int>()
+        mutableListOf(path, *aliasePaths).forEach {
+            val maxLength = it.split(" ").size
+            val minLength = it.split(" ").count { !it.isOptionalArgument() }
+            for (i in minLength..maxLength) {
+                counts.add(i)
+            }
+        }
+        if (counts.none { it == parameters.size }) return false
         parameters.forEach {
             index++
             val possible = matched.filter { path ->
@@ -134,29 +144,8 @@ class CommandSubBase(
 
     fun getUsage(): String = "${command.getName()} ${getSubPaths().first()}"
 
-    fun getSubPathsWithoutArguments(): List<String>
-        = listOf(*aliasePaths, path)
-
     fun getSubPaths(): List<String> {
-        val prefixes = listOf(*aliasePaths, path)
-        val paths = mutableListOf<String>()
-        var currentPath = "%prefix%"
-        if (arguments.isEmpty()) return prefixes.map { currentPath.replace("%prefix%", it) }
-        var currentArgumentIndex = 0
-        val arguments = arguments.filter { !it.isActorArgument() }
-        while (currentArgumentIndex < arguments.count() { !it.isActorArgument() } ) {
-            val currentArgument = arguments[currentArgumentIndex]
-            if (currentArgument.required) {
-                currentPath += " ${currentArgument.getPathFormat()}"
-                currentArgumentIndex++
-                continue
-            }
-            paths.add(currentPath)
-            currentPath += " [${currentArgument.name}]"
-            currentArgumentIndex++
-        }
-        if (!paths.contains(currentPath)) paths.add(currentPath)
-        return prefixes.flatMap { prefix -> paths.map { it.replace("%prefix%", prefix) } }
+        return listOf(*aliasePaths, path).map { it.removeLastSpaces() }
     }
 
 }

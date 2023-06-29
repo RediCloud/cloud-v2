@@ -12,16 +12,11 @@ interface ICommandSuggester {
         )
     }
 
-    fun suggest(context: CommandSuggesterContext): Array<String>
-}
-
-class CommandSuggesterContext(val input: String, val annotationArguments: Array<String>) {
-    fun <T> getOr(index: Int, default: T): T =
-        if (annotationArguments.size > index) annotationArguments[index] as T else default
+    fun suggest(context: CommandContext): Array<String>
 }
 
 class EmptySuggester() : ICommandSuggester {
-    override fun suggest(context: CommandSuggesterContext): Array<String> = arrayOf()
+    override fun suggest(context: CommandContext): Array<String> = arrayOf()
 }
 
 class MemorySuggester() : ICommandSuggester {
@@ -40,14 +35,14 @@ class MemorySuggester() : ICommandSuggester {
         1048576
     )
 
-    override fun suggest(context: CommandSuggesterContext): Array<String> {
+    override fun suggest(context: CommandContext): Array<String> {
         val totalMemory = Runtime.getRuntime().totalMemory()
         return memoryList.filter { it.toLong() < totalMemory }.map { it.toString() }.toTypedArray()
     }
 }
 
 class IntegerSuggester() : ICommandSuggester {
-    override fun suggest(context: CommandSuggesterContext): Array<String> {
+    override fun suggest(context: CommandContext): Array<String> {
         val min = context.getOr(0, 1)
         val max = context.getOr(1, 10)
         val step = context.getOr(2, 1)
@@ -56,21 +51,21 @@ class IntegerSuggester() : ICommandSuggester {
 }
 
 class CommandSubPathSuggester(val subCommand: CommandSubBase) : ICommandSuggester {
-    private val easyCache = EasyCache<Array<String>, CommandSuggesterContext>(5.seconds) { context ->
-        subCommand.getSubPathsWithoutArguments().toTypedArray()
+    private val easyCache = EasyCache<Array<String>, CommandContext>(5.seconds) { context ->
+        subCommand.getSubPaths().toTypedArray()
     }
-    override fun suggest(context: CommandSuggesterContext): Array<String> =
+    override fun suggest(context: CommandContext): Array<String> =
         easyCache.get(context)!!
 }
 
 class CommandSuggester(val command: CommandBase) : ICommandSuggester {
-    override fun suggest(context: CommandSuggesterContext): Array<String> =
+    override fun suggest(context: CommandContext): Array<String> =
         arrayOf(command.getName(), *command.getAliases())
 }
 
 class CommandArgumentSuggester(val commandArgument: CommandArgument) : ICommandSuggester {
 
-    private val easyCache = EasyCache<Array<String>, CommandSuggesterContext>(5.seconds) { context ->
+    private val easyCache = EasyCache<Array<String>, CommandContext>(5.seconds) { context ->
         if (context == null) return@EasyCache arrayOf()
         if (!commandArgument.isThis(context.input, true)) return@EasyCache arrayOf()
         val nextArgument = !commandArgument.isThis(context.input, false)
@@ -88,6 +83,6 @@ class CommandArgumentSuggester(val commandArgument: CommandArgument) : ICommandS
             .toTypedArray()
     }
 
-    override fun suggest(context: CommandSuggesterContext): Array<String> = easyCache.get(context)!!
+    override fun suggest(context: CommandContext): Array<String> = easyCache.get(context)!!
 
 }
