@@ -17,3 +17,5 @@ fun isInFile(folder: File, file: File): Boolean {
 
     return false
 }
+
+fun toMb(bytes: Long): Long = bytes / (1024 * 1024)
