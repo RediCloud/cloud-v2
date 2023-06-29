@@ -318,7 +318,7 @@
     "versionType": ["VELOCITY"]
   },
   {
-    "name": "UNKNOWN",
+    "name": "unknown",
     "protocolId": -1,
     "supportedJavaVersion": [],
     "versionType": []
