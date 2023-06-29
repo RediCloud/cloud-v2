@@ -12,13 +12,16 @@ import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
+import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.ServerVersionRepository
 import dev.redicloud.repository.server.version.utils.ServerVersion
+import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplateRepository
 import dev.redicloud.service.base.packets.ServicePingPacket
 import dev.redicloud.service.base.packets.ServicePingResponse
 import dev.redicloud.service.base.parser.CloudNodeParser
 import dev.redicloud.service.base.parser.CloudServerParser
+import dev.redicloud.service.base.parser.CloudServerVersionParser
 import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
 import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
 import dev.redicloud.service.base.suggester.CloudServerVersionSuggester
@@ -46,6 +49,7 @@ abstract class BaseService(
     val serverRepository: ServerRepository
     val serverVersionRepository: ServerVersionRepository
     val fileTemplateRepository: FileTemplateRepository
+    val configurationTemplateRepository: ConfigurationTemplateRepository
 
     val packetManager: PacketManager
     val eventManager: EventManager
@@ -76,6 +80,7 @@ abstract class BaseService(
         serverVersionRepository = ServerVersionRepository(databaseConnection)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager)
         fileTemplateRepository = FileTemplateRepository(databaseConnection, nodeRepository)
+        configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection)
 
         this.registerParsers()
         this.registerSuggesters()
@@ -94,6 +99,7 @@ abstract class BaseService(
     private fun registerParsers() {
         CommandArgumentParser.PARSERS[CloudNode::class] = CloudNodeParser(this.nodeRepository)
         CommandArgumentParser.PARSERS[CloudServer::class] = CloudServerParser(this.serverRepository)
+        CommandArgumentParser.PARSERS[CloudServerVersion::class] = CloudServerVersionParser(this.serverVersionRepository)
     }
 
     private fun registerSuggesters() {

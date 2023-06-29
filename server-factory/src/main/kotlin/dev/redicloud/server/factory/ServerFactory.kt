@@ -8,7 +8,7 @@ import dev.redicloud.repository.server.CloudServerState
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.ServerVersionRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
-import dev.redicloud.repository.temlate.configuration.ConfigurationTemplate
+import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.file.FileTemplateRepository
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
