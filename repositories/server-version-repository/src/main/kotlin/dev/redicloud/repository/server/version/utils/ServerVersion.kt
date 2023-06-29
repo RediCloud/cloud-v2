@@ -9,7 +9,7 @@ import khttp.get
 class ServerVersion(
     val name: String,
     val protocolId: Int,
-    val versionType: Array<CloudServerVersionType> = CloudServerVersionType.VALUES.toTypedArray(),
+    val versionType: Array<String> = CloudServerVersionType.VALUES.map { it.name }.toTypedArray(),
     private val supportedJavaVersion: Array<String> = emptyArray()
 ) {
 
@@ -29,9 +29,13 @@ class ServerVersion(
             CACHED_MINECRAFT_VERSIONS.clear()
             val json = get("https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/server-versions.json").text
             val type = object : TypeToken<ArrayList<ServerVersion>>() {}.type
-            val list: List<ServerVersion> = prettyPrintGson.fromJson(json, type)
+            val list = prettyPrintGson.fromJson<List<ServerVersion>?>(json, type).toMutableList()
+            if (list.none { it.isUnknown() }) {
+                list.add(ServerVersion("unknown", -1))
+            }
             CACHED_MINECRAFT_VERSIONS.addAll(list)
         }
+
         suspend fun loadIfNotLoaded() {
             if (CACHED_MINECRAFT_VERSIONS.isNotEmpty()) return
             loadOnlineVersions()
