@@ -316,5 +316,11 @@
       "16"
     ],
     "versionType": ["VELOCITY"]
+  },
+  {
+    "name": "UNKNOWN",
+    "protocolId": -1,
+    "supportedJavaVersion": [],
+    "versionType": []
   }
 ]
