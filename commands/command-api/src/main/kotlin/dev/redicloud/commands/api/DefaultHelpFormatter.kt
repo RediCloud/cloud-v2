@@ -21,7 +21,7 @@ class DefaultHelpFormatter(private val commandManager: CommandManager<*>) : ICom
             actor.sendMessage("§cCommand was not found! %tc%Here are some suggestions")
             actor.sendMessage("")
             predictedCommands.forEach {
-                actor.sendMessage("%hc%${it.getName()} §8| %tc%${it.getAliases().joinToString { "§8, %tc%" }}")
+                actor.sendMessage("%hc%${it.getName()} §8| %tc%${it.getAliases().joinToString(separator = "§8, %tc%")}")
                 actor.sendMessage("§8➥ %tc%${it.getDescription()}")
                 actor.sendMessage("")
             }
@@ -32,7 +32,7 @@ class DefaultHelpFormatter(private val commandManager: CommandManager<*>) : ICom
             )
         }
 
-        val helpPaths = commandManager.helpPaths(command, parameters.joinToString { " " })
+        val helpPaths = commandManager.helpPaths(command, parameters.joinToString(separator = " "))
 
         if (helpPaths.isNotEmpty()) {
             if (helpPaths.size == 1) {
