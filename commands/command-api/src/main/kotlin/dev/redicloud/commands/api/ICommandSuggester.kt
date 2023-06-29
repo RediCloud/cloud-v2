@@ -52,7 +52,7 @@ class IntegerSuggester() : ICommandSuggester {
 
 class CommandSubPathSuggester(val subCommand: CommandSubBase) : ICommandSuggester {
     private val easyCache = EasyCache<Array<String>, CommandContext>(5.seconds) { context ->
-        subCommand.getSubPathsWithoutArguments().toTypedArray()
+        subCommand.getSubPaths().toTypedArray()
     }
     override fun suggest(context: CommandContext): Array<String> =
         easyCache.get(context)!!
