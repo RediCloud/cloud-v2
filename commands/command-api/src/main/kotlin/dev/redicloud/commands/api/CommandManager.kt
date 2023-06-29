@@ -98,33 +98,40 @@ abstract class CommandManager<K : ICommandActor<*>> {
         )
 
         val optimalPath = subCommand.parseToOptimalPath(input)!!
-        var pathWithoutArgs = ""
+        val argumentIndexes = mutableListOf<Int>()
+        var index = -1
         optimalPath.split(" ").forEach {
-            if (it.isOptionalArgument() || it.isRequiredArgument()) return@forEach
-            if (pathWithoutArgs.isNotBlank()) pathWithoutArgs += " "
-            pathWithoutArgs += it
+            index++
+            if (it.isOptionalArgument() || it.isRequiredArgument()) argumentIndexes.add(index)
         }
-        val arguments = parameters.drop(pathWithoutArgs.split(" ").size)
+        val arguments = parameters.filterIndexed { i, _ -> argumentIndexes.contains(i) }
         return subCommand.execute(actor, arguments)
     }
 
     fun helpPaths(commandBase: CommandBase, parameterInput: String): List<CommandSubBase> {
-        val results = mutableListOf<CommandSubBase>()
-
         val instantResult = commandBase.getSubCommand(parameterInput)
         if (instantResult != null) return listOf(instantResult)
-
+        val results = commandBase.getSubCommands().toMutableList()
+        var storedLastResults = results.toList()
         var currentInput = parameterInput.removeFirstSpaces()
-        while (results.size < 2 || currentInput.isNotEmpty()) {
-            commandBase.getSubCommands().filter {
-                it.isThis(currentInput, true)
-            }.forEach { results.add(it) }
-            val split = currentInput.removeLastSpaces().split(" ")
-            if (split.isEmpty()) return results
-            currentInput = split.drop(split.size-1).joinToString { " " }
+        while ((storedLastResults.size > 2 && results.isNotEmpty())) {
+            if (results.isNotEmpty()) storedLastResults = results.toList()
+            results.clear()
+            commandBase.getSubCommands().forEach {
+                if (it.isThis("${commandBase.getName()} $currentInput", true)) {
+                    results.add(it)
+                }else {
+                    results.remove(it)
+                }
+            }
+            val split = currentInput.removeLastSpaces().split(" ").toMutableList()
+            if (split.isEmpty()) return if (results.isEmpty()) storedLastResults else results
+            split.removeLast()
+            if (split.isEmpty()) return if (results.isEmpty()) storedLastResults else results
+            currentInput = split.joinToString(separator = " ")
         }
 
-        return results
+        return if (results.isEmpty()) storedLastResults else results
     }
 
     fun getCommands(): List<CommandBase> = commands.toList()
