@@ -49,14 +49,36 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
         if (!subCommand.isThis(input, false)) return false
         if (isActorArgument()) return false
         if (input.isEmpty()) return false
-        var argumentPath = input.lowercase()
-        subCommand.getSubPathsWithoutArguments().forEach {
-            argumentPath = argumentPath.replace(it, "")
+
+        val optimalCurrentPaths = listOf(subCommand.path, *subCommand.aliasePaths)
+            .flatMap { subCommandPaths ->
+                listOf(subCommand.command.getName(), *subCommand.command.getAliases())
+                .map { commandPath -> "$commandPath $subCommandPaths".removeLastSpaces() }
+            }
+
+        optimalCurrentPaths.forEach optimalPathForEach@ { optimalPath ->
+            if (input.startsWith(optimalPath) && predict) return true
+            var index = -1
+            var currentBuild = ""
+            optimalPath.split(" ").forEach optimalParameterForEach@ {
+                index++
+                if (it.isRequiredArgument() || it.isOptionalArgument()) {
+                    if (input.split(" ").size < index + 1) {
+                        if (it.isOptionalArgument()) return true
+                        currentBuild += "$it "
+                        return@optimalParameterForEach
+                    }
+                }
+                val inputCurrent = input.split(" ")[index]
+                if (inputCurrent.lowercase() == it.lowercase()) {
+                    currentBuild += "$inputCurrent "
+                    return@optimalParameterForEach
+                }
+            }
+            if (currentBuild.lowercase().removeLastSpaces() == input.lowercase().removeLastSpaces()) return true
         }
-        val argumentSplit = argumentPath.split(" ")
-        if (argumentSplit.size <= index) return false
-        if (argumentSplit.size == index + 1 && !argumentPath.endsWith(" ")) return true
-        return argumentSplit.size == index && argumentPath.endsWith(" ") && predict
+
+        return false
     }
 
     fun parse(input: String): Any? = parser?.parse(input)
