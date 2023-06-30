@@ -1,5 +1,6 @@
 [
   {
+    "uniqueId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "name": "paper",
     "defaultType": true,
     "versionHandlerName": "papermc",
@@ -25,10 +26,10 @@
       "spigot.yml": {
         "\"bungeecord\"": "true"
       }
-    },
-    "unknown": false
+    }
   },
   {
+    "uniqueId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "name": "spigot",
     "defaultType": true,
     "versionHandlerName": "urldownloader",
@@ -54,10 +55,10 @@
       "spigot.yml": {
         "\"bungeecord\"": "true"
       }
-    },
-    "unknown": false
+    }
   },
   {
+    "uniqueId": "22fdc789-f155-41fc-8bcd-974994410079",
     "name": "bukkit",
     "defaultType": true,
     "versionHandlerName": "urldownloader",
@@ -83,10 +84,10 @@
       "spigot.yml": {
         "\"bungeecord\"": "true"
       }
-    },
-    "unknown": false
+    }
   },
   {
+    "uniqueId": "e0982b0f-f27f-4206-a373-ce12ad8ea333",
     "name": "velocity",
     "defaultType": true,
     "versionHandlerName": "papermc",
@@ -98,10 +99,10 @@
       "velocity.toml": {
         "bind": "\"%HOSTNAME%:%PORT%\""
       }
-    },
-    "unknown": false
+    }
   },
   {
+    "uniqueId": "6dc3fa6b-d8ae-4e31-b40e-519b43671e5b",
     "name": "bungeecord",
     "defaultType": true,
     "versionHandlerName": "urldownloader",
@@ -114,10 +115,10 @@
         "host": "%HOSTNAME%",
         "ip_forward": "true"
       }
-    },
-    "unknown": false
+    }
   },
   {
+    "uniqueId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "name": "waterfall",
     "defaultType": true,
     "versionHandlerName": "urldownloader",
@@ -130,10 +131,10 @@
         "host": "%HOSTNAME%",
         "ip_forward": "true"
       }
-    },
-    "unknown": false
+    }
   },
   {
+    "uniqueId": "6fa280a8-aaed-4ee7-99e4-c337b6985098",
     "name": "folia",
     "defaultType": true,
     "versionHandlerName": "papermc",
@@ -152,10 +153,10 @@
         "server-ip": "%HOSTNAME%",
         "server-port": "%PORT%"
       }
-    },
-    "unknown": false
+    }
   },
   {
+    "uniqueId": "b41715df-bc33-4086-83cc-41f4578e84e2",
     "name": "minestom",
     "defaultType": true,
     "versionHandlerName": "urldownloader",
@@ -163,10 +164,10 @@
     "proxy": false,
     "jvmArguments": [],
     "programmArguments": [],
-    "fileEdits": {},
-    "unknown": false
+    "fileEdits": {}
   },
   {
+    "uniqueId": "13846fd0-f01a-4838-a130-d1b4f3a2d0cf",
     "name": "limbo",
     "defaultType": true,
     "versionHandlerName": "urldownloader",
@@ -174,10 +175,10 @@
     "proxy": false,
     "jvmArguments": [],
     "programmArguments": [],
-    "fileEdits": {},
-    "unknown": false
+    "fileEdits": {}
   },
   {
+    "uniqueId": "188507b4-37b9-45b5-b977-73ed6f6192a9",
     "name": "unknown",
     "defaultType": true,
     "versionHandlerName": "urldownloader",
@@ -185,7 +186,6 @@
     "proxy": false,
     "jvmArguments": [],
     "programmArguments": [],
-    "fileEdits": {},
-    "unknown": true
+    "fileEdits": {}
   }
 ]

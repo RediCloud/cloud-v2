@@ -67,7 +67,7 @@ class ServerFactory(
 
         // check if the server version is known
         val version = serverVersionRepository.getVersion(configurationTemplate.serverVersionId)
-        if (version == null || version.type.unknown) return UnknownServerVersionStartResult(version)
+        if (version == null || version.type.isUnknown()) return UnknownServerVersionStartResult(version)
         // get the version handler and update/patch the version if needed
         val versionHandler = IServerVersionHandler.getHandler(version.type)
         if (versionHandler.isUpdateAvailable(version)) versionHandler.update(version)

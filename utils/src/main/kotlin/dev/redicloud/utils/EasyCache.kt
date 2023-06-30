@@ -12,7 +12,7 @@ class EasyCache<T, I>(
     private var singleCachedValue: Pair<Long, T?>? = null
 
     fun get(value: I? = null): T? {
-        if (value != null && (!isCached(value) || isCacheValid(value))) {
+        if (!isCacheValid(value)) {
             setCached(value, runBlocking { block(value) })
         }
         return getCached(value)

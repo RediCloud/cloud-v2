@@ -47,13 +47,19 @@ class CloudServerVersionTypeCommand(
         actor.sendMessage("Default§8: %hc%${type.defaultType.toSymbol()}")
         actor.sendMessage("CraftBukkit based§8: %hc%${type.craftBukkitBased.toSymbol()}")
         actor.sendMessage("Proxy§8: %hc%${type.proxy.toSymbol()}")
-        actor.sendMessage("JVM-Arguments§8: %hc%${type.jvmArguments.joinToString("§8, %hc%")}")
-        actor.sendMessage("Programm-Arguments§8: %hc%${type.programmArguments.joinToString("§8, %hc%")}")
+        actor.sendMessage("JVM arguments§8:${if(type.jvmArguments.isEmpty()) " %hc%None" else ""}")
+        type.jvmArguments.forEach {
+            actor.sendMessage("\t§8- %hc%$it")
+        }
+        actor.sendMessage("Programm arguments§8:${if(type.programmArguments.isEmpty()) " %hc%None" else ""}")
+        type.programmArguments.forEach {
+            actor.sendMessage("\t§8- %hc%$it")
+        }
         actor.sendMessage("File edits§8:")
         type.fileEdits.keys.forEach {
             actor.sendMessage("\t§8- %hc%$it")
             type.fileEdits[it]?.forEach { edit ->
-                actor.sendMessage("\t\t§8➥ %hc%${edit.key} §8➜ %hc%${edit.value}")
+                actor.sendMessage("\t    §8➥ %tc%${edit.key} §8➜ %tc%${edit.value}")
             }
         }
         actor.sendMessage("")

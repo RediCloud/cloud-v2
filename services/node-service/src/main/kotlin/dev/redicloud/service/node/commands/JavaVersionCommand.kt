@@ -23,7 +23,7 @@ class JavaVersionCommand(
             actor.sendMessage("")
             javaVersionRepository.getVersions().forEach {
                 actor.sendMessage(
-                    "§8- §7${it.name} §8(§7${it.id}§8) §8| %tc%Installed$8: ${it.isLocated(javaVersionRepository.serviceId).toSymbol()}"
+                    "§8- %hc%${it.name} §8(%hc%${it.id}§8) §8| %tc%Installed§8: ${it.isLocated(javaVersionRepository.serviceId).toSymbol()}"
                 )
             }
             actor.sendMessage("")

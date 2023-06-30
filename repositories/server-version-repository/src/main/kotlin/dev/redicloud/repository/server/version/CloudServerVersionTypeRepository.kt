@@ -19,8 +19,8 @@ class CloudServerVersionTypeRepository(
             val json =
                 khttp.get("${getRawUserContentUrl()}/api-files/server-version-types.json").text
             val type = object : TypeToken<ArrayList<CloudServerVersionType>>() {}.type
-            val list: MutableList<CloudServerVersionType> = prettyPrintGson.fromJson(json, type)
-            if (list.none { it.unknown }) {
+            val list: MutableList<CloudServerVersionType> = prettyPrintGson.fromJson<MutableList<CloudServerVersionType>?>(json, type)
+            if (list.none { it.isUnknown() }) {
                 list.add(
                     CloudServerVersionType(
                         UUID.randomUUID(),
@@ -66,7 +66,10 @@ class CloudServerVersionTypeRepository(
     private suspend fun createDefaultTypes() {
         val defaultTypes = getDefaultTypes()
         defaultTypes.forEach {
-            if (existsType(it.name)) return@forEach
+            if (existsType(it.uniqueId)) {
+                updateType(it)
+                return@forEach
+            }
             createType(it)
         }
     }

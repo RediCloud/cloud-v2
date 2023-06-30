@@ -36,9 +36,16 @@ fun locateAllJavaVersions(): List<File> {
     when (getOperatingSystemType()) {
         OSType.WINDOWS -> {
             mutableListOf<String>(
-                "Program Files\\Java",
-                "Program Files (x86)\\Java"
-            ).filter { it.isNotEmpty() }.map { File(it) }.filter { it.exists() }.filter { it.isDirectory }
+                "\\Program Files\\Java",
+                "\\Program Files (x86)\\Java"
+            ).filter {
+                it.isNotEmpty()
+            }.map {
+                File(it)
+            }.filter {
+                val state = it.exists()
+                state
+            }.filter { it.isDirectory }
                 .forEach { versionFolders.addAll(it.listFiles()!!.toList()) }
         }
         OSType.LINUX -> {

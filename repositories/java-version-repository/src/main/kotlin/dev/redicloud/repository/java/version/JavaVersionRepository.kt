@@ -3,6 +3,7 @@ package dev.redicloud.repository.java.version
 import com.google.gson.reflect.TypeToken
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
+import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.*
 import dev.redicloud.utils.service.ServiceId
 import kotlinx.coroutines.runBlocking
@@ -20,13 +21,17 @@ class JavaVersionRepository(
             val json =
                 khttp.get("${getRawUserContentUrl()}/api-files/java-versions.json").text
             val type = object : TypeToken<ArrayList<JavaVersion>>() {}.type
-            prettyPrintGson.fromJson(json, type)
+            prettyPrintGson.fromJson<List<JavaVersion>?>(json, type)
         }
     }
 
     init {
         runBlocking {
-            createOnlineVersions()
+            try {
+                createOnlineVersions()
+            }catch (e: Exception) {
+                LogManager.logger(JavaVersionRepository::class).severe("Failed to detect online versions", e)
+            }
         }
     }
 
@@ -48,7 +53,7 @@ class JavaVersionRepository(
 
     suspend fun getVersion(name: String) = getVersions().firstOrNull { it.name.lowercase() == name.lowercase() }
 
-    suspend fun getOnlineVersions(): List<JavaVersion> = ONLINE_VERSION_CACHE.get() ?: emptyList()
+    suspend fun getOnlineVersions(): List<JavaVersion> = ONLINE_VERSION_CACHE.get()?.toList() ?: emptyList()
 
     private suspend fun createOnlineVersions() {
         getOnlineVersions().forEach {

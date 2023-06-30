@@ -43,7 +43,9 @@ class NodeService(
                 return@runBlocking
             }
 
-            this@NodeService.checkJavaVersions()
+            try { this@NodeService.checkJavaVersions() } catch (e: Exception) {
+                LOGGER.warning("Error while checking java versions", e)
+            }
             this@NodeService.registerPreTasks()
             this@NodeService.connectFileCluster()
             this@NodeService.registerPackets()
@@ -89,8 +91,8 @@ class NodeService(
 
     private suspend fun checkJavaVersions() {
         javaVersionRepository.detectInstalledVersions().forEach {
-            if (javaVersionRepository.existsVersion(it.name))
-                LOGGER.info("Auto detected installed java version: ${it.name}")
+            if (javaVersionRepository.existsVersion(it.name)) return@forEach
+            LOGGER.info("Auto detected installed java version: ${it.name}")
             javaVersionRepository.createVersion(it)
         }
         var wrongAutoDetectPossible = false

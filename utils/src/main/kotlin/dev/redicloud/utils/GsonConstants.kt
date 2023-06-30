@@ -25,6 +25,6 @@ fun GsonBuilder.fixKotlinAnnotations(): GsonBuilder {
         override fun shouldSkipClass(clazz: Class<*>?): Boolean =
             clazz?.getAnnotation(Expose::class.java)?.deserialize == false
 
-    })
+    }).serializeNulls()
     return this
 }

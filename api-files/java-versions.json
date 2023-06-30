@@ -1,107 +1,149 @@
 [
   {
+    "uniqueId": "d879f1ad-61f9-46f8-bc0b-5012723fe044",
     "name": "1.0",
     "id": 45,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "1087bb6b-31e4-4ed7-a93c-63976490b48d",
     "name": "1.2",
     "id": 46,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "90aef37d-984b-452a-abea-4948b4f0afed",
     "name": "1.3",
     "id": 47,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "36c11838-5cd5-4231-ad86-e21d7a8431f5",
     "name": "1.4",
     "id": 48,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "8e643bd7-3374-4943-be4f-3f2ebbe19c2a",
     "name": "5",
     "id": 49,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "1200f1cc-78e6-452d-85fb-b49b0054e2b6",
     "name": "6",
     "id": 50,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "0dd1f2fd-ab0c-4297-99d9-a9ea1c848943",
     "name": "7",
     "id": 51,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "fbbc8376-4740-4fee-974b-4b79993ef20e",
     "name": "8",
     "id": 52,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "cbb4701c-ad2e-48c3-a389-21587ca04d87",
     "name": "9",
     "id": 53,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "703e37ff-bd1c-4cc6-9818-a085afe4bdc7",
     "name": "10",
     "id": 54,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "817a3395-826e-4b2c-a336-27795263893d",
     "name": "11",
     "id": 55,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "6d36e481-0a0d-4ef4-8a4d-6540f161f859",
     "name": "12",
     "id": 56,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "89aa706a-78a3-4c4a-8f4d-b8d9180384f2",
     "name": "13",
     "id": 57,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "5e25b25f-a2f4-4bf6-bc9b-0f25c210bfd6",
     "name": "14",
     "id": 58,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "a9a2409e-5b6d-4142-a5ae-06063cae3e4f",
     "name": "15",
     "id": 59,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "079db961-19e6-4750-a362-b88d179a2714",
     "name": "16",
     "id": 60,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "bb0998e2-600b-4dbe-a59a-5e1893b7ae39",
     "name": "17",
     "id": 61,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "276077ee-db93-4ac3-9d19-5fcf079c3f8b",
     "name": "18",
     "id": 62,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "2714a638-6592-459c-9c4e-16ecb536ddf0",
     "name": "19",
     "id": 63,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "50891449-8e15-43a9-a37b-d6e952f72e62",
     "name": "20",
     "id": 64,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   },
   {
+    "uniqueId": "a6fba32a-0f52-4ece-aa0d-13806d09b6f7",
     "name": "unknown",
     "id": -1,
-    "onlineVersion": true
+    "onlineVersion": true,
+    "located": {}
   }
 ]

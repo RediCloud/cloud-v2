@@ -103,6 +103,7 @@ abstract class BaseService(
         CommandArgumentParser.PARSERS[CloudServerVersion::class] = CloudServerVersionParser(this.serverVersionRepository)
         CommandArgumentParser.PARSERS[CloudServerVersionType::class] = CloudServerVersionTypeParser(this.serverVersionTypeRepository)
         CommandArgumentParser.PARSERS[JavaVersion::class] = JavaVersionParser(this.javaVersionRepository)
+        CommandArgumentParser.PARSERS[ServerVersion::class] = ServerVersionParser()
     }
 
     private fun registerSuggesters() {
