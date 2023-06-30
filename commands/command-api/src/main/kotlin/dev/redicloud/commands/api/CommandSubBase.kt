@@ -108,7 +108,7 @@ class CommandSubBase(
     }
 
     fun isThis(input: String, predicate: Boolean): Boolean {
-        if (!command.isThis(input, false)) return false
+        if (!command.isThis(input, predicate)) return false
         val split = if (predicate) input.split(" ") else input.removeLastSpaces().split(" ")
         if (split.size == 1 && path.isEmpty()) return true
         if (split.size < 2 && predicate) return input.endsWith(" ")
@@ -125,7 +125,7 @@ class CommandSubBase(
                 counts.add(i)
             }
         }
-        if (counts.none { it == parameters.size }) return false
+        if (counts.none { it == parameters.size } && !predicate) return false
         parameters.forEach {
             index++
             val possible = matched.filter { path ->
