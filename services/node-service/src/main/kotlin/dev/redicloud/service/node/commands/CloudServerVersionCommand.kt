@@ -1,6 +1,8 @@
 package dev.redicloud.service.node.commands
 
 import dev.redicloud.commands.api.*
+import dev.redicloud.console.Console
+import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
@@ -10,8 +12,10 @@ import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.service.base.suggester.CloudServerVersionSuggester
 import dev.redicloud.service.base.suggester.ServerVersionSuggester
+import dev.redicloud.service.node.repository.node.LOGGER
 import kotlinx.coroutines.runBlocking
 import java.util.*
+import kotlin.time.Duration.Companion.seconds
 
 @Command("sv")
 @CommandAlias(["serverversion", "serverversion"])
@@ -19,7 +23,8 @@ import java.util.*
 class CloudServerVersionCommand(
     private val serverVersionRepository: ServerVersionRepository,
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
-    private val serverRepository: ServerRepository
+    private val serverRepository: ServerRepository,
+    private val console: Console
 ) : CommandBase() {
 
     @CommandSubPath("edit <version> name <name>")
@@ -187,6 +192,84 @@ class CloudServerVersionCommand(
         actor.sendMessage("§8- %hc%Download-Url§8: %tc%${version.customDownloadUrl}")
         actor.sendMessage("")
         actor.sendMessage("§8<====== %hc%§nServer-Version info §8 ======§8>")
+    }
+
+    @CommandSubPath("patch <version>")
+    @CommandDescription("Patch a server version")
+    fun onPatch(
+        actor: ConsoleActor,
+        @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion
+    ) {
+        runBlocking {
+            val handler = version.getHandle()
+            if (!handler.isPatchVersion(version)) {
+                actor.sendMessage("§cThis version is not patchable!")
+                return@runBlocking
+            }
+            var canceled = false
+            var patched = false
+            var error = false
+            val animation = AnimatedLineAnimation(
+                console,
+                200
+            ) {
+                if (canceled) {
+                    null
+                } else if (patched) {
+                    canceled = true
+                    "Patching version %tc%${version.name}§8: ${if (error) "§4✘" else "§a✔"}"
+                } else {
+                    "Patching version %tc%${version.name}§8: %loading%"
+                }
+            }
+            try {
+                handler.patch(version)
+            }catch (e: Exception) {
+                error = true
+                LOGGER.severe("Error while patching version ${version.name}", e)
+            }finally {
+                patched = true
+            }
+        }
+    }
+
+    @CommandSubPath("download <version>")
+    @CommandDescription("Download the server version")
+    fun onDownload(
+        actor: ConsoleActor,
+        @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion
+    ) {
+        runBlocking {
+            val handler = version.getHandle()
+            if (handler.canDownload(version)) {
+                actor.sendMessage("§c'${version.name}' can´t be downloaded! Check the version type and the download url!")
+                return@runBlocking
+            }
+            var canceled = false
+            var downloaded = false
+            var error = false
+            val animation = AnimatedLineAnimation(
+                console,
+                200
+            ) {
+                if (canceled) {
+                    null
+                } else if (downloaded) {
+                    canceled = true
+                    "Downloading version %tc%${version.name}§8: ${if (error) "§4✘" else "§a✔"}"
+                } else {
+                    "Downloading version %tc%${version.name}§8: %loading%"
+                }
+            }
+            try {
+                handler.download(version, true)
+            }catch (e: Exception) {
+                error = true
+                LOGGER.severe("Error while downloading version ${version.name}", e)
+            }finally {
+                downloaded = true
+            }
+        }
     }
 
 }

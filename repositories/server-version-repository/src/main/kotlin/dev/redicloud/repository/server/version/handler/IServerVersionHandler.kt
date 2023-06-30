@@ -12,7 +12,9 @@ interface IServerVersionHandler {
     val type: CloudServerVersionType
     var lastUpdateCheck: Long
 
-    suspend fun download(version: CloudServerVersion, force: Boolean): File
+    suspend fun download(version: CloudServerVersion, force: Boolean = false): File
+
+    suspend fun canDownload(version: CloudServerVersion): Boolean
 
     fun isDownloaded(version: CloudServerVersion): Boolean = getJar(version).exists()
 

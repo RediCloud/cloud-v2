@@ -45,6 +45,14 @@ class PaperMcServerVersionHandler(
         return jar
     }
 
+    override suspend fun canDownload(version: CloudServerVersion): Boolean {
+        val buildId = requester.getLatestBuild(version.version)
+        if (buildId == -1) return false
+        val url = requester.getDownloadUrl(version.version, buildId)
+        val response = get(url)
+        return response.statusCode == 200
+    }
+
     override suspend fun isUpdateAvailable(version: CloudServerVersion, force: Boolean): Boolean {
         if (!force && System.currentTimeMillis() - lastUpdateCheck < 5.minutes.inWholeMilliseconds) return false
         val currentId = version.buildId ?: return true

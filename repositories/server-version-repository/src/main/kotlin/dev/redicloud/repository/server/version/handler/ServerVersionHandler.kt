@@ -34,6 +34,10 @@ class ServerVersionHandler(override val type: CloudServerVersionType) : IServerV
         return jar
     }
 
+    override suspend fun canDownload(version: CloudServerVersion): Boolean {
+        return version.customDownloadUrl != null && get(version.customDownloadUrl!!).statusCode == 200
+    }
+
     override suspend fun isUpdateAvailable(version: CloudServerVersion, force: Boolean): Boolean {
         return false
     }
