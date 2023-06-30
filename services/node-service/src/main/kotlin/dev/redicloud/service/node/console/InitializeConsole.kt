@@ -26,6 +26,7 @@ class InitializeConsole() : Console(
 ) {
 
     private val logger = LogManager.logger(this)
+    var firstStartDetected = false
 
     private val nodeNameQuestion = ConsoleQuestion(
         question = "What should be the name of this node?",
@@ -223,6 +224,7 @@ class InitializeConsole() : Console(
     }
 
     private fun nodeSetup(): NodeConfiguration {
+        firstStartDetected = true
         if (getCurrentScreen().name == "node-setup") {
             clearScreen()
         }else {
@@ -302,6 +304,7 @@ class InitializeConsole() : Console(
     }
 
     private fun databaseSetup(): DatabaseConnection {
+        firstStartDetected = true
         if (getCurrentScreen().name == "database-setup") {
             clearScreen()
         }else {
