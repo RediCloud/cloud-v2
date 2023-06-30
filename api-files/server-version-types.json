@@ -1,0 +1,191 @@
+[
+  {
+    "name": "paper",
+    "defaultType": true,
+    "versionHandlerName": "papermc",
+    "craftBukkitBased": true,
+    "proxy": false,
+    "jvmArguments": [
+      "-Dcom.mojang.eula.agree=true",
+      "-Djline.terminal=jline.UnsupportedTerminal"
+    ],
+    "programmArguments": [
+      "nogui",
+      "-Djline.terminal=jline.UnsupportedTerminal"
+    ],
+    "fileEdits": {
+      "server.properties": {
+        "server-ip": "%HOSTNAME%",
+        "server-port": "%PORT%",
+        "online-mode": "false"
+      },
+      "bukkit.yml": {
+        "settings.connection-throttle": "0"
+      },
+      "spigot.yml": {
+        "\"bungeecord\"": "true"
+      }
+    },
+    "unknown": false
+  },
+  {
+    "name": "spigot",
+    "defaultType": true,
+    "versionHandlerName": "urldownloader",
+    "craftBukkitBased": true,
+    "proxy": false,
+    "jvmArguments": [
+      "-Dcom.mojang.eula.agree=true",
+      "-Djline.terminal=jline.UnsupportedTerminal"
+    ],
+    "programmArguments": [
+      "nogui",
+      "-Djline.terminal=jline.UnsupportedTerminal"
+    ],
+    "fileEdits": {
+      "server.properties": {
+        "server-ip": "%HOSTNAME%",
+        "server-port": "%PORT%",
+        "online-mode": "false"
+      },
+      "bukkit.yml": {
+        "settings.connection-throttle": "0"
+      },
+      "spigot.yml": {
+        "\"bungeecord\"": "true"
+      }
+    },
+    "unknown": false
+  },
+  {
+    "name": "bukkit",
+    "defaultType": true,
+    "versionHandlerName": "urldownloader",
+    "craftBukkitBased": true,
+    "proxy": false,
+    "jvmArguments": [
+      "-Dcom.mojang.eula.agree=true",
+      "-Djline.terminal=jline.UnsupportedTerminal"
+    ],
+    "programmArguments": [
+      "nogui",
+      "-Djline.terminal=jline.UnsupportedTerminal"
+    ],
+    "fileEdits": {
+      "server.properties": {
+        "server-ip": "%HOSTNAME%",
+        "server-port": "%PORT%",
+        "online-mode": "false"
+      },
+      "bukkit.yml": {
+        "settings.connection-throttle": "0"
+      },
+      "spigot.yml": {
+        "\"bungeecord\"": "true"
+      }
+    },
+    "unknown": false
+  },
+  {
+    "name": "velocity",
+    "defaultType": true,
+    "versionHandlerName": "papermc",
+    "craftBukkitBased": false,
+    "proxy": true,
+    "jvmArguments": [],
+    "programmArguments": [],
+    "fileEdits": {
+      "velocity.toml": {
+        "bind": "\"%HOSTNAME%:%PORT%\""
+      }
+    },
+    "unknown": false
+  },
+  {
+    "name": "bungeecord",
+    "defaultType": true,
+    "versionHandlerName": "urldownloader",
+    "craftBukkitBased": false,
+    "proxy": true,
+    "jvmArguments": [],
+    "programmArguments": [],
+    "fileEdits": {
+      "config.yml": {
+        "host": "%HOSTNAME%",
+        "ip_forward": "true"
+      }
+    },
+    "unknown": false
+  },
+  {
+    "name": "waterfall",
+    "defaultType": true,
+    "versionHandlerName": "urldownloader",
+    "craftBukkitBased": false,
+    "proxy": true,
+    "jvmArguments": [],
+    "programmArguments": [],
+    "fileEdits": {
+      "config.yml": {
+        "host": "%HOSTNAME%",
+        "ip_forward": "true"
+      }
+    },
+    "unknown": false
+  },
+  {
+    "name": "folia",
+    "defaultType": true,
+    "versionHandlerName": "papermc",
+    "craftBukkitBased": false,
+    "proxy": false,
+    "jvmArguments": [
+      "-Dcom.mojang.eula.agree=true",
+      "-Djline.terminal=jline.UnsupportedTerminal"
+    ],
+    "programmArguments": [
+      "nogui",
+      "-Djline.terminal=jline.UnsupportedTerminal"
+    ],
+    "fileEdits": {
+      "server.properties": {
+        "server-ip": "%HOSTNAME%",
+        "server-port": "%PORT%"
+      }
+    },
+    "unknown": false
+  },
+  {
+    "name": "minestom",
+    "defaultType": true,
+    "versionHandlerName": "urldownloader",
+    "craftBukkitBased": false,
+    "proxy": false,
+    "jvmArguments": [],
+    "programmArguments": [],
+    "fileEdits": {},
+    "unknown": false
+  },
+  {
+    "name": "limbo",
+    "defaultType": true,
+    "versionHandlerName": "urldownloader",
+    "craftBukkitBased": false,
+    "proxy": false,
+    "jvmArguments": [],
+    "programmArguments": [],
+    "fileEdits": {},
+    "unknown": false
+  },
+  {
+    "name": "unknown",
+    "defaultType": true,
+    "versionHandlerName": "urldownloader",
+    "craftBukkitBased": false,
+    "proxy": false,
+    "jvmArguments": [],
+    "programmArguments": [],
+    "fileEdits": {},
+    "unknown": true
+  }
+]

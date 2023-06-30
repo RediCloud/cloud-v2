@@ -10,11 +10,13 @@ import dev.redicloud.database.config.DatabaseNode
 import dev.redicloud.database.config.toFile
 import dev.redicloud.logging.LogManager
 import dev.redicloud.logging.getLogLevelByProperty
+import dev.redicloud.repository.java.version.getJavaVersion
+import dev.redicloud.repository.java.version.isJavaVersionNotSupported
+import dev.redicloud.repository.java.version.isJavaVersionSupported
 import dev.redicloud.service.node.NodeConfiguration
 import dev.redicloud.utils.*
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
-import dev.redicloud.utils.versions.*
 import java.util.*
 import java.util.logging.Filter
 import java.util.logging.Level

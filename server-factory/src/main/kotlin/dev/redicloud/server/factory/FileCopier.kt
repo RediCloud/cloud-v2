@@ -60,7 +60,7 @@ class FileCopier(
             versionHandler.patch(serverVersion)
         }
         versionHandler.getFolder(serverVersion).copyRecursively(workDirectory)
-        versionHandler.type.doFileEdits(workDirectory)
+        serverVersion.type.doFileEdits(workDirectory)
     }
 
     /**
