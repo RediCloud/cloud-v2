@@ -54,7 +54,9 @@ abstract class ServiceRepository<T : CloudService>(
         if (cloudService.isConnected() && !connectedServices.contains(cloudService.serviceId)) {
             connectedServices.add(cloudService.serviceId)
         }
-        registeredServices.add(cloudService.serviceId)
+        if (!registeredServices.contains(cloudService.serviceId)) {
+            registeredServices.add(cloudService.serviceId)
+        }
         return cloudService
     }
 
@@ -69,6 +71,12 @@ abstract class ServiceRepository<T : CloudService>(
             registeredServices.add(cloudService.serviceId)
         }
         return cloudService
+    }
+
+    suspend fun deleteService(cloudService: CloudService) {
+        getUnsafeHandle<CloudService>(cloudService.serviceId.toDatabaseIdentifier(), true).delete()
+        connectedServices.remove(cloudService.serviceId)
+        registeredServices.remove(cloudService.serviceId)
     }
 
     suspend fun getRegisteredServices(): List<CloudService> =

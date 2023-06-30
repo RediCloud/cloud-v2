@@ -11,5 +11,6 @@ enum class CommandResponseType {
     BLANK_INPUT,
     INVALID_ARGUMENT_TYPE,
     INVALID_ARGUMENT_COUNT,
+    HELP_SENT,
     INVALID_SUB_PATH
 }

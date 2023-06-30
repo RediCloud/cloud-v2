@@ -6,5 +6,5 @@ repositories {
 
 
 dependencies {
-    dependency("com.google.code.gson:gson:2.10.1")
+    dependency("com.google.code.gson:gson:${Versions.gson}")
 }

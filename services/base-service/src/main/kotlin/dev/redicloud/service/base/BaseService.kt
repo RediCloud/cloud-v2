@@ -9,22 +9,24 @@ import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
+import dev.redicloud.repository.java.version.JavaVersion
+import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
+import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.ServerVersionRepository
+import dev.redicloud.repository.server.version.CloudServerVersionType
+import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.utils.ServerVersion
-import dev.redicloud.repository.template.file.FileTemplate
+import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplateRepository
 import dev.redicloud.service.base.packets.ServicePingPacket
 import dev.redicloud.service.base.packets.ServicePingResponse
-import dev.redicloud.service.base.parser.CloudNodeParser
-import dev.redicloud.service.base.parser.CloudServerParser
-import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
-import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
+import dev.redicloud.service.base.parser.*
+import dev.redicloud.service.base.suggester.*
 import dev.redicloud.tasks.CloudTaskManager
 import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.versions.JavaVersion
 import kotlinx.coroutines.runBlocking
 import kotlin.system.exitProcess
 
@@ -45,6 +47,9 @@ abstract class BaseService(
     val serverRepository: ServerRepository
     val serverVersionRepository: ServerVersionRepository
     val fileTemplateRepository: FileTemplateRepository
+    val configurationTemplateRepository: ConfigurationTemplateRepository
+    val serverVersionTypeRepository: CloudServerVersionTypeRepository
+    val javaVersionRepository: JavaVersionRepository
 
     val packetManager: PacketManager
     val eventManager: EventManager
@@ -53,7 +58,6 @@ abstract class BaseService(
     init {
         runBlocking {
             ServerVersion.loadIfNotLoaded()
-            JavaVersion.loadIfNotLoaded()
         }
         databaseConnection = if (_databaseConnection != null && _databaseConnection.isConnected()) {
             _databaseConnection
@@ -71,10 +75,13 @@ abstract class BaseService(
         eventManager = EventManager("base-event-manager", packetManager)
         taskManager = CloudTaskManager(eventManager, packetManager)
 
+        javaVersionRepository = JavaVersionRepository(databaseConnection)
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager)
+        serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection)
         serverVersionRepository = ServerVersionRepository(databaseConnection)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager)
-        fileTemplateRepository = FileTemplateRepository(databaseConnection, packetManager, nodeRepository)
+        fileTemplateRepository = FileTemplateRepository(databaseConnection, nodeRepository)
+        configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection)
 
         this.registerParsers()
         this.registerSuggesters()
@@ -93,11 +100,18 @@ abstract class BaseService(
     private fun registerParsers() {
         CommandArgumentParser.PARSERS[CloudNode::class] = CloudNodeParser(this.nodeRepository)
         CommandArgumentParser.PARSERS[CloudServer::class] = CloudServerParser(this.serverRepository)
+        CommandArgumentParser.PARSERS[CloudServerVersion::class] = CloudServerVersionParser(this.serverVersionRepository)
+        CommandArgumentParser.PARSERS[CloudServerVersionType::class] = CloudServerVersionTypeParser(this.serverVersionTypeRepository)
+        CommandArgumentParser.PARSERS[JavaVersion::class] = JavaVersionParser(this.javaVersionRepository)
     }
 
     private fun registerSuggesters() {
         ICommandSuggester.SUGGESTERS.add(RegisteredCloudNodeSuggester(this.nodeRepository))
         ICommandSuggester.SUGGESTERS.add(ConnectedCloudNodeSuggester(this.nodeRepository))
+        ICommandSuggester.SUGGESTERS.add(CloudServerVersionSuggester(this.serverVersionRepository))
+        ICommandSuggester.SUGGESTERS.add(CloudServerVersionTypeSuggester(this.serverVersionTypeRepository))
+        ICommandSuggester.SUGGESTERS.add(JavaVersionSuggester(this.javaVersionRepository))
+        ICommandSuggester.SUGGESTERS.add(ServerVersionSuggester())
     }
 
     private fun registerPackets() {

@@ -17,7 +17,8 @@ open class DatabaseBucketRepository<T>(
     suspend fun delete(identifier: String): Boolean = getHandle(identifier).delete()
 
     suspend fun getAll(): List<T> =
-        connection.getClient().keys.getKeysByPattern("$name:*").mapNotNull { get(it) }
+        connection.getClient().keys.getKeysByPattern("$name:*")
+            .mapNotNull { getUnsafeHandle<T>(it, true).get() }
 
     suspend fun exists(identifier: String): Boolean = getHandle(identifier).isExists
 

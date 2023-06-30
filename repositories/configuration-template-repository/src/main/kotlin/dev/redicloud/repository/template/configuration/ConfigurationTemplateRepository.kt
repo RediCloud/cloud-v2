@@ -1,4 +1,4 @@
-package dev.redicloud.repository.temlate.configuration
+package dev.redicloud.repository.template.configuration
 
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository

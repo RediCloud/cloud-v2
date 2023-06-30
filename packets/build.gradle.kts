@@ -10,5 +10,5 @@ dependencies {
     compileOnly(project(":logging"))
 
     dependency("org.redisson:redisson:3.21.3")
-    dependency("com.google.code.gson:gson:2.10.1")
+    dependency("com.google.code.gson:gson:${Versions.gson}")
 }

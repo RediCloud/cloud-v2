@@ -45,8 +45,6 @@ abstract class CommandBase {
         it.isThis("$name $subPath", false)
     }
 
-    fun getPathsWithArguments(): List<String> = subCommands.flatMap { it.getSubPathsWithoutArguments() }
-
     fun getPaths(): List<String> = subCommands.flatMap { it.getSubPaths() }
 
     fun getPermission(): String? = permission

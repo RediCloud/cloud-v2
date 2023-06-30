@@ -9,7 +9,8 @@ class CloudNode(
     name: String,
     sessions: MutableList<ServiceSession>,
     private val hostedServers: MutableList<ServiceId>,
-    var master: Boolean
+    var master: Boolean,
+    var maxMemory: Long
 ) : CloudService(serviceId, name, sessions) {
 
     fun getHostedServers(): List<ServiceId> = hostedServers.toList()

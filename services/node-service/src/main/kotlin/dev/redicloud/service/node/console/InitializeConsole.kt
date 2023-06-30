@@ -10,11 +10,13 @@ import dev.redicloud.database.config.DatabaseNode
 import dev.redicloud.database.config.toFile
 import dev.redicloud.logging.LogManager
 import dev.redicloud.logging.getLogLevelByProperty
+import dev.redicloud.repository.java.version.getJavaVersion
+import dev.redicloud.repository.java.version.isJavaVersionNotSupported
+import dev.redicloud.repository.java.version.isJavaVersionSupported
 import dev.redicloud.service.node.NodeConfiguration
 import dev.redicloud.utils.*
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
-import dev.redicloud.utils.versions.*
 import java.util.*
 import java.util.logging.Filter
 import java.util.logging.Level
@@ -24,6 +26,7 @@ class InitializeConsole() : Console(
 ) {
 
     private val logger = LogManager.logger(this)
+    var firstStartDetected = false
 
     private val nodeNameQuestion = ConsoleQuestion(
         question = "What should be the name of this node?",
@@ -221,6 +224,7 @@ class InitializeConsole() : Console(
     }
 
     private fun nodeSetup(): NodeConfiguration {
+        firstStartDetected = true
         if (getCurrentScreen().name == "node-setup") {
             clearScreen()
         }else {
@@ -300,6 +304,7 @@ class InitializeConsole() : Console(
     }
 
     private fun databaseSetup(): DatabaseConnection {
+        firstStartDetected = true
         if (getCurrentScreen().name == "database-setup") {
             clearScreen()
         }else {

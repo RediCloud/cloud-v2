@@ -315,12 +315,12 @@
       "8",
       "16"
     ],
-    "versionType": ["VELOCITY"]
+    "versionTypes": ["VELOCITY"]
   },
   {
-    "name": "unknown",
+    "name": "UNKNOWN",
     "protocolId": -1,
     "supportedJavaVersion": [],
-    "versionType": []
+    "versionTypes": []
   }
 ]

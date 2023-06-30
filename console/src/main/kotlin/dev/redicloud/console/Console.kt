@@ -79,7 +79,7 @@ open class Console(
             .build()
         lineReader = ConsoleLineReader(this).apply {
             completer = ConsoleCompleter(this@Console)
-            highlighter = ConsoleHighlighter(this@Console)
+            //highlighter = ConsoleHighlighter(this@Console)
             option(LineReader.Option.AUTO_GROUP, false)
             option(LineReader.Option.AUTO_MENU_LIST, true)
             option(LineReader.Option.AUTO_FRESH_LINE, true)
@@ -157,6 +157,7 @@ open class Console(
                 if (!commandManager.areCommandsDisabled()) {
                     try {
                         val response = commandManager.handleInput(commandManager.actor, line)
+                        if (response.type == CommandResponseType.HELP_SENT) continue
                         if (response.message != null && response.type != CommandResponseType.BLANK_INPUT
                             && response.type != CommandResponseType.ERROR) {
                             commandManager.actor.sendMessage(response.message!!)
