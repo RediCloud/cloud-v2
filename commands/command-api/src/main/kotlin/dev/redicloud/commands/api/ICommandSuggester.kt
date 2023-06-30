@@ -71,15 +71,13 @@ class CommandArgumentSuggester(val commandArgument: CommandArgument) : ICommandS
         val nextArgument = !commandArgument.isThis(context.input, false)
         if (nextArgument) {
             val input = context.input.removeLastSpaces().removeFirstSpaces()
-            return@EasyCache commandArgument.annotatedSuggester.suggest(context).map { "$input $it" }.toTypedArray()
+            return@EasyCache commandArgument.annotatedSuggester.suggest(context).map { it }.toTypedArray()
         }
-        val argumentOptions = commandArgument.annotatedSuggester.suggest(context)
         val input = context.input.removeLastSpaces().removeFirstSpaces()
         val lastArgument = input.split(" ").last()
         val currentPathWithoutArgument = input.split(" ").dropLast(1).joinToString(" ")
         return@EasyCache commandArgument.annotatedSuggester.suggest(context)
             .filter { lastArgument.lowercase().startsWith(it.lowercase()) }
-            .map { "$currentPathWithoutArgument $it" }
             .toTypedArray()
     }
 
