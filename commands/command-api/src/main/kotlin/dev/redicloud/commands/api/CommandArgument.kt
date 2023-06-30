@@ -46,7 +46,7 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
     fun isActorArgument(): Boolean = name == "_actor"
 
     fun isThis(input: String, predict: Boolean): Boolean {
-        if (!subCommand.isThis(input, false)) return false
+        if (!subCommand.isThis(input, predict)) return false
         if (isActorArgument()) return false
         if (input.isEmpty()) return false
 
@@ -54,10 +54,10 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
             .flatMap { subCommandPaths ->
                 listOf(subCommand.command.getName(), *subCommand.command.getAliases())
                 .map { commandPath -> "$commandPath $subCommandPaths".removeLastSpaces() }
-            }
+            }.toSet()
 
         optimalCurrentPaths.forEach optimalPathForEach@ { optimalPath ->
-            if (input.startsWith(optimalPath) && predict) return true
+            if (optimalPath.startsWith(input) && predict) return true
             var index = -1
             var currentBuild = ""
             optimalPath.split(" ").forEach optimalParameterForEach@ {
