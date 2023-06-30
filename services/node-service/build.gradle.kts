@@ -18,6 +18,7 @@ dependencies {
     shade(project(":repositories:file-template-repository"))
     shade(project(":repositories:configuration-template-repository"))
     shade(project(":repositories:server-version-repository"))
+    shade(project(":repositories:java-version-repository"))
     shade(project(":database"))
     shade(project(":utils"))
     shade(project(":events"))

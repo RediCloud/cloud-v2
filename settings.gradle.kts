@@ -41,3 +41,5 @@ include("file-cluster")
 include("repositories:configuration-template-repository")
 findProject(":repositories:configuration-template-repository")?.name = "configuration-template-repository"
 include("server-factory")
+include("repositories:java-version-repository")
+findProject(":repositories:java-version-repository")?.name = "java-version-repository"

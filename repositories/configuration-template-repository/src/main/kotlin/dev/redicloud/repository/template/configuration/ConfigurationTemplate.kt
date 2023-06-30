@@ -1,7 +1,6 @@
 package dev.redicloud.repository.template.configuration
 
 import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.versions.JavaVersion
 import java.util.*
 
 data class ConfigurationTemplate(
@@ -10,7 +9,7 @@ data class ConfigurationTemplate(
     val programmArguments: MutableList<String> = mutableListOf(),
     val jvmArguments: MutableList<String> = mutableListOf(),
     val environments: MutableMap<String, String> = mutableMapOf(),
-    var javaCommand: String = "java",
+    var javaVersionName: String = "unknown",
     var maxMemory: Long = 750,
     val fileTemplateIds: MutableList<UUID> = mutableListOf(),
     val nodeIds: MutableList<ServiceId> = mutableListOf(),
