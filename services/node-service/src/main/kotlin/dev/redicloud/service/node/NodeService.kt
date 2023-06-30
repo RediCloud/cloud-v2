@@ -46,7 +46,6 @@ class NodeService(
 
             this@NodeService.registerPreTasks()
             this@NodeService.connectFileCluster()
-            this@NodeService.registerServerVersionHandlers()
             this@NodeService.registerPackets()
             this@NodeService.registerCommands()
             this@NodeService.registerTasks()
@@ -108,14 +107,10 @@ class NodeService(
         }
     }
 
-    private fun registerServerVersionHandlers() {
-        IServerVersionHandler.registerHandler(this.serverVersionRepository)
-    }
-
     private fun registerCommands() {
         console.commandManager.register(ExitCommand(this))
         console.commandManager.register(ClusterCommand(this))
-        console.commandManager.register(CloudServerVersionCommand(this.serverVersionRepository, this.configurationTemplateRepository, this.serverRepository))
+        console.commandManager.register(CloudServerVersionCommand(this.serverVersionRepository, this.configurationTemplateRepository, this.serverRepository, this.console))
     }
 
     private fun initShutdownHook() {
