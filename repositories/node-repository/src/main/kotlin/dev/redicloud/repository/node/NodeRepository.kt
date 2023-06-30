@@ -12,12 +12,12 @@ class NodeRepository(databaseConnection: DatabaseConnection, serviceId: ServiceI
 
     suspend fun getNode(serviceId: ServiceId): CloudNode? {
         if (serviceId.type != ServiceType.NODE) return null
-        return get(serviceId.id.toString())
+        return getService(serviceId) as CloudNode?
     }
 
     suspend fun existsNode(serviceId: ServiceId): Boolean {
         if (serviceId.type != ServiceType.NODE) return false
-        return exists(serviceId.id.toString())
+        return existsService(serviceId)
     }
 
     suspend fun updateNode(cloudNode: CloudNode): CloudNode

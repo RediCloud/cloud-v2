@@ -10,12 +10,7 @@ class ServerRepository(databaseConnection: DatabaseConnection, serviceId: Servic
     : ServiceRepository<CloudServer>(databaseConnection, serviceId, ServiceType.SERVER, packetManager) {
 
     suspend fun getServer(serviceId: ServiceId): CloudServer? =
-        get(serviceId.id.toString())
-
-    suspend fun existsNode(serviceId: ServiceId): Boolean {
-        if (serviceId.type != ServiceType.SERVER) return false
-        return exists(serviceId.id.toString())
-    }
+        getService(serviceId) as CloudServer?
 
     suspend fun updateServer(cloudServer: CloudServer): CloudServer
         = updateService(cloudServer) as CloudServer
@@ -24,7 +19,7 @@ class ServerRepository(databaseConnection: DatabaseConnection, serviceId: Servic
         = createService(cloudServer) as CloudServer
 
     suspend fun deleteServer(cloudServer: CloudServer)
-        = delete(cloudServer.serviceId.id.toString())
+        = deleteService(cloudServer)
 
     suspend fun getConnectedServers(): List<CloudServer> =
         getConnectedServices().filter { it.serviceId.type == ServiceType.SERVER }.toList() as List<CloudServer>

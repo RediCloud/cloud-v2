@@ -73,6 +73,12 @@ abstract class ServiceRepository<T : CloudService>(
         return cloudService
     }
 
+    suspend fun deleteService(cloudService: CloudService) {
+        getUnsafeHandle<CloudService>(cloudService.serviceId.toDatabaseIdentifier(), true).delete()
+        connectedServices.remove(cloudService.serviceId)
+        registeredServices.remove(cloudService.serviceId)
+    }
+
     suspend fun getRegisteredServices(): List<CloudService> =
         registeredServices.mapNotNull { getService(it) }
 
