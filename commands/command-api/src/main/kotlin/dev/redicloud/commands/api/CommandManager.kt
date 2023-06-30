@@ -46,18 +46,17 @@ abstract class CommandManager<K : ICommandActor<*>> {
     fun getCompletions(actor: K, input: String): List<String> {
         val list = mutableListOf<String>()
 
-        val split = input.split(" ")
+        val split = input.removeLastSpaces().split(" ")
         if (split.isEmpty()) return list
+        val parameters = split.drop(1)
+        val commandName = split[0]
+        val commandBase = getCommand(input)
         val possibleCommands = commands
             .filter { actor.hasPermission(it.getPermission()) }
             .filter { !isDisabled(it) }
             .filter { it.isThis(input, true) }
 
         if (possibleCommands.isEmpty()) return list
-
-        if (possibleCommands.size == 1) {
-            list.addAll(possibleCommands.first().suggester.suggest(CommandContext(input, emptyArray())))
-        }
 
         possibleCommands.forEach { command ->
             val possibleSubCommands = command.getSubCommands()
@@ -69,10 +68,63 @@ abstract class CommandManager<K : ICommandActor<*>> {
                 possibleSubCommands.first().arguments
                     .filter { it.isThis(input, true) }
                     .map { it.subCommand.suggester.suggest(CommandContext(input, it.suggesterParameter)) }
+            }else{
+                possibleSubCommands.forEach {
+                    list.addAll(it.getSubPaths())
+                }
             }
-
         }
-        return list
+
+        if ((list.isEmpty() || commandBase == null)
+            && possibleCommands.isNotEmpty()
+            && input.removeLastSpaces().split(" ").size == 1) {
+            list.clear()
+            list.addAll(possibleCommands
+                .filter { actor.hasPermission(it.getPermission()) }
+                .filter { !isDisabled(it) }
+                .map { it.getName() }
+                .filter { it.lowercase().startsWith(split[0].lowercase()) })
+            list.removeIf { it.isBlank() }
+            return list
+        }
+
+        val results = mutableSetOf<String>()
+
+        val currentIndex = if (input.endsWith(" ")) split.size else split.size - 1
+        list.forEach { path ->
+            val split1 = "$commandName $path".removeLastSpaces().split(" ")
+            if (split1.size < currentIndex+1) return@forEach
+            val result = split1[currentIndex]
+            val inputR = if (currentIndex-1 == -1) commandName else if (parameters.size < currentIndex+1) "" else parameters[currentIndex]
+            if (commandBase != null
+                && listOf(commandBase.getName(), *commandBase.getAliases()).any { inputR.lowercase() == it.lowercase() }
+                && !result.isArgument()
+                && result.isNotBlank()
+                && split1.size > currentIndex + 1) {
+                results.add(split1[currentIndex + 1])
+            }else if(inputR.isEmpty() && !result.isArgument()) {
+                results.add(split1[currentIndex])
+            }else if (!input.endsWith(" ")
+                && result.lowercase().startsWith(inputR.lowercase())
+                && !result.isArgument()
+                && result.isNotBlank()) {
+                results.add(result)
+            }else if (input.endsWith(" ")) {
+                if (split1.size >= currentIndex + 2 && inputR != "") return@forEach
+                val nextResult = if (inputR == "") result else split1[currentIndex + 1]
+                if (nextResult.isArgument()) {
+                    val subCommand = commandBase
+                        ?.getSubCommands()
+                        ?.filter { it.isThis(input, true) }
+                        ?.firstOrNull()
+                        ?: return@forEach
+                    val argument = subCommand.arguments.firstOrNull { it.isThis(input, true) } ?: return@forEach
+                    results.addAll(argument.suggester.suggest(CommandContext(input, argument.suggesterParameter)))
+                }
+            }
+        }
+        results.removeIf { it.isBlank() }
+        return results.toList()
     }
 
     fun handleInput(actor: K, input: String): CommandResponse {
