@@ -37,7 +37,7 @@ class ConsoleHighlighter(private val console: Console) : DefaultHighlighter() {
     override fun highlight(reader: LineReader?, buffer: String?): AttributedString {
         if (!enabled || reader == null || buffer == null) return super.highlight(reader, buffer)
 
-        val lastInput = reader.buffer.toString().split(" ").lastOrNull()
+        val lastInput = reader.buffer.toString()
 
         if (lastInput == buffer) return super.highlight(reader, buffer)
 

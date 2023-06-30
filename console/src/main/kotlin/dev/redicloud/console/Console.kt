@@ -79,7 +79,7 @@ open class Console(
             .build()
         lineReader = ConsoleLineReader(this).apply {
             completer = ConsoleCompleter(this@Console)
-            highlighter = ConsoleHighlighter(this@Console)
+            //highlighter = ConsoleHighlighter(this@Console)
             option(LineReader.Option.AUTO_GROUP, false)
             option(LineReader.Option.AUTO_MENU_LIST, true)
             option(LineReader.Option.AUTO_FRESH_LINE, true)
