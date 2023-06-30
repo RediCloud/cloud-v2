@@ -1,5 +1,9 @@
 package dev.redicloud.repository.java.version
 
+import dev.redicloud.utils.OSType
+import dev.redicloud.utils.getOperatingSystemType
+import java.io.File
+
 fun getJavaVersionsBetween(javaVersion1: JavaVersion, javaVersion2: JavaVersion): List<JavaVersion> {
     return JavaVersionRepository.ONLINE_VERSION_CACHE.get()!!
         .filter { it.id >= javaVersion1.id && it.id <= javaVersion2.id }.toList()
@@ -24,4 +28,32 @@ fun isJavaVersionNotSupported(version: JavaVersion): Boolean {
 
 fun isJavaVersionUnsupported(version: JavaVersion): Boolean {
     return !isJavaVersionNotSupported(getJavaVersion()) && !isJavaVersionNotSupported(version)
+}
+
+fun locateAllJavaVersions(): List<File> {
+    val versionFolders = mutableListOf<File>()
+
+    when (getOperatingSystemType()) {
+        OSType.WINDOWS -> {
+            mutableListOf<String>(
+                "Program Files\\Java",
+                "Program Files (x86)\\Java"
+            ).filter { it.isNotEmpty() }.map { File(it) }.filter { it.exists() }.filter { it.isDirectory }
+                .forEach { versionFolders.addAll(it.listFiles()!!.toList()) }
+        }
+        OSType.LINUX -> {
+            mutableListOf<String>(
+                "/usr/lib/jvm",
+                "/usr/lib64/jvm"
+            ).filter { it.isNotEmpty() }.map { File(it) }.filter { it.exists() }.filter { it.isDirectory }
+                .forEach { versionFolders.addAll(it.listFiles()!!.toList()) }
+        }
+        else -> {}
+    }
+
+    if (System.getProperty("redicloud.java.versions.path", "").isNotEmpty()) {
+        File(System.getProperty("redicloud.java.versions.path")).listFiles()!!.toList().forEach { versionFolders.add(it) }
+    }
+
+    return versionFolders
 }

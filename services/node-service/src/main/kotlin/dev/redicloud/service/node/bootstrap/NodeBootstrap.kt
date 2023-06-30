@@ -1,6 +1,5 @@
 package dev.redicloud.service.node.bootstrap
 
-import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.service.node.NodeService
 import dev.redicloud.service.node.console.InitializeConsole
 import kotlinx.coroutines.runBlocking
@@ -14,6 +13,6 @@ fun main(args: Array<String>) {
         val serviceId = preConsole.serviceId!!
         val nodeConfiguration = preConsole.nodeConfiguration!!
         preConsole.close()
-        NodeService(databaseConfiguration, databaseConnection, nodeConfiguration)
+        NodeService(databaseConfiguration, databaseConnection, nodeConfiguration, preConsole.firstStartDetected)
     }
 }
