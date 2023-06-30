@@ -80,7 +80,7 @@ class JavaVersionRepository(
                 name = file.name,
                 id = detectJavaId(file.name),
                 located = mutableMapOf(
-                    serviceId to file.absolutePath
+                    serviceId.id to file.absolutePath
                 )
             )
         }

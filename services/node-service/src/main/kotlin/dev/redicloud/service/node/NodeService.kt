@@ -92,16 +92,16 @@ class NodeService(
     private suspend fun checkJavaVersions() {
         javaVersionRepository.detectInstalledVersions().forEach {
             if (javaVersionRepository.existsVersion(it.name)) return@forEach
-            LOGGER.info("Auto detected installed java version: ${it.name}")
+            LOGGER.info("Auto detected installed java version§8: %hc%${it.name}")
             javaVersionRepository.createVersion(it)
         }
         var wrongAutoDetectPossible = false
         javaVersionRepository.getVersions().forEach { version ->
             val located = version.autoLocate()
             if (located != null) {
-                if (located.absolutePath == version.located[configuration.toServiceId()]) return@forEach
+                if (located.absolutePath == version.located[configuration.toServiceId().id]) return@forEach
                 LOGGER.info("Auto located java version §8'%tc%${version.name}§8'%tc% at §8'%hc%${located.absolutePath}§8'")
-                version.located[configuration.toServiceId()] = located.absolutePath
+                version.located[configuration.toServiceId().id] = located.absolutePath
                 javaVersionRepository.updateVersion(version)
                 return@forEach
             }

@@ -11,12 +11,12 @@ data class JavaVersion(
     var name: String,
     var id: Int,
     val onlineVersion: Boolean = false,
-    val located: MutableMap<ServiceId, String> = mutableMapOf()
+    val located: MutableMap<UUID, String> = mutableMapOf()
 ) {
 
     fun isUnknown() = id == -1
 
-    fun isLocated(serviceId: ServiceId) = located.containsKey(serviceId) && File(located[serviceId]!!).exists()
+    fun isLocated(serviceId: ServiceId) = located.containsKey(serviceId.id) && File(located[serviceId.id]!!).exists()
 
     fun autoLocate(): File? {
         return locateAllJavaVersions().filter {
