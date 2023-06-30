@@ -2,11 +2,11 @@ package dev.redicloud.service.base.parser
 
 import dev.redicloud.commands.api.CommandArgumentParser
 import dev.redicloud.repository.server.version.CloudServerVersion
-import dev.redicloud.repository.server.version.ServerVersionRepository
+import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import kotlinx.coroutines.runBlocking
 import java.util.*
 
-class CloudServerVersionParser(private val serverVersionRepository: ServerVersionRepository) :
+class CloudServerVersionParser(private val serverVersionRepository: CloudServerVersionRepository) :
     CommandArgumentParser<CloudServerVersion> {
 
     override fun parse(parameter: String): CloudServerVersion? {

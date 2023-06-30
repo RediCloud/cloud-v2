@@ -3,6 +3,7 @@ package dev.redicloud.repository.server.version
 import com.google.gson.reflect.TypeToken
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
+import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.utils.EasyCache
 import dev.redicloud.utils.getRawUserContentUrl
 import dev.redicloud.utils.prettyPrintGson
@@ -11,8 +12,13 @@ import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
 
 class CloudServerVersionTypeRepository(
-    databaseConnection: DatabaseConnection
+    databaseConnection: DatabaseConnection,
+    serverVersionRepository: CloudServerVersionRepository
 ) : DatabaseBucketRepository<CloudServerVersionType>(databaseConnection, "server-version-types") {
+
+    init {
+        runBlocking { IServerVersionHandler.registerDefaultHandlers(serverVersionRepository, this@CloudServerVersionTypeRepository) }
+    }
 
     companion object {
         val DEFAULT_TYPES_CACHE = EasyCache<List<CloudServerVersionType>, Unit> (1.minutes) {

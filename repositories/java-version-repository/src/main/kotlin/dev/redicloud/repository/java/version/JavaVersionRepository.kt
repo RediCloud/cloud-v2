@@ -25,16 +25,6 @@ class JavaVersionRepository(
         }
     }
 
-    init {
-        runBlocking {
-            try {
-                createOnlineVersions()
-            }catch (e: Exception) {
-                LogManager.logger(JavaVersionRepository::class).severe("Failed to detect online versions", e)
-            }
-        }
-    }
-
     suspend fun getVersion(uniqueId: UUID): JavaVersion? = get(uniqueId.toString())
 
     suspend fun existsVersion(name: String): Boolean = getVersion(name) != null
@@ -54,13 +44,6 @@ class JavaVersionRepository(
     suspend fun getVersion(name: String) = getVersions().firstOrNull { it.name.lowercase() == name.lowercase() }
 
     suspend fun getOnlineVersions(): List<JavaVersion> = ONLINE_VERSION_CACHE.get()?.toList() ?: emptyList()
-
-    private suspend fun createOnlineVersions() {
-        getOnlineVersions().forEach {
-            if (existsVersion(it.name)) return@forEach
-            createVersion(it)
-        }
-    }
 
     suspend fun detectInstalledVersions(): List<JavaVersion> {
         val created = getVersions()
@@ -86,6 +69,7 @@ class JavaVersionRepository(
         }
     }
 
+    //TODO: improve
     private fun detectJavaId(fileName: String): Int {
         return fileName.split("-").mapNotNull { it.toIntOrNull() }.firstOrNull() ?: -1
     }

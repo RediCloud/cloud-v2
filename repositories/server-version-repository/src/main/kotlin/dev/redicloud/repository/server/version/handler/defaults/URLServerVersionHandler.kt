@@ -1,7 +1,7 @@
 package dev.redicloud.repository.server.version.handler.defaults
 
 import dev.redicloud.repository.server.version.CloudServerVersion
-import dev.redicloud.repository.server.version.ServerVersionRepository
+import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.TEMP_SERVER_VERSION_FOLDER
@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.minutes
 
-class URLServerVersionHandler(override val serverVersionRepository: ServerVersionRepository) : IServerVersionHandler {
+class URLServerVersionHandler(override val serverVersionRepository: CloudServerVersionRepository) : IServerVersionHandler {
 
     override val name: String = "urldownloader"
     override var lastUpdateCheck: Long = -1
@@ -20,11 +20,11 @@ class URLServerVersionHandler(override val serverVersionRepository: ServerVersio
     override suspend fun download(version: CloudServerVersion, force: Boolean): File {
         val jar = getJar(version)
         if (jar.exists() && !force) return jar
-        if (version.customDownloadUrl == null) throw NullPointerException("Download url of ${version.name} is null")
+        if (version.customDownloadUrl == null) throw NullPointerException("Download url of ${version.getDisplayName()} is null")
 
         val response = get(version.customDownloadUrl!!)
         if (response.statusCode != 200) throw IllegalStateException(
-            "Download of ${version.name} is not available (${response.statusCode}):\n" +
+            "Download of ${version.getDisplayName()} is not available (${response.statusCode}):\n" +
                     response.text
         )
 

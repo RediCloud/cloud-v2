@@ -64,3 +64,11 @@ fun locateAllJavaVersions(): List<File> {
 
     return versionFolders
 }
+
+fun toVersionId(versionNumber: Int): Int {
+    return versionNumber+44
+}
+
+fun toVersionNumber(versionId: Int): Int {
+    return versionId-44
+}

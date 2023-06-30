@@ -8,12 +8,12 @@ import java.util.*
 
 data class CloudServerVersionType(
     val uniqueId: UUID = UUID.randomUUID(),
-    val name: String,
-    val versionHandlerName: String,
-    val craftBukkitBased: Boolean,
-    val proxy: Boolean,
-    val jvmArguments: List<String> = mutableListOf(),
-    val programmArguments: List<String> = mutableListOf(),
+    var name: String,
+    var versionHandlerName: String,
+    var craftBukkitBased: Boolean,
+    var proxy: Boolean,
+    val jvmArguments: MutableList<String> = mutableListOf(),
+    val programmArguments: MutableList<String> = mutableListOf(),
     // key = file, pair first = key, pair second = value
     val fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf(),
     val defaultType: Boolean = false

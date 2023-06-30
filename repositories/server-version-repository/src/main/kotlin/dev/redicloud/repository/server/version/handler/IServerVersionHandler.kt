@@ -1,10 +1,11 @@
 package dev.redicloud.repository.server.version.handler
 
 import dev.redicloud.repository.server.version.CloudServerVersion
-import dev.redicloud.repository.server.version.ServerVersionRepository
+import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.handler.defaults.PaperMcServerVersionHandler
 import dev.redicloud.repository.server.version.handler.defaults.URLServerVersionHandler
 import dev.redicloud.repository.server.version.CloudServerVersionType
+import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.MINECRAFT_VERSIONS_FOLDER
 import java.io.File
@@ -12,7 +13,7 @@ import java.io.File
 interface IServerVersionHandler {
 
     val name: String
-    val serverVersionRepository: ServerVersionRepository
+    val serverVersionRepository: CloudServerVersionRepository
     var lastUpdateCheck: Long
 
     suspend fun download(version: CloudServerVersion, force: Boolean = false): File
@@ -39,28 +40,28 @@ interface IServerVersionHandler {
     fun getJar(version: CloudServerVersion): File = File(getFolder(version).absolutePath, "$version.name.jar")
 
     fun getFolder(version: CloudServerVersion): File =
-        File(MINECRAFT_VERSIONS_FOLDER.getFile().absolutePath, version.name)
+        File(MINECRAFT_VERSIONS_FOLDER.getFile().absolutePath, version.getDisplayName())
 
     fun register() = registerHandler(this)
 
     companion object {
 
-        private val CACHE = mutableListOf<IServerVersionHandler>()
+        val CACHE_HANDLERS = mutableListOf<IServerVersionHandler>()
 
         fun getHandler(type: CloudServerVersionType): IServerVersionHandler =
-            CACHE.firstOrNull { it.name.lowercase() == type.versionHandlerName.lowercase() }
+            CACHE_HANDLERS.firstOrNull { it.name.lowercase() == type.versionHandlerName.lowercase() }
                 ?: throw IllegalStateException("No handler for type $type")
 
         fun registerHandler(serverVersionHandler: IServerVersionHandler): IServerVersionHandler {
-            if (CACHE.any { it.name.lowercase() == serverVersionHandler.name.lowercase() })
-                return CACHE.first { it.name.lowercase() == serverVersionHandler.name.lowercase() }
-            CACHE.add(serverVersionHandler)
+            if (CACHE_HANDLERS.any { it.name.lowercase() == serverVersionHandler.name.lowercase() })
+                return CACHE_HANDLERS.first { it.name.lowercase() == serverVersionHandler.name.lowercase() }
+            CACHE_HANDLERS.add(serverVersionHandler)
             return serverVersionHandler
         }
 
-        suspend fun registerDefaultHandlers(serverVersionRepository: ServerVersionRepository) {
-            registerHandler(URLServerVersionHandler(serverVersionRepository))
-            registerHandler(PaperMcServerVersionHandler(serverVersionRepository))
+        suspend fun registerDefaultHandlers(cloudServerVersionRepository: CloudServerVersionRepository, serverVersionTypeRepository: CloudServerVersionTypeRepository) {
+            registerHandler(URLServerVersionHandler(cloudServerVersionRepository))
+            registerHandler(PaperMcServerVersionHandler(cloudServerVersionRepository, serverVersionTypeRepository))
         }
 
     }

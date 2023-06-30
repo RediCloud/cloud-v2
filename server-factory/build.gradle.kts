@@ -9,6 +9,7 @@ dependencies {
     compileOnly(project(":repositories:node-repository"))
     compileOnly(project(":repositories:file-template-repository"))
     compileOnly(project(":repositories:configuration-template-repository"))
+    compileOnly(project(":repositories:java-version-repository"))
     compileOnly(project(":repositories:server-version-repository"))
     compileOnly(project(":repositories:service-repository"))
 }

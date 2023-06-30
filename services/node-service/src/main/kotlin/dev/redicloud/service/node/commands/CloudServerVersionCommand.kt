@@ -8,7 +8,8 @@ import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.repository.server.version.ServerVersionRepository
+import dev.redicloud.repository.server.version.CloudServerVersionRepository
+import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.service.base.suggester.CloudServerVersionSuggester
@@ -22,14 +23,15 @@ import java.util.*
 @CommandAlias(["serverversion", "serverversion"])
 @CommandDescription("Configures the server version")
 class CloudServerVersionCommand(
-    private val serverVersionRepository: ServerVersionRepository,
+    private val serverVersionRepository: CloudServerVersionRepository,
+    private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
     private val serverRepository: ServerRepository,
     private val console: Console
 ) : CommandBase() {
 
-    @CommandSubPath("edit <version> name <name>")
-    @CommandDescription("Set the name of the server version")
+    @CommandSubPath("edit <version> project <name>")
+    @CommandDescription("Set the project name of the server version")
     fun onEditName(
         actor: ConsoleActor,
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion,
@@ -40,10 +42,10 @@ class CloudServerVersionCommand(
                 actor.sendMessage("§cA version with the name '$name' already exists!")
                 return@runBlocking
             }
-            val oldName = version.name
-            version.name = name
+            val oldName = version.projectName
+            version.projectName = name
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Updated name of $oldName to ${version.name}")
+            actor.sendMessage("Updated project name of $oldName to ${version.projectName}")
         }
     }
 
@@ -57,7 +59,7 @@ class CloudServerVersionCommand(
         runBlocking {
             version.customDownloadUrl = if (url != "null") url else null
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Updated download url of ${version.name} to ${version.customDownloadUrl}")
+            actor.sendMessage("Updated download url of ${version.getDisplayName()} to ${version.customDownloadUrl}")
         }
     }
 
@@ -69,9 +71,9 @@ class CloudServerVersionCommand(
         @CommandParameter("type", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType
     ) {
         runBlocking {
-            version.type = type
+            version.typeId = type.uniqueId
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Updated type of ${version.name} to ${type.name}")
+            actor.sendMessage("Updated type of ${version.getDisplayName()} to ${type.name}")
         }
     }
 
@@ -85,7 +87,7 @@ class CloudServerVersionCommand(
         runBlocking {
             version.libPattern = if (pattern != "null") pattern else null
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Updated lib pattern of ${version.name} to '${version.libPattern}'")
+            actor.sendMessage("Updated lib pattern of ${version.getDisplayName()} to '${version.libPattern}'")
         }
     }
 
@@ -99,7 +101,7 @@ class CloudServerVersionCommand(
         runBlocking {
             version.version = minecraftVersion
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Updated minecraft version of ${version.name} to ${minecraftVersion.name}")
+            actor.sendMessage("Updated minecraft version of ${version.getDisplayName()} to ${minecraftVersion.name}")
         }
     }
 
@@ -116,7 +118,7 @@ class CloudServerVersionCommand(
             }
             val version = CloudServerVersion(
                 UUID.randomUUID(),
-                CloudServerVersionTypeRepository.DEFAULT_TYPES_CACHE.get()!!.first { it.name == "unknown" },
+                CloudServerVersionTypeRepository.DEFAULT_TYPES_CACHE.get()!!.first { it.name == "unknown" }.uniqueId,
                 versionName,
                 null,
                 null,
@@ -124,8 +126,8 @@ class CloudServerVersionCommand(
                 ServerVersion.versions().first { it.isUnknown() }
             )
             serverVersionRepository.createVersion(version)
-            actor.sendMessage("§aCreated server version with name ${version.name}")
-            actor.sendMessage("Use '/sv edit ${version.name} <key> <value>' to edit the server version")
+            actor.sendMessage("§aCreated server version with name ${version.getDisplayName()}")
+            actor.sendMessage("Use '/sv edit ${version.getDisplayName()} <key> <value>' to edit the server version")
         }
     }
 
@@ -155,7 +157,7 @@ class CloudServerVersionCommand(
                 return@runBlocking
             }
             serverVersionRepository.deleteVersion(version.uniqueId)
-            actor.sendMessage("Deleted server version with name ${version.name}")
+            actor.sendMessage("Deleted server version with name ${version.getDisplayName()}")
         }
     }
 
@@ -167,7 +169,8 @@ class CloudServerVersionCommand(
         runBlocking {
             actor.sendMessage("Server versions:")
             serverVersionRepository.getVersions().forEach {
-                actor.sendMessage("§8- %hc%${it.name} §8(%tc%${it.type.name}§8)")
+                val type = serverVersionTypeRepository.getType(it.typeId)
+                actor.sendMessage("§8- %hc%${it.getDisplayName()} §8(%tc%${type?.name ?: "unknown"}§8)")
             }
         }
     }
@@ -178,15 +181,19 @@ class CloudServerVersionCommand(
         actor: ConsoleActor,
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion
     ) {
-        actor.sendMessage("§8<====== %hc%§nServer-Version info §8 ======§8>")
-        actor.sendMessage("")
-        actor.sendMessage("§8- %hc%Name§8: %tc%${version.name}")
-        actor.sendMessage("§8- %hc%Type§8: %tc%${version.type.name}")
-        actor.sendMessage("§8- %hc%Lib-Pattern§8: %tc%${version.libPattern}")
-        actor.sendMessage("§8- %hc%Version§8: %tc%${version.version.name}")
-        actor.sendMessage("§8- %hc%Download-Url§8: %tc%${version.customDownloadUrl}")
-        actor.sendMessage("")
-        actor.sendMessage("§8<====== %hc%§nServer-Version info §8 ======§8>")
+        runBlocking {
+            val type = serverVersionTypeRepository.getType(version.typeId)
+            actor.sendMessage("§8<====== %hc%§nServer-Version info §8 ======§8>")
+            actor.sendMessage("")
+            actor.sendMessage("§8- %tc%Name§8: %hc%${version.getDisplayName()}")
+            actor.sendMessage("§8- %tc%Project§8: %hc%${version.projectName}")
+            actor.sendMessage("§8- %tc%Type§8: %hc%${type?.name ?: "unknown"}")
+            actor.sendMessage("§8- %tc%Lib-Pattern§8: %hc%${version.libPattern}")
+            actor.sendMessage("§8- %tc%Version§8: %hc%${version.version.name}")
+            actor.sendMessage("§8- %tc%Download-Url§8: %hc%${version.customDownloadUrl}")
+            actor.sendMessage("")
+            actor.sendMessage("§8<====== %hc%§nServer-Version info §8 ======§8>")
+        }
     }
 
     @CommandSubPath("patch <version>")
@@ -196,7 +203,13 @@ class CloudServerVersionCommand(
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion
     ) {
         runBlocking {
-            val handler = version.getHandle()
+            val type = serverVersionTypeRepository.getType(version.typeId)
+            if (type == null) {
+                actor.sendMessage("§cThis version has no server version type!")
+                actor.sendMessage("§cYou can set one with '/sv edit ${version.getDisplayName()} type <type>'")
+                return@runBlocking
+            }
+            val handler = IServerVersionHandler.getHandler(type)
             if (!handler.isPatchVersion(version)) {
                 actor.sendMessage("§cThis version is not patchable!")
                 return@runBlocking
@@ -212,16 +225,16 @@ class CloudServerVersionCommand(
                     null
                 } else if (patched) {
                     canceled = true
-                    "Patching version %tc%${version.name}§8: ${if (error) "§4✘" else "§a✔"}"
+                    "Patching version %tc%${version.projectName}§8: ${if (error) "§4✘" else "§a✔"}"
                 } else {
-                    "Patching version %tc%${version.name}§8: %loading%"
+                    "Patching version %tc%${version.projectName}§8: %loading%"
                 }
             }
             try {
                 handler.patch(version)
             } catch (e: Exception) {
                 error = true
-                LOGGER.severe("Error while patching version ${version.name}", e)
+                LOGGER.severe("Error while patching version ${version.getDisplayName()}", e)
             } finally {
                 patched = true
             }
@@ -235,9 +248,15 @@ class CloudServerVersionCommand(
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion
     ) {
         runBlocking {
-            val handler = version.getHandle()
+            val type = serverVersionTypeRepository.getType(version.typeId)
+            if (type == null) {
+                actor.sendMessage("§cThis version has no server version type!")
+                actor.sendMessage("§cYou can set one with '/sv edit ${version.projectName} type <type>'")
+                return@runBlocking
+            }
+            val handler = IServerVersionHandler.getHandler(type)
             if (handler.canDownload(version)) {
-                actor.sendMessage("§c'${version.name}' can´t be downloaded! Check the version type and the download url!")
+                actor.sendMessage("§c'${version.getDisplayName()}' can´t be downloaded! Check the version type and the download url!")
                 return@runBlocking
             }
             var canceled = false
@@ -251,16 +270,16 @@ class CloudServerVersionCommand(
                     null
                 } else if (downloaded) {
                     canceled = true
-                    "Downloading version %tc%${version.name}§8: ${if (error) "§4✘" else "§a✔"}"
+                    "Downloading version %tc%${version.getDisplayName()}§8: ${if (error) "§4✘" else "§a✔"}"
                 } else {
-                    "Downloading version %tc%${version.name}§8: %loading%"
+                    "Downloading version %tc%${version.getDisplayName()}§8: %loading%"
                 }
             }
             try {
                 handler.download(version, true)
             } catch (e: Exception) {
                 error = true
-                LOGGER.severe("Error while downloading version ${version.name}", e)
+                LOGGER.severe("Error while downloading version ${version.getDisplayName()}", e)
             } finally {
                 downloaded = true
             }

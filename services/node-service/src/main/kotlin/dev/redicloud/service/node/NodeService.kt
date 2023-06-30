@@ -10,7 +10,6 @@ import dev.redicloud.service.base.events.NodeSuspendedEvent
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.repository.node.connect
 import dev.redicloud.service.node.repository.node.disconnect
-import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.service.node.commands.*
 import dev.redicloud.service.node.tasks.node.NodeChooseMasterTask
 import dev.redicloud.service.node.tasks.NodePingTask
@@ -138,9 +137,9 @@ class NodeService(
     private fun registerCommands() {
         console.commandManager.register(ExitCommand(this))
         console.commandManager.register(ClusterCommand(this))
-        console.commandManager.register(CloudServerVersionCommand(this.serverVersionRepository, this.configurationTemplateRepository, this.serverRepository, this.console))
-        console.commandManager.register(CloudServerVersionTypeCommand(this.serverVersionTypeRepository))
-        console.commandManager.register(JavaVersionCommand(this.javaVersionRepository))
+        console.commandManager.register(CloudServerVersionCommand(this.serverVersionRepository, this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverRepository, this.console))
+        console.commandManager.register(CloudServerVersionTypeCommand(this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverVersionRepository))
+        console.commandManager.register(JavaVersionCommand(this.javaVersionRepository, this.configurationTemplateRepository))
     }
 
     private fun initShutdownHook() {

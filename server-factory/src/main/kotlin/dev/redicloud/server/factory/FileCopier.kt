@@ -3,7 +3,9 @@ package dev.redicloud.server.factory
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.version.CloudServerVersion
-import dev.redicloud.repository.server.version.ServerVersionRepository
+import dev.redicloud.repository.server.version.CloudServerVersionRepository
+import dev.redicloud.repository.server.version.CloudServerVersionType
+import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.FileTemplateRepository
@@ -19,7 +21,8 @@ import java.util.*
 class FileCopier(
     serverProcess: ServerProcess,
     cloudServer: CloudServer,
-    serverVersionRepository: ServerVersionRepository,
+    serverVersionRepository: CloudServerVersionRepository,
+    serverVersionTypeRepository: CloudServerVersionTypeRepository,
     fileTemplateRepository: FileTemplateRepository
 ) {
 
@@ -27,6 +30,7 @@ class FileCopier(
     val serviceId = ServiceId(serverUniqueId, ServiceType.SERVER)
     val configurationTemplate = serverProcess.configurationTemplate
     val serverVersion: CloudServerVersion
+    val serverVersionType: CloudServerVersionType
     val templates: List<FileTemplate>
     val workDirectory: File
     private val logger = LogManager.logger(FileCopier::class)
@@ -35,6 +39,8 @@ class FileCopier(
         // get server version
         serverVersion = runBlocking { serverVersionRepository.getVersion(configurationTemplate.serverVersionId) }
             ?: throw Exception("Server version ${configurationTemplate.serverVersionId} not found!")
+        serverVersionType = runBlocking { serverVersionTypeRepository.getType(serverVersion.typeId) }
+            ?: throw Exception("Server version type ${serverVersion.typeId} not found!")
         // get templates by given configuration template and collect also inherited templates
         templates = configurationTemplate.fileTemplateIds.mapNotNull { runBlocking { fileTemplateRepository.getTemplate(it) } }
             .flatMap { runBlocking { fileTemplateRepository.collectTemplates(it) } }
@@ -51,8 +57,8 @@ class FileCopier(
      * Copies all files for the server version to the work directory
      */
     suspend fun copyVersionFiles() {
-        logger.fine("Copying files for $serviceId of version ${serverVersion.name}")
-        val versionHandler = IServerVersionHandler.getHandler(serverVersion.type)
+        logger.fine("Copying files for $serviceId of version ${serverVersion.getDisplayName()}")
+        val versionHandler = IServerVersionHandler.getHandler(serverVersionType)
         if (versionHandler.isUpdateAvailable(serverVersion)) {
             versionHandler.update(serverVersion)
         }
@@ -60,7 +66,7 @@ class FileCopier(
             versionHandler.patch(serverVersion)
         }
         versionHandler.getFolder(serverVersion).copyRecursively(workDirectory)
-        serverVersion.type.doFileEdits(workDirectory)
+        serverVersionType.doFileEdits(workDirectory)
     }
 
     /**

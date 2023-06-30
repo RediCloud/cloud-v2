@@ -29,17 +29,22 @@ findProject(":repositories:node-repository")?.name = "node-repository"
 include("repositories:server-repository")
 findProject(":repositories:server-repository")?.name = "server-repository"
 
-include("commands:command-api")
-findProject(":commands:command-api")?.name = "command-api"
-include("logging")
-include("tasks")
-include("repositories:server-version-repository")
-findProject(":repositories:server-version-repository")?.name = "server-version-repository"
-include("repositories:file-template-repository")
-findProject(":repositories:file-template-repository")?.name = "file-template-repository"
-include("file-cluster")
-include("repositories:configuration-template-repository")
-findProject(":repositories:configuration-template-repository")?.name = "configuration-template-repository"
-include("server-factory")
 include("repositories:java-version-repository")
 findProject(":repositories:java-version-repository")?.name = "java-version-repository"
+
+include("repositories:configuration-template-repository")
+findProject(":repositories:configuration-template-repository")?.name = "configuration-template-repository"
+
+include("repositories:server-version-repository")
+findProject(":repositories:server-version-repository")?.name = "server-version-repository"
+
+include("repositories:file-template-repository")
+findProject(":repositories:file-template-repository")?.name = "file-template-repository"
+
+include("commands:command-api")
+findProject(":commands:command-api")?.name = "command-api"
+
+include("logging")
+include("tasks")
+include("file-cluster")
+include("server-factory")

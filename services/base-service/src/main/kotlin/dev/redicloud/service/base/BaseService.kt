@@ -15,9 +15,10 @@ import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
-import dev.redicloud.repository.server.version.ServerVersionRepository
+import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
+import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplateRepository
@@ -45,7 +46,7 @@ abstract class BaseService(
 
     val nodeRepository: NodeRepository
     val serverRepository: ServerRepository
-    val serverVersionRepository: ServerVersionRepository
+    val serverVersionRepository: CloudServerVersionRepository
     val fileTemplateRepository: FileTemplateRepository
     val configurationTemplateRepository: ConfigurationTemplateRepository
     val serverVersionTypeRepository: CloudServerVersionTypeRepository
@@ -77,8 +78,8 @@ abstract class BaseService(
 
         javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection)
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager)
-        serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection)
-        serverVersionRepository = ServerVersionRepository(databaseConnection)
+        serverVersionRepository = CloudServerVersionRepository(databaseConnection)
+        serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, serverVersionRepository)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager)
         fileTemplateRepository = FileTemplateRepository(databaseConnection, nodeRepository)
         configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection)
@@ -104,6 +105,7 @@ abstract class BaseService(
         CommandArgumentParser.PARSERS[CloudServerVersionType::class] = CloudServerVersionTypeParser(this.serverVersionTypeRepository)
         CommandArgumentParser.PARSERS[JavaVersion::class] = JavaVersionParser(this.javaVersionRepository)
         CommandArgumentParser.PARSERS[ServerVersion::class] = ServerVersionParser()
+        CommandArgumentParser.PARSERS[IServerVersionHandler::class] = ServerVersionHandlerParser()
     }
 
     private fun registerSuggesters() {
@@ -113,6 +115,7 @@ abstract class BaseService(
         ICommandSuggester.SUGGESTERS.add(CloudServerVersionTypeSuggester(this.serverVersionTypeRepository))
         ICommandSuggester.SUGGESTERS.add(JavaVersionSuggester(this.javaVersionRepository))
         ICommandSuggester.SUGGESTERS.add(ServerVersionSuggester())
+        ICommandSuggester.SUGGESTERS.add(ServerVersionHandlerSuggester())
     }
 
     private fun registerPackets() {

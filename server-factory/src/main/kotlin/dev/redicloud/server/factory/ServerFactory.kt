@@ -2,11 +2,13 @@ package dev.redicloud.server.factory
 
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
+import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.CloudServerState
 import dev.redicloud.repository.server.ServerRepository
-import dev.redicloud.repository.server.version.ServerVersionRepository
+import dev.redicloud.repository.server.version.CloudServerVersionRepository
+import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.file.FileTemplateRepository
@@ -20,8 +22,10 @@ class ServerFactory(
     databaseConnection: DatabaseConnection,
     private val nodeRepository: NodeRepository,
     private val serverRepository: ServerRepository,
-    private val serverVersionRepository: ServerVersionRepository,
-    private val fileTemplateRepository: FileTemplateRepository
+    private val serverVersionRepository: CloudServerVersionRepository,
+    private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
+    private val fileTemplateRepository: FileTemplateRepository,
+    private val javaVersionRepository: JavaVersionRepository
 ) {
 
     //TODO: move to server queue task
@@ -67,14 +71,15 @@ class ServerFactory(
 
         // check if the server version is known
         val version = serverVersionRepository.getVersion(configurationTemplate.serverVersionId)
-        if (version == null || version.type.isUnknown()) return UnknownServerVersionStartResult(version)
+        val type = serverVersionTypeRepository.getType(configurationTemplate.serverVersionId) ?: return UnknownServerVersionStartResult(version)
+        if (version == null || type.isUnknown()) return UnknownServerVersionStartResult(version)
         // get the version handler and update/patch the version if needed
-        val versionHandler = IServerVersionHandler.getHandler(version.type)
+        val versionHandler = IServerVersionHandler.getHandler(type)
         if (versionHandler.isUpdateAvailable(version)) versionHandler.update(version)
         if (versionHandler.isPatched(version) && versionHandler.isPatchVersion(version)) versionHandler.patch(version)
 
         // create the server process
-        val serverProcess = ServerProcess(configurationTemplate, serverRepository)
+        val serverProcess = ServerProcess(configurationTemplate, serverRepository, javaVersionRepository, serverVersionRepository, serverVersionTypeRepository)
         var cloudServer: CloudServer? = null
         try {
             // store the process
@@ -94,7 +99,7 @@ class ServerFactory(
             )
 
             // copy the files to copy server necessary files
-            val copier = FileCopier(serverProcess, cloudServer, serverVersionRepository, fileTemplateRepository)
+            val copier = FileCopier(serverProcess, cloudServer, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository)
             serverProcess.fileCopier = copier
 
             // copy all templates
