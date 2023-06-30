@@ -75,7 +75,7 @@ abstract class BaseService(
         eventManager = EventManager("base-event-manager", packetManager)
         taskManager = CloudTaskManager(eventManager, packetManager)
 
-        javaVersionRepository = JavaVersionRepository(databaseConnection)
+        javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection)
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection)
         serverVersionRepository = ServerVersionRepository(databaseConnection)
