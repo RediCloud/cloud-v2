@@ -75,6 +75,8 @@ abstract class CommandManager<K : ICommandActor<*>> {
             }
         }
 
+        list.removeIf { it.isBlank() }
+
         if ((list.isEmpty() || commandBase == null)
             && possibleCommands.isNotEmpty()
             && input.removeLastSpaces().split(" ").size == 1) {
@@ -82,9 +84,14 @@ abstract class CommandManager<K : ICommandActor<*>> {
             list.addAll(possibleCommands
                 .filter { actor.hasPermission(it.getPermission()) }
                 .filter { !isDisabled(it) }
-                .map { it.getName() }
+                .flatMap {
+                    if (input.isBlank()) {
+                        mutableListOf(it.getName())
+                    }else {
+                        mutableListOf(it.getName(), *it.getAliases())
+                    }
+                }
                 .filter { it.lowercase().startsWith(split[0].lowercase()) })
-            list.removeIf { it.isBlank() }
             return list
         }
 
