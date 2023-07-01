@@ -1,9 +1,5 @@
 package dev.redicloud.service.node.commands
 
-import com.jcraft.jsch.ChannelExec
-import com.jcraft.jsch.ChannelSftp
-import com.jcraft.jsch.ChannelSftp.LsEntry
-import com.jcraft.jsch.Session
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.ConsoleActor
@@ -12,14 +8,11 @@ import dev.redicloud.service.base.repository.pingService
 import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
 import dev.redicloud.service.node.NodeService
 import dev.redicloud.service.node.repository.node.suspendNode
-import dev.redicloud.service.node.repository.template.file.pushTemplates
 import dev.redicloud.utils.*
 import dev.redicloud.utils.service.ServiceId
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.io.File
-import java.util.*
 
 @Command("cluster")
 @CommandDescription("All commands for the cluster")

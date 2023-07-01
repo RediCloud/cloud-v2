@@ -2,6 +2,7 @@ package dev.redicloud.service.node
 
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.cluster.file.FileNodeRepository
+import dev.redicloud.commands.api.CommandBase
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.repository.java.version.JavaVersion
@@ -140,13 +141,17 @@ class NodeService(
     }
 
     private fun registerCommands() {
-        console.commandManager.register(ExitCommand(this))
-        console.commandManager.register(ClusterCommand(this))
-        console.commandManager.register(CloudServerVersionCommand(this.serverVersionRepository, this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverRepository, this.console))
-        console.commandManager.register(CloudServerVersionTypeCommand(this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverVersionRepository))
-        console.commandManager.register(JavaVersionCommand(this.javaVersionRepository, this.configurationTemplateRepository))
-        console.commandManager.register(ClearCommand(this.console))
-        console.commandManager.register(ConfigurationTemplateCommand(this.configurationTemplateRepository, this.javaVersionRepository, this.serverRepository, this.serverVersionRepository, this.nodeRepository, this.fileTemplateRepository))
+        fun register(command: CommandBase) {
+            console.commandManager.register(command)
+        }
+        register(ExitCommand(this))
+        register(ClusterCommand(this))
+        register(CloudServerVersionCommand(this.serverVersionRepository, this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverRepository, this.console))
+        register(CloudServerVersionTypeCommand(this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverVersionRepository))
+        register(JavaVersionCommand(this.javaVersionRepository, this.configurationTemplateRepository))
+        register(ClearCommand(this.console))
+        register(ConfigurationTemplateCommand(this.configurationTemplateRepository, this.javaVersionRepository, this.serverRepository, this.serverVersionRepository, this.nodeRepository, this.fileTemplateRepository))
+        register(FileTemplateCommand(this.fileTemplateRepository))
     }
 
     private fun initShutdownHook() {
