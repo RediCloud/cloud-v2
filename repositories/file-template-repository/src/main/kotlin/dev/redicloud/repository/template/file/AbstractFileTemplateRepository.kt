@@ -47,6 +47,7 @@ abstract class AbstractFileTemplateRepository(
         delete(uniqueId.toString())
         if (template.getFolder().exists() && template.getFolder().isDirectory) {
             template.getFolder().deleteRecursively()
+            if (template.getPrefixFolder().listFiles()?.isEmpty() == true) template.getPrefixFolder().deleteRecursively()
             nodeRepository.getConnectedNodes().forEach {
                 pushTemplates(it.serviceId)
             }

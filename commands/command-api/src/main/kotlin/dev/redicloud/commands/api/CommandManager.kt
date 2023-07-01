@@ -121,9 +121,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
                 val nextResult = if (inputR == "") result else split1[currentIndex + 1]
                 if (nextResult.isArgument()) {
                     val subCommand = commandBase
-                        ?.getSubCommands()
-                        ?.filter { it.isThis(input, true) }
-                        ?.firstOrNull()
+                        ?.getSubCommands()?.firstOrNull { it.isThis(input, true) }
                         ?: return@forEach
                     val argument = subCommand.arguments.firstOrNull { it.isThis(input, true) } ?: return@forEach
                     results.addAll(argument.suggester.suggest(CommandContext(input, argument.suggesterParameter)))

@@ -16,8 +16,11 @@ data class FileTemplate(
     }
 
     fun getFolder(): File {
-        val parent = File(TEMPLATE_FOLDER.getFile().absolutePath, prefix)
-        return File(name, parent.absolutePath)
+        return File(getPrefixFolder().absolutePath, name)
+    }
+
+    fun getPrefixFolder(): File {
+        return File(TEMPLATE_FOLDER.getFile().absolutePath, prefix)
     }
 
 }
