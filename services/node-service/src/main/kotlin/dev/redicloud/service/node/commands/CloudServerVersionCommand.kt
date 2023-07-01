@@ -169,7 +169,7 @@ class CloudServerVersionCommand(
         runBlocking {
             actor.sendMessage("Server versions:")
             serverVersionRepository.getVersions().forEach {
-                val type = serverVersionTypeRepository.getType(it.typeId)
+                val type = if (it.typeId != null) serverVersionTypeRepository.getType(it.typeId!!) else null
                 actor.sendMessage("§8- %hc%${it.getDisplayName()} §8(%tc%${type?.name ?: "unknown"}§8)")
             }
         }
@@ -182,7 +182,7 @@ class CloudServerVersionCommand(
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion
     ) {
         runBlocking {
-            val type = serverVersionTypeRepository.getType(version.typeId)
+            val type = if (version.typeId != null) serverVersionTypeRepository.getType(version.typeId!!) else null
             actor.sendMessage("§8<====== %hc%§nServer-Version info §8 ======§8>")
             actor.sendMessage("")
             actor.sendMessage("§8- %tc%Name§8: %hc%${version.getDisplayName()}")
@@ -203,7 +203,7 @@ class CloudServerVersionCommand(
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion
     ) {
         runBlocking {
-            val type = serverVersionTypeRepository.getType(version.typeId)
+            val type = if (version.typeId != null) serverVersionTypeRepository.getType(version.typeId!!) else null
             if (type == null) {
                 actor.sendMessage("§cThis version has no server version type!")
                 actor.sendMessage("§cYou can set one with '/sv edit ${version.getDisplayName()} type <type>'")
@@ -248,7 +248,7 @@ class CloudServerVersionCommand(
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion
     ) {
         runBlocking {
-            val type = serverVersionTypeRepository.getType(version.typeId)
+            val type = if (version.typeId != null) serverVersionTypeRepository.getType(version.typeId!!) else null
             if (type == null) {
                 actor.sendMessage("§cThis version has no server version type!")
                 actor.sendMessage("§cYou can set one with '/sv edit ${version.projectName} type <type>'")

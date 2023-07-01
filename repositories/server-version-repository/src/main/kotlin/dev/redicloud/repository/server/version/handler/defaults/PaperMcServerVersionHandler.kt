@@ -27,7 +27,9 @@ class PaperMcServerVersionHandler(
         val jar = getJar(version)
         if (jar.exists() && !force) return jar
 
-        val type = serverVersionTypeRepository.getType(version.typeId) ?: throw NullPointerException("Cant find server version type ${version.typeId}")
+        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
+
+        val type = serverVersionTypeRepository.getType(version.typeId!!) ?: throw NullPointerException("Cant find server version type ${version.typeId}")
 
         val buildId = requester.getLatestBuild(type, version.version)
         if (buildId == -1) throw NullPointerException("Cant find build for ${version.getDisplayName()}")
@@ -50,7 +52,8 @@ class PaperMcServerVersionHandler(
     }
 
     override suspend fun canDownload(version: CloudServerVersion): Boolean {
-        val type = serverVersionTypeRepository.getType(version.typeId) ?: throw NullPointerException("Cant find server version type ${version.typeId}")
+        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
+        val type = serverVersionTypeRepository.getType(version.typeId!!) ?: throw NullPointerException("Cant find server version type ${version.typeId}")
         val buildId = requester.getLatestBuild(type, version.version)
         if (buildId == -1) return false
         val url = requester.getDownloadUrl(type, version.version, buildId)
@@ -59,9 +62,10 @@ class PaperMcServerVersionHandler(
     }
 
     override suspend fun isUpdateAvailable(version: CloudServerVersion, force: Boolean): Boolean {
+        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
         if (!force && System.currentTimeMillis() - lastUpdateCheck < 5.minutes.inWholeMilliseconds) return false
         val currentId = version.buildId ?: return true
-        val type = serverVersionTypeRepository.getType(version.typeId) ?: throw NullPointerException("Cant find server version type ${version.typeId}")
+        val type = serverVersionTypeRepository.getType(version.typeId!!) ?: throw NullPointerException("Cant find server version type ${version.typeId}")
         val latest = requester.getLatestBuild(type, version.version)
         if (latest == -1) throw NullPointerException("Cant find build for ${version.getDisplayName()}")
         lastUpdateCheck = System.currentTimeMillis()
@@ -69,12 +73,14 @@ class PaperMcServerVersionHandler(
     }
 
     override suspend fun getVersions(version: CloudServerVersion): List<ServerVersion> {
-        val type = serverVersionTypeRepository.getType(version.typeId) ?: throw NullPointerException("Cant find server version type ${version.typeId}")
+        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
+        val type = serverVersionTypeRepository.getType(version.typeId!!) ?: throw NullPointerException("Cant find server version type ${version.typeId}")
         return requester.getVersions(type)
     }
 
     override suspend fun getBuilds(version: CloudServerVersion, mcVersion: ServerVersion): List<String> {
-        val type = serverVersionTypeRepository.getType(version.typeId) ?: throw NullPointerException("Cant find server version type ${version.typeId}")
+        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
+        val type = serverVersionTypeRepository.getType(version.typeId!!) ?: throw NullPointerException("Cant find server version type ${version.typeId}")
         return requester.getBuilds(type, mcVersion).map { it.toString() }
     }
 

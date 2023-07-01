@@ -99,13 +99,14 @@ class CloudServerVersionTypeCommand(
         @CommandParameter("name", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType
     ) {
         runBlocking {
-            val versions = configurationTemplateRepository.getTemplates().map {
-                serverVersionRepository.getVersion(it.serverVersionId)
-            }
-            if (versions.any { it?.typeId == type.uniqueId }) {
+            val versions = configurationTemplateRepository.getTemplates().mapNotNull {
+                if (it.serverVersionId == null) return@mapNotNull null
+                serverVersionRepository.getVersion(it.serverVersionId!!)
+            }.filter { it.typeId != null }
+            if (versions.any { it.typeId == type.uniqueId }) {
                 actor.sendMessage("§cYou can't delete a server version type which is used by a server version:")
                 actor.sendMessage("§c${
-                    versions.filter { it?.typeId == type.uniqueId }.joinToString(", ") { it?.getDisplayName() ?: "null" }}"
+                    versions.filter { it.typeId == type.uniqueId }.joinToString(", ") { it.getDisplayName() ?: "null" }}"
                 )
                 return@runBlocking
             }
