@@ -3,8 +3,10 @@ package dev.redicloud.service.node.commands
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.template.file.FileTemplate
-import dev.redicloud.repository.template.file.FileTemplateRepository
+import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
+import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
 import dev.redicloud.service.base.suggester.FileTemplateSuggester
 import kotlinx.coroutines.runBlocking
 import java.util.*
@@ -13,7 +15,7 @@ import java.util.*
 @CommandAlias(["ft", "filetemplates", "ftemplate"])
 @CommandDescription("Manage the file templates")
 class FileTemplateCommand(
-    private val fileTemplateRepository: FileTemplateRepository
+    private val fileTemplateRepository: AbstractFileTemplateRepository
 ) : CommandBase() {
 
     @CommandSubPath("list")
@@ -166,6 +168,19 @@ class FileTemplateCommand(
         template.prefix = newPrefix
         fileTemplateRepository.updateTemplate(template)
         actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} was renamed to ${toConsoleValue(newPrefix)}!")
+    }
+
+    @CommandSubPath("publish <node>")
+    @CommandDescription("Publish a file template to a node")
+    fun publish(
+        actor: ConsoleActor,
+        @CommandParameter("node", true, ConnectedCloudNodeSuggester::class) node: CloudNode,
+    ) = runBlocking {
+        if (node.currentSession() == null) {
+            actor.sendMessage("§cThe node ${toConsoleValue(node.name)} is not connected!")
+            return@runBlocking
+        }
+        fileTemplateRepository.pushTemplates(node.serviceId)
     }
 
 }

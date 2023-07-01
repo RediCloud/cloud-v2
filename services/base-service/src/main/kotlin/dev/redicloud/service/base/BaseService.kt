@@ -23,7 +23,7 @@ import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplate
-import dev.redicloud.repository.template.file.FileTemplateRepository
+import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.service.base.packets.ServicePingPacket
 import dev.redicloud.service.base.packets.ServicePingResponse
 import dev.redicloud.service.base.parser.*
@@ -49,7 +49,7 @@ abstract class BaseService(
     val nodeRepository: NodeRepository
     val serverRepository: ServerRepository
     val serverVersionRepository: CloudServerVersionRepository
-    val fileTemplateRepository: FileTemplateRepository
+    abstract val fileTemplateRepository: AbstractFileTemplateRepository
     val configurationTemplateRepository: ConfigurationTemplateRepository
     val serverVersionTypeRepository: CloudServerVersionTypeRepository
     val javaVersionRepository: JavaVersionRepository
@@ -83,7 +83,6 @@ abstract class BaseService(
         serverVersionRepository = CloudServerVersionRepository(databaseConnection)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, serverVersionRepository)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager)
-        fileTemplateRepository = FileTemplateRepository(databaseConnection, nodeRepository)
         configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection)
 
         this.registerParsers()

@@ -6,6 +6,7 @@ import dev.redicloud.commands.api.CommandBase
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.repository.java.version.JavaVersion
+import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.service.base.BaseService
 import dev.redicloud.service.base.events.NodeDisconnectEvent
 import dev.redicloud.service.base.events.NodeSuspendedEvent
@@ -13,6 +14,7 @@ import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.repository.node.connect
 import dev.redicloud.service.node.repository.node.disconnect
 import dev.redicloud.service.node.commands.*
+import dev.redicloud.service.node.repository.template.file.NodeFileTemplateRepository
 import dev.redicloud.service.node.tasks.node.NodeChooseMasterTask
 import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
@@ -24,9 +26,10 @@ class NodeService(
     databaseConfiguration: DatabaseConfiguration,
     databaseConnection: DatabaseConnection,
     val configuration: NodeConfiguration,
-    val firstStart: Boolean = false
+    val firstStart: Boolean = false,
 ) : BaseService(databaseConfiguration, databaseConnection, configuration.toServiceId()) {
 
+    override val fileTemplateRepository: NodeFileTemplateRepository
     val console: NodeConsole = NodeConsole(configuration, eventManager, nodeRepository)
     val fileNodeRepository: FileNodeRepository
     val fileCluster: FileCluster
@@ -34,6 +37,8 @@ class NodeService(
     init {
         fileNodeRepository = FileNodeRepository(databaseConnection, packetManager)
         fileCluster = FileCluster(configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
+        fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster)
+
         runBlocking {
             this@NodeService.initShutdownHook()
 
@@ -47,6 +52,8 @@ class NodeService(
             try { this@NodeService.checkJavaVersions() } catch (e: Exception) {
                 LOGGER.warning("Error while checking java versions", e)
             }
+
+
             this@NodeService.registerPreTasks()
             this@NodeService.connectFileCluster()
             this@NodeService.registerPackets()

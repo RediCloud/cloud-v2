@@ -11,7 +11,7 @@ import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
-import dev.redicloud.repository.template.file.FileTemplateRepository
+import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.cancel
@@ -24,7 +24,7 @@ class ServerFactory(
     private val serverRepository: ServerRepository,
     private val serverVersionRepository: CloudServerVersionRepository,
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
-    private val fileTemplateRepository: FileTemplateRepository,
+    private val fileTemplateRepository: AbstractFileTemplateRepository,
     private val javaVersionRepository: JavaVersionRepository
 ) {
 

@@ -8,7 +8,7 @@ import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.file.FileTemplate
-import dev.redicloud.repository.template.file.FileTemplateRepository
+import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.utils.STATIC_FOLDER
 import dev.redicloud.utils.TEMP_SERVER_FOLDER
 import dev.redicloud.utils.service.ServiceId
@@ -23,7 +23,7 @@ class FileCopier(
     cloudServer: CloudServer,
     serverVersionRepository: CloudServerVersionRepository,
     serverVersionTypeRepository: CloudServerVersionTypeRepository,
-    fileTemplateRepository: FileTemplateRepository
+    fileTemplateRepository: AbstractFileTemplateRepository
 ) {
 
     val serverUniqueId = UUID.randomUUID()

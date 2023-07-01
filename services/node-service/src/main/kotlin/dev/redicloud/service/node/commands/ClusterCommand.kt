@@ -72,7 +72,7 @@ class ClusterCommand(private val nodeService: NodeService) : CommandBase() {
             actor.sendMessage("${node.getIdentifyingName()} is not connected to the cluster!")
             return
         }
-        runBlocking { nodeService.fileTemplateRepository.pushTemplates(node.serviceId, nodeService.fileCluster) }
+        runBlocking { nodeService.fileTemplateRepository.pushTemplates(node.serviceId) }
     }
 
     private val suspendConfirm = mutableListOf<ServiceId>()

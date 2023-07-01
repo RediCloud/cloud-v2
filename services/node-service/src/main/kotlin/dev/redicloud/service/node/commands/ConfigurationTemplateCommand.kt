@@ -13,7 +13,7 @@ import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplate
-import dev.redicloud.repository.template.file.FileTemplateRepository
+import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.service.base.suggester.CloudServerVersionSuggester
 import dev.redicloud.service.base.suggester.ConfigurationTemplateSuggester
 import dev.redicloud.service.base.suggester.JavaVersionSuggester
@@ -31,7 +31,7 @@ class ConfigurationTemplateCommand(
     private val serverRepository: ServerRepository,
     private val serverVersionRepository: CloudServerVersionRepository,
     private val nodeRepository: NodeRepository,
-    private val fileTemplateRepository: FileTemplateRepository
+    private val fileTemplateRepository: AbstractFileTemplateRepository
 ) : CommandBase() {
 
     @CommandSubPath("create <name>")
