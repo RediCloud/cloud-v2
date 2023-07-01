@@ -30,6 +30,55 @@ fun isJavaVersionUnsupported(version: JavaVersion): Boolean {
     return !isJavaVersionNotSupported(getJavaVersion()) && !isJavaVersionNotSupported(version)
 }
 
+fun parseVersionInfo(version: String): JavaVersionInfo? {
+    var matchResult = Regex("(?i)(jdk|jre)([0-9]+)\\.([0-9]+)\\.([0-9]+)_([0-9]+)").find(version)
+    //%type%%major%.%minor%.%patch%_%build% Beispiel: jre1.8.0_202
+    //%type%%major%.%minor%.%patch% Beispiel: jre1.8.0
+    if (matchResult != null) {
+        println("Matcher 1")
+        val type = matchResult.groupValues[1]
+        val major = matchResult.groupValues[2].toInt()
+        val minor = matchResult.groupValues[3].toInt()
+        val patch = matchResult.groupValues[4].toInt()
+        val build = matchResult.groupValues[5].toInt()
+
+        return JavaVersionInfo(major, minor, patch, build, type, "unknown", version)
+    }
+    matchResult = Regex("(?i)(jdk|jre)(-)([0-9]+)(.)([0-9]+)(.)([0-9]+)").find(version)
+    //%type%-%major%.%minor%.%patch% Beispiel: jdk-17.0.2
+    if (matchResult != null) {
+        println("Matcher 2")
+        val type = matchResult.groupValues[1]
+        val major = matchResult.groupValues[3].toInt()
+        val minor = matchResult.groupValues[5].toInt()
+        val patch = matchResult.groupValues[7].toInt()
+
+        return JavaVersionInfo(major, minor, patch, -1, type, "unknown", version)
+    }
+    matchResult = Regex("(?i)java-([0-9]+)-open(jdk|jre)-(\\w+)").find(version)
+    //%type%%major%.%minor%.%patch% Beispiel: jre1.8.0
+    if (matchResult != null) {
+        println("Matcher 3")
+        val major = matchResult.groupValues[1].toInt()
+        val type = matchResult.groupValues[2].toUpperCase()
+        val arch = matchResult.groupValues[3]
+        return JavaVersionInfo(major, 0, 0, -1, type, arch, version)
+    }
+    matchResult = Regex("(?i)java-([0-9]+)\\.([0-9]+)\\.([0-9]+)-open(jdk|jre)-(\\w+)").find(version)
+    //java-%major%-open%type%-%arch% Beispiel: java-17-openjdk-amd64
+    if (matchResult != null) {
+        println("Matcher 4")
+        val major = matchResult.groupValues[1].toInt()
+        val minor = matchResult.groupValues[2].toInt()
+        val patch = matchResult.groupValues[3].toInt()
+        val type = matchResult.groupValues[4].toUpperCase()
+        val arch = matchResult.groupValues[5]
+        return JavaVersionInfo(major, minor, patch, -1, type, arch, version)
+    }
+
+    return null
+}
+
 fun locateAllJavaVersions(): List<File> {
     val versionFolders = mutableListOf<File>()
 
@@ -71,4 +120,16 @@ fun toVersionId(versionNumber: Int): Int {
 
 fun toVersionNumber(versionId: Int): Int {
     return versionId-44
+}
+
+data class JavaVersionInfo(
+    val major: Int,
+    val minor: Int,
+    val patch: Int,
+    val build: Int,
+    val type: String,
+    val arch: String,
+    val raw: String
+) {
+    fun toVersionId(): Int = toVersionId(major)
 }

@@ -4,6 +4,7 @@ import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.cluster.file.FileNodeRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
+import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.service.base.BaseService
 import dev.redicloud.service.base.events.NodeDisconnectEvent
 import dev.redicloud.service.base.events.NodeSuspendedEvent
@@ -89,10 +90,14 @@ class NodeService(
     }
 
     private suspend fun checkJavaVersions() {
+        val detected = mutableListOf<JavaVersion>()
         javaVersionRepository.detectInstalledVersions().forEach {
             if (javaVersionRepository.existsVersion(it.name)) return@forEach
-            LOGGER.info("Auto detected installed java version§8: %hc%${it.name}")
             javaVersionRepository.createVersion(it)
+            detected.add(it)
+        }
+        if (detected.isNotEmpty()) {
+            LOGGER.info("Detected %hc%${detected.size} %tc%java versions§8: %hc%${detected.joinToString("§8, %hc%") { it.name }}")
         }
         var wrongAutoDetectPossible = false
         javaVersionRepository.getVersions().forEach { version ->

@@ -64,13 +64,13 @@ class JavaVersionRepository(
                 id = detectJavaId(file.name),
                 located = mutableMapOf(
                     serviceId.id to file.absolutePath
-                )
+                ),
+                info = parseVersionInfo(file.name)
             )
         }
     }
 
-    //TODO: improve
     private fun detectJavaId(fileName: String): Int {
-        return fileName.split("-").mapNotNull { it.toIntOrNull() }.firstOrNull() ?: -1
+        return parseVersionInfo(fileName)?.toVersionId() ?: -1
     }
 }

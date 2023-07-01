@@ -46,11 +46,17 @@ class JavaVersionCommand(
                 actor.sendMessage("§cNo java versions found")
                 return@runBlocking
             }
+            val created = mutableListOf<JavaVersion>()
             versions.forEach {
                 if (javaVersionRepository.existsVersion(it.name)) return@forEach
                 javaVersionRepository.createVersion(it)
-                actor.sendMessage("Created version %hc%${it.name} §8(§7${it.id}§8)")
+                created.add(it)
             }
+            if (created.isEmpty()) {
+                actor.sendMessage("No new java versions found")
+                return@runBlocking
+            }
+            actor.sendMessage("Created new java versions§8: %hc%${created.joinToString("§8, %hc%")}")
         }
     }
 

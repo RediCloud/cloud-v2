@@ -11,7 +11,8 @@ data class JavaVersion(
     var name: String,
     var id: Int,
     val onlineVersion: Boolean = false,
-    val located: MutableMap<UUID, String> = mutableMapOf()
+    val located: MutableMap<UUID, String> = mutableMapOf(),
+    val info: JavaVersionInfo? = null
 ) {
 
     fun isUnknown() = id == -1
