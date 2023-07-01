@@ -56,7 +56,7 @@ open class Console(
     override val commandManager = ConsoleCommandManager(this)
     override var lineFormat: String = System.getProperty("redicloud.console.lineformat", "§8[§f%time%§8] %level%§8: %tc%%message%")
     private val runningAnimations: MutableMap<UUID, Pair<Job, AbstractConsoleAnimation>> = mutableMapOf()
-    internal val terminal: Terminal
+    val terminal: Terminal
     internal val lineReader: ConsoleLineReader
     override var prompt: String = System.getProperty("redicloud.console.promt", "§8• %hc%%user%§8@§f%host% §8➔ §r")
     var highlightColor: ConsoleColor = ConsoleColor.valueOf(System.getProperty("redicloud.console.highlight", "CYAN").uppercase())
