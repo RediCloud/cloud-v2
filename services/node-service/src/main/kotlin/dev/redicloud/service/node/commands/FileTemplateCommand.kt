@@ -8,6 +8,8 @@ import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
 import dev.redicloud.service.base.suggester.FileTemplateSuggester
+import dev.redicloud.utils.defaultScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.*
 
@@ -26,7 +28,7 @@ class FileTemplateCommand(
         val v = fileTemplateRepository.getTemplates()
         val versions = mutableMapOf<String, MutableList<String>>()
         v.forEach {
-            val list = versions.getOrDefault(it.name, mutableListOf())
+            val list = versions.getOrDefault(it.prefix, mutableListOf())
             list.add(it.name)
             versions[it.prefix] = list
         }
@@ -37,12 +39,13 @@ class FileTemplateCommand(
         actor.sendMessage("§8<====== %hc%§nFile templates§8 ======§8>")
         actor.sendMessage("")
         versions.forEach { (prefix, values) ->
-            actor.sendMessage("§8- %hc%$prefix")
+            actor.sendMessage("§8- %hc%$prefix §8(%tc%${values.size}§8)")
             values.forEach {
                 actor.sendMessage("  §8➥ %tc%$it")
             }
         }
         actor.sendMessage("")
+        actor.sendMessage("§8<====== %hc%§nFile templates§8 ======§8>")
     }
 
     @CommandSubPath("info <name>")
@@ -70,10 +73,10 @@ class FileTemplateCommand(
         actor: ConsoleActor,
         @CommandParameter("name") name: String,
         @CommandParameter("prefix") prefix: String
-    ) = runBlocking {
+    ) = defaultScope.launch {
         if (fileTemplateRepository.existsTemplate(name, prefix)) {
             actor.sendMessage("§cA file template with the name ${toConsoleValue(name)} and prefix ${toConsoleValue(prefix)} already exists!")
-            return@runBlocking
+            return@launch
         }
         val template = FileTemplate(
             UUID.randomUUID(),
@@ -91,7 +94,7 @@ class FileTemplateCommand(
     fun delete(
         actor: ConsoleActor,
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate
-    ) = runBlocking {
+    ) = defaultScope.launch {
         actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} will be deleted...")
         fileTemplateRepository.deleteTemplate(template.uniqueId)
         actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} was deleted!")
@@ -105,12 +108,12 @@ class FileTemplateCommand(
         @CommandParameter("inherit", true, FileTemplateSuggester::class) inherit: FileTemplate
     ) = runBlocking {
         if (template.inherited.contains(inherit.uniqueId)) {
-            actor.sendMessage("§cThe file template ${toConsoleValue(template.getDisplayName())} already inherits from ${toConsoleValue(inherit.getDisplayName())}!")
+            actor.sendMessage("§cThe file template ${toConsoleValue(template.getDisplayName(), false)} already inherits from ${toConsoleValue(inherit.getDisplayName(), false)}!")
             return@runBlocking
         }
         val allTemplates = fileTemplateRepository.collectTemplates(template)
         if (allTemplates.contains(inherit)) {
-            actor.sendMessage("§cThe file template ${toConsoleValue(template.getDisplayName())} already inherits from ${toConsoleValue(inherit.getDisplayName())}!")
+            actor.sendMessage("§cThe file template ${toConsoleValue(template.getDisplayName(), false)} already inherits from ${toConsoleValue(inherit.getDisplayName(), false)}!")
             return@runBlocking
         }
         actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} will inherit from ${toConsoleValue(inherit.getDisplayName())}...")
@@ -127,7 +130,7 @@ class FileTemplateCommand(
         @CommandParameter("inherit", true, FileTemplateSuggester::class) inherit: FileTemplate
     ) = runBlocking {
         if (!template.inherited.contains(inherit.uniqueId)) {
-            actor.sendMessage("§cThe file template ${toConsoleValue(template.getDisplayName())} does not inherit from ${toConsoleValue(inherit.getDisplayName())}!")
+            actor.sendMessage("§cThe file template ${toConsoleValue(template.getDisplayName(), false)} does not inherit from ${toConsoleValue(inherit.getDisplayName(), false)}!")
             return@runBlocking
         }
         actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} will no longer inherit from ${toConsoleValue(inherit.getDisplayName())}...")
@@ -142,10 +145,10 @@ class FileTemplateCommand(
         actor: ConsoleActor,
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate,
         @CommandParameter("newName") newName: String
-    ) = runBlocking {
+    ) = defaultScope.launch {
         if (fileTemplateRepository.existsTemplate(newName, template.prefix)) {
             actor.sendMessage("§cA file template with the name ${toConsoleValue(newName)} and prefix ${toConsoleValue(template.prefix)} already exists!")
-            return@runBlocking
+            return@launch
         }
         actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} will be renamed to ${toConsoleValue(newName)}...")
         template.name = newName
@@ -159,10 +162,10 @@ class FileTemplateCommand(
         actor: ConsoleActor,
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate,
         @CommandParameter("newPrefix") newPrefix: String
-    ) = runBlocking {
+    ) = defaultScope.launch {
         if (fileTemplateRepository.existsTemplate(template.name, newPrefix)) {
             actor.sendMessage("§cA file template with the name ${toConsoleValue(template.name)} and prefix ${toConsoleValue(newPrefix)} already exists!")
-            return@runBlocking
+            return@launch
         }
         actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} will be renamed to ${toConsoleValue(newPrefix)}...")
         template.prefix = newPrefix
@@ -175,10 +178,10 @@ class FileTemplateCommand(
     fun publish(
         actor: ConsoleActor,
         @CommandParameter("node", true, ConnectedCloudNodeSuggester::class) node: CloudNode,
-    ) = runBlocking {
+    ) = defaultScope.launch {
         if (node.currentSession() == null) {
             actor.sendMessage("§cThe node ${toConsoleValue(node.name)} is not connected!")
-            return@runBlocking
+            return@launch
         }
         fileTemplateRepository.pushTemplates(node.serviceId)
     }

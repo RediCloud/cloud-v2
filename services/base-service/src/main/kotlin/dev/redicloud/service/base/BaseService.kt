@@ -84,10 +84,12 @@ abstract class BaseService(
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, serverVersionRepository)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager)
         configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection)
-
-        this.registerParsers()
-        this.registerSuggesters()
         this.registerPackets()
+    }
+
+    fun registerDefaults() {
+        this.registerDefaultParsers()
+        this.registerDefaultSuggesters()
     }
 
     open fun shutdown() {
@@ -99,7 +101,7 @@ abstract class BaseService(
         databaseConnection.disconnect()
     }
 
-    private fun registerParsers() {
+    private fun registerDefaultParsers() {
         CommandArgumentParser.PARSERS[CloudNode::class] = CloudNodeParser(this.nodeRepository)
         CommandArgumentParser.PARSERS[CloudServer::class] = CloudServerParser(this.serverRepository)
         CommandArgumentParser.PARSERS[CloudServerVersion::class] = CloudServerVersionParser(this.serverVersionRepository)
@@ -111,7 +113,7 @@ abstract class BaseService(
         CommandArgumentParser.PARSERS[FileTemplate::class] = FileTemplateParser(this.fileTemplateRepository)
     }
 
-    private fun registerSuggesters() {
+    private fun registerDefaultSuggesters() {
         ICommandSuggester.SUGGESTERS.add(RegisteredCloudNodeSuggester(this.nodeRepository))
         ICommandSuggester.SUGGESTERS.add(ConnectedCloudNodeSuggester(this.nodeRepository))
         ICommandSuggester.SUGGESTERS.add(CloudServerVersionSuggester(this.serverVersionRepository))

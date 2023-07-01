@@ -20,6 +20,10 @@ class NodeFileTemplateRepository(
 
     override suspend fun pushTemplates(serviceId: ServiceId) {
         val node = nodeRepository.getNode(serviceId) ?: return
+        if (node.serviceId == serviceId) {
+            FileCluster.LOGGER.info("Skipping pushing templates to ${node.getIdentifyingName()} because it is the current node!")
+            return
+        }
         FileCluster.LOGGER.info("Pushing templates to ${node.getIdentifyingName()}...")
         var session: Session? = null
         var sftpChannel: ChannelSftp? = null

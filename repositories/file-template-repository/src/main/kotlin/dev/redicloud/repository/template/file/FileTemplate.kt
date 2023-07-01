@@ -12,7 +12,7 @@ data class FileTemplate(
 ) {
 
     fun getDisplayName(): String {
-        return "$name/$prefix"
+        return "$prefix/$name"
     }
 
     fun getFolder(): File {

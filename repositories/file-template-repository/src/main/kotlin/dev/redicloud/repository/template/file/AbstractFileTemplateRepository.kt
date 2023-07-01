@@ -57,6 +57,7 @@ abstract class AbstractFileTemplateRepository(
 
     suspend fun createTemplate(template: FileTemplate): FileTemplate {
         getHandle(template.uniqueId.toString()).set(template)
+        if (!template.getFolder().exists()) template.getFolder().mkdirs()
         nodeRepository.getConnectedNodes().forEach {
             pushTemplates(it.serviceId)
         }

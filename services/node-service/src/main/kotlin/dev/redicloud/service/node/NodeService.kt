@@ -40,6 +40,7 @@ class NodeService(
         fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster)
 
         runBlocking {
+            registerDefaults()
             this@NodeService.initShutdownHook()
 
             nodeRepository.connect(this@NodeService)
@@ -52,7 +53,6 @@ class NodeService(
             try { this@NodeService.checkJavaVersions() } catch (e: Exception) {
                 LOGGER.warning("Error while checking java versions", e)
             }
-
 
             this@NodeService.registerPreTasks()
             this@NodeService.connectFileCluster()
