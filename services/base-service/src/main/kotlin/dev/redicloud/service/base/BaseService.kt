@@ -20,7 +20,9 @@ import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
+import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
+import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.FileTemplateRepository
 import dev.redicloud.service.base.packets.ServicePingPacket
 import dev.redicloud.service.base.packets.ServicePingResponse
@@ -105,7 +107,9 @@ abstract class BaseService(
         CommandArgumentParser.PARSERS[CloudServerVersionType::class] = CloudServerVersionTypeParser(this.serverVersionTypeRepository)
         CommandArgumentParser.PARSERS[JavaVersion::class] = JavaVersionParser(this.javaVersionRepository)
         CommandArgumentParser.PARSERS[ServerVersion::class] = ServerVersionParser()
+        CommandArgumentParser.PARSERS[ConfigurationTemplate::class] = ConfigurationTemplateParser(this.configurationTemplateRepository)
         CommandArgumentParser.PARSERS[IServerVersionHandler::class] = ServerVersionHandlerParser()
+        CommandArgumentParser.PARSERS[FileTemplate::class] = FileTemplateParser(this.fileTemplateRepository)
     }
 
     private fun registerSuggesters() {
@@ -113,9 +117,11 @@ abstract class BaseService(
         ICommandSuggester.SUGGESTERS.add(ConnectedCloudNodeSuggester(this.nodeRepository))
         ICommandSuggester.SUGGESTERS.add(CloudServerVersionSuggester(this.serverVersionRepository))
         ICommandSuggester.SUGGESTERS.add(CloudServerVersionTypeSuggester(this.serverVersionTypeRepository))
+        ICommandSuggester.SUGGESTERS.add(ConfigurationTemplateSuggester(this.configurationTemplateRepository))
         ICommandSuggester.SUGGESTERS.add(JavaVersionSuggester(this.javaVersionRepository))
         ICommandSuggester.SUGGESTERS.add(ServerVersionSuggester())
         ICommandSuggester.SUGGESTERS.add(ServerVersionHandlerSuggester())
+        ICommandSuggester.SUGGESTERS.add(FileTemplateSuggester(this.fileTemplateRepository))
     }
 
     private fun registerPackets() {

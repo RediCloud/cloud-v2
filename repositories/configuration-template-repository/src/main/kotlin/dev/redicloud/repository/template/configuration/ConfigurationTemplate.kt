@@ -9,7 +9,7 @@ data class ConfigurationTemplate(
     val programmArguments: MutableList<String> = mutableListOf(),
     val jvmArguments: MutableList<String> = mutableListOf(),
     val environments: MutableMap<String, String> = mutableMapOf(),
-    var javaVersionId: UUID,
+    var javaVersionId: UUID?,
     var maxMemory: Long = 750,
     val fileTemplateIds: MutableList<UUID> = mutableListOf(),
     val nodeIds: MutableList<ServiceId> = mutableListOf(),
@@ -21,9 +21,10 @@ data class ConfigurationTemplate(
     var serverSplitter: String = "-",
     var fallbackServer: Boolean = false,
     var startPriority: Int = if(fallbackServer) 0 else 50,
-    var serverVersionId: UUID,
-    val static: Boolean = false,
-    var startPort: Int = 40000
+    var serverVersionId: UUID?,
+    var static: Boolean = false,
+    var startPort: Int = 40000,
+    var joinPermission: String? = null
 ) : Comparable<ConfigurationTemplate> {
 
     override fun compareTo(other: ConfigurationTemplate): Int

@@ -27,6 +27,14 @@ class ConfigurationTemplateRepository(databaseConnection: DatabaseConnection) :
         return getHandle(configurationTemplate.uniqueId.toString()).set(configurationTemplate)
     }
 
+    suspend fun updateTemplate(configurationTemplate: ConfigurationTemplate) {
+        return set(configurationTemplate.uniqueId.toString(), configurationTemplate)
+    }
+
+    suspend fun deleteTemplate(configurationTemplate: ConfigurationTemplate) {
+        delete(configurationTemplate.uniqueId.toString())
+    }
+
     suspend fun getTemplates(): List<ConfigurationTemplate> {
         return getAll()
     }
