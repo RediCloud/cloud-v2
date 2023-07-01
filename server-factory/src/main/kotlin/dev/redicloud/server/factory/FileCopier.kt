@@ -36,11 +36,13 @@ class FileCopier(
     private val logger = LogManager.logger(FileCopier::class)
 
     init {
+        if (configurationTemplate.serverVersionId == null) throw IllegalStateException("Server version is not set for configuration template ${configurationTemplate.name}!")
         // get server version
-        serverVersion = runBlocking { serverVersionRepository.getVersion(configurationTemplate.serverVersionId) }
-            ?: throw Exception("Server version ${configurationTemplate.serverVersionId} not found!")
-        serverVersionType = runBlocking { serverVersionTypeRepository.getType(serverVersion.typeId) }
-            ?: throw Exception("Server version type ${serverVersion.typeId} not found!")
+        serverVersion = runBlocking { serverVersionRepository.getVersion(configurationTemplate.serverVersionId!!) }
+            ?: throw IllegalStateException("Server version is not set for configuration template ${configurationTemplate.name}!")
+        if (serverVersion.typeId == null) throw IllegalStateException("Server version type is not set for server version ${serverVersion.getDisplayName()}!")
+        serverVersionType = runBlocking { serverVersionTypeRepository.getType(serverVersion.typeId!!) }
+            ?: throw IllegalStateException("Server version type is not set for server version ${serverVersion.getDisplayName()}!")
         // get templates by given configuration template and collect also inherited templates
         templates = configurationTemplate.fileTemplateIds.mapNotNull { runBlocking { fileTemplateRepository.getTemplate(it) } }
             .flatMap { runBlocking { fileTemplateRepository.collectTemplates(it) } }
