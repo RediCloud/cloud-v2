@@ -145,6 +145,8 @@ class NodeService(
         console.commandManager.register(CloudServerVersionCommand(this.serverVersionRepository, this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverRepository, this.console))
         console.commandManager.register(CloudServerVersionTypeCommand(this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverVersionRepository))
         console.commandManager.register(JavaVersionCommand(this.javaVersionRepository, this.configurationTemplateRepository))
+        console.commandManager.register(ClearCommand(this.console))
+        console.commandManager.register(ConfigurationTemplateCommand(this.configurationTemplateRepository, this.javaVersionRepository, this.serverRepository, this.serverVersionRepository, this.nodeRepository, this.fileTemplateRepository))
     }
 
     private fun initShutdownHook() {
