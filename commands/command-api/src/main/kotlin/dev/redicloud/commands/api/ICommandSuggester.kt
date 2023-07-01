@@ -8,7 +8,8 @@ interface ICommandSuggester {
         val SUGGESTERS = mutableListOf(
             EmptySuggester(),
             MemorySuggester(),
-            IntegerSuggester()
+            IntegerSuggester(),
+            BooleanSuggester()
         )
     }
 
@@ -39,6 +40,10 @@ class MemorySuggester() : ICommandSuggester {
         val totalMemory = Runtime.getRuntime().totalMemory()
         return memoryList.filter { it.toLong() < totalMemory }.map { it.toString() }.toTypedArray()
     }
+}
+
+class BooleanSuggester() : ICommandSuggester {
+    override fun suggest(context: CommandContext): Array<String> = arrayOf("true", "false")
 }
 
 class IntegerSuggester() : ICommandSuggester {
