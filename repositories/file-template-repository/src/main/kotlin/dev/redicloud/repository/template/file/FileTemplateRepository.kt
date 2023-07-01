@@ -16,12 +16,20 @@ class FileTemplateRepository(
         return getHandle(uniqueId.toString()).get()
     }
 
+    suspend fun getTemplate(displayName: String): FileTemplate? {
+        return getTemplates().firstOrNull { it.getDisplayName().lowercase() == displayName.lowercase() }
+    }
+
     suspend fun getTemplate(name: String, prefix: String): FileTemplate? {
         return getTemplates().firstOrNull { it.name.lowercase() == name.lowercase() && it.prefix.lowercase() == prefix.lowercase() }
     }
 
     suspend fun existsTemplate(uniqueId: UUID, prefix: String): Boolean {
         return getHandle(uniqueId.toString()).isExists
+    }
+
+    suspend fun existsTemplate(displayName: String): Boolean {
+        return getTemplates().any { it.getDisplayName().lowercase() == displayName.lowercase() }
     }
 
     suspend fun existsTemplate(name: String, prefix: String): Boolean {
