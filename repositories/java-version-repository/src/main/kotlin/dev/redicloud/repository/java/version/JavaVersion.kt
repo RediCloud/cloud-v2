@@ -29,7 +29,11 @@ data class JavaVersion(
             val byId = file.name.split("-").any { it.lowercase() == id.toString() }
             val byName = file.name.lowercase() == name.lowercase()
             byId || byName
+        }.map {
+            when (OSType.WINDOWS) {
+                getOperatingSystemType() -> File(it, "bin/java.exe")
+                else -> File(it, "bin/java")
+            }
         }.firstOrNull()
     }
-
 }
