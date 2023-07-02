@@ -54,7 +54,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
         val possibleCommands = commands
             .filter { actor.hasPermission(it.getPermission()) }
             .filter { !isDisabled(it) }
-            .filter { it.isThis(input, true) }
+            .filter { it.isThis(input, commandBase == null) }
 
         if (possibleCommands.isEmpty()) return list
 

@@ -60,22 +60,35 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
             if (optimalPath.startsWith(input) && predict) return true
             var index = -1
             var currentBuild = ""
+            var lastWasThis = false
+            var alreadyIndexed = false
             optimalPath.split(" ").forEach optimalParameterForEach@ {
+                lastWasThis = false
                 index++
-                if (it.isRequiredArgument() || it.isOptionalArgument()) {
-                    if (input.split(" ").size < index + 1) {
-                        if (it.isOptionalArgument()) return true
-                        currentBuild += "$it "
-                        return@optimalParameterForEach
-                    }
-                }
+                if (input.split(" ").size < index + 1) return@optimalParameterForEach
                 val inputCurrent = input.split(" ")[index]
+                if (it.isArgument()) {
+                    if (getPathFormat() == it) {
+                        lastWasThis = true
+                        alreadyIndexed = true
+                    }
+                    if (currentBuild.isNotEmpty()) currentBuild += " "
+                    currentBuild += inputCurrent
+                    return@optimalParameterForEach
+                }
                 if (inputCurrent.lowercase() == it.lowercase()) {
-                    currentBuild += "$inputCurrent "
+                    if (currentBuild.isNotEmpty()) currentBuild += " "
+                    currentBuild += inputCurrent
                     return@optimalParameterForEach
                 }
             }
-            if (currentBuild.lowercase().removeLastSpaces() == input.lowercase().removeLastSpaces()) return true
+            if (!alreadyIndexed) {
+                val argumentIndex = optimalPath.split(" ").indexOf(getPathFormat()) // 4
+                if (argumentIndex != -1) {
+                    if (input.endsWith(" ") && predict && argumentIndex == index) return true
+                }
+            }
+            if (currentBuild.lowercase().removeLastSpaces() == input.lowercase().removeLastSpaces() && lastWasThis) return true
         }
 
         return false
