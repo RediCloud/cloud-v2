@@ -28,6 +28,7 @@ dependencies {
     shade(project(":logging"))
     shade(project(":tasks"))
     shade(project(":file-cluster"))
+    shade(project(":server-factory"))
     shade("dev.redicloud.libloader:libloader-bootstrap:1.6.7")
 
     compileOnly("org.jline:jline-terminal-jansi:3.23.0")

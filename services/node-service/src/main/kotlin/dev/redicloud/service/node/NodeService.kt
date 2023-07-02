@@ -7,6 +7,7 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
+import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.service.base.BaseService
 import dev.redicloud.service.base.events.NodeDisconnectEvent
 import dev.redicloud.service.base.events.NodeSuspendedEvent
@@ -33,11 +34,13 @@ class NodeService(
     val console: NodeConsole = NodeConsole(configuration, eventManager, nodeRepository)
     val fileNodeRepository: FileNodeRepository
     val fileCluster: FileCluster
+    val serverFactory: ServerFactory
 
     init {
         fileNodeRepository = FileNodeRepository(databaseConnection, packetManager)
         fileCluster = FileCluster(configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
         fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster)
+        serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository)
 
         runBlocking {
             registerDefaults()
@@ -159,6 +162,7 @@ class NodeService(
         register(ClearCommand(this.console))
         register(ConfigurationTemplateCommand(this.configurationTemplateRepository, this.javaVersionRepository, this.serverRepository, this.serverVersionRepository, this.nodeRepository, this.fileTemplateRepository))
         register(FileTemplateCommand(this.fileTemplateRepository))
+        register(ServerCommand(this.serverFactory, this.serverRepository, this.nodeRepository))
     }
 
     private fun initShutdownHook() {
