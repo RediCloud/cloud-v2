@@ -4,308 +4,352 @@
     "protocolId": 47,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.8.9",
     "protocolId": 47,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.9",
     "protocolId": 107,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.9.1",
     "protocolId": 108,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.9.2",
     "protocolId": 109,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.9.3",
     "protocolId": 110,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.9.4",
     "protocolId": 110,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.10",
     "protocolId": 210,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.10.1",
     "protocolId": 210,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.10.2",
     "protocolId": 210,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.11",
     "protocolId": 315,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.11.1",
     "protocolId": 316,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.11.2",
     "protocolId": 316,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.12",
     "protocolId": 335,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.12.1",
     "protocolId": 338,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.12.2",
     "protocolId": 340,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.13",
     "protocolId": 393,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.13.1",
     "protocolId": 401,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.13.2",
     "protocolId": 404,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.14",
     "protocolId": 477,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.14.1",
     "protocolId": 480,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.14.2",
     "protocolId": 485,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.14.3",
     "protocolId": 490,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.14.4",
     "protocolId": 498,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.15",
     "protocolId": 573,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.15.1",
     "protocolId": 575,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.15.2",
     "protocolId": 578,
     "supportedJavaVersion": [
       "8"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.16",
     "protocolId": 735,
     "supportedJavaVersion": [
       "16"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.16.1",
     "protocolId": 736,
     "supportedJavaVersion": [
       "16"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.16.2",
     "protocolId": 751,
     "supportedJavaVersion": [
       "16"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.16.3",
     "protocolId": 753,
     "supportedJavaVersion": [
       "16"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.16.4",
     "protocolId": 754,
     "supportedJavaVersion": [
       "16"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.16.5",
     "protocolId": 754,
     "supportedJavaVersion": [
       "16"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.17",
     "protocolId": 755,
     "supportedJavaVersion": [
       "17"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.17.1",
     "protocolId": 756,
     "supportedJavaVersion": [
       "17"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.18",
     "protocolId": 757,
     "supportedJavaVersion": [
       "17"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.18.1",
     "protocolId": 757,
     "supportedJavaVersion": [
       "17"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.18.2",
     "protocolId": 758,
     "supportedJavaVersion": [
       "17"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.19",
     "protocolId": 759,
     "supportedJavaVersion": [
       "17"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.19.1",
     "protocolId": 760,
     "supportedJavaVersion": [
       "17"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.19.2",
     "protocolId": 760,
     "supportedJavaVersion": [
       "17"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.19.3",
     "protocolId": 761,
     "supportedJavaVersion": [
       "17"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.19.4",
     "protocolId": 762,
     "supportedJavaVersion": [
       "17"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "1.20",
     "protocolId": 763,
     "supportedJavaVersion": [
       "17"
-    ]
+    ],
+    "versionTypes": []
   },
   {
     "name": "3.2.0-SNAPSHOT",
