@@ -7,10 +7,14 @@ import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.requester.PaperMcApiRequester
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.TEMP_SERVER_VERSION_FOLDER
+import dev.redicloud.utils.isValid
+import dev.redicloud.utils.isValidUrl
 import khttp.get
 import java.io.File
+import java.net.URL
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
 import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.minutes
 
@@ -22,31 +26,37 @@ class PaperMcServerVersionHandler(
 ) : IServerVersionHandler {
 
     private val requester = PaperMcApiRequester()
+    private val locks = mutableMapOf<UUID, ReentrantLock>()
 
     override suspend fun download(version: CloudServerVersion, force: Boolean): File {
         val jar = getJar(version)
         if (jar.exists() && !force) return jar
+        locks.getOrDefault(version.uniqueId, ReentrantLock()).lock()
 
-        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
+        try {
+            if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
 
-        val type = serverVersionTypeRepository.getType(version.typeId!!) ?: throw NullPointerException("Cant find server version type ${version.typeId}")
+            val type = serverVersionTypeRepository.getType(version.typeId!!) ?: throw NullPointerException("Cant find server version type ${version.typeId}")
 
-        val buildId = requester.getLatestBuild(type, version.version)
-        if (buildId == -1) throw NullPointerException("Cant find build for ${version.getDisplayName()}")
+            val buildId = requester.getLatestBuild(type, version.version)
+            if (buildId == -1) throw NullPointerException("Cant find build for ${version.getDisplayName()}")
 
-        val url = requester.getDownloadUrl(type, version.version, buildId)
-        val response = get(url)
-        if (response.statusCode != 200) throw IllegalStateException("Download of ${version.version} is not available (${response.statusCode}):\n${response.text}")
+            val url = requester.getDownloadUrl(type, version.version, buildId)
+            val response = get(url)
+            if (response.statusCode != 200) throw IllegalStateException("Download of ${version.version} is not available (${response.statusCode}):\n${response.text}")
 
-        val folder = getFolder(version)
-        if (folder.exists()) folder.deleteRecursively()
-        folder.mkdirs()
-        if (jar.exists()) jar.delete()
-        jar.writeBytes(response.content)
+            val folder = getFolder(version)
+            if (folder.exists()) folder.deleteRecursively()
+            folder.mkdirs()
+            if (jar.exists()) jar.delete()
+            jar.writeBytes(response.content)
 
-        version.buildId = buildId.toString()
-        serverVersionRepository.updateVersion(version)
-        lastUpdateCheck = System.currentTimeMillis()
+            version.buildId = buildId.toString()
+            serverVersionRepository.updateVersion(version)
+            lastUpdateCheck = System.currentTimeMillis()
+        }finally {
+            locks[version.uniqueId]?.unlock()
+        }
 
         return jar
     }
@@ -57,8 +67,7 @@ class PaperMcServerVersionHandler(
         val buildId = requester.getLatestBuild(type, version.version)
         if (buildId == -1) return false
         val url = requester.getDownloadUrl(type, version.version, buildId)
-        val response = get(url)
-        return response.statusCode == 200
+        return isValidUrl(url)
     }
 
     override suspend fun isUpdateAvailable(version: CloudServerVersion, force: Boolean): Boolean {
@@ -92,35 +101,40 @@ class PaperMcServerVersionHandler(
     }
 
     override suspend fun patch(version: CloudServerVersion) {
-        val jar = getJar(version)
-        if (!jar.exists()) download(version, true)
+        locks.getOrDefault(version.uniqueId, ReentrantLock()).lock()
+        try {
+            val jar = getJar(version)
+            if (!jar.exists()) download(version, true)
 
-        val versionDir = getFolder(version)
-        val tempDir = File(UUID.randomUUID().toString(), TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath)
-        val tempJar = jar.copyTo(tempDir)
+            val versionDir = getFolder(version)
+            val tempDir = File(UUID.randomUUID().toString(), TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath)
+            val tempJar = jar.copyTo(tempDir)
 
-        val processBuilder = ProcessBuilder("java", "-jar", tempJar.absolutePath)
-        processBuilder.directory(tempDir)
-        processBuilder.start().waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+            val processBuilder = ProcessBuilder("java", "-jar", tempJar.absolutePath)
+            processBuilder.directory(tempDir)
+            processBuilder.start().waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
 
-        if (!versionDir.exists()) versionDir.mkdirs()
+            if (!versionDir.exists()) versionDir.mkdirs()
 
-        tempJar.copyTo(jar, true)
-        if (version.libPattern != null) {
-            val pattern = Pattern.compile(version.libPattern!!)
-            tempDir.listFiles()?.forEach {
-                if (!pattern.matcher(it.name).find()) {
-                    if (it.isDirectory) {
-                        it.deleteRecursively()
-                    } else {
-                        it.delete()
+            tempJar.copyTo(jar, true)
+            if (version.libPattern != null) {
+                val pattern = Pattern.compile(version.libPattern!!)
+                tempDir.listFiles()?.forEach {
+                    if (!pattern.matcher(it.name).find()) {
+                        if (it.isDirectory) {
+                            it.deleteRecursively()
+                        } else {
+                            it.delete()
+                        }
+                        return@forEach
                     }
-                    return@forEach
                 }
             }
+            versionDir.deleteRecursively()
+            tempDir.copyRecursively(versionDir, true)
+        }finally {
+            locks[version.uniqueId]?.unlock()
         }
-        versionDir.deleteRecursively()
-        tempDir.copyRecursively(versionDir, true)
     }
 
 

@@ -17,6 +17,9 @@ import dev.redicloud.service.base.suggester.CloudServerVersionSuggester
 import dev.redicloud.service.base.suggester.CloudServerVersionTypeSuggester
 import dev.redicloud.service.base.suggester.ServerVersionSuggester
 import dev.redicloud.service.node.repository.node.LOGGER
+import dev.redicloud.utils.defaultScope
+import dev.redicloud.utils.isValidUrl
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.*
 
@@ -57,7 +60,11 @@ class CloudServerVersionCommand(
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion,
         @CommandParameter("url", true) url: String
     ) {
-        runBlocking {
+        defaultScope.launch {
+            if (url != "null" && isValidUrl(url)) {
+                actor.sendMessage("§cThe url '$url' is not valid!")
+                return@launch
+            }
             version.customDownloadUrl = if (url != "null") url else null
             serverVersionRepository.updateVersion(version)
             actor.sendMessage("Updated download url of ${version.getDisplayName()} to ${version.customDownloadUrl}")
@@ -204,9 +211,10 @@ class CloudServerVersionCommand(
             actor.sendMessage("§8- %tc%Name§8: %hc%${version.getDisplayName()}")
             actor.sendMessage("§8- %tc%Project§8: %hc%${version.projectName}")
             actor.sendMessage("§8- %tc%Type§8: %hc%${type?.name ?: "unknown"}")
-            actor.sendMessage("§8- %tc%Lib-Pattern§8: %hc%${version.libPattern}")
+            actor.sendMessage("§8- %tc%Lib-Pattern§8: %hc%${version.libPattern ?: "not set"}")
             actor.sendMessage("§8- %tc%Version§8: %hc%${version.version.name}")
-            actor.sendMessage("§8- %tc%Download-Url§8: %hc%${version.customDownloadUrl}")
+            actor.sendMessage("§8- %tc%Version-Handler§8: %hc%${type?.versionHandlerName ?: "unknown"}")
+            actor.sendMessage("§8- %tc%Download-Url§8: %hc%${version.customDownloadUrl ?: "not set"}")
             actor.sendMessage("")
             actor.sendHeader("Server-Version info")
         }
@@ -218,17 +226,17 @@ class CloudServerVersionCommand(
         actor: ConsoleActor,
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion
     ) {
-        runBlocking {
+        defaultScope.launch {
             val type = if (version.typeId != null) serverVersionTypeRepository.getType(version.typeId!!) else null
             if (type == null) {
                 actor.sendMessage("§cThis version has no server version type!")
                 actor.sendMessage("§cYou can set one with '/sv edit ${version.getDisplayName()} type <type>'")
-                return@runBlocking
+                return@launch
             }
             val handler = IServerVersionHandler.getHandler(type)
             if (!handler.isPatchVersion(version)) {
                 actor.sendMessage("§cThis version is not patchable!")
-                return@runBlocking
+                return@launch
             }
             var canceled = false
             var patched = false
@@ -241,7 +249,7 @@ class CloudServerVersionCommand(
                     null
                 } else if (patched) {
                     canceled = true
-                    "Patching version %tc%${version.projectName}§8: ${if (error) "§4✘" else "§a✔"}"
+                    "Patching version %tc%${version.projectName}§8: ${if (error) "§4✘" else "§2✓"}"
                 } else {
                     "Patching version %tc%${version.projectName}§8: %loading%"
                 }
@@ -263,17 +271,17 @@ class CloudServerVersionCommand(
         actor: ConsoleActor,
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion
     ) {
-        runBlocking {
+        defaultScope.launch {
             val type = if (version.typeId != null) serverVersionTypeRepository.getType(version.typeId!!) else null
             if (type == null) {
                 actor.sendMessage("§cThis version has no server version type!")
                 actor.sendMessage("§cYou can set one with '/sv edit ${version.projectName} type <type>'")
-                return@runBlocking
+                return@launch
             }
             val handler = IServerVersionHandler.getHandler(type)
-            if (handler.canDownload(version)) {
+            if (!handler.canDownload(version)) {
                 actor.sendMessage("§c'${version.getDisplayName()}' can´t be downloaded! Check the version type and the download url!")
-                return@runBlocking
+                return@launch
             }
             var canceled = false
             var downloaded = false
@@ -286,11 +294,12 @@ class CloudServerVersionCommand(
                     null
                 } else if (downloaded) {
                     canceled = true
-                    "Downloading version %tc%${version.getDisplayName()}§8: ${if (error) "§4✘" else "§a✔"}"
+                    "Downloading version %hc%${version.getDisplayName()}§8: ${if (error) "§4✘" else "§2✓"}"
                 } else {
-                    "Downloading version %tc%${version.getDisplayName()}§8: %loading%"
+                    "Downloading version %hc%${version.getDisplayName()}§8: %hc%%loading%"
                 }
             }
+            console.startAnimation(animation)
             try {
                 handler.download(version, true)
             } catch (e: Exception) {

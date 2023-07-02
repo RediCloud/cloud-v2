@@ -37,7 +37,7 @@ interface IServerVersionHandler {
 
     fun isPatchVersion(version: CloudServerVersion): Boolean = version.libPattern != null
 
-    fun getJar(version: CloudServerVersion): File = File(getFolder(version).absolutePath, "$version.name.jar")
+    fun getJar(version: CloudServerVersion): File = File(getFolder(version).absolutePath, "${version.getDisplayName()}.jar")
 
     fun getFolder(version: CloudServerVersion): File =
         File(MINECRAFT_VERSIONS_FOLDER.getFile().absolutePath, version.getDisplayName())
