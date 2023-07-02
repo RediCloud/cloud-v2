@@ -107,7 +107,7 @@ class CloudServerVersionTypeCommand(
             if (versions.any { it.typeId == type.uniqueId }) {
                 actor.sendMessage("§cYou can't delete a server version type which is used by a server version:")
                 actor.sendMessage("§c${
-                    versions.filter { it.typeId == type.uniqueId }.joinToString(", ") { it.getDisplayName() ?: "null" }}"
+                    versions.filter { it.typeId == type.uniqueId }.joinToString(", ") { it.getDisplayName() }}"
                 )
                 return@runBlocking
             }
