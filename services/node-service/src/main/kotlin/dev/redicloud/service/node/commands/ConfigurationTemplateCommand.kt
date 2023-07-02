@@ -435,8 +435,12 @@ class ConfigurationTemplateCommand(
     fun editStartPriority(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
-        @CommandParameter("priority", true) priority: Int
+        @CommandParameter("priority", true, IntegerSuggester::class, ["0", "100"]) priority: Int
     ) = runBlocking {
+        if (priority < 0 || priority > 100) {
+            actor.sendMessage("§cThe priority must be between 0 and 100!")
+            return@runBlocking
+        }
         template.startPriority = priority
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage("The start priority of ${toConsoleValue(template.name)} was updated to ${toConsoleValue(priority)}!")
