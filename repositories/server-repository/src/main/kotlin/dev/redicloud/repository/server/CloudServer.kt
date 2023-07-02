@@ -13,4 +13,10 @@ class CloudServer(
     sessions: MutableList<ServiceSession>,
     var hidden: Boolean,
     var state: CloudServerState = CloudServerState.UNKNOWN
-) : CloudService(serviceId, "${configurationTemplate.name}${configurationTemplate.serverSplitter}$id", sessions)
+) : CloudService(serviceId, "${configurationTemplate.name}${configurationTemplate.serverSplitter}$id", sessions) {
+
+    override fun unregisterAfterDisconnect(): Boolean {
+        return super.unregisterAfterDisconnect() && !configurationTemplate.static
+    }
+
+}
