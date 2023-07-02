@@ -25,7 +25,7 @@ class ClusterCommand(private val nodeService: NodeService) : CommandBase() {
         runBlocking {
             try {
                 val nodes = nodeService.nodeRepository.getRegisteredNodes()
-                actor.sendMessage("§8<====== %hc%§nNodes§8 ======§8>")
+                actor.sendHeader("Nodes")
                 nodes.forEach { node ->
                     actor.sendMessage("")
                     actor.sendMessage("§8> §a${if (node.master) node.getIdentifyingName() + " §8(§6master§8)" else node.getIdentifyingName()}")
@@ -42,7 +42,7 @@ class ClusterCommand(private val nodeService: NodeService) : CommandBase() {
                     }
                 }
                 actor.sendMessage("")
-                actor.sendMessage("§8<====== %hc%§nNodes§8 ======§8>")
+                actor.sendHeader("Nodes")
             }catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -88,7 +88,7 @@ class ClusterCommand(private val nodeService: NodeService) : CommandBase() {
                 nodeService.nodeRepository.suspendNode(nodeService, node.serviceId)
                 return@runBlocking
             }
-            actor.sendMessage("§8<====== %hc%§nSuspend§8 ======§8>")
+            actor.sendHeader("Suspend")
             actor.sendMessage("")
             actor.sendMessage("Node§8: %hc%${node.getIdentifyingName()}")
             actor.sendMessage("Servers§8: %hc%${node.getHostedServers().mapNotNull { nodeService.serverRepository.getServer(it)?.name }.joinToString(", ")}")
@@ -97,7 +97,7 @@ class ClusterCommand(private val nodeService: NodeService) : CommandBase() {
             actor.sendMessage("§cThis will suspend the node and all hosted servers will be stopped!")
             actor.sendMessage("§cEnter the command again to confirm within 10 seconds")
             actor.sendMessage("")
-            actor.sendMessage("§8<====== %hc%§nSuspend§8 ======§8>")
+            actor.sendHeader("Suspend")
             suspendConfirm.add(node.serviceId)
         }
     }

@@ -183,7 +183,7 @@ class CloudServerVersionCommand(
     ) {
         runBlocking {
             val type = if (version.typeId != null) serverVersionTypeRepository.getType(version.typeId!!) else null
-            actor.sendMessage("§8<====== %hc%§nServer-Version info §8 ======§8>")
+            actor.sendHeader("Server-Version info")
             actor.sendMessage("")
             actor.sendMessage("§8- %tc%Name§8: %hc%${version.getDisplayName()}")
             actor.sendMessage("§8- %tc%Project§8: %hc%${version.projectName}")
@@ -192,7 +192,7 @@ class CloudServerVersionCommand(
             actor.sendMessage("§8- %tc%Version§8: %hc%${version.version.name}")
             actor.sendMessage("§8- %tc%Download-Url§8: %hc%${version.customDownloadUrl}")
             actor.sendMessage("")
-            actor.sendMessage("§8<====== %hc%§nServer-Version info §8 ======§8>")
+            actor.sendHeader("Server-Version info")
         }
     }
 

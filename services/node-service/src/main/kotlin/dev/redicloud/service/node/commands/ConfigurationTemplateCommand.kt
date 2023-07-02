@@ -94,13 +94,13 @@ class ConfigurationTemplateCommand(
             actor.sendMessage("§cThere are no configuration templates!")
             return@runBlocking
         }
-        actor.sendMessage("§8<====== %hc%§nConfiguration templates §8 ======§8>")
+        actor.sendHeader("Configuration templates")
         actor.sendMessage("")
         templates.forEach {
             actor.sendMessage("§8- §7${it.name}")
         }
         actor.sendMessage("")
-        actor.sendMessage("§8<====== %hc%§nConfiguration templates §8 ======§8>")
+        actor.sendHeader("Configuration templates")
     }
 
     @CommandSubPath("info <name>")
@@ -109,7 +109,7 @@ class ConfigurationTemplateCommand(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate
     ) = runBlocking {
-        actor.sendMessage("§8<====== %hc%§nConfiguration template §8 ======§8>")
+        actor.sendHeader("Configuration template")
         actor.sendMessage("")
         actor.sendMessage("§8- %tc%Name§8: %hc%${template.name}")
         actor.sendMessage("§8- %tc%ID§8: %hc%${template.uniqueId}")
@@ -151,7 +151,7 @@ class ConfigurationTemplateCommand(
             actor.sendMessage("§8  - %hc%${it.key}§8=%tc%${it.value}")
         }
         actor.sendMessage("")
-        actor.sendMessage("§8<====== %hc%§nConfiguration template §8 ======§8>")
+        actor.sendHeader("Configuration template")
     }
 
     @CommandSubPath("edit <name> name <new-name>")

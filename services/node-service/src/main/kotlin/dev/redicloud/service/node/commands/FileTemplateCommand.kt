@@ -36,7 +36,7 @@ class FileTemplateCommand(
             actor.sendMessage("§cNo file templates found")
             return@runBlocking
         }
-        actor.sendMessage("§8<====== %hc%§nFile templates§8 ======§8>")
+        actor.sendHeader("File templates")
         actor.sendMessage("")
         versions.forEach { (prefix, values) ->
             actor.sendMessage("§8- %hc%$prefix §8(%tc%${values.size}§8)")
@@ -45,7 +45,7 @@ class FileTemplateCommand(
             }
         }
         actor.sendMessage("")
-        actor.sendMessage("§8<====== %hc%§nFile templates§8 ======§8>")
+        actor.sendHeader("File templates")
     }
 
     @CommandSubPath("info <name>")
@@ -55,7 +55,7 @@ class FileTemplateCommand(
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate
     ) = runBlocking {
         val inherited = fileTemplateRepository.collectTemplates(template)
-        actor.sendMessage("§8<====== %hc%§nTemplate§8 ======§8>")
+        actor.sendHeader("File template")
         actor.sendMessage("")
         actor.sendMessage("§8- %tc%Name§8: %hc%${template.name}")
         actor.sendMessage("§8- %tc%Prefix§8: %hc%${template.prefix}")
@@ -64,7 +64,7 @@ class FileTemplateCommand(
             actor.sendMessage("  §8➥ %tc%${it.getDisplayName()}")
         }
         actor.sendMessage("")
-        actor.sendMessage("§8<====== %hc%§nTemplate§8 ======§8>")
+        actor.sendHeader("File template")
     }
 
     @CommandSubPath("create <name> <prefix>")

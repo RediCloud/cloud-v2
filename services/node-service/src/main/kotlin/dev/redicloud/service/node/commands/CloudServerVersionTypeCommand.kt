@@ -14,6 +14,7 @@ import kotlinx.coroutines.runBlocking
 
 @Command("svt")
 @CommandAlias(["serverversiontype", "svtype"])
+@CommandDescription("Configure server version types")
 class CloudServerVersionTypeCommand(
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
@@ -66,7 +67,7 @@ class CloudServerVersionTypeCommand(
         actor: ConsoleActor,
         @CommandParameter("name", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType
     ) {
-        actor.sendMessage("§8<====== %hc%§nServer-Version type§8 ======§8>")
+        actor.sendHeader("Server-Version type")
         actor.sendMessage("")
         actor.sendMessage("Name§8: %hc%${type.name}")
         actor.sendMessage("Handler§8: %hc%${type.versionHandlerName}")
@@ -89,7 +90,7 @@ class CloudServerVersionTypeCommand(
             }
         }
         actor.sendMessage("")
-        actor.sendMessage("§8<====== %hc%§nServer-Version type§8 ======§8>")
+        actor.sendHeader("Server-Version type")
     }
 
     @CommandSubPath("delete <name>")

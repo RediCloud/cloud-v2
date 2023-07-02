@@ -11,4 +11,9 @@ class ConsoleActor(val console: Console, override val identifier: UUID) : IComma
         console.forceWriteLine(text)
     }
 
+    override fun sendHeader(text: String) {
+        console.forceWriteLine("§8<====== %hc%§n$text§8 ======>")
+    }
+
+
 }

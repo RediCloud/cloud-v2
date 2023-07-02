@@ -6,4 +6,6 @@ interface ICommandActor<T> {
 
     fun sendMessage(text: String)
 
+    fun sendHeader(text: String)
+
 }

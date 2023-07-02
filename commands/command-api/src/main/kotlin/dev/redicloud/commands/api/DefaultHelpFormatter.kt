@@ -16,7 +16,7 @@ class DefaultHelpFormatter(private val commandManager: CommandManager<*>) : ICom
                 CommandResponseType.INVALID_COMMAND,
                 "Command '$commandName' was not found!"
             )
-            actor.sendMessage("§8<====== %hc%§nHelp §8 ======§8>")
+            actor.sendHeader("Help")
             actor.sendMessage("")
             actor.sendMessage("§cCommand was not found! %tc%Here are some suggestions")
             actor.sendMessage("")
@@ -25,7 +25,7 @@ class DefaultHelpFormatter(private val commandManager: CommandManager<*>) : ICom
                 actor.sendMessage("§8➥ %tc%${it.getDescription()}")
                 actor.sendMessage("")
             }
-            actor.sendMessage("§8<====== %hc%§nHelp§8 ======§8>")
+            actor.sendHeader("Help")
             return CommandResponse(
                 CommandResponseType.HELP_SENT,
                 "Help for '${context.input}' was sent!"
@@ -43,7 +43,7 @@ class DefaultHelpFormatter(private val commandManager: CommandManager<*>) : ICom
                     "Help for '${subBase.getUsage()}' was sent!"
                 )
             }
-            actor.sendMessage("§8<====== %hc%§nHelp §8 ======§8>")
+            actor.sendHeader("Help")
             actor.sendMessage("")
             actor.sendMessage("§cSub command was not found! %tc%Here are some suggestions:")
             actor.sendMessage("")
@@ -52,7 +52,7 @@ class DefaultHelpFormatter(private val commandManager: CommandManager<*>) : ICom
                 actor.sendMessage("§8➥ %tc%${it.description}")
                 actor.sendMessage("")
             }
-            actor.sendMessage("§8<====== %hc%§nHelp§8 ======§8>")
+            actor.sendHeader("Help")
             return CommandResponse(
                 CommandResponseType.HELP_SENT,
                 "Help for '${context.input}' was sent!"

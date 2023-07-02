@@ -23,7 +23,7 @@ class JavaVersionCommand(
         actor: ConsoleActor
     ) {
         runBlocking {
-            actor.sendMessage("§8<====== %hc%§nJava-Versions§8 ======§8>")
+            actor.sendHeader("Java-Versions")
             actor.sendMessage("")
             javaVersionRepository.getVersions().forEach {
                 actor.sendMessage(
@@ -31,7 +31,7 @@ class JavaVersionCommand(
                 )
             }
             actor.sendMessage("")
-            actor.sendMessage("§8<====== %hc%§nJava-Versions§8 ======§8>")
+            actor.sendHeader("Java-Versions")
         }
     }
 

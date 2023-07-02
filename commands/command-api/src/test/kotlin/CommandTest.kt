@@ -21,7 +21,9 @@ class ConsoleActor() : ICommandActor<UUID> {
 
     override fun hasPermission(permission: String?): Boolean = true
 
-    override fun sendMessage(message: String) = println(message)
+    override fun sendMessage(text: String) = println(text)
+
+    override fun sendHeader(text: String) = println("Header: $text")
 }
 
 @Command("test")
