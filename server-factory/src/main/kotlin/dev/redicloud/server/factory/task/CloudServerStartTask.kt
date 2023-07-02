@@ -23,7 +23,7 @@ class CloudServerStartTask(
             val nodes = nodeRepository.getConnectedNodes()
             val master = nodes.firstOrNull { it.master }
             if (master?.serviceId != nodeRepository.serviceId) return@launch
-            serverFactory.startQueue.forEach queue@{ id, info ->
+            serverFactory.startQueue.forEach queue@{ info ->
                 info.failedStarts.forEach { serviceId, map ->
                     // Remove the node from the failed starts
                     if (serviceId != it.serviceId) return@forEach
@@ -42,9 +42,8 @@ class CloudServerStartTask(
             val nodes = nodeRepository.getConnectedNodes()
             val master = nodes.firstOrNull { it.master }
             if (master?.serviceId != nodeRepository.serviceId) return@launch
-            serverFactory.startQueue.forEach queue@{ id, info ->
+            serverFactory.startQueue.forEach queue@{ info ->
                 info.failedStarts.forEach { serviceId, map ->
-                    // Remove the node from the failed starts
                     if (serviceId != it.serviceId) return@forEach
                     map[StartResultType.NODE_NOT_CONNECTED] = map.getOrDefault(StartResultType.NODE_NOT_CONNECTED, 0) + 1
                 }
@@ -58,9 +57,8 @@ class CloudServerStartTask(
             val nodes = nodeRepository.getConnectedNodes()
             val master = nodes.firstOrNull { it.master }
             if (master?.serviceId != nodeRepository.serviceId) return@launch
-            serverFactory.startQueue.forEach queue@{ id, info ->
+            serverFactory.startQueue.forEach queue@{ info ->
                 info.failedStarts.forEach { serviceId, map ->
-                    // Remove the node from the failed starts
                     if (serviceId != it.serviceId) return@forEach
                     map[StartResultType.NODE_NOT_CONNECTED] = map.getOrDefault(StartResultType.NODE_NOT_CONNECTED, 0) + 1
                 }
@@ -79,33 +77,42 @@ class CloudServerStartTask(
         var nextTick = false
         scope.launch {
             try {
-                serverFactory.getStartList().forEach {
-                    if (it.isNextNode(nodeRepository.serviceId)) return@forEach
-                    val info = serverFactory.startQueue.remove(it.uniqueId) ?: return@forEach
+                serverFactory.getStartList().forEach { info ->
+                    if (!info.isNextNode(nodeRepository.serviceId)) return@forEach
+                    serverFactory.startQueue.remove(info)
                     val template = info.configurationTemplate
                     val result = serverFactory.startServer(template)
                     when (result.type) {
                         StartResultType.ALREADY_RUNNING -> {
+                            info.addFailedStart(nodeRepository.serviceId, StartResultType.ALREADY_RUNNING)
+                            serverFactory.startQueue.remove(info)
+                            serverFactory.startQueue.add(info)
                             val alreadyRunningStartResult = result as AlreadyRunningStartResult
                             logger.warning("§cServer ${alreadyRunningStartResult.server.getIdentifyingName(false)} was removed from the start queue because it is already running!")
                         }
                         StartResultType.RAM_USAGE_TOO_HIGH -> {
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.RAM_USAGE_TOO_HIGH)
                             info.addFailedNode(nodeRepository.serviceId)
-                            serverFactory.startQueue[it.uniqueId] = info
+                            serverFactory.startQueue.remove(info)
+                            serverFactory.startQueue.add(info)
                             logger.warning("§cCan´t start server of template '${template.name}' because the ram usage is too high!")
                         }
                         StartResultType.TOO_MUCH_SERVICES_OF_TEMPLATE -> {
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.TOO_MUCH_SERVICES_OF_TEMPLATE)
-                            serverFactory.startQueue[it.uniqueId] = info
+                            serverFactory.startQueue.remove(info)
+                            serverFactory.startQueue.add(info)
                             logger.warning("§cCan´t start server of template '${template.name}' because there are too much services of this template!")
                         }
                         StartResultType.UNKNOWN_SERVER_VERSION -> {
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_SERVER_VERSION)
+                            serverFactory.startQueue.remove(info)
+                            serverFactory.startQueue.add(info)
                             logger.warning("§cCan´t start server of template '${template.name}' because the server version is not set!")
                         }
                         StartResultType.UNKNOWN_ERROR -> {
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_ERROR)
+                            serverFactory.startQueue.remove(info)
+                            serverFactory.startQueue.add(info)
                             val errorResult = result as UnknownErrorStartResult
                             logger.severe("§cAn unknown error occurred while starting server of template '${template.name}'!", errorResult.throwable)
                         }
