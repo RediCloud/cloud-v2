@@ -51,7 +51,6 @@ class ConfigurationTemplateCommand(
                 mutableListOf(),
                 mutableListOf(),
                 mutableMapOf(),
-                null,
                 512,
                 mutableListOf(),
                 mutableListOf(),
@@ -113,10 +112,6 @@ class ConfigurationTemplateCommand(
         actor.sendMessage("")
         actor.sendMessage("§8- %tc%Name§8: %hc%${template.name}")
         actor.sendMessage("§8- %tc%ID§8: %hc%${template.uniqueId}")
-        val javaVersion = if (template.javaVersionId != null) {
-            javaVersionRepository.getVersion(template.javaVersionId!!)
-        }else null
-        actor.sendMessage("§8- %tc%Java version§8: %hc%${javaVersion?.name ?: "§cNot set"}")
         actor.sendMessage("§8- %tc%Max memory§8: %hc%${template.maxMemory} MB")
         val serverVersion = if (template.serverVersionId != null) {
             serverVersionRepository.getVersion(template.serverVersionId!!)
@@ -247,19 +242,6 @@ class ConfigurationTemplateCommand(
         template.environments.remove(key)
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage("The environment variable ${toConsoleValue(key)} was removed from the configuration template ${toConsoleValue(template.name)}!")
-    }
-
-    @CommandSubPath("edit <name> javaversion <version>")
-    @CommandAlias(["edit <name> jv <version>"])
-    @CommandDescription("Edit the Java version of a configuration template")
-    fun editJavaVersion(
-        actor: ConsoleActor,
-        @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
-        @CommandParameter("version", true, JavaVersionSuggester::class) version: JavaVersion
-    ) = runBlocking {
-        template.javaVersionId = version.uniqueId
-        configurationTemplateRepository.updateTemplate(template)
-        actor.sendMessage("The java version of the configuration template ${toConsoleValue(template.name)} was updated to ${toConsoleValue(version.name)}!")
     }
 
     @CommandSubPath("edit <name> maxmemory <memory>")
