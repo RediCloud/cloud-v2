@@ -17,6 +17,7 @@ import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import org.redisson.api.RMap
 import org.redisson.api.RQueue
 import java.util.*
 
@@ -30,25 +31,36 @@ class ServerFactory(
     private val javaVersionRepository: JavaVersionRepository
 ) {
 
-    //TODO: move to server queue task
-    private val queue: RQueue<ConfigurationTemplate> =
-        databaseConnection.getClient().getPriorityQueue("server-factory-queue")
+    internal val startQueue: RMap<UUID, ServerQueueInformation> =
+        databaseConnection.getClient().getMap("server-factory:queue:start")
+    internal val stopQueue: RQueue<ServiceId> =
+        databaseConnection.getClient().getPriorityQueue("server-factory:queue:stop")
     private val processes: MutableList<ServerProcess> = mutableListOf()
     private val logger = LogManager.logger(ServerFactory::class)
 
-    fun queueStart(configurationTemplate: ConfigurationTemplate, count: Int = 1) {
-        for (i in 0..count) {
-            queue.addAsync(configurationTemplate)
-        }
+    suspend fun getStartList(): List<ServerQueueInformation> {
+        return startQueue.entries.sortedWith(compareBy<MutableMap.MutableEntry<UUID, ServerQueueInformation>>
+        { it.value.configurationTemplate.startPort }.thenByDescending { it.value.queueTime }).map { it.value }.toList()
     }
 
-    fun queueStop(serviceId: ServiceId, force: Boolean = false) {
+
+    fun queueStart(configurationTemplate: ConfigurationTemplate, count: Int = 1) =
+        defaultScope.launch {
+            val info = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, queueTime = -1)
+            val nodes = nodeRepository.getRegisteredNodes()
+            info.calculateStartOrder(nodes)
+            for (i in 0..count) {
+                val clone = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, info.failedStarts, info.nodeStartOrder, System.currentTimeMillis())
+                startQueue[clone.uniqueId] = clone
+            }
+        }
+
+    fun queueStop(serviceId: ServiceId, force: Boolean = false) =
         defaultScope.launch {
             val server = serverRepository.getServer(serviceId) ?: return@launch
             if (server.state == CloudServerState.STOPPED || server.state == CloudServerState.STOPPING && !force) return@launch
-            stopServer(server.serviceId, force)
+            stopQueue.add(serviceId)
         }
-    }
 
     //TODO: events
     /**
@@ -57,7 +69,10 @@ class ServerFactory(
      * @param force if the server should be started even if the configuration template does not allow it (e.g. max memory)
      * @return the result of the start
      */
-    suspend fun startServer(configurationTemplate: ConfigurationTemplate, force: Boolean = false): StartResult {
+    suspend internal fun startServer(
+        configurationTemplate: ConfigurationTemplate,
+        force: Boolean = false
+    ): StartResult {
         logger.fine("Prepare server ${configurationTemplate.uniqueId}...")
         val thisNode = nodeRepository.getNode(nodeRepository.serviceId)!!
         if (!force) {
@@ -87,9 +102,11 @@ class ServerFactory(
 
         // check if the server version is known
         if (configurationTemplate.serverVersionId == null) return UnknownServerVersionStartResult(null)
-        val version = serverVersionRepository.getVersion(configurationTemplate.serverVersionId!!) ?: return UnknownServerVersionStartResult(null)
+        val version = serverVersionRepository.getVersion(configurationTemplate.serverVersionId!!)
+            ?: return UnknownServerVersionStartResult(null)
         if (version.typeId == null) return UnknownServerVersionStartResult(null)
-        val type = serverVersionTypeRepository.getType(version.typeId!!) ?: return UnknownServerVersionStartResult(version)
+        val type =
+            serverVersionTypeRepository.getType(version.typeId!!) ?: return UnknownServerVersionStartResult(version)
         if (type.isUnknown()) return UnknownServerVersionStartResult(version)
         // get the version handler and update/patch the version if needed
         val versionHandler = IServerVersionHandler.getHandler(type)
@@ -97,7 +114,13 @@ class ServerFactory(
         if (versionHandler.isPatched(version) && versionHandler.isPatchVersion(version)) versionHandler.patch(version)
 
         // create the server process
-        val serverProcess = ServerProcess(configurationTemplate, serverRepository, javaVersionRepository, serverVersionRepository, serverVersionTypeRepository)
+        val serverProcess = ServerProcess(
+            configurationTemplate,
+            serverRepository,
+            javaVersionRepository,
+            serverVersionRepository,
+            serverVersionTypeRepository
+        )
         var cloudServer: CloudServer? = null
         try {
             // store the process
@@ -118,7 +141,13 @@ class ServerFactory(
             )
 
             // copy the files to copy server necessary files
-            val copier = FileCopier(serverProcess, cloudServer, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository)
+            val copier = FileCopier(
+                serverProcess,
+                cloudServer,
+                serverVersionRepository,
+                serverVersionTypeRepository,
+                fileTemplateRepository
+            )
             serverProcess.fileCopier = copier
 
             // copy all templates
@@ -130,7 +159,7 @@ class ServerFactory(
             serverProcess.start(cloudServer)
 
             return SuccessStartResult(cloudServer, serverProcess)
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             // delete the server if it is created and not static
             if (cloudServer != null && !cloudServer.configurationTemplate.static) {
                 serverRepository.deleteServer(cloudServer)
@@ -140,8 +169,15 @@ class ServerFactory(
     }
 
     //TODO: events
-    suspend fun stopServer(serviceId: ServiceId, force: Boolean = true) {
-        //TODO: stop service
+    suspend internal fun stopServer(serviceId: ServiceId, force: Boolean = true) {
+        val server = serverRepository.getServer(serviceId) ?: throw IllegalArgumentException("Server not found")
+        if (server.hostNodeId != nodeRepository.serviceId) throw IllegalArgumentException("Server is not on this node")
+        if (server.state == CloudServerState.STOPPED || server.state == CloudServerState.STOPPING && !force) return
+        val process = processes.firstOrNull { it.cloudServer!!.serviceId == serviceId }
+        if (process != null) {
+            process.stop()
+            processes.remove(process)
+        }
     }
 
     /**
@@ -151,10 +187,10 @@ class ServerFactory(
         processes.forEach {
             try {
                 stopServer(it.cloudServer!!.serviceId)
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 try {
                     stopServer(it.cloudServer!!.serviceId, true)
-                }catch (e1: Exception) {
+                } catch (e1: Exception) {
                     logger.severe("Error while stopping server ${it.cloudServer!!.serviceId}", e1)
                 }
             }

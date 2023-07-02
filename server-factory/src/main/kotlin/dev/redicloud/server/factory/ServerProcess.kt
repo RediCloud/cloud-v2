@@ -81,7 +81,7 @@ class ServerProcess(
     /**
      * Stops the server process
      */
-    suspend fun stop(force: Boolean) {
+    suspend fun stop(force: Boolean = false) {
         logger.fine("Stopped server process ${configurationTemplate.uniqueId}")
 
         if (cloudServer != null) {
