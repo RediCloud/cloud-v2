@@ -4,6 +4,7 @@ import dev.redicloud.commands.api.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.ConsoleActor
+import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionType
@@ -71,9 +72,14 @@ class CloudServerVersionCommand(
         @CommandParameter("type", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType
     ) {
         runBlocking {
+            if (version.version.versionTypes.isNotEmpty()
+                && version.version.versionTypes.none { it.lowercase() == type.name.lowercase() }) {
+                actor.sendMessage("§cThe type ${toConsoleValue(type.name, false)} is not supported by the version ${toConsoleValue(version.version.name, false)}")
+                return@runBlocking
+            }
             version.typeId = type.uniqueId
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Updated type of ${version.getDisplayName()} to ${type.name}")
+            actor.sendMessage("Updated type of ${toConsoleValue(version.getDisplayName())} to ${toConsoleValue(type.name)}")
         }
     }
 
@@ -87,7 +93,7 @@ class CloudServerVersionCommand(
         runBlocking {
             version.libPattern = if (pattern != "null") pattern else null
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Updated lib pattern of ${version.getDisplayName()} to '${version.libPattern}'")
+            actor.sendMessage("Updated lib pattern of ${toConsoleValue(version.getDisplayName())} to §8'%tc%${version.libPattern}§8'")
         }
     }
 
@@ -101,32 +107,33 @@ class CloudServerVersionCommand(
         runBlocking {
             version.version = minecraftVersion
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Updated minecraft version of ${version.getDisplayName()} to ${minecraftVersion.name}")
+            actor.sendMessage("Updated minecraft version of ${toConsoleValue(version.getDisplayName())} to ${toConsoleValue(minecraftVersion.name)}")
         }
     }
 
-    @CommandSubPath("create <name>")
+    @CommandSubPath("create <project> <mcversion>")
     @CommandDescription("Create a new server version")
     fun onCreate(
         actor: ConsoleActor,
-        @CommandParameter("name", true) versionName: String
+        @CommandParameter("project", true) projectName: String,
+        @CommandParameter("mcversion", true, ServerVersionSuggester::class) mcVersion: ServerVersion
     ) {
         runBlocking {
-            if (serverVersionRepository.existsVersion(versionName)) {
-                actor.sendMessage("§cA server version with the name $versionName already exists!")
-                return@runBlocking
-            }
             val version = CloudServerVersion(
                 UUID.randomUUID(),
                 CloudServerVersionTypeRepository.DEFAULT_TYPES_CACHE.get()!!.first { it.name == "unknown" }.uniqueId,
-                versionName,
+                projectName,
                 null,
                 null,
                 null,
-                ServerVersion.versions().first { it.isUnknown() }
+                mcVersion
             )
+            if (serverVersionRepository.existsVersion(version.getDisplayName())) {
+                actor.sendMessage("§cA server version with the project name $projectName and the mc version ${mcVersion.name }already exists!")
+                return@runBlocking
+            }
             serverVersionRepository.createVersion(version)
-            actor.sendMessage("§aCreated server version with name ${version.getDisplayName()}")
+            actor.sendMessage("Created server version with name ${toConsoleValue(version.getDisplayName())}")
             actor.sendMessage("Use '/sv edit ${version.getDisplayName()} <key> <value>' to edit the server version")
         }
     }
@@ -157,7 +164,7 @@ class CloudServerVersionCommand(
                 return@runBlocking
             }
             serverVersionRepository.deleteVersion(version.uniqueId)
-            actor.sendMessage("Deleted server version with name ${version.getDisplayName()}")
+            actor.sendMessage("Deleted server version with name ${toConsoleValue(version.getDisplayName())}")
         }
     }
 
@@ -167,11 +174,20 @@ class CloudServerVersionCommand(
         actor: ConsoleActor
     ) {
         runBlocking {
-            actor.sendMessage("Server versions:")
-            serverVersionRepository.getVersions().forEach {
+            val versions = serverVersionRepository.getVersions()
+            if (versions.isEmpty()) {
+                actor.sendMessage("§cThere are no server versions")
+                return@runBlocking
+            }
+            actor.sendHeader("Server-Versions")
+            actor.sendMessage("")
+            actor.sendMessage("Server versions§8:")
+            versions.forEach {
                 val type = if (it.typeId != null) serverVersionTypeRepository.getType(it.typeId!!) else null
                 actor.sendMessage("§8- %hc%${it.getDisplayName()} §8(%tc%${type?.name ?: "unknown"}§8)")
             }
+            actor.sendMessage("")
+            actor.sendHeader("Server-Versions")
         }
     }
 
