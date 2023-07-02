@@ -11,5 +11,6 @@ class CloudServer(
     val id: Int,
     val hostNodeId: ServiceId,
     sessions: MutableList<ServiceSession>,
+    var hidden: Boolean,
     var state: CloudServerState = CloudServerState.UNKNOWN
 ) : CloudService(serviceId, "${configurationTemplate.name}${configurationTemplate.serverSplitter}$id", sessions)
