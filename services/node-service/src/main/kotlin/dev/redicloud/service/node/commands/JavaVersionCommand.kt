@@ -4,6 +4,7 @@ import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
+import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.service.base.suggester.JavaVersionSuggester
 import dev.redicloud.utils.toSymbol
@@ -14,7 +15,7 @@ import kotlinx.coroutines.runBlocking
 @CommandDescription("Manage java versions")
 class JavaVersionCommand(
     private val javaVersionRepository: JavaVersionRepository,
-    private val configurationTemplateRepository: ConfigurationTemplateRepository
+    private val serverVersionRepository: CloudServerVersionRepository
 ) : CommandBase() {
 
     @CommandSubPath("list")
@@ -56,7 +57,7 @@ class JavaVersionCommand(
                 actor.sendMessage("No new java versions found")
                 return@runBlocking
             }
-            actor.sendMessage("Created new java versions§8: %hc%${created.joinToString("§8, %hc%")}")
+            actor.sendMessage("Created new java versions§8: %hc%${created.joinToString("§8, %hc%") { it.name }}")
         }
     }
 
@@ -67,10 +68,10 @@ class JavaVersionCommand(
         @CommandParameter("version", true, JavaVersionSuggester::class) version: JavaVersion
     ) {
         runBlocking {
-            val configTemplates = configurationTemplateRepository.getTemplates()
-            if (configTemplates.any { it.javaVersionId == version.uniqueId }) {
-                actor.sendMessage("§cThere are still configuration templates using this version:")
-                actor.sendMessage("§c${configTemplates.filter { it.javaVersionId == version.uniqueId }.joinToString(", ") { it.name }}")
+            val versions = serverVersionRepository.getVersions()
+            if (versions.any { it.uniqueId == version.uniqueId }) {
+                actor.sendMessage("§cThere are still server versions using this version:")
+                actor.sendMessage("§c${versions.filter { it.javaVersionId == version.uniqueId }.joinToString(", ") { it.getDisplayName() }}")
                 return@runBlocking
             }
             javaVersionRepository.deleteVersion(version)
