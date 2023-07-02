@@ -54,7 +54,7 @@ abstract class CloudService(
         return current
     }
 
-    fun unregisterAfterDisconnect(): Boolean =
+    open fun unregisterAfterDisconnect(): Boolean =
         serviceId.type == ServiceType.SERVER
 
 }
