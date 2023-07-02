@@ -5,6 +5,7 @@ import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
+import dev.redicloud.repository.server.CloudServerState
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
@@ -37,7 +38,7 @@ class ServerCommand(
         actor.sendHeader("Registered servers")
         actor.sendMessage("")
         registered.forEach {
-            actor.sendMessage("§8- %hc%${it.name}§8: ${it.state.color}● §8(%tc%${it.state.displayName}%8)")
+            actor.sendMessage("§8- %hc%${it.name}§8: ${it.state.color}● §8(%tc%${it.state.displayName}§8)")
         }
         actor.sendMessage("")
         actor.sendHeader("Registered servers")
@@ -48,22 +49,23 @@ class ServerCommand(
     fun start(
         actor: ConsoleActor,
         @CommandParameter("template", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
-        @CommandParameter("count", false) count: Int = 1
+        @CommandParameter("count", false) count: Int?
     ) = defaultScope.launch {
-        actor.sendMessage("Queued ${toConsoleValue(count)} servers with template ${toConsoleValue(template.name)}...")
-        serverFactory.queueStart(template, count)
+        actor.sendMessage("Queued ${toConsoleValue(count ?: 1)} server with template ${toConsoleValue(template.name)}...")
+        serverFactory.queueStart(template, count ?: 1)
     }
 
     @CommandSubPath("stop <server> [force]")
     @CommandDescription("Stop a server")
     fun stop(
         actor: ConsoleActor,
-        @CommandParameter("server", true) server: String,
+        @CommandParameter("server", true, CloudServerSuggester::class) server: String,
         @CommandParameter("force", false, BooleanSuggester::class) force: Boolean?
     ) = defaultScope.launch {
         val servers = mutableListOf<CloudServer>()
         if (server == "*") {
-            serverRepository.getConnectedServers().forEach {
+            serverRepository.getRegisteredServers().forEach {
+                if (it.state == CloudServerState.STOPPING || it.state == CloudServerState.STOPPED) return@forEach
                 servers.add(it)
             }
             if (servers.isEmpty()) {
@@ -77,13 +79,14 @@ class ServerCommand(
             return@launch
         } else if (server.endsWith("*")) {
             val name = server.substring(0, server.length - 1)
-            serverRepository.getConnectedServers().forEach {
+            serverRepository.getRegisteredServers().forEach {
+                if (it.state == CloudServerState.STOPPING || it.state == CloudServerState.STOPPED) return@forEach
                 if (it.name.lowercase().startsWith(name.lowercase())) {
                     servers.add(it)
                 }
             }
             if (servers.isEmpty()) {
-                actor.sendMessage("No server starts with ${toConsoleValue(name)}!")
+                actor.sendMessage("No server starts with ${toConsoleValue(name)} is connected!")
                 return@launch
             }
             actor.sendMessage("Stopping all servers starting with ${toConsoleValue(name)}...")
@@ -95,7 +98,8 @@ class ServerCommand(
             val names = server.split(",")
             names.forEach {
                 val name = it.trim()
-                serverRepository.getConnectedServers().forEach { server ->
+                serverRepository.getRegisteredServers().forEach server@{ server ->
+                    if (server.state == CloudServerState.STOPPING || server.state == CloudServerState.STOPPED) return@server
                     if (server.name.lowercase() == name.lowercase()) {
                         servers.add(server)
                     }
@@ -107,13 +111,14 @@ class ServerCommand(
             }
             return@launch
         } else {
-            serverRepository.getConnectedServers().forEach {
+            serverRepository.getRegisteredServers().forEach {
+                if (it.state == CloudServerState.STOPPING || it.state == CloudServerState.STOPPED) return@forEach
                 if (it.name.lowercase() == server.lowercase()) {
                     servers.add(it)
                 }
             }
             if (servers.isEmpty()) {
-                actor.sendMessage("No server with name ${toConsoleValue(server)} found!")
+                actor.sendMessage("No server with name ${toConsoleValue(server)} connected!")
                 return@launch
             }
             actor.sendMessage("Stopping server ${toConsoleValue(server)}...")
@@ -134,7 +139,7 @@ class ServerCommand(
         actor.sendMessage("")
         actor.sendMessage("§8- %tc%Name§8: %hc%${server.name}")
         actor.sendMessage("§8- %tc%ID§8: %hc%${server.serviceId.id}")
-        actor.sendMessage("§8- %tc%State§8: ${server.state.color}● §8(%tc%${server.state.displayName}%8)")
+        actor.sendMessage("§8- %tc%State§8: ${server.state.color}● §8(%tc%${server.state.displayName}§8)")
         actor.sendMessage("§8- %tc%Configuration template§8: %hc%${server.configurationTemplate.name}")
         val node = nodeRepository.getNode(server.hostNodeId)
         actor.sendMessage("§8- %tc%Node§8: %hc%${node?.name ?: "unknown"}")
