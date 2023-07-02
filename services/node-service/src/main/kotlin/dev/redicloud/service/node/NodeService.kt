@@ -8,7 +8,11 @@ import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.server.factory.ServerFactory
+import dev.redicloud.server.factory.task.CloudServerQueueCleanerTask
+import dev.redicloud.server.factory.task.CloudServerStartTask
+import dev.redicloud.server.factory.task.CloudServerStopTask
 import dev.redicloud.service.base.BaseService
+import dev.redicloud.service.base.events.NodeConnectEvent
 import dev.redicloud.service.base.events.NodeDisconnectEvent
 import dev.redicloud.service.base.events.NodeSuspendedEvent
 import dev.redicloud.service.node.console.NodeConsole
@@ -70,6 +74,7 @@ class NodeService(
         SHUTTINGDOWN = true
         LOGGER.info("Shutting down node service...")
         runBlocking {
+            serverFactory.shutdown()
             fileCluster.disconnect(true)
             nodeRepository.disconnect(this@NodeService)
             super.shutdown()
@@ -88,6 +93,22 @@ class NodeService(
             .task(NodeSelfSuspendTask(this))
             .event(NodeSuspendedEvent::class)
             .period(10.seconds)
+            .register()
+        taskManager.builder()
+            .task(CloudServerStartTask(this.serverFactory, this.eventManager, this.nodeRepository))
+            .event(NodeConnectEvent::class)
+            .period(3.seconds)
+            .register()
+        taskManager.builder()
+            .task(CloudServerStopTask(this.serviceId, this.serverRepository, this.serverFactory))
+            .period(2.seconds)
+            .register()
+        taskManager.builder()
+            .task(CloudServerQueueCleanerTask(this.serverFactory, this.nodeRepository))
+            .event(NodeConnectEvent::class)
+            .event(NodeDisconnectEvent::class)
+            .event(NodeSuspendedEvent::class)
+            .period(5.seconds)
             .register()
     }
 
