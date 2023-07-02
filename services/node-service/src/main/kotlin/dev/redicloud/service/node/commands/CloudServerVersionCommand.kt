@@ -5,6 +5,9 @@ import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.repository.java.version.JavaVersion
+import dev.redicloud.repository.java.version.JavaVersionRepository
+import dev.redicloud.repository.java.version.getJavaVersion
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionType
@@ -12,10 +15,9 @@ import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
+import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
-import dev.redicloud.service.base.suggester.CloudServerVersionSuggester
-import dev.redicloud.service.base.suggester.CloudServerVersionTypeSuggester
-import dev.redicloud.service.base.suggester.ServerVersionSuggester
+import dev.redicloud.service.base.suggester.*
 import dev.redicloud.service.node.repository.node.LOGGER
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.isValidUrl
@@ -31,6 +33,7 @@ class CloudServerVersionCommand(
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
     private val serverRepository: ServerRepository,
+    private val javaVersionRepository: JavaVersionRepository,
     private val console: Console
 ) : CommandBase() {
 
@@ -104,6 +107,19 @@ class CloudServerVersionCommand(
         }
     }
 
+    @CommandSubPath("edit <version> javaversion <java>")
+    @CommandAlias(["edit <version> jv <java>"])
+    @CommandDescription("Edit the Java version of a server version")
+    fun editJavaVersion(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, CloudServerVersionSuggester::class) serverVersion: CloudServerVersion,
+        @CommandParameter("java", true, JavaVersionSuggester::class) version: JavaVersion
+    ) = runBlocking {
+        serverVersion.javaVersionId = version.uniqueId
+        serverVersionRepository.updateVersion(serverVersion)
+        actor.sendMessage("The java version of the server version ${toConsoleValue(serverVersion.getDisplayName())} was updated to ${toConsoleValue(version.name)}!")
+    }
+
     @CommandSubPath("edit <version> version <mcversion>")
     @CommandDescription("Set the minecraft version of the server version")
     fun onEditMinecraftVersion(
@@ -133,7 +149,8 @@ class CloudServerVersionCommand(
                 null,
                 null,
                 null,
-                mcVersion
+                mcVersion,
+                null
             )
             if (serverVersionRepository.existsVersion(version.getDisplayName())) {
                 actor.sendMessage("§cA server version with the project name $projectName and the mc version ${mcVersion.name }already exists!")
@@ -215,6 +232,8 @@ class CloudServerVersionCommand(
             actor.sendMessage("§8- %tc%Version§8: %hc%${version.version.name}")
             actor.sendMessage("§8- %tc%Version-Handler§8: %hc%${type?.versionHandlerName ?: "unknown"}")
             actor.sendMessage("§8- %tc%Download-Url§8: %hc%${version.customDownloadUrl ?: "not set"}")
+            val javaVersion = if (version.javaVersionId != null) javaVersionRepository.getVersion(version.javaVersionId!!) else null
+            actor.sendMessage("§8- %tc%Java version§8: %hc%${javaVersion?.name ?: "not set"}")
             actor.sendMessage("")
             actor.sendHeader("Server-Version info")
         }
@@ -235,32 +254,13 @@ class CloudServerVersionCommand(
             }
             val handler = IServerVersionHandler.getHandler(type)
             if (!handler.isPatchVersion(version)) {
-                actor.sendMessage("§cThis version is not patchable!")
+                actor.sendMessage("§cThis version is not patchable! Set the lib pattern with '/sv edit ${version.getDisplayName()} libpattern <pattern>'")
                 return@launch
-            }
-            var canceled = false
-            var patched = false
-            var error = false
-            val animation = AnimatedLineAnimation(
-                console,
-                200
-            ) {
-                if (canceled) {
-                    null
-                } else if (patched) {
-                    canceled = true
-                    "Patching version %tc%${version.projectName}§8: ${if (error) "§4✘" else "§2✓"}"
-                } else {
-                    "Patching version %tc%${version.projectName}§8: %loading%"
-                }
             }
             try {
                 handler.patch(version)
             } catch (e: Exception) {
-                error = true
                 LOGGER.severe("Error while patching version ${version.getDisplayName()}", e)
-            } finally {
-                patched = true
             }
         }
     }
@@ -283,30 +283,10 @@ class CloudServerVersionCommand(
                 actor.sendMessage("§c'${version.getDisplayName()}' can´t be downloaded! Check the version type and the download url!")
                 return@launch
             }
-            var canceled = false
-            var downloaded = false
-            var error = false
-            val animation = AnimatedLineAnimation(
-                console,
-                200
-            ) {
-                if (canceled) {
-                    null
-                } else if (downloaded) {
-                    canceled = true
-                    "Downloading version %hc%${version.getDisplayName()}§8: ${if (error) "§4✘" else "§2✓"}"
-                } else {
-                    "Downloading version %hc%${version.getDisplayName()}§8: %hc%%loading%"
-                }
-            }
-            console.startAnimation(animation)
             try {
                 handler.download(version, true)
             } catch (e: Exception) {
-                error = true
                 LOGGER.severe("Error while downloading version ${version.getDisplayName()}", e)
-            } finally {
-                downloaded = true
             }
         }
     }
