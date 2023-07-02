@@ -10,6 +10,7 @@ class CloudNode(
     sessions: MutableList<ServiceSession>,
     private val hostedServers: MutableList<ServiceId>,
     var master: Boolean,
+    var currentMemoryUsage: Long,
     var maxMemory: Long
 ) : CloudService(serviceId, name, sessions) {
 
