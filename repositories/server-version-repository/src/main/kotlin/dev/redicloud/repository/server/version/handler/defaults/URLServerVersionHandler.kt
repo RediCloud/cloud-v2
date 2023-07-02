@@ -1,5 +1,6 @@
 package dev.redicloud.repository.server.version.handler.defaults
 
+import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
@@ -12,7 +13,10 @@ import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.minutes
 
-class URLServerVersionHandler(override val serverVersionRepository: CloudServerVersionRepository) : IServerVersionHandler {
+class URLServerVersionHandler(
+    override val serverVersionRepository: CloudServerVersionRepository,
+    override val nodeRepository: NodeRepository
+) : IServerVersionHandler {
 
     override val name: String = "urldownloader"
     override var lastUpdateCheck: Long = -1
@@ -84,5 +88,6 @@ class URLServerVersionHandler(override val serverVersionRepository: CloudServerV
         }
         versionDir.deleteRecursively()
         tempDir.copyRecursively(versionDir, true)
+        File(versionDir, ".patched").createNewFile()
     }
 }

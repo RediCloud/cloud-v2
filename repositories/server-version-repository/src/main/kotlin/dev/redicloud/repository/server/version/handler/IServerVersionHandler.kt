@@ -1,5 +1,9 @@
 package dev.redicloud.repository.server.version.handler
 
+import dev.redicloud.console.Console
+import dev.redicloud.repository.java.version.JavaVersion
+import dev.redicloud.repository.java.version.JavaVersionRepository
+import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.handler.defaults.PaperMcServerVersionHandler
@@ -14,6 +18,7 @@ interface IServerVersionHandler {
 
     val name: String
     val serverVersionRepository: CloudServerVersionRepository
+    val nodeRepository: NodeRepository
     var lastUpdateCheck: Long
 
     suspend fun download(version: CloudServerVersion, force: Boolean = false): File
@@ -31,6 +36,23 @@ interface IServerVersionHandler {
     suspend fun update(version: CloudServerVersion): File
 
     suspend fun patch(version: CloudServerVersion)
+
+    suspend fun patchCommand(type: CloudServerVersionType, javaVersion: JavaVersion, jarToExecute: File): List<String> {
+        if(!javaVersion.isLocated(nodeRepository.serviceId)) {
+            javaVersion.located[nodeRepository.serviceId.id] = javaVersion.autoLocate()?.absolutePath ?: throw IllegalStateException("Java version ${javaVersion.id} not found")
+        }
+        val javaPath = javaVersion.located[nodeRepository.serviceId.id]
+        if (javaPath == null || javaPath.isEmpty()) throw IllegalStateException("Java version ${javaVersion.id} not found")
+
+        val list = mutableListOf(
+            javaPath,
+            "-Xms512M",
+            "-Xmx512M",
+        )
+        list.add("-jar")
+        list.add(jarToExecute.absolutePath)
+        return list
+    }
 
     fun isPatched(version: CloudServerVersion): Boolean =
         version.libPattern != null && File(getFolder(version).absolutePath, ".patched").exists()
@@ -59,9 +81,9 @@ interface IServerVersionHandler {
             return serverVersionHandler
         }
 
-        suspend fun registerDefaultHandlers(cloudServerVersionRepository: CloudServerVersionRepository, serverVersionTypeRepository: CloudServerVersionTypeRepository) {
-            registerHandler(URLServerVersionHandler(cloudServerVersionRepository))
-            registerHandler(PaperMcServerVersionHandler(cloudServerVersionRepository, serverVersionTypeRepository))
+        fun registerDefaultHandlers(cloudServerVersionRepository: CloudServerVersionRepository, serverVersionTypeRepository: CloudServerVersionTypeRepository, javaVersionRepository: JavaVersionRepository, nodeRepository: NodeRepository, console: Console) {
+            registerHandler(URLServerVersionHandler(cloudServerVersionRepository, nodeRepository))
+            registerHandler(PaperMcServerVersionHandler(cloudServerVersionRepository, serverVersionTypeRepository, javaVersionRepository, nodeRepository, console))
         }
 
     }

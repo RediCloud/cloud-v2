@@ -1,8 +1,11 @@
 package dev.redicloud.repository.server.version
 
 import com.google.gson.reflect.TypeToken
+import dev.redicloud.console.Console
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
+import dev.redicloud.repository.java.version.JavaVersionRepository
+import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.utils.EasyCache
 import dev.redicloud.utils.getRawUserContentUrl
@@ -12,20 +15,15 @@ import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
 
 class CloudServerVersionTypeRepository(
-    databaseConnection: DatabaseConnection,
-    serverVersionRepository: CloudServerVersionRepository
+    databaseConnection: DatabaseConnection
 ) : DatabaseBucketRepository<CloudServerVersionType>(databaseConnection, "server-version-types") {
-
-    init {
-        runBlocking { IServerVersionHandler.registerDefaultHandlers(serverVersionRepository, this@CloudServerVersionTypeRepository) }
-    }
 
     companion object {
         val DEFAULT_TYPES_CACHE = EasyCache<List<CloudServerVersionType>, Unit> (1.minutes) {
             val json =
                 khttp.get("${getRawUserContentUrl()}/api-files/server-version-types.json").text
             val type = object : TypeToken<ArrayList<CloudServerVersionType>>() {}.type
-            val list: MutableList<CloudServerVersionType> = prettyPrintGson.fromJson<MutableList<CloudServerVersionType>?>(json, type)
+            val list: MutableList<CloudServerVersionType> = prettyPrintGson.fromJson(json, type)
             if (list.none { it.isUnknown() }) {
                 list.add(
                     CloudServerVersionType(
