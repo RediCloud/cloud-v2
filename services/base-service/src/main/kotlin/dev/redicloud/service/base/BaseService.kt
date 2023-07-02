@@ -81,7 +81,7 @@ abstract class BaseService(
         javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection)
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager)
         serverVersionRepository = CloudServerVersionRepository(databaseConnection)
-        serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, serverVersionRepository)
+        serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager)
         configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection)
         this.registerPackets()

@@ -6,6 +6,8 @@ import dev.redicloud.commands.api.CommandBase
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.repository.java.version.JavaVersion
+import dev.redicloud.repository.server.version.handler.IServerVersionHandler
+import dev.redicloud.repository.server.version.task.CloudServerVersionUpdateTask
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.server.factory.task.CloudServerQueueCleanerTask
@@ -25,6 +27,7 @@ import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
 import dev.redicloud.utils.TEMP_FOLDER
 import kotlinx.coroutines.runBlocking
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class NodeService(
@@ -60,6 +63,8 @@ class NodeService(
             try { this@NodeService.checkJavaVersions() } catch (e: Exception) {
                 LOGGER.warning("Error while checking java versions", e)
             }
+
+            IServerVersionHandler.registerDefaultHandlers(serverVersionRepository, serverVersionTypeRepository, javaVersionRepository, nodeRepository, console)
 
             this@NodeService.registerPreTasks()
             this@NodeService.connectFileCluster()
@@ -109,6 +114,11 @@ class NodeService(
             .event(NodeDisconnectEvent::class)
             .event(NodeSuspendedEvent::class)
             .period(5.seconds)
+            .register()
+        taskManager.builder()
+            .task(CloudServerVersionUpdateTask(this.serverVersionRepository, this.serverVersionTypeRepository))
+            .period(5.minutes)
+            .instant()
             .register()
     }
 
@@ -177,9 +187,9 @@ class NodeService(
         }
         register(ExitCommand(this))
         register(ClusterCommand(this))
-        register(CloudServerVersionCommand(this.serverVersionRepository, this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverRepository, this.console))
+        register(CloudServerVersionCommand(this.serverVersionRepository, this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverRepository, this.javaVersionRepository, this.console))
         register(CloudServerVersionTypeCommand(this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverVersionRepository))
-        register(JavaVersionCommand(this.javaVersionRepository, this.configurationTemplateRepository))
+        register(JavaVersionCommand(this.javaVersionRepository, this.serverVersionRepository))
         register(ClearCommand(this.console))
         register(ConfigurationTemplateCommand(this.configurationTemplateRepository, this.javaVersionRepository, this.serverRepository, this.serverVersionRepository, this.nodeRepository, this.fileTemplateRepository))
         register(FileTemplateCommand(this.fileTemplateRepository))
