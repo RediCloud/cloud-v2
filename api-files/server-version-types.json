@@ -11,8 +11,7 @@
       "-Djline.terminal=jline.UnsupportedTerminal"
     ],
     "programmArguments": [
-      "nogui",
-      "-Djline.terminal=jline.UnsupportedTerminal"
+      "nogui"
     ],
     "fileEdits": {
       "server.properties": {
@@ -40,8 +39,7 @@
       "-Djline.terminal=jline.UnsupportedTerminal"
     ],
     "programmArguments": [
-      "nogui",
-      "-Djline.terminal=jline.UnsupportedTerminal"
+      "nogui"
     ],
     "fileEdits": {
       "server.properties": {
@@ -69,8 +67,7 @@
       "-Djline.terminal=jline.UnsupportedTerminal"
     ],
     "programmArguments": [
-      "nogui",
-      "-Djline.terminal=jline.UnsupportedTerminal"
+      "nogui"
     ],
     "fileEdits": {
       "server.properties": {
@@ -145,8 +142,7 @@
       "-Djline.terminal=jline.UnsupportedTerminal"
     ],
     "programmArguments": [
-      "nogui",
-      "-Djline.terminal=jline.UnsupportedTerminal"
+      "nogui"
     ],
     "fileEdits": {
       "server.properties": {
