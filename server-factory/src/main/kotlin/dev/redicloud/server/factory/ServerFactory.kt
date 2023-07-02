@@ -12,9 +12,11 @@ import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
+import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import org.redisson.api.RQueue
 import java.util.*
 
@@ -33,6 +35,20 @@ class ServerFactory(
         databaseConnection.getClient().getPriorityQueue("server-factory-queue")
     private val processes: MutableList<ServerProcess> = mutableListOf()
     private val logger = LogManager.logger(ServerFactory::class)
+
+    fun queueStart(configurationTemplate: ConfigurationTemplate, count: Int = 1) {
+        for (i in 0..count) {
+            queue.addAsync(configurationTemplate)
+        }
+    }
+
+    fun queueStop(serviceId: ServiceId, force: Boolean = false) {
+        defaultScope.launch {
+            val server = serverRepository.getServer(serviceId) ?: return@launch
+            if (server.state == CloudServerState.STOPPED || server.state == CloudServerState.STOPPING && !force) return@launch
+            stopServer(server.serviceId, force)
+        }
+    }
 
     //TODO: events
     /**
@@ -70,9 +86,11 @@ class ServerFactory(
         }
 
         // check if the server version is known
-        val version = serverVersionRepository.getVersion(configurationTemplate.serverVersionId)
-        val type = serverVersionTypeRepository.getType(configurationTemplate.serverVersionId) ?: return UnknownServerVersionStartResult(version)
-        if (version == null || type.isUnknown()) return UnknownServerVersionStartResult(version)
+        if (configurationTemplate.serverVersionId == null) return UnknownServerVersionStartResult(null)
+        val version = serverVersionRepository.getVersion(configurationTemplate.serverVersionId!!) ?: return UnknownServerVersionStartResult(null)
+        if (version.typeId == null) return UnknownServerVersionStartResult(null)
+        val type = serverVersionTypeRepository.getType(version.typeId!!) ?: return UnknownServerVersionStartResult(version)
+        if (type.isUnknown()) return UnknownServerVersionStartResult(version)
         // get the version handler and update/patch the version if needed
         val versionHandler = IServerVersionHandler.getHandler(type)
         if (versionHandler.isUpdateAvailable(version)) versionHandler.update(version)
@@ -94,6 +112,7 @@ class ServerFactory(
                     id,
                     thisNode.serviceId,
                     mutableListOf(),
+                    false,
                     CloudServerState.PREPARING
                 )
             )
@@ -121,7 +140,7 @@ class ServerFactory(
     }
 
     //TODO: events
-    suspend fun stop(serviceId: ServiceId, force: Boolean = true) {
+    suspend fun stopServer(serviceId: ServiceId, force: Boolean = true) {
         //TODO: stop service
     }
 
@@ -130,7 +149,15 @@ class ServerFactory(
      */
     suspend fun shutdown() {
         processes.forEach {
-            stop(it.cloudServer!!.serviceId)
+            try {
+                stopServer(it.cloudServer!!.serviceId)
+            }catch (e: Exception) {
+                try {
+                    stopServer(it.cloudServer!!.serviceId, true)
+                }catch (e1: Exception) {
+                    logger.severe("Error while stopping server ${it.cloudServer!!.serviceId}", e1)
+                }
+            }
         }
         ServiceProcessHandler.PROCESS_SCOPE.cancel()
     }
