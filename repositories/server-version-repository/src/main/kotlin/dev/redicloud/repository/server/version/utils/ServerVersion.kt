@@ -12,7 +12,7 @@ class ServerVersion(
     val versionTypes: Array<String> = arrayOf()
 ) {
 
-    fun isUnknown(): Boolean = name == "unknown"
+    fun isUnknown(): Boolean = name.lowercase() == "unknown"
 
     companion object {
         private val CACHED_MINECRAFT_VERSIONS = mutableListOf<ServerVersion>()
