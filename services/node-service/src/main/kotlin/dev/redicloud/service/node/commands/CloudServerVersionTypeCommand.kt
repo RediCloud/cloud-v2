@@ -2,15 +2,22 @@ package dev.redicloud.service.node.commands
 
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
+import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
+import dev.redicloud.service.base.suggester.CloudConnectorFileNameSelector
 import dev.redicloud.service.base.suggester.CloudServerVersionTypeSuggester
 import dev.redicloud.service.base.suggester.ServerVersionHandlerSuggester
+import dev.redicloud.utils.CLOUD_VERSION
+import dev.redicloud.utils.CONNECTORS_FOLDER
+import dev.redicloud.utils.isValidUrl
 import dev.redicloud.utils.toSymbol
 import kotlinx.coroutines.runBlocking
+import java.io.File
+import java.util.*
 
 @Command("svt")
 @CommandAlias(["serverversiontype", "svtype"])
@@ -72,8 +79,10 @@ class CloudServerVersionTypeCommand(
         actor.sendMessage("Name§8: %hc%${type.name}")
         actor.sendMessage("Handler§8: %hc%${type.versionHandlerName}")
         actor.sendMessage("Default§8: %hc%${type.defaultType.toSymbol()}")
-        actor.sendMessage("CraftBukkit based§8: %hc%${type.craftBukkitBased.toSymbol()}")
         actor.sendMessage("Proxy§8: %hc%${type.proxy.toSymbol()}")
+        actor.sendMessage("Connector plugin§8: %hc%${type.connectorPluginName.replace("%cloud_version%", CLOUD_VERSION)}")
+        actor.sendMessage("Connector download url§8: %hc%${type.connectorDownloadUrl?.replace("%cloud_version%", CLOUD_VERSION) ?: "Not set"}")
+        actor.sendMessage("Connector folder§8: %hc%${type.connectorFolder}")
         actor.sendMessage("JVM arguments§8:${if (type.jvmArguments.isEmpty()) " %hc%None" else ""}")
         type.jvmArguments.forEach {
             actor.sendMessage("\t§8- %hc%$it")
@@ -91,6 +100,35 @@ class CloudServerVersionTypeCommand(
         }
         actor.sendMessage("")
         actor.sendHeader("Server-Version type")
+    }
+
+    @CommandSubPath("create <name>")
+    @CommandDescription("Create a new server version type")
+    fun create(
+        actor: ConsoleActor,
+        @CommandParameter("name") name: String
+    ) {
+        runBlocking {
+            if (serverVersionTypeRepository.existsType(name)) {
+                actor.sendMessage("§cA server version type with this name already exists!")
+                return@runBlocking
+            }
+            val type = CloudServerVersionType(
+                UUID.randomUUID(),
+                name,
+                "urldownloader",
+                false,
+                mutableListOf(),
+                mutableListOf(),
+                mutableMapOf(),
+                false,
+                "redicloud-$name-%cloud_version%.jar",
+                null,
+                "plugins"
+            )
+            serverVersionTypeRepository.createType(type)
+            actor.sendMessage("Successfully created server version type ${toConsoleValue(type.name)}")
+        }
     }
 
     @CommandSubPath("delete <name>")
@@ -111,8 +149,12 @@ class CloudServerVersionTypeCommand(
                 )
                 return@runBlocking
             }
+            if (type.defaultType) {
+                actor.sendMessage("§cYou can't delete the default server version type!")
+                return@runBlocking
+            }
             serverVersionTypeRepository.deleteType(type)
-            actor.sendMessage("Successfully deleted server version type %tc%${type.name}")
+            actor.sendMessage("Successfully deleted server version type ${toConsoleValue(type.name)}")
         }
     }
 
@@ -124,9 +166,13 @@ class CloudServerVersionTypeCommand(
         @CommandParameter("new-name") newName: String
     ) {
         runBlocking {
+            if (type.defaultType) {
+                actor.sendMessage("§cYou can't edit the name of the default server version type!")
+                return@runBlocking
+            }
             type.name = newName
             serverVersionTypeRepository.updateType(type)
-            actor.sendMessage("Successfully edited name of server version type to %tc%${type.name}")
+            actor.sendMessage("Successfully edited name of server version type to ${toConsoleValue(type.name)}")
         }
     }
 
@@ -138,24 +184,13 @@ class CloudServerVersionTypeCommand(
         @CommandParameter("handler", true, ServerVersionHandlerSuggester::class) newHandler: IServerVersionHandler
     ) {
         runBlocking {
+            if (type.defaultType) {
+                actor.sendMessage("§cYou can't edit the name of the default server version type!")
+                return@runBlocking
+            }
             type.versionHandlerName = newHandler.name
             serverVersionTypeRepository.updateType(type)
-            actor.sendMessage("Successfully edited handler of server version type to %tc%${type.versionHandlerName}")
-        }
-    }
-
-    @CommandSubPath("edit <name> craftbukkitbased <state>")
-    @CommandAlias(["edit <name> cb <state>", "edit <name> craftbukkit <state>"])
-    @CommandDescription("Edit the craftbukkit based of a server version type")
-    fun editCraftBukkitBased(
-        actor: ConsoleActor,
-        @CommandParameter("name", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
-        @CommandParameter("state") craftBukkitBased: Boolean
-    ) {
-        runBlocking {
-            type.craftBukkitBased = craftBukkitBased
-            serverVersionTypeRepository.updateType(type)
-            actor.sendMessage("Successfully edited craftbukkit based of server version type to %tc%${type.craftBukkitBased}")
+            actor.sendMessage("Successfully edited handler of server version type to ${toConsoleValue(type.versionHandlerName)}")
         }
     }
 
@@ -167,11 +202,80 @@ class CloudServerVersionTypeCommand(
         @CommandParameter("state") proxy: Boolean
     ) {
         runBlocking {
+            if (type.defaultType) {
+                actor.sendMessage("§cYou can't edit the name of the default server version type!")
+                return@runBlocking
+            }
             type.proxy = proxy
             serverVersionTypeRepository.updateType(type)
-            actor.sendMessage("Successfully edited proxy of server version type to %tc%${type.proxy}")
+            actor.sendMessage("Successfully edited proxy of server version type to ${toConsoleValue(type.proxy)}")
         }
     }
+
+    @CommandSubPath("edit <name> connector <file>")
+    @CommandDescription("Edit the file name of the connector of a server version type")
+    fun editConnector(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
+        @CommandParameter("file", true, CloudConnectorFileNameSelector::class) connector: String
+    ) {
+        runBlocking {
+            if (type.defaultType) {
+                actor.sendMessage("§cYou can't edit the name of the default server version type!")
+                return@runBlocking
+            }
+            val oldName = type.connectorPluginName
+            val file = File(CONNECTORS_FOLDER.getFile(), oldName)
+            if (file.exists()) {
+                file.renameTo(File(CONNECTORS_FOLDER.getFile(), connector))
+            }
+            type.connectorPluginName = connector
+            serverVersionTypeRepository.updateType(type)
+            actor.sendMessage("Successfully edited connector of server version type to ${toConsoleValue(type.connectorPluginName)}")
+        }
+    }
+
+    @CommandSubPath("edit <name> connector <url>")
+    @CommandDescription("Edit the connector download url of a server version type")
+    fun editConnectorUrl(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
+        @CommandParameter("url", true) url: String
+    ) {
+        runBlocking {
+            if (type.defaultType) {
+                actor.sendMessage("§cYou can't edit the name of the default server version type!")
+                return@runBlocking
+            }
+            if (!isValidUrl(url)) {
+                actor.sendMessage("§cThe url is not valid!")
+                return@runBlocking
+            }
+            type.connectorDownloadUrl = url
+            serverVersionTypeRepository.downloadConnector(type, true)
+            serverVersionTypeRepository.updateType(type)
+            actor.sendMessage("Successfully edited connector download url of server version type to ${toConsoleValue(type.connectorDownloadUrl!!)}")
+        }
+    }
+
+    @CommandSubPath("edit <name> connector <folder>")
+    @CommandDescription("Edit the connector folder of a server version type. E.g. 'plugins' or 'extensions'")
+    fun editConnectorFolder(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
+        @CommandParameter("folder", true) folder: String
+    ) {
+        runBlocking {
+            if (type.defaultType) {
+                actor.sendMessage("§cYou can't edit the name of the default server version type!")
+                return@runBlocking
+            }
+            type.connectorFolder = folder
+            serverVersionTypeRepository.updateType(type)
+            actor.sendMessage("Successfully edited connector folder of server version type to ${toConsoleValue(type.connectorFolder)}")
+        }
+    }
+
 
     @CommandSubPath("edit <name> jvmargument add <argument>")
     @CommandAlias(["edit <name> jvmarg add <argument>"])
@@ -182,6 +286,10 @@ class CloudServerVersionTypeCommand(
         @CommandParameter("argument") argument: String
     ) {
         runBlocking {
+            if (type.defaultType) {
+                actor.sendMessage("§cYou can't edit the name of the default server version type!")
+                return@runBlocking
+            }
             type.jvmArguments.add(argument)
             serverVersionTypeRepository.updateType(type)
             actor.sendMessage("Successfully added jvm argument to server version type!")
@@ -197,6 +305,10 @@ class CloudServerVersionTypeCommand(
         @CommandParameter("argument") argument: String
     ) {
         runBlocking {
+            if (type.defaultType) {
+                actor.sendMessage("§cYou can't edit the name of the default server version type!")
+                return@runBlocking
+            }
             type.jvmArguments.remove(argument)
             serverVersionTypeRepository.updateType(type)
             actor.sendMessage("Successfully removed jvm argument from server version type!")
@@ -212,6 +324,10 @@ class CloudServerVersionTypeCommand(
         @CommandParameter("argument") argument: String
     ) {
         runBlocking {
+            if (type.defaultType) {
+                actor.sendMessage("§cYou can't edit the name of the default server version type!")
+                return@runBlocking
+            }
             type.programmArguments.add(argument)
             serverVersionTypeRepository.updateType(type)
             actor.sendMessage("Successfully added programm argument to server version type!")
@@ -228,6 +344,10 @@ class CloudServerVersionTypeCommand(
         @CommandParameter("value") value: String
     ) {
         runBlocking {
+            if (type.defaultType) {
+                actor.sendMessage("§cYou can't edit the name of the default server version type!")
+                return@runBlocking
+            }
             val subMap = type.fileEdits.getOrDefault(file, mutableMapOf())
             subMap[key] = value
             type.fileEdits[file] = subMap
@@ -245,6 +365,10 @@ class CloudServerVersionTypeCommand(
         @CommandParameter("key") key: String
     ) {
         runBlocking {
+            if (type.defaultType) {
+                actor.sendMessage("§cYou can't edit the name of the default server version type!")
+                return@runBlocking
+            }
             val subMap = type.fileEdits.getOrDefault(file, mutableMapOf())
             subMap.remove(key)
             type.fileEdits[file] = subMap

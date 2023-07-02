@@ -124,6 +124,7 @@ abstract class BaseService(
         ICommandSuggester.SUGGESTERS.add(ServerVersionHandlerSuggester())
         ICommandSuggester.SUGGESTERS.add(FileTemplateSuggester(this.fileTemplateRepository))
         ICommandSuggester.SUGGESTERS.add(CloudServerSuggester(this.serverRepository))
+        ICommandSuggester.SUGGESTERS.add(CloudConnectorFileNameSelector())
     }
 
     private fun registerPackets() {

@@ -15,7 +15,8 @@ suspend fun URL.isValid(): Boolean {
     }
 }
 
-suspend fun isValidUrl(url: String): Boolean {
+suspend fun isValidUrl(url: String?): Boolean {
+    if (url == null) return false
     return try {
         val connection = URL(url).openConnection() as HttpURLConnection
         connection.requestMethod = "HEAD"

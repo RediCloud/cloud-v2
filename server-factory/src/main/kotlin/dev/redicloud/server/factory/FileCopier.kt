@@ -9,12 +9,14 @@ import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
+import dev.redicloud.utils.CONNECTORS_FOLDER
 import dev.redicloud.utils.STATIC_FOLDER
 import dev.redicloud.utils.TEMP_SERVER_FOLDER
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import java.io.File
+import java.net.URL
 import java.util.*
 
 
@@ -22,7 +24,7 @@ class FileCopier(
     serverProcess: ServerProcess,
     cloudServer: CloudServer,
     serverVersionRepository: CloudServerVersionRepository,
-    serverVersionTypeRepository: CloudServerVersionTypeRepository,
+    private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     fileTemplateRepository: AbstractFileTemplateRepository
 ) {
 
@@ -53,6 +55,36 @@ class FileCopier(
             File(TEMP_SERVER_FOLDER.getFile().absolutePath, serverUniqueId.toString())
         }
         if (!workDirectory.exists()) workDirectory.mkdirs()
+    }
+
+    suspend fun copyConnector() {
+        logger.fine("Copying connector for $serviceId")
+        CONNECTORS_FOLDER.createIfNotExists()
+        val connectorFile = File(CONNECTORS_FOLDER.getFile(), serverVersionType.connectorPluginName)
+        if (!connectorFile.exists()) {
+            connectorFile.createNewFile()
+            if (serverVersionType.connectorDownloadUrl == null) {
+                logger.warning("Connector download url for ${serverVersionType.name} is not set! The server will not connect to the cloud cluster!")
+                logger.warning("You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'")
+                return
+            }
+            try {
+                serverVersionTypeRepository.downloadConnector(serverVersionType)
+            }catch (e: Exception) {
+                logger.warning("Failed to download connector for ${serverVersionType.name} from ${serverVersionType.connectorDownloadUrl}", e)
+                logger.warning("The server will not connect to the cloud cluster!")
+                logger.warning("You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'")
+                return
+            }
+        }
+        if (!connectorFile.exists()) {
+            logger.warning("Connector file for ${serverVersionType.name} does not exist! The server will not connect to the cloud cluster!")
+            logger.warning("You can set the connector file in the server version type settings with: 'svt edit <name> connector jar <connector>'")
+            return
+        }
+        val pluginFolder = File(workDirectory, serverVersionType.connectorFolder)
+        if (!pluginFolder.exists()) pluginFolder.mkdirs()
+        connectorFile.copyRecursively(File(pluginFolder, connectorFile.name))
     }
 
     /**
