@@ -123,6 +123,7 @@ abstract class BaseService(
         ICommandSuggester.SUGGESTERS.add(ServerVersionSuggester())
         ICommandSuggester.SUGGESTERS.add(ServerVersionHandlerSuggester())
         ICommandSuggester.SUGGESTERS.add(FileTemplateSuggester(this.fileTemplateRepository))
+        ICommandSuggester.SUGGESTERS.add(CloudServerSuggester(this.serverRepository))
     }
 
     private fun registerPackets() {
