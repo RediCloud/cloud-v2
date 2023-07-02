@@ -9,7 +9,6 @@ data class ConfigurationTemplate(
     val programmArguments: MutableList<String> = mutableListOf(),
     val jvmArguments: MutableList<String> = mutableListOf(),
     val environments: MutableMap<String, String> = mutableMapOf(),
-    var javaVersionId: UUID?,
     var maxMemory: Long = 750,
     val fileTemplateIds: MutableList<UUID> = mutableListOf(),
     val nodeIds: MutableList<ServiceId> = mutableListOf(),

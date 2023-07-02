@@ -10,7 +10,8 @@ class CloudServerVersion(
     var customDownloadUrl: String?,
     var libPattern: String?,
     var buildId: String?,
-    var version: ServerVersion
+    var version: ServerVersion,
+    var javaVersionId: UUID?,
 ) {
     fun getDisplayName(): String {
         return "${projectName}_${version.name}"
