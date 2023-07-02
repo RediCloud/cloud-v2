@@ -52,7 +52,7 @@ class FileCopier(
         }else {
             File(TEMP_SERVER_FOLDER.getFile().absolutePath, serverUniqueId.toString())
         }
-        workDirectory.mkdirs()
+        if (!workDirectory.exists()) workDirectory.mkdirs()
     }
 
     /**
