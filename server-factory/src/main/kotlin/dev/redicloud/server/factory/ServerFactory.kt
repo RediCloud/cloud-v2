@@ -17,8 +17,10 @@ import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import org.redisson.api.RList
 import org.redisson.api.RMap
 import org.redisson.api.RQueue
+import org.redisson.codec.JsonJacksonCodec
 import java.util.*
 
 class ServerFactory(
@@ -31,16 +33,16 @@ class ServerFactory(
     private val javaVersionRepository: JavaVersionRepository
 ) {
 
-    internal val startQueue: RMap<UUID, ServerQueueInformation> =
-        databaseConnection.getClient().getMap("server-factory:queue:start")
-    internal val stopQueue: RQueue<ServiceId> =
-        databaseConnection.getClient().getPriorityQueue("server-factory:queue:stop")
+    internal val startQueue: RList<ServerQueueInformation> =
+        databaseConnection.getClient().getList("server-factory:queue:start")
+    internal val stopQueue: RList<ServiceId> =
+        databaseConnection.getClient().getList("server-factory:queue:stop")
     private val processes: MutableList<ServerProcess> = mutableListOf()
     private val logger = LogManager.logger(ServerFactory::class)
 
     suspend fun getStartList(): List<ServerQueueInformation> {
-        return startQueue.entries.sortedWith(compareBy<MutableMap.MutableEntry<UUID, ServerQueueInformation>>
-        { it.value.configurationTemplate.startPort }.thenByDescending { it.value.queueTime }).map { it.value }.toList()
+        return startQueue.sortedWith(compareBy<ServerQueueInformation>
+        { it.configurationTemplate.startPort }.thenByDescending { it.queueTime }).toList()
     }
 
 
@@ -49,9 +51,9 @@ class ServerFactory(
             val info = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, queueTime = -1)
             val nodes = nodeRepository.getRegisteredNodes()
             info.calculateStartOrder(nodes)
-            for (i in 0..count) {
+            for (i in 1..count) {
                 val clone = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, info.failedStarts, info.nodeStartOrder, System.currentTimeMillis())
-                startQueue[clone.uniqueId] = clone
+                startQueue.add(clone)
             }
         }
 
@@ -111,7 +113,7 @@ class ServerFactory(
         // get the version handler and update/patch the version if needed
         val versionHandler = IServerVersionHandler.getHandler(type)
         if (versionHandler.isUpdateAvailable(version)) versionHandler.update(version)
-        if (versionHandler.isPatched(version) && versionHandler.isPatchVersion(version)) versionHandler.patch(version)
+        if (!versionHandler.isPatched(version) && versionHandler.isPatchVersion(version)) versionHandler.patch(version)
 
         // create the server process
         val serverProcess = ServerProcess(
@@ -184,7 +186,7 @@ class ServerFactory(
      * Shuts down the server factory and all running processes
      */
     suspend fun shutdown() {
-        processes.forEach {
+        processes.toList().forEach {
             try {
                 stopServer(it.cloudServer!!.serviceId)
             } catch (e: Exception) {

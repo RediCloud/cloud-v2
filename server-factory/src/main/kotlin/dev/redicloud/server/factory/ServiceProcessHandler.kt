@@ -34,7 +34,6 @@ class ServiceProcessHandler(
             bufferedReader.close()
             inputReader.close()
 
-            exits.forEach { it(process.exitValue()) }
             if (errorStream.isOpen()) {
                 val errorReader = InputStreamReader(errorStream)
                 val errorBufferedReader = BufferedReader(errorReader)
@@ -48,6 +47,8 @@ class ServiceProcessHandler(
                 errorBufferedReader.close()
                 errorReader.close()
             }
+
+            exits.forEach { it(process.exitValue()) }
 
         }
     }

@@ -47,17 +47,16 @@ class ServerProcess(
         processBuilder.environment()["REDICLOUD_LOG_LEVEL"] = getDefaultLogLevel().localizedName
         processBuilder.environment().putAll(configurationTemplate.environments)
 
-        if (configurationTemplate.javaVersionId == null) throw IllegalStateException("Java version is not set that is required of ${configurationTemplate.name} configuration")
         if (configurationTemplate.serverVersionId == null) throw IllegalStateException("Server version is not set that is required of ${configurationTemplate.name} configuration")
-
-        val javaVersion = javaVersionRepository.getVersion(configurationTemplate.javaVersionId!!)
-            ?: throw IllegalStateException("Java version ${configurationTemplate.javaVersionId} not found that is required of ${configurationTemplate.name} configuration")
         val serverVersion = serverVersionRepository.getVersion(configurationTemplate.serverVersionId!!)
             ?: throw IllegalStateException("Server version ${configurationTemplate.serverVersionId} not found that is required of ${configurationTemplate.name} configuration")
 
+        if (serverVersion.javaVersionId == null) throw IllegalStateException("Java version is not set that is required of ${configurationTemplate.name} configuration")
+        val javaVersion = javaVersionRepository.getVersion(serverVersion.javaVersionId!!)
+            ?: throw IllegalStateException("Java version ${serverVersion.javaVersionId} not found that is required of ${configurationTemplate.name} configuration")
+
         if (serverVersion.typeId == null)
             throw IllegalStateException("Server version type of version ${serverVersion.getDisplayName()} is not set that is required of ${configurationTemplate.name} configuration")
-
         val versionType = serverVersionTypeRepository.getType(serverVersion.typeId!!) ?: throw IllegalStateException("Server version type ${serverVersion.typeId} not found")
 
         // set command
@@ -96,6 +95,8 @@ class ServerProcess(
                 process!!.destroy()
             }
         }
+
+        fileCopier.workDirectory.deleteRecursively()
 
         if (cloudServer != null) {
             cloudServer!!.state = CloudServerState.STOPPED
