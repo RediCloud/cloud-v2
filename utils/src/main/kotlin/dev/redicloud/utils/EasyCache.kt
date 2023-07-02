@@ -3,7 +3,7 @@ package dev.redicloud.utils
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration
 
-class EasyCache<T, I>(
+open class EasyCache<T, I>(
     val cacheTime: Duration,
     val block: suspend (I?) -> T?
 ) {
@@ -42,3 +42,8 @@ class EasyCache<T, I>(
     }
 
 }
+
+class SingleCache<I>(
+    cacheTime: Duration,
+    block: suspend (Unit?) -> I?
+) : EasyCache<I, Unit>(cacheTime, block)
