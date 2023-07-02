@@ -28,6 +28,7 @@ abstract class ServiceRepository<T : CloudService>(
                 if (!databaseConnection.isConnected()) {
                     throw Exception("Database connection is not connected! Cannot remove service from cluster")
                 }
+                if (serviceId.type != serviceType) return@runBlocking
                 connectedServices.remove(serviceId)
                 val service = getService(serviceId) as T? ?: return@runBlocking
                 if (service.isConnected()) {
