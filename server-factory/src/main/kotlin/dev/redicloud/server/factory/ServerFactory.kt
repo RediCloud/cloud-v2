@@ -31,7 +31,8 @@ class ServerFactory(
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     private val fileTemplateRepository: AbstractFileTemplateRepository,
     private val javaVersionRepository: JavaVersionRepository,
-    private val packetManager: PacketManager
+    private val packetManager: PacketManager,
+    private val bindHost: String
 ) {
 
     internal val startQueue: RList<ServerQueueInformation> =
@@ -90,7 +91,7 @@ class ServerFactory(
                     .freeMemory()
             ) return NotEnoughRamOnJVMStartResult()
 
-            val servers = serverRepository.getAll()
+            val servers = serverRepository.getRegisteredServers()
 
             // Check how many servers of the template are already started and cancel if the configured globally total amount is reached
             val startAmountOfTemplate =
@@ -123,7 +124,8 @@ class ServerFactory(
             javaVersionRepository,
             serverVersionRepository,
             serverVersionTypeRepository,
-            packetManager
+            packetManager,
+            bindHost
         )
         var cloudServer: CloudServer? = null
         try {
@@ -131,11 +133,11 @@ class ServerFactory(
             processes.add(serverProcess)
 
             // get the next id for the server and create it
-            val id = getForServer(configurationTemplate)
+            val id = getIdForServer(configurationTemplate)
             cloudServer = if (type.proxy) {
                 serverRepository.createServer(
                     CloudProxyServer(
-                        ServiceId(UUID.randomUUID(), ServiceType.MINECRAFT_SERVER),
+                        ServiceId(UUID.randomUUID(), ServiceType.PROXY_SERVER),
                         configurationTemplate,
                         id,
                         thisNode.serviceId,
@@ -221,9 +223,9 @@ class ServerFactory(
     /**
      * Gets the next id for a server with the given configuration template
      */
-    private suspend fun getForServer(configuration: ConfigurationTemplate): Int {
+    private suspend fun getIdForServer(configuration: ConfigurationTemplate): Int {
         var i = 1
-        for (cloudServer in serverRepository.getAll()) {
+        for (cloudServer in serverRepository.getRegisteredServers()) {
             if (cloudServer.configurationTemplate.name != configuration.name) continue
             val id = cloudServer.configurationTemplate.name
                 .replace(configuration.name, "")
