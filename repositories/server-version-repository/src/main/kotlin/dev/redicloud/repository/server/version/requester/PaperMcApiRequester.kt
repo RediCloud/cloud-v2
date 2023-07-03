@@ -31,8 +31,8 @@ class PaperMcApiRequester {
     }
 
     fun getDownloadUrl(type: CloudServerVersionType, minecraftVersion: ServerVersion, build: Int): String {
-        return "$baseUrl/projects/${type.name.lowercase()}/versions/${minecraftVersion.name.lowercase()}/builds/$build/downloads/" +
-                "${type.name.lowercase()}-${minecraftVersion.name.lowercase()}-$build.jar"
+        return "$baseUrl/projects/${type.name.lowercase()}/versions/${minecraftVersion.name}/builds/$build/downloads/" +
+                "${type.name.lowercase()}-${minecraftVersion.name}-$build.jar"
     }
 
     suspend fun getLatestBuild(type: CloudServerVersionType, minecraftVersion: ServerVersion): Int {
