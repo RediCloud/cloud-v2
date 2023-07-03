@@ -9,6 +9,7 @@ import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
+import dev.redicloud.utils.CLOUD_VERSION
 import dev.redicloud.utils.CONNECTORS_FOLDER
 import dev.redicloud.utils.STATIC_FOLDER
 import dev.redicloud.utils.TEMP_SERVER_FOLDER
@@ -60,7 +61,7 @@ class FileCopier(
     suspend fun copyConnector() {
         logger.fine("Copying connector for $serviceId")
         CONNECTORS_FOLDER.createIfNotExists()
-        val connectorFile = File(CONNECTORS_FOLDER.getFile(), serverVersionType.connectorPluginName)
+        val connectorFile = File(CONNECTORS_FOLDER.getFile(), serverVersionType.connectorPluginName.replace("%cloud_version%", CLOUD_VERSION))
         if (!connectorFile.exists()) {
             connectorFile.createNewFile()
             if (serverVersionType.connectorDownloadUrl == null) {
@@ -70,17 +71,17 @@ class FileCopier(
             }
             try {
                 serverVersionTypeRepository.downloadConnector(serverVersionType)
+                if (!connectorFile.exists()) {
+                    logger.warning("Connector file for ${serverVersionType.name} does not exist! The server will not connect to the cloud cluster!")
+                    logger.warning("You can set the connector file in the server version type settings with: 'svt edit <name> connector jar <connector>'")
+                    return
+                }
             }catch (e: Exception) {
                 logger.warning("Failed to download connector for ${serverVersionType.name} from ${serverVersionType.connectorDownloadUrl}", e)
                 logger.warning("The server will not connect to the cloud cluster!")
                 logger.warning("You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'")
                 return
             }
-        }
-        if (!connectorFile.exists()) {
-            logger.warning("Connector file for ${serverVersionType.name} does not exist! The server will not connect to the cloud cluster!")
-            logger.warning("You can set the connector file in the server version type settings with: 'svt edit <name> connector jar <connector>'")
-            return
         }
         val pluginFolder = File(workDirectory, serverVersionType.connectorFolder)
         if (!pluginFolder.exists()) pluginFolder.mkdirs()
