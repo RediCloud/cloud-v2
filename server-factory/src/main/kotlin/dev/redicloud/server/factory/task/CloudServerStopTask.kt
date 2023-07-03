@@ -1,6 +1,7 @@
 package dev.redicloud.server.factory.task
 
 import dev.redicloud.logging.LogManager
+import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.tasks.CloudTask
@@ -22,7 +23,7 @@ class CloudServerStopTask(
         var stopped = 0
         var total = 0
         serverFactory.stopQueue.forEach {
-            val server = serverRepository.getServer(it)
+            val server = serverRepository.getServer<CloudServer>(it)
             if (server == null) {
                 serverFactory.stopQueue.remove(it)
                 return@forEach

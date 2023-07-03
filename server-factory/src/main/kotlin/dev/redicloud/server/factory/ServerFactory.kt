@@ -3,8 +3,11 @@ package dev.redicloud.server.factory
 import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
+import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.NodeRepository
+import dev.redicloud.repository.server.CloudMinecraftServer
+import dev.redicloud.repository.server.CloudProxyServer
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
@@ -27,7 +30,8 @@ class ServerFactory(
     private val serverVersionRepository: CloudServerVersionRepository,
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     private val fileTemplateRepository: AbstractFileTemplateRepository,
-    private val javaVersionRepository: JavaVersionRepository
+    private val javaVersionRepository: JavaVersionRepository,
+    private val packetManager: PacketManager
 ) {
 
     internal val startQueue: RList<ServerQueueInformation> =
@@ -56,7 +60,7 @@ class ServerFactory(
 
     fun queueStop(serviceId: ServiceId, force: Boolean = false) =
         defaultScope.launch {
-            val server = serverRepository.getServer(serviceId) ?: return@launch
+            val server = serverRepository.getServer<CloudServer>(serviceId) ?: return@launch
             if (server.state == CloudServerState.STOPPED || server.state == CloudServerState.STOPPING && !force) return@launch
             stopQueue.add(serviceId)
         }
@@ -118,7 +122,8 @@ class ServerFactory(
             serverRepository,
             javaVersionRepository,
             serverVersionRepository,
-            serverVersionTypeRepository
+            serverVersionTypeRepository,
+            packetManager
         )
         var cloudServer: CloudServer? = null
         try {
@@ -127,17 +132,31 @@ class ServerFactory(
 
             // get the next id for the server and create it
             val id = getForServer(configurationTemplate)
-            cloudServer = serverRepository.createServer(
-                CloudServer(
-                    ServiceId(UUID.randomUUID(), ServiceType.SERVER),
-                    configurationTemplate,
-                    id,
-                    thisNode.serviceId,
-                    mutableListOf(),
-                    false,
-                    CloudServerState.PREPARING
+            cloudServer = if (type.proxy) {
+                serverRepository.createServer(
+                    CloudProxyServer(
+                        ServiceId(UUID.randomUUID(), ServiceType.MINECRAFT_SERVER),
+                        configurationTemplate,
+                        id,
+                        thisNode.serviceId,
+                        mutableListOf(),
+                        false,
+                        CloudServerState.PREPARING
+                    )
                 )
-            )
+            }else {
+                serverRepository.createServer(
+                    CloudMinecraftServer(
+                        ServiceId(UUID.randomUUID(), ServiceType.MINECRAFT_SERVER),
+                        configurationTemplate,
+                        id,
+                        thisNode.serviceId,
+                        mutableListOf(),
+                        false,
+                        CloudServerState.PREPARING
+                    )
+                )
+            }
 
             // copy the files to copy server necessary files
             val copier = FileCopier(
@@ -171,7 +190,7 @@ class ServerFactory(
 
     //TODO: events
     suspend internal fun stopServer(serviceId: ServiceId, force: Boolean = true) {
-        val server = serverRepository.getServer(serviceId) ?: throw IllegalArgumentException("Server not found")
+        val server = serverRepository.getServer<CloudServer>(serviceId) ?: throw IllegalArgumentException("Server not found")
         if (server.hostNodeId != nodeRepository.serviceId) throw IllegalArgumentException("Server is not on this node")
         if (server.state == CloudServerState.STOPPED || server.state == CloudServerState.STOPPING && !force) return
         val process = processes.firstOrNull { it.cloudServer!!.serviceId == serviceId }

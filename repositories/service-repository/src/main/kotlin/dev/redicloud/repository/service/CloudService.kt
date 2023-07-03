@@ -56,6 +56,6 @@ abstract class CloudService(
     }
 
     open fun unregisterAfterDisconnect(): Boolean =
-        serviceId.type == ServiceType.SERVER
+        serviceId.type == ServiceType.MINECRAFT_SERVER || serviceId.type == ServiceType.PROXY_SERVER
 
 }

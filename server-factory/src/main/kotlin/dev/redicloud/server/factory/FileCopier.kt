@@ -17,7 +17,6 @@ import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import java.io.File
-import java.net.URL
 import java.util.*
 
 
@@ -30,7 +29,7 @@ class FileCopier(
 ) {
 
     val serverUniqueId = UUID.randomUUID()
-    val serviceId = ServiceId(serverUniqueId, ServiceType.SERVER)
+    val serviceId: ServiceId
     val configurationTemplate = serverProcess.configurationTemplate
     val serverVersion: CloudServerVersion
     val serverVersionType: CloudServerVersionType
@@ -46,6 +45,7 @@ class FileCopier(
         if (serverVersion.typeId == null) throw IllegalStateException("Server version type is not set for server version ${serverVersion.getDisplayName()}!")
         serverVersionType = runBlocking { serverVersionTypeRepository.getType(serverVersion.typeId!!) }
             ?: throw IllegalStateException("Server version type is not set for server version ${serverVersion.getDisplayName()}!")
+        serviceId = ServiceId(serverUniqueId, if (serverVersionType.proxy) ServiceType.PROXY_SERVER else ServiceType.MINECRAFT_SERVER)
         // get templates by given configuration template and collect also inherited templates
         templates = configurationTemplate.fileTemplateIds.mapNotNull { runBlocking { fileTemplateRepository.getTemplate(it) } }
             .flatMap { runBlocking { fileTemplateRepository.collectTemplates(it) } }

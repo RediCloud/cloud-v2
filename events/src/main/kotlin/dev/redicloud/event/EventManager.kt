@@ -146,12 +146,61 @@ class EventManager(val identifier: String, val packetManager: PacketManager?) {
                                 gson.toJson(event),
                                 event::class.qualifiedName!!,
                                 identifier
-                            ), ServiceType.SERVER
+                            ), ServiceType.MINECRAFT_SERVER
+                        )
+                        packetManager?.publish(
+                            CloudEventPacket(
+                                gson.toJson(event),
+                                event::class.qualifiedName!!,
+                                identifier
+                            ), ServiceType.PROXY_SERVER
                         )
                         fireLocalEvent(event)
                     } catch (e: Exception) {
                         LOGGER.severe(
                             "Error while publishing server event (Make sure ${event::class.simpleName} is serializable)",
+                            e
+                        )
+                    }
+                }
+                return
+            }
+
+            EventFireType.MINECRAFT_SERVER -> {
+                runBlocking {
+                    try {
+                        packetManager?.publish(
+                            CloudEventPacket(
+                                gson.toJson(event),
+                                event::class.qualifiedName!!,
+                                identifier
+                            ), ServiceType.MINECRAFT_SERVER
+                        )
+                        fireLocalEvent(event)
+                    } catch (e: Exception) {
+                        LOGGER.severe(
+                            "Error while publishing minecraft server event (Make sure ${event::class.simpleName} is serializable)",
+                            e
+                        )
+                    }
+                }
+                return
+            }
+
+            EventFireType.PROXY_SERVER -> {
+                runBlocking {
+                    try {
+                        packetManager?.publish(
+                            CloudEventPacket(
+                                gson.toJson(event),
+                                event::class.qualifiedName!!,
+                                identifier
+                            ), ServiceType.PROXY_SERVER
+                        )
+                        fireLocalEvent(event)
+                    } catch (e: Exception) {
+                        LOGGER.severe(
+                            "Error while publishing proxy server event (Make sure ${event::class.simpleName} is serializable)",
                             e
                         )
                     }

@@ -4,6 +4,7 @@ import dev.redicloud.commands.api.*
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.repository.node.CloudNode
+import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.service.base.repository.pingService
 import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
 import dev.redicloud.service.node.NodeService
@@ -37,7 +38,7 @@ class ClusterCommand(private val nodeService: NodeService) : CommandBase() {
                     actor.sendMessage("   - IP§8: %hc%${node.currentOrLastsession()?.ipAddress ?: "Unknown"}")
                     if (node.isConnected()) {
                         sendPingMessage(node, actor, "   - Ping§8: ")
-                        val server = node.getHostedServers().mapNotNull { nodeService.serverRepository.getServer(it)?.name }
+                        val server = node.getHostedServers().mapNotNull { nodeService.serverRepository.getServer<CloudServer>(it)?.name }
                         actor.sendMessage("   - Server§8: %hc%${if (server.isEmpty()) "None" else server.joinToString(", ")}")
                     }
                 }
@@ -91,7 +92,7 @@ class ClusterCommand(private val nodeService: NodeService) : CommandBase() {
             actor.sendHeader("Suspend")
             actor.sendMessage("")
             actor.sendMessage("Node§8: %hc%${node.getIdentifyingName()}")
-            actor.sendMessage("Servers§8: %hc%${node.getHostedServers().mapNotNull { nodeService.serverRepository.getServer(it)?.name }.joinToString(", ")}")
+            actor.sendMessage("Servers§8: %hc%${node.getHostedServers().mapNotNull { nodeService.serverRepository.getServer<CloudServer>(it)?.name }.joinToString(", ")}")
             sendPingMessage(node, actor, "Ping§8: %hc%")
             actor.sendMessage("")
             actor.sendMessage("§cThis will suspend the node and all hosted servers will be stopped!")

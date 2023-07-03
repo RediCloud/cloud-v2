@@ -43,6 +43,7 @@ class ServerProcess(
      */
     suspend fun start(cloudServer: CloudServer) {
         this.cloudServer = cloudServer
+        cloudServer.port = port
         val processBuilder = ProcessBuilder()
         // set environment variables
         processBuilder.environment()["RC_SERVICE_ID"] = cloudServer.serviceId.toName()

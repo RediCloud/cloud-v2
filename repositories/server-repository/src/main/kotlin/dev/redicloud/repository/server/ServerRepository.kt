@@ -6,53 +6,64 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.ServiceRepository
+import dev.redicloud.service.base.events.server.CloudServerDisconnectedEvent
 import dev.redicloud.service.base.events.server.CloudServerRegisteredEvent
 import dev.redicloud.service.base.events.server.CloudServerStateChangeEvent
-import dev.redicloud.service.base.events.server.CloudServerDisconnectedEvent
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
+import org.redisson.api.RBucket
 
 class ServerRepository(
     databaseConnection: DatabaseConnection,
     serviceId: ServiceId,
     packetManager: PacketManager,
     private val eventManager: EventManager
-) : ServiceRepository<CloudServer>(databaseConnection, serviceId, ServiceType.SERVER, packetManager) {
+) : ServiceRepository<CloudServer>(databaseConnection, serviceId, serviceId.type, packetManager) {
 
-    suspend fun getServer(serviceId: ServiceId): CloudServer? =
-        getService(serviceId) as CloudServer?
+    private fun <T : CloudServer> getBase(serviceId: ServiceId): RBucket<T> =
+        getUnsafeHandle<T>("service:${serviceId.type.name.lowercase()}:${serviceId.id}", true)
 
-    suspend fun updateServer(cloudServer: CloudServer): CloudServer {
-        val oldServer = getServer(cloudServer.serviceId)
-        val newServer = updateService(cloudServer) as CloudServer
-        if (oldServer?.state != newServer.state) {
-            eventManager.fireEvent(CloudServerStateChangeEvent(newServer.serviceId, newServer.state))
+    suspend fun <T : CloudServer> getServer(serviceId: ServiceId): T? =
+        getBase<T>(serviceId).get()
+
+    suspend fun getMinecraftServer(serviceId: ServiceId): CloudMinecraftServer? =
+        getServer(serviceId)
+
+    suspend fun getProxyServer(serviceId: ServiceId): CloudProxyServer? =
+        getServer(serviceId)
+
+    suspend fun <T : CloudServer> updateServer(cloudServer: T): T {
+        val oldServer = getServer<T>(cloudServer.serviceId)
+        getBase<CloudServer>(cloudServer.serviceId).set(cloudServer)
+        if (oldServer?.state != cloudServer.state) {
+            eventManager.fireEvent(CloudServerStateChangeEvent(cloudServer.serviceId, cloudServer.state))
         }
-        if (oldServer != null && oldServer.connected != newServer.connected) {
-            if (newServer.connected) {
-                eventManager.fireEvent(CloudServerConnectedEvent(newServer.serviceId))
+        if (oldServer != null && oldServer.connected != cloudServer.connected) {
+            if (cloudServer.connected) {
+                eventManager.fireEvent(CloudServerConnectedEvent(cloudServer.serviceId))
             } else {
-                eventManager.fireEvent(CloudServerDisconnectedEvent(newServer.serviceId))
+                eventManager.fireEvent(CloudServerDisconnectedEvent(cloudServer.serviceId))
             }
         }
-        return newServer
+        return cloudServer
     }
 
-    suspend fun createServer(cloudServer: CloudServer): CloudServer {
-        val newServer = createService(cloudServer) as CloudServer
-        eventManager.fireEvent(CloudServerRegisteredEvent(newServer.serviceId))
-        return newServer
+    fun <T : CloudServer> createServer(cloudServer: T): T {
+        getBase<T>(cloudServer.serviceId).set(cloudServer)
+        eventManager.fireEvent(CloudServerRegisteredEvent(cloudServer.serviceId))
+        return cloudServer
     }
 
-    suspend fun deleteServer(cloudServer: CloudServer) {
-        deleteService(cloudServer)
+
+    suspend fun <T : CloudServer> deleteServer(cloudServer: T) {
+        getBase<T>(cloudServer.serviceId).delete()
         eventManager.fireEvent(CloudServerUnregisteredEvent(cloudServer.serviceId))
     }
 
     suspend fun getConnectedServers(): List<CloudServer> =
-        getConnectedServices().filter { it.serviceId.type == ServiceType.SERVER }.toList() as List<CloudServer>
+        getConnectedServices().filter { it.serviceId.type.isServer() }.toList() as List<CloudServer>
 
     suspend fun getRegisteredServers(): List<CloudServer> =
-        getRegisteredServices().filter { it.serviceId.type == ServiceType.SERVER }.toList() as List<CloudServer>
+        getRegisteredServices().filter { it.serviceId.type.isServer() }.toList() as List<CloudServer>
 
 }
