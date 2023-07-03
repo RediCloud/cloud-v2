@@ -1,11 +1,11 @@
 package dev.redicloud.server.factory
 
+import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
-import dev.redicloud.repository.server.CloudServerState
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
@@ -18,9 +18,6 @@ import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.redisson.api.RList
-import org.redisson.api.RMap
-import org.redisson.api.RQueue
-import org.redisson.codec.JsonJacksonCodec
 import java.util.*
 
 class ServerFactory(
@@ -41,7 +38,7 @@ class ServerFactory(
     private val logger = LogManager.logger(ServerFactory::class)
 
     suspend fun getStartList(): List<ServerQueueInformation> {
-        return startQueue.sortedWith(compareBy<ServerQueueInformation>
+        return startQueue.toMutableList().sortedWith(compareBy<ServerQueueInformation>
         { it.configurationTemplate.startPort }.thenByDescending { it.queueTime }).toList()
     }
 
@@ -156,6 +153,8 @@ class ServerFactory(
             copier.copyTemplates()
             // copy all version files
             copier.copyVersionFiles()
+            // copy connector
+            copier.copyConnector()
 
             // start the server
             serverProcess.start(cloudServer)

@@ -4,12 +4,10 @@ import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.server.factory.*
-import dev.redicloud.service.base.events.NodeConnectEvent
-import dev.redicloud.service.base.events.NodeDisconnectEvent
-import dev.redicloud.service.base.events.NodeSuspendedEvent
+import dev.redicloud.service.base.events.node.NodeConnectEvent
+import dev.redicloud.service.base.events.node.NodeDisconnectEvent
+import dev.redicloud.service.base.events.node.NodeSuspendedEvent
 import dev.redicloud.tasks.CloudTask
-import dev.redicloud.utils.defaultScope
-import dev.redicloud.utils.ioScope
 import kotlinx.coroutines.*
 
 class CloudServerStartTask(
@@ -24,13 +22,9 @@ class CloudServerStartTask(
             val master = nodes.firstOrNull { it.master }
             if (master?.serviceId != nodeRepository.serviceId) return@launch
             serverFactory.startQueue.forEach queue@{ info ->
-                info.failedStarts.forEach { serviceId, map ->
-                    // Remove the node from the failed starts
-                    if (serviceId != it.serviceId) return@forEach
-                    if (info.configurationTemplate.nodeIds.isNotEmpty() && !info.configurationTemplate.nodeIds.contains(serviceId)) return@forEach
-                    map.remove(StartResultType.NODE_NOT_CONNECTED)
-                    map.remove(StartResultType.RAM_USAGE_TOO_HIGH)
-                    map.remove(StartResultType.TOO_MUCH_SERVICES_OF_TEMPLATE)
+                info.failedStarts.removeFails(it.serviceId)
+                if (info.configurationTemplate.nodeIds.isNotEmpty() && !info.configurationTemplate.nodeIds.contains(it.serviceId)) {
+                    info.failedStarts.addFailedStart(it.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
                 }
                 info.calculateStartOrder(nodes)
             }
@@ -43,10 +37,7 @@ class CloudServerStartTask(
             val master = nodes.firstOrNull { it.master }
             if (master?.serviceId != nodeRepository.serviceId) return@launch
             serverFactory.startQueue.forEach queue@{ info ->
-                info.failedStarts.forEach { serviceId, map ->
-                    if (serviceId != it.serviceId) return@forEach
-                    map[StartResultType.NODE_NOT_CONNECTED] = map.getOrDefault(StartResultType.NODE_NOT_CONNECTED, 0) + 1
-                }
+                info.failedStarts.addFailedStart(it.serviceId, StartResultType.NODE_NOT_CONNECTED)
                 info.calculateStartOrder(nodes)
             }
         }
@@ -58,10 +49,7 @@ class CloudServerStartTask(
             val master = nodes.firstOrNull { it.master }
             if (master?.serviceId != nodeRepository.serviceId) return@launch
             serverFactory.startQueue.forEach queue@{ info ->
-                info.failedStarts.forEach { serviceId, map ->
-                    if (serviceId != it.serviceId) return@forEach
-                    map[StartResultType.NODE_NOT_CONNECTED] = map.getOrDefault(StartResultType.NODE_NOT_CONNECTED, 0) + 1
-                }
+                info.failedStarts.addFailedStart(it.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
                 info.calculateStartOrder(nodes)
             }
         }

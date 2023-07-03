@@ -26,7 +26,7 @@ class CloudServerQueueCleanerTask(
             // Check if queue time is too long
             if ((System.currentTimeMillis() - info.queueTime) - MAX_QUEUE_TIME > 0) {
                 logger.warning("§cStart of template ${info.configurationTemplate.name} took too long, cancelling server start!")
-                serverFactory.startQueue.removeIf { it.uniqueId == info.uniqueId }
+                serverFactory.startQueue.remove(info)
                 return@forEach
             }
             // Check if no node is available
@@ -34,9 +34,9 @@ class CloudServerQueueCleanerTask(
                 logger.warning("§cNo node for template ${info.configurationTemplate.name} available, cancelling server start!")
             }
             // Check if all nodes failed to start
-            if (info.failedStarts.map { it.key to it.value.values.sum() }.count { it.second != 0 } > nodes.size) {
+            if (info.failedStarts.getFailedNodes().none { serviceId -> nodes.any { it.serviceId == serviceId } }) {
                 logger.warning("§cAll nodes for template ${info.configurationTemplate.name} failed to start, cancelling server start!")
-                serverFactory.startQueue.removeIf { it.uniqueId == info.uniqueId }
+                serverFactory.startQueue.remove(info)
                 return@forEach
             }
         }
