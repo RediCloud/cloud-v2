@@ -27,12 +27,13 @@ class ServerProcess(
     private val javaVersionRepository: JavaVersionRepository,
     private val serverVersionRepository: CloudServerVersionRepository,
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
-    private val packetManager: PacketManager
+    private val packetManager: PacketManager,
+    private val bindHost: String
 ) {
 
     val port = findFreePort(configurationTemplate.startPort, !configurationTemplate.static)
     var process: Process? = null
-    var handler: ServiceProcessHandler? = null
+    var handler: ServerProcessHandler? = null
     private val logger = LogManager.logger(ServerProcess::class)
     internal lateinit var fileCopier: FileCopier
     internal var cloudServer: CloudServer? = null
@@ -48,6 +49,7 @@ class ServerProcess(
         // set environment variables
         processBuilder.environment()["RC_SERVICE_ID"] = cloudServer.serviceId.toName()
         processBuilder.environment()["RC_PATH"] = CLOUD_PATH
+        processBuilder.environment()["RC_HOST"] = bindHost
         processBuilder.environment()["RC_PORT"] = port.toString()
         processBuilder.environment()["RC_LOG_LEVEL"] = getDefaultLogLevel().localizedName
         processBuilder.environment()["LIBRARY_FOLDER"] = LIB_FOLDER.getFile().absolutePath
@@ -74,7 +76,7 @@ class ServerProcess(
         processBuilder.directory(fileCopier.workDirectory)
         process = processBuilder.start()
         // create handler and listen for exit
-        handler = ServiceProcessHandler(process!!, cloudServer)
+        handler = ServerProcessHandler(process!!, cloudServer)
         handler!!.onExit { runBlocking { stop(false) } }
 
         cloudServer.state = CloudServerState.STARTING

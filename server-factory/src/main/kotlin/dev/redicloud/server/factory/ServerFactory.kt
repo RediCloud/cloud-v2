@@ -217,7 +217,7 @@ class ServerFactory(
                 }
             }
         }
-        ServiceProcessHandler.PROCESS_SCOPE.cancel()
+        ServerProcessHandler.PROCESS_SCOPE.cancel()
     }
 
     /**

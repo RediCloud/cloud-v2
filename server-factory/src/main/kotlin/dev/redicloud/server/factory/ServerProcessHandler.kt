@@ -10,22 +10,31 @@ import kotlinx.coroutines.launch
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-class ServiceProcessHandler(
+class ServerProcessHandler(
     private val process: Process,
     private val cloudServer: CloudServer
 ) {
 
     companion object {
         val PROCESS_SCOPE = CoroutineScope(Dispatchers.Default)
-        val LOGGER = LogManager.logger(ServiceProcessHandler::class)
+        val LOGGER = LogManager.logger(ServerProcessHandler::class)
     }
 
     init {
-        PROCESS_SCOPE.launch {
+        run()
+    }
 
+    private val inputStream = process.inputStream
+    private val errorStream = process.errorStream
+    private val exits = mutableListOf<(Int) -> Unit>()
+    private val lines = mutableListOf<(String) -> Unit>()
+    val history = History<String>(100)
+
+    private fun run() {
+        PROCESS_SCOPE.launch {
             val inputReader = InputStreamReader(inputStream)
             val bufferedReader = BufferedReader(inputReader)
-            while (process.isAlive && inputStream.isOpen() && inputReader.ready()) {
+            while (process.isAlive && inputStream.isOpen()) {
                 val line = bufferedReader.readLine()
                 if (line == null || line.isEmpty()) continue
                 history.add(line)
@@ -48,16 +57,13 @@ class ServiceProcessHandler(
                 errorReader.close()
             }
 
-            exits.forEach { it(process.exitValue()) }
-
+            if (!process.isAlive) {
+                exits.forEach { it(process.exitValue()) }
+            }else {
+                run()
+            }
         }
     }
-
-    private val inputStream = process.inputStream
-    private val errorStream = process.errorStream
-    private val exits = mutableListOf<(Int) -> Unit>()
-    private val lines = mutableListOf<(String) -> Unit>()
-    val history = History<String>(100)
 
     suspend fun onExit(): Int = process.waitFor()
 
