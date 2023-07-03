@@ -1,10 +1,12 @@
 package dev.redicloud.service.node.console
 
+import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.api.server.events.server.CloudServerConnectedEvent
 import dev.redicloud.console.Console
 import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.event.EventManager
 import dev.redicloud.repository.node.NodeRepository
+import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.service.node.NodeConfiguration
 import dev.redicloud.service.base.events.node.NodeConnectEvent
@@ -53,15 +55,24 @@ class NodeConsole(
 
     private val onServerConnectedEvent = eventManager.listen<CloudServerConnectedEvent> {
         runBlocking {
-            val server = serverRepository.getServer(it.serviceId) ?: return@runBlocking
+            val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@runBlocking
             writeLine("${server.getIdentifyingName()}§8: §2● §8(%tc%connected to the cluster§8)")
         }
     }
 
     private val onServerDisconnectedEvent = eventManager.listen<CloudServerDisconnectedEvent> {
         runBlocking {
-            val server = serverRepository.getServer(it.serviceId) ?: return@runBlocking
+            val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@runBlocking
             writeLine("${server.getIdentifyingName()}§8: §c● §8(%tc%disconnected from the cluster§8)")
+        }
+    }
+
+    private val onServerStateChangeEvent = eventManager.listen<CloudServerStateChangeEvent> {
+        runBlocking {
+            val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@runBlocking
+            if (it.state == CloudServerState.PREPARING) {
+                writeLine("${server.getIdentifyingName()}§8: §e● §8(%tc%starting§8)")
+            }
         }
     }
 
