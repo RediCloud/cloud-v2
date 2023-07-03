@@ -1,0 +1,5 @@
+name: redicloud-connector-bukkit
+version: 2.0.0-SNAPSHOT
+main: dev.redicloud.connectors.bukkit.bootstrap.BukkitConnectorBootstrap
+author: RediCloud
+description: RediCloud Connector Bukkit
