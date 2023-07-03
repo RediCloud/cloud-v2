@@ -35,3 +35,18 @@ dependencies {
     compileOnly("org.jline:jline-terminal-jansi:3.23.0")
     compileOnly("com.jcraft:jsch:0.1.55")
 }
+
+tasks.register("buildAndCopy") {
+    dependsOn(tasks.named("build"))
+    val outputJar = Builds.getOutputFileName(project)
+    doLast {
+        for (i in 1..Builds.testNodes) {
+            val id = if (i in 1..9) "0$i" else i.toString()
+            val path = Builds.getTestDirPath(project, "node$id")
+            project.copy {
+                from(project.buildDir.resolve("libs").resolve(outputJar))
+                into(path)
+            }
+        }
+    }
+}

@@ -51,3 +51,12 @@ findProject(":commands:command-api")?.name = "command-api"
 
 include("connectors:bukkit-connector")
 findProject(":connectors:bukkit-connector")?.name = "bukkit-connector"
+
+include("connectors:velocity-connector")
+findProject(":connectors:velocity-connector")?.name = "velocity-connector"
+
+include("services:minecraft-server-service")
+findProject(":services:minecraft-server-service")?.name = "minecraft-server-service"
+
+include("services:proxy-server-service")
+findProject(":services:proxy-server-service")?.name = "proxy-server-service"

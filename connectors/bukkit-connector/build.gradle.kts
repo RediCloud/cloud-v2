@@ -7,6 +7,7 @@ repositories {
 dependencies {
     shade(project(":api"))
     shade(project(":services:base-service"))
+    shade(project(":services:minecraft-server-service"))
     shade(project(":repositories:node-repository"))
     shade(project(":repositories:service-repository"))
     shade(project(":repositories:server-repository"))
@@ -25,4 +26,19 @@ dependencies {
     shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
 
     compileOnly("org.spigotmc:spigot-api:${Versions.minecraftVersion}")
+}
+
+tasks.register("buildAndCopy") {
+    dependsOn(tasks.named("build"))
+    val outputJar = Builds.getOutputFileName(project)
+    doLast {
+        for (i in 1..Builds.testNodes) {
+            val id = if (i in 1..9) "0$i" else i.toString()
+            val path = File(Builds.getTestDirPath(project, "node$id"), "storage/connectors")
+            project.copy {
+                from(project.buildDir.resolve("libs").resolve(outputJar))
+                into(path)
+            }
+        }
+    }
 }

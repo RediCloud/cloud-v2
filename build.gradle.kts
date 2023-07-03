@@ -45,6 +45,7 @@ allprojects {
         withType<JavaCompile> {
             options.release.set(8)
             options.encoding = "UTF-8"
+
         }
     }
 
@@ -56,6 +57,21 @@ allprojects {
             attributes["Agent-Class"] = "dev.redicloud.libloader.boot.Agent"
             attributes["Launcher-Agent-Class"] = "dev.redicloud.libloader.boot.Agent"
         }
+        archiveFileName.set(Builds.getOutputFileName(this@allprojects))
     }
 
+}
+
+tasks.register("buildCloudAndCopy") {
+    project.allprojects.forEach {
+        if (it == it.rootProject) return@forEach
+        try {
+            val task = it.tasks.named("buildAndCopy")
+            dependsOn(task)
+            println("Project ${it.name} has ${task.name} task!")
+        }catch (_: UnknownDomainObjectException) {
+            println("Project ${it.name} has no buildAndCopy task! Use default build task instead.")
+            dependsOn(it.tasks.named("build"))
+        }
+    }
 }
