@@ -1,20 +1,25 @@
 package dev.redicloud.connector.velocity
 
+import com.velocitypowered.api.proxy.ProxyServer
 import com.velocitypowered.api.proxy.server.ServerInfo
 import dev.redicloud.connector.velocity.bootstrap.VelocityConnectorBootstrap
 import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.service.minecraft.ProxyServerService
 import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.utils.service.ServiceType
 import java.net.InetSocketAddress
 
-class VelocityConnector(private val bootstrap: VelocityConnectorBootstrap) :
-    ProxyServerService<VelocityConnectorBootstrap>() {
+class VelocityConnector(
+    private val bootstrap: VelocityConnectorBootstrap,
+    val proxyServer: ProxyServer
+) : ProxyServerService<VelocityConnectorBootstrap>() {
 
     private val registered = mutableMapOf<ServiceId, ServerInfo>()
 
     override fun registerServer(server: CloudMinecraftServer) {
+        if (server.serviceId.type != ServiceType.MINECRAFT_SERVER) return
         val session = server.currentSession()
-        if (session == null) throw IllegalStateException("Server ${serviceId.toName()} is connected but has no active session?")
+            ?: throw IllegalStateException("Server ${serviceId.toName()} is connected but has no active session?")
         val serverInfo = ServerInfo(
             server.name,
             InetSocketAddress(
@@ -23,12 +28,13 @@ class VelocityConnector(private val bootstrap: VelocityConnectorBootstrap) :
             )
         )
         registered[server.serviceId] = serverInfo
-        bootstrap.proxyServer.registerServer(serverInfo)
+        proxyServer.registerServer(serverInfo)
     }
 
     override fun unregisterServer(server: CloudMinecraftServer) {
+        if (server.serviceId.type != ServiceType.MINECRAFT_SERVER) return
         val serverInfo = registered.remove(server.serviceId) ?: return
-        bootstrap.proxyServer.unregisterServer(serverInfo)
+        proxyServer.unregisterServer(serverInfo)
     }
 
     override fun getConnectorPlugin(): VelocityConnectorBootstrap = bootstrap

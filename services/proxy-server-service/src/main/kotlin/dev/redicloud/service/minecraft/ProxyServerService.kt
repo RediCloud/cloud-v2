@@ -2,11 +2,16 @@ package dev.redicloud.service.minecraft
 
 import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.service.minecraft.listener.CloudServerListener
+import dev.redicloud.utils.service.ServiceType
+import kotlinx.coroutines.runBlocking
 
 abstract class ProxyServerService<T> : MinecraftServerService<T>() {
 
     init {
-        this.registerListeners()
+        runBlocking {
+            registerListeners()
+            registerStartedServers()
+        }
     }
 
     abstract fun registerServer(server: CloudMinecraftServer)
@@ -15,6 +20,12 @@ abstract class ProxyServerService<T> : MinecraftServerService<T>() {
 
     private fun registerListeners() {
         this.eventManager.register(CloudServerListener(this))
+    }
+
+    private suspend fun registerStartedServers() {
+        this.serverRepository.getConnectedServers<CloudMinecraftServer>(ServiceType.MINECRAFT_SERVER).forEach {
+            registerServer(it)
+        }
     }
 
 }
