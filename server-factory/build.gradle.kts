@@ -1,10 +1,12 @@
 group = "dev.redicloud.server.factory"
 
 dependencies {
+    compileOnly(project(":api"))
     compileOnly(project(":utils"))
     compileOnly(project(":tasks"))
     compileOnly(project(":database"))
     compileOnly(project(":logging"))
+    compileOnly(project(":packets"))
     compileOnly(project(":services:base-service"))
     compileOnly(project(":events"))
     compileOnly(project(":repositories:server-repository"))

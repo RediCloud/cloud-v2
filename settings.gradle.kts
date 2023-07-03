@@ -8,11 +8,16 @@ pluginManagement {
     }
 }
 
+include("api")
 include("database")
 include("packets")
 include("utils")
 include("events")
 include("console")
+include("logging")
+include("tasks")
+include("file-cluster")
+include("server-factory")
 
 include("services:base-service")
 findProject(":services:base-service")?.name = "base-service"
@@ -44,7 +49,5 @@ findProject(":repositories:file-template-repository")?.name = "file-template-rep
 include("commands:command-api")
 findProject(":commands:command-api")?.name = "command-api"
 
-include("logging")
-include("tasks")
-include("file-cluster")
-include("server-factory")
+include("connectors:bukkit-connector")
+findProject(":connectors:bukkit-connector")?.name = "bukkit-connector"

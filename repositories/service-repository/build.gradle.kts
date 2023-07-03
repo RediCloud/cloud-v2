@@ -6,6 +6,7 @@ repositories {
 
 dependencies {
     compileOnly(project(":utils"))
+    compileOnly(project(":api"))
     compileOnly(project(":database"))
     compileOnly(project(":packets"))
     compileOnly(project(":logging"))

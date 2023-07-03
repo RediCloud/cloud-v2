@@ -11,6 +11,7 @@ repositories {
 }
 
 dependencies {
+    shade(project(":api"))
     shade(project(":services:base-service"))
     shade(project(":repositories:node-repository"))
     shade(project(":repositories:service-repository"))
@@ -29,7 +30,7 @@ dependencies {
     shade(project(":tasks"))
     shade(project(":file-cluster"))
     shade(project(":server-factory"))
-    shade("dev.redicloud.libloader:libloader-bootstrap:1.6.7")
+    shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
 
     compileOnly("org.jline:jline-terminal-jansi:3.23.0")
     compileOnly("com.jcraft:jsch:0.1.55")

@@ -2,6 +2,7 @@ group = "dev.redicloud.cluster.file"
 
 dependencies {
     compileOnly(project(":utils"))
+    compileOnly(project(":api"))
     compileOnly(project(":logging"))
     compileOnly(project(":events"))
     compileOnly(project(":services:base-service"))

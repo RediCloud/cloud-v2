@@ -1,4 +1,4 @@
-package dev.redicloud.service.base.events
+package dev.redicloud.service.base.events.node
 
 import dev.redicloud.event.CloudEvent
 import dev.redicloud.event.EventFireType
