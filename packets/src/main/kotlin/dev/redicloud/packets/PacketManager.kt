@@ -1,6 +1,5 @@
 package dev.redicloud.packets
 
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
@@ -8,7 +7,6 @@ import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.fixKotlinAnnotations
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.redisson.api.RTopic
@@ -110,6 +108,10 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
         val listener = PacketListener(clazz, handler)
         listeners.add(listener)
         return listener
+    }
+
+    fun registerListener(listener: PacketListener<out AbstractPacket>) {
+        listeners.add(listener)
     }
 
     fun unregisterListener(listener: PacketListener<out AbstractPacket>) {
