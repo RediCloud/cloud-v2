@@ -25,8 +25,8 @@
         "\"bungeecord\"": "true"
       }
     },
-    "connectorPluginName": "redicloud-connector-bukkit-%cloud_version%.jar",
-    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-connector-bukkit-%cloud_version%.jar",
+    "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-bukkit-connector-%cloud_version%.jar",
     "connectorFolder": "plugins"
   },
   {
@@ -55,8 +55,8 @@
         "\"bungeecord\"": "true"
       }
     },
-    "connectorPluginName": "redicloud-connector-bukkit-%cloud_version%.jar",
-    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-connector-bukkit-%cloud_version%.jar",
+    "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-bukkit-connector-%cloud_version%.jar",
     "connectorFolder": "plugins"
   },
   {
@@ -85,8 +85,8 @@
         "\"bungeecord\"": "true"
       }
     },
-    "connectorPluginName": "redicloud-connector-bukkit-%cloud_version%.jar",
-    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-connector-bukkit-%cloud_version%.jar",
+    "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-bukkit-connector-%cloud_version%.jar",
     "connectorFolder": "plugins"
   },
   {
@@ -102,8 +102,8 @@
         "bind": "\"%HOSTNAME%:%PORT%\""
       }
     },
-    "connectorPluginName": "redicloud-connector-velocity-%cloud_version%.jar",
-    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-connector-velocity-%cloud_version%.jar",
+    "connectorPluginName": "redicloud-velocity-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-velocity-connector-%cloud_version%.jar",
     "connectorFolder": "plugins"
   },
   {
@@ -120,8 +120,8 @@
         "ip_forward": "true"
       }
     },
-    "connectorPluginName": "redicloud-connector-bungeecord-%cloud_version%.jar",
-    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-connector-bungeecord-%cloud_version%.jar",
+    "connectorPluginName": "redicloud-bungeecord-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-bungeecord-connector-%cloud_version%.jar",
     "connectorFolder": "plugins"
   },
   {
@@ -161,8 +161,8 @@
         "server-port": "%PORT%"
       }
     },
-    "connectorPluginName": "redicloud-connector-bukkit-%cloud_version%.jar",
-    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-connector-bukkit-%cloud_version%.jar",
+    "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-bukkit-connector-%cloud_version%.jar",
     "connectorFolder": "plugins"
   },
   {
@@ -174,8 +174,8 @@
     "jvmArguments": [],
     "programmArguments": [],
     "fileEdits": {},
-    "connectorPluginName": "redicloud-connector-minestom-%cloud_version%.jar",
-    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-connector-minestom-%cloud_version%.jar",
+    "connectorPluginName": "redicloud-minestom-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-minestom-connector-%cloud_version%.jar",
     "connectorFolder": "extensions"
   },
   {
@@ -187,8 +187,8 @@
     "jvmArguments": [],
     "programmArguments": [],
     "fileEdits": {},
-    "connectorPluginName": "redicloud-connector-limbo-%cloud_version%.jar",
-    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-connector-limbo-%cloud_version%.jar",
+    "connectorPluginName": "redicloud-limbo-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-limbo-connector-%cloud_version%.jar",
     "connectorFolder": "plugins"
   },
   {
