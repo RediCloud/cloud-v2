@@ -1,22 +1,32 @@
 package dev.redicloud.service.node.console
 
+import dev.redicloud.api.server.events.server.CloudServerConnectedEvent
 import dev.redicloud.console.Console
+import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.event.EventManager
 import dev.redicloud.repository.node.NodeRepository
+import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.service.node.NodeConfiguration
-import dev.redicloud.service.base.events.NodeConnectEvent
-import dev.redicloud.service.base.events.NodeDisconnectEvent
-import dev.redicloud.service.base.events.NodeMasterChangedEvent
-import dev.redicloud.service.base.events.NodeSuspendedEvent
+import dev.redicloud.service.base.events.node.NodeConnectEvent
+import dev.redicloud.service.base.events.node.NodeDisconnectEvent
+import dev.redicloud.service.base.events.node.NodeMasterChangedEvent
+import dev.redicloud.service.base.events.node.NodeSuspendedEvent
+import dev.redicloud.service.base.events.server.CloudServerDisconnectedEvent
+import dev.redicloud.service.base.events.server.CloudServerStateChangeEvent
 import kotlinx.coroutines.runBlocking
 
-class NodeConsole(nodeConfiguration: NodeConfiguration, eventManager: EventManager, nodeRepository: NodeRepository) :
-    Console(nodeConfiguration.nodeName, eventManager, true) {
+class NodeConsole(
+    nodeConfiguration: NodeConfiguration,
+    eventManager: EventManager,
+    nodeRepository: NodeRepository,
+    serverRepository: ServerRepository
+) : Console(nodeConfiguration.nodeName, eventManager, true) {
 
     private val onSuspendNode = eventManager.listen<NodeSuspendedEvent> {
         runBlocking {
             val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
-            writeLine("${node.getIdentifyingName()}§8: §4● §8(%tc%suspended by ${it.suspender.getIdentifyingName(false)} because node is reachable§8)")
+            val suspender = nodeRepository.getNode(it.suspender)
+            writeLine("${node.getIdentifyingName()}§8: §4● §8(%tc%suspended by ${suspender?.getIdentifyingName(false) ?: toConsoleValue("unknown")} because node is reachable§8)")
         }
     }
 
@@ -38,6 +48,20 @@ class NodeConsole(nodeConfiguration: NodeConfiguration, eventManager: EventManag
         runBlocking {
             val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
             writeLine("${node.getIdentifyingName()}§8: §6● §8(%tc%new master§8)")
+        }
+    }
+
+    private val onServerConnectedEvent = eventManager.listen<CloudServerConnectedEvent> {
+        runBlocking {
+            val server = serverRepository.getServer(it.serviceId) ?: return@runBlocking
+            writeLine("${server.getIdentifyingName()}§8: §2● §8(%tc%connected to the cluster§8)")
+        }
+    }
+
+    private val onServerDisconnectedEvent = eventManager.listen<CloudServerDisconnectedEvent> {
+        runBlocking {
+            val server = serverRepository.getServer(it.serviceId) ?: return@runBlocking
+            writeLine("${server.getIdentifyingName()}§8: §c● §8(%tc%disconnected from the cluster§8)")
         }
     }
 
