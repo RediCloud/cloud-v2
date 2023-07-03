@@ -25,7 +25,7 @@
         "\"bungeecord\"": "true"
       }
     },
-    "connectorPluginName": "redicloud-connector-craftbukkit-%cloud_version%.jar",
+    "connectorPluginName": "redicloud-connector-bukkit-%cloud_version%.jar",
     "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-connector-craftbukkit-%cloud_version%.jar",
     "connectorFolder": "plugins"
   },
@@ -55,7 +55,7 @@
         "\"bungeecord\"": "true"
       }
     },
-    "connectorPluginName": "redicloud-connector-spigot-%cloud_version%.jar",
+    "connectorPluginName": "redicloud-connector-bukkit-%cloud_version%.jar",
     "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-connector-spigot-%cloud_version%.jar",
     "connectorFolder": "plugins"
   },
@@ -161,7 +161,7 @@
         "server-port": "%PORT%"
       }
     },
-    "connectorPluginName": "redicloud-connector-folia-%cloud_version%.jar",
+    "connectorPluginName": "redicloud-connector-bukkit-%cloud_version%.jar",
     "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-connector-folia-%cloud_version%.jar",
     "connectorFolder": "plugins"
   },
