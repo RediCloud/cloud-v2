@@ -8,7 +8,11 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent
 import com.velocitypowered.api.plugin.Plugin
 import com.velocitypowered.api.proxy.ProxyServer
 import dev.redicloud.connector.velocity.VelocityConnector
+import dev.redicloud.libloader.boot.Bootstrap
+import dev.redicloud.libloader.boot.loaders.URLClassLoaderJarLoader
+import java.net.URLClassLoader
 import kotlin.system.exitProcess
+
 
 @Plugin(
     id = "redicloud-connector-velocity",
@@ -23,7 +27,8 @@ class VelocityConnectorBootstrap @Inject constructor(val proxyServer: ProxyServe
 
     init {
         try {
-            connector = VelocityConnector(this)
+            Bootstrap().apply(URLClassLoaderJarLoader(this.javaClass.classLoader as URLClassLoader))
+            connector = VelocityConnector(this, proxyServer)
         }catch (e: Exception) {
             e.printStackTrace()
         }

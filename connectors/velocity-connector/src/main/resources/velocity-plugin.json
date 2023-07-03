@@ -1,0 +1,11 @@
+{
+  "id": "redicloud-connector-velocity",
+  "name": "redicloud-connector-velocity",
+  "version": "2.0.0-SNAPSHOT",
+  "url": "https://redicloud.dev",
+  "authors": [
+    "RediCloud"
+  ],
+  "dependencies": [],
+  "main": "dev.redicloud.connector.velocity.bootstrap.VelocityConnectorBootstrap"
+}
