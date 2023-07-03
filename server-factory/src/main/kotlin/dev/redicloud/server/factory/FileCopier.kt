@@ -97,8 +97,10 @@ class FileCopier(
         if (versionHandler.isUpdateAvailable(serverVersion)) {
             versionHandler.update(serverVersion)
         }
-        if (!versionHandler.isPatched(serverVersion)) {
+        if (!versionHandler.isPatched(serverVersion) && versionHandler.isPatchVersion(serverVersion)) {
             versionHandler.patch(serverVersion)
+        }else if(!versionHandler.isDownloaded(serverVersion)) {
+            versionHandler.download(serverVersion)
         }
         versionHandler.getFolder(serverVersion).copyRecursively(workDirectory)
         serverVersionType.doFileEdits(workDirectory)
