@@ -10,17 +10,17 @@ open class DatabaseBucketRepository<T>(
     codec: BaseCodec? = null
 ) : DatabaseRepository<T>(connection, name, codec) {
 
-    suspend fun set(identifier: String, value: T) = getHandle(identifier).set(value)
+    protected suspend fun set(identifier: String, value: T) = getHandle(identifier).set(value)
 
-    suspend fun get(identifier: String): T? = getHandle(identifier).get()
+    protected suspend fun get(identifier: String): T? = getHandle(identifier).get()
 
-    suspend fun delete(identifier: String): Boolean = getHandle(identifier).delete()
+    protected suspend fun delete(identifier: String): Boolean = getHandle(identifier).delete()
 
-    suspend fun getAll(): List<T> =
-        connection.getClient().keys.getKeysByPattern("$name:*")
+    protected suspend fun getAll(customPattern: String? = null): List<T> =
+        connection.getClient().keys.getKeysByPattern(customPattern ?: "$name:*")
             .mapNotNull { getUnsafeHandle<T>(it, true).get() }
 
-    suspend fun exists(identifier: String): Boolean = getHandle(identifier).isExists
+    protected suspend fun exists(identifier: String): Boolean = getHandle(identifier).isExists
 
     fun getHandle(identifier: String, customIdentifier: Boolean = false): RBucket<T> {
         if (!connection.isConnected()) throw IllegalStateException("Not connected to database")

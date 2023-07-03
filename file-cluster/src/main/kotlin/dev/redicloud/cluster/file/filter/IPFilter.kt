@@ -40,7 +40,7 @@ class IPFilter(
             System.getProperty("redicloud.filter.ip.bypass", "127.0.0.1;0.0.0.0").split(";").forEach {
                 allowedIpCache.add(it)
             }
-            fileNodeRepository.getAll().forEach { allowedIpCache.add(it.hostname) }
+            fileNodeRepository.getFileNodes().forEach { allowedIpCache.add(it.hostname) }
         }
     }
 

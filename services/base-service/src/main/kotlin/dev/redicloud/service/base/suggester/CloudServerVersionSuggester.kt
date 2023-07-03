@@ -12,7 +12,7 @@ class CloudServerVersionSuggester(
     private val cloudServerVersionRepository: CloudServerVersionRepository
 ) : ICommandSuggester {
 
-    private val easyCache = SingleCache(5.seconds) { cloudServerVersionRepository.getAll().map { it.getDisplayName() }.toTypedArray() }
+    private val easyCache = SingleCache(5.seconds) { cloudServerVersionRepository.getVersions().map { it.getDisplayName() }.toTypedArray() }
     override fun suggest(context: CommandContext): Array<String> =
         easyCache.get()!!
 }

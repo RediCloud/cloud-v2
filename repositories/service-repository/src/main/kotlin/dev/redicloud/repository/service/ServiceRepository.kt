@@ -44,14 +44,14 @@ abstract class ServiceRepository<T : CloudService>(
         }
     }
 
-    suspend fun getService(serviceId: ServiceId): CloudService?
-        = getUnsafeHandle<CloudService>(serviceId.toDatabaseIdentifier(), true).get()
+    protected suspend fun <C : CloudService> getService(serviceId: ServiceId): C?
+        = getUnsafeHandle<C>(serviceId.toDatabaseIdentifier(), true).get()
 
-    suspend fun existsService(serviceId: ServiceId): Boolean
-        = getUnsafeHandle<CloudService>(serviceId.toDatabaseIdentifier(), true).isExists
+    protected suspend fun <C : CloudService> existsService(serviceId: ServiceId): Boolean
+        = getUnsafeHandle<C>(serviceId.toDatabaseIdentifier(), true).isExists
 
-    suspend fun createService(cloudService: CloudService): CloudService {
-        getUnsafeHandle<CloudService>(cloudService.serviceId.toDatabaseIdentifier(), true).set(cloudService)
+    protected suspend fun <C : CloudService> createService(cloudService: C): C {
+        getUnsafeHandle<C>(cloudService.serviceId.toDatabaseIdentifier(), true).set(cloudService)
         if (cloudService.isConnected() && !connectedServices.contains(cloudService.serviceId)) {
             connectedServices.add(cloudService.serviceId)
         }
@@ -61,8 +61,8 @@ abstract class ServiceRepository<T : CloudService>(
         return cloudService
     }
 
-    suspend fun updateService(cloudService: CloudService): CloudService {
-        getUnsafeHandle<CloudService>(cloudService.serviceId.toDatabaseIdentifier(), true).set(cloudService)
+    protected suspend fun <C : CloudService> updateService(cloudService: C): CloudService {
+        getUnsafeHandle<C>(cloudService.serviceId.toDatabaseIdentifier(), true).set(cloudService)
         if (cloudService.isConnected() && !connectedServices.contains(cloudService.serviceId)) {
             connectedServices.add(cloudService.serviceId)
         }else if(!cloudService.isConnected()) {
@@ -74,16 +74,22 @@ abstract class ServiceRepository<T : CloudService>(
         return cloudService
     }
 
-    suspend fun deleteService(cloudService: CloudService) {
-        getUnsafeHandle<CloudService>(cloudService.serviceId.toDatabaseIdentifier(), true).delete()
+    protected suspend fun <C : CloudService> deleteService(cloudService: C) {
+        getUnsafeHandle<C>(cloudService.serviceId.toDatabaseIdentifier(), true).delete()
         connectedServices.remove(cloudService.serviceId)
         registeredServices.remove(cloudService.serviceId)
     }
 
-    suspend fun getRegisteredServices(): List<CloudService> =
+    protected suspend fun getRegisteredServices(): List<CloudService> =
         registeredServices.mapNotNull { getService(it) }
 
-    suspend fun getConnectedServices(): List<CloudService> =
+    protected suspend fun getConnectedServices(): List<CloudService> =
         connectedServices.mapNotNull { getService(it) }
+
+    protected suspend fun getRegisteredIds(): List<ServiceId> =
+        registeredServices.toList()
+
+    protected suspend fun getConnectedIds(): List<ServiceId> =
+        connectedServices.toList()
 
 }

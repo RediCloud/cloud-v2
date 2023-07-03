@@ -17,7 +17,7 @@ class NodeRepository(databaseConnection: DatabaseConnection, serviceId: ServiceI
 
     suspend fun existsNode(serviceId: ServiceId): Boolean {
         if (serviceId.type != ServiceType.NODE) return false
-        return existsService(serviceId)
+        return existsService<CloudNode>(serviceId)
     }
 
     suspend fun updateNode(cloudNode: CloudNode): CloudNode
@@ -31,9 +31,9 @@ class NodeRepository(databaseConnection: DatabaseConnection, serviceId: ServiceI
         = getConnectedNodes().firstOrNull { it.master }
 
     suspend fun getConnectedNodes(): List<CloudNode> =
-        getConnectedServices().filter { it.serviceId.type == ServiceType.NODE }.toList() as List<CloudNode>
+        getConnectedIds().filter { serviceId.type == ServiceType.NODE }.mapNotNull { getNode(it) }
 
     suspend fun getRegisteredNodes(): List<CloudNode> =
-        getRegisteredServices().filter { it.serviceId.type == ServiceType.NODE }.toList() as List<CloudNode>
+        getRegisteredIds().filter { serviceId.type == ServiceType.NODE }.mapNotNull { getNode(it) }
 
 }

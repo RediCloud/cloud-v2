@@ -22,7 +22,7 @@ class FileNodeRepository(databaseConnection: DatabaseConnection, packetManager: 
     }
 
     suspend fun existsFileNode(serviceId: ServiceId): Boolean {
-        return existsService(migrateId(serviceId))
+        return existsService<FileNode>(migrateId(serviceId))
     }
 
     suspend fun updateFileNode(fileNode: FileNode): FileNode {
@@ -31,6 +31,10 @@ class FileNodeRepository(databaseConnection: DatabaseConnection, packetManager: 
 
     suspend fun createFileNode(fileNode: FileNode): FileNode {
         return createService(fileNode) as FileNode
+    }
+
+    suspend fun getFileNodes(): List<FileNode> {
+        return getAll()
     }
 
 }

@@ -13,4 +13,4 @@ class CloudProxyServer(
     sessions: MutableList<ServiceSession>,
     hidden: Boolean,
     state: CloudServerState = CloudServerState.UNKNOWN
-) : CloudServer(serviceId, configurationTemplate, id, hostNodeId, sessions, hidden)
+) : CloudServer(serviceId, configurationTemplate, id, hostNodeId, sessions, hidden, state)
