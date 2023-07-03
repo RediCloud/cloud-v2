@@ -53,7 +53,7 @@ class NodeService(
         fileCluster = FileCluster(configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
         fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console)
-        serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager)
+        serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress)
 
         runBlocking {
             registerDefaults()
