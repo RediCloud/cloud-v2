@@ -8,4 +8,5 @@ object Versions {
     const val redisson = "3.21.3"
     const val slf4j = "2.0.7"
     const val khttp = "0.1.0"
+    const val minecraftVersion = "1.20.1-R0.1-SNAPSHOT"
 }
