@@ -3,9 +3,9 @@ package dev.redicloud.service.node.repository.node
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
-import dev.redicloud.service.base.events.NodeConnectEvent
-import dev.redicloud.service.base.events.NodeDisconnectEvent
-import dev.redicloud.service.base.events.NodeSuspendedEvent
+import dev.redicloud.service.base.events.node.NodeConnectEvent
+import dev.redicloud.service.base.events.node.NodeDisconnectEvent
+import dev.redicloud.service.base.events.node.NodeSuspendedEvent
 import dev.redicloud.service.node.NodeService
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.toMb
@@ -28,6 +28,7 @@ suspend fun NodeRepository.connect(nodeService: NodeService) {
         createNode(CloudNode(serviceId, nodeService.configuration.nodeName, mutableListOf(), mutableListOf(), false, toMb(allocated), memory))
     }
     node.startSession(nodeService.configuration.hostAddress)
+    node.connected = true
     updateNode(node)
     nodeService.eventManager.fireEvent(NodeConnectEvent(node.serviceId))
     LOGGER.info("Connected to node cluster!")
@@ -36,6 +37,7 @@ suspend fun NodeRepository.connect(nodeService: NodeService) {
 suspend fun NodeRepository.disconnect(nodeService: NodeService) {
     val serviceId = nodeService.configuration.toServiceId()
     val node = getNode(serviceId) ?: return
+    node.connected = false
     node.endSession()
     if (node.master) node.master = false
     updateNode(node)
@@ -48,6 +50,7 @@ suspend fun NodeRepository.suspendNode(nodeService: NodeService, serviceId: Serv
     val node = getNode(serviceId) ?: return
     val currentSession = node.currentSession() ?: return
     currentSession.suspended = true
+    node.connected = false
     updateNode(node)
-    nodeService.eventManager.fireEvent(NodeSuspendedEvent(node.serviceId, getNode(this.serviceId)!!))
+    nodeService.eventManager.fireEvent(NodeSuspendedEvent(node.serviceId, this.serviceId))
 }

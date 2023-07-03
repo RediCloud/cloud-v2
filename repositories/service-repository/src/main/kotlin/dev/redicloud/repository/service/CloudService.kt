@@ -6,7 +6,8 @@ import dev.redicloud.utils.service.ServiceType
 abstract class CloudService(
     val serviceId: ServiceId,
     val name: String,
-    private val sessions: MutableList<ServiceSession>
+    private val sessions: MutableList<ServiceSession>,
+    var connected: Boolean = false
 ){
 
     fun getIdentifyingName(colored: Boolean = true): String = if (colored) "%hc%$name§8#%tc%${serviceId.id}" else "$name#${serviceId.id}"
@@ -30,7 +31,7 @@ abstract class CloudService(
 
     fun getSessions(): List<ServiceSession> = sessions.toList()
 
-    fun isConnected(): Boolean = currentSession() != null && !isSuspended()
+    fun isConnected(): Boolean = connected && !isSuspended()
 
     fun firstSession(): ServiceSession? {
         if (sessions.isEmpty()) return null

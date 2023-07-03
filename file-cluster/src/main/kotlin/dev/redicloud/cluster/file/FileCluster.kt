@@ -130,6 +130,7 @@ class FileCluster(
         sshd!!.start()
 
         thisNode.startSession(hostname)
+        thisNode.connected = true
         runBlocking { fileNodeRepository.updateFileNode(thisNode) }
         eventManager.fireEvent(FileNodeConnectedEvent(thisNode.serviceId))
     }
@@ -201,6 +202,7 @@ class FileCluster(
         )
         sshd!!.stop(immediately)
         thisNode.endSession()
+        thisNode.connected = false
         fileNodeRepository.shutdownAction.run()
         runBlocking { fileNodeRepository.updateFileNode(thisNode) }
         eventManager.fireEvent(FileNodeDisconnectedEvent(thisNode.serviceId))
