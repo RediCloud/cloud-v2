@@ -71,7 +71,7 @@ class NodeConsole(
         runBlocking {
             val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@runBlocking
             if (it.state == CloudServerState.PREPARING) {
-                writeLine("${server.getIdentifyingName()}§8: §e● §8(%tc%starting§8)")
+                writeLine("${server.getIdentifyingName()}§8: §6● §8(%tc%starting§8)")
             }
         }
     }
