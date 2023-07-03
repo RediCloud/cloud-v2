@@ -6,17 +6,17 @@ import dev.redicloud.commands.api.CommandBase
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.repository.java.version.JavaVersion
+import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.task.CloudServerVersionUpdateTask
-import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.server.factory.task.CloudServerQueueCleanerTask
 import dev.redicloud.server.factory.task.CloudServerStartTask
 import dev.redicloud.server.factory.task.CloudServerStopTask
 import dev.redicloud.service.base.BaseService
-import dev.redicloud.service.base.events.NodeConnectEvent
-import dev.redicloud.service.base.events.NodeDisconnectEvent
-import dev.redicloud.service.base.events.NodeSuspendedEvent
+import dev.redicloud.service.base.events.node.NodeConnectEvent
+import dev.redicloud.service.base.events.node.NodeDisconnectEvent
+import dev.redicloud.service.base.events.node.NodeSuspendedEvent
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.repository.node.connect
 import dev.redicloud.service.node.repository.node.disconnect
@@ -38,7 +38,8 @@ class NodeService(
 ) : BaseService(databaseConfiguration, databaseConnection, configuration.toServiceId()) {
 
     override val fileTemplateRepository: NodeFileTemplateRepository
-    val console: NodeConsole = NodeConsole(configuration, eventManager, nodeRepository)
+    override val serverVersionTypeRepository: CloudServerVersionTypeRepository
+    val console: NodeConsole = NodeConsole(configuration, eventManager, nodeRepository, serverRepository)
     val fileNodeRepository: FileNodeRepository
     val fileCluster: FileCluster
     val serverFactory: ServerFactory
@@ -47,6 +48,7 @@ class NodeService(
         fileNodeRepository = FileNodeRepository(databaseConnection, packetManager)
         fileCluster = FileCluster(configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
         fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster)
+        serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, this.console)
         serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository)
 
         runBlocking {
