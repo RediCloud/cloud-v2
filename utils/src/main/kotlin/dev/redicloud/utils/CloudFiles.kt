@@ -3,9 +3,10 @@ package dev.redicloud.utils
 import java.io.File
 import java.nio.file.Paths
 
-val CLOUD_PATH: String = System.getProperty("redicloud.cloud.path") ?: Paths.get("").toAbsolutePath().toString()
+val CLOUD_PATH: String = System.getenv()["RC_PATH"] ?: Paths.get("").toAbsolutePath().toString()
 
 val NODE_JSON = CloudFile("node.json")
+val LIB_FOLDER = CloudFile(".libs", folder = true)
 val TEMP_FOLDER = CloudFile("tmp", folder = true)
 val TEMP_SERVER_VERSION_FOLDER = CloudFile("server-version", "tmp", folder = true)
 val TEMP_SERVER_FOLDER = CloudFile("server", "tmp", folder = true)
