@@ -1,5 +1,6 @@
 package dev.redicloud.service.base
 
+import dev.redicloud.api.service.packets.CloudServiceShutdownPacket
 import dev.redicloud.commands.api.CommandArgumentParser
 import dev.redicloud.commands.api.ICommandSuggester
 import dev.redicloud.repository.node.NodeRepository
@@ -8,6 +9,7 @@ import dev.redicloud.database.codec.GsonCodec
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
+import dev.redicloud.packets.PacketListener
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
@@ -26,6 +28,7 @@ import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.service.base.packets.ServicePingPacket
 import dev.redicloud.service.base.packets.ServicePingResponse
+import dev.redicloud.service.base.packets.listener.CloudServiceShutdownPacketListener
 import dev.redicloud.service.base.parser.*
 import dev.redicloud.service.base.suggester.*
 import dev.redicloud.tasks.CloudTaskManager
@@ -51,7 +54,7 @@ abstract class BaseService(
     val serverVersionRepository: CloudServerVersionRepository
     abstract val fileTemplateRepository: AbstractFileTemplateRepository
     val configurationTemplateRepository: ConfigurationTemplateRepository
-    val serverVersionTypeRepository: CloudServerVersionTypeRepository
+    abstract val serverVersionTypeRepository: CloudServerVersionTypeRepository
     val javaVersionRepository: JavaVersionRepository
 
     val packetManager: PacketManager
@@ -81,10 +84,10 @@ abstract class BaseService(
         javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection)
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager)
         serverVersionRepository = CloudServerVersionRepository(databaseConnection)
-        serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection)
-        serverRepository = ServerRepository(databaseConnection, serviceId, packetManager)
+        serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager)
         configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection)
         this.registerPackets()
+        this.registerPacketListeners()
     }
 
     fun registerDefaults() {
@@ -130,6 +133,14 @@ abstract class BaseService(
     private fun registerPackets() {
         packetManager.registerPacket(ServicePingPacket::class)
         packetManager.registerPacket(ServicePingResponse::class)
+        packetManager.registerPacket(CloudServiceShutdownPacket::class)
+    }
+
+    private fun registerPacketListeners() {
+        fun register(listener: PacketListener<*>) {
+            packetManager.unregisterListener(listener)
+        }
+        register(CloudServiceShutdownPacketListener(this))
     }
 
 }
