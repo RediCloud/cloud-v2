@@ -1,6 +1,7 @@
 package dev.redicloud.service.base
 
 import dev.redicloud.api.service.packets.CloudServiceShutdownPacket
+import dev.redicloud.api.service.packets.CloudServiceShutdownResponse
 import dev.redicloud.commands.api.CommandArgumentParser
 import dev.redicloud.commands.api.ICommandSuggester
 import dev.redicloud.repository.node.NodeRepository
@@ -133,6 +134,7 @@ abstract class BaseService(
         packetManager.registerPacket(ServicePingPacket::class)
         packetManager.registerPacket(ServicePingResponse::class)
         packetManager.registerPacket(CloudServiceShutdownPacket::class)
+        packetManager.registerPacket(CloudServiceShutdownResponse::class)
     }
 
     private fun registerPacketListeners() {

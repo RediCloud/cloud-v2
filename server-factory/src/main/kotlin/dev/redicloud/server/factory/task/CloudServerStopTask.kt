@@ -20,7 +20,7 @@ class CloudServerStopTask(
     }
 
     override suspend fun execute(): Boolean {
-        var stopped = 0
+        var responded = 0
         var total = 0
         serverFactory.stopQueue.forEach {
             val server = serverRepository.getServer<CloudServer>(it)
@@ -29,21 +29,20 @@ class CloudServerStopTask(
                 return@forEach
             }
             if (server.hostNodeId == serviceId) {
+                total++
+                serverFactory.stopQueue.remove(it)
                 defaultScope.launch {
-                    total++
                     try {
                         serverFactory.stopServer(it)
-                        serverFactory.stopQueue.remove(it)
                     }catch (e: Exception) {
                         logger.severe("Failed to stop server ${server.name}", e)
                     }finally {
-                        stopped++
+                        responded++
                     }
                 }
-                return false
             }
         }
-        while (stopped != total) {
+        while (responded != total) {
             Thread.sleep(333)
         }
         return false

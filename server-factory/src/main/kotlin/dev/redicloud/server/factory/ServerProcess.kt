@@ -2,6 +2,7 @@ package dev.redicloud.server.factory
 
 import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.api.service.packets.CloudServiceShutdownPacket
+import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.logging.getDefaultLogLevel
 import dev.redicloud.packets.PacketManager
@@ -14,10 +15,12 @@ import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
+import dev.redicloud.server.factory.screens.ServerScreen
 import dev.redicloud.utils.CLOUD_PATH
 import dev.redicloud.utils.LIB_FOLDER
 import dev.redicloud.utils.findFreePort
 import kotlinx.coroutines.runBlocking
+import kotlin.time.Duration.Companion.seconds
 
 class ServerProcess(
     val configurationTemplate: ConfigurationTemplate,
@@ -36,11 +39,15 @@ class ServerProcess(
     internal lateinit var fileCopier: FileCopier
     internal var cloudServer: CloudServer? = null
 
+    companion object {
+        val SERVER_STOP_TIMEOUT = System.getProperty("redicloud.server.stop.timeout", "20").toInt()
+    }
+
     /**
      * Starts the server process
      * @param cloudServer the cloud server instance
      */
-    suspend fun start(cloudServer: CloudServer): StartResult {
+    suspend fun start(cloudServer: CloudServer, serverScreen: ServerScreen): StartResult {
         this.cloudServer = cloudServer
         cloudServer.port = port
         val processBuilder = ProcessBuilder()
@@ -76,7 +83,7 @@ class ServerProcess(
         processBuilder.directory(fileCopier.workDirectory)
         process = processBuilder.start()
         // create handler and listen for exit
-        handler = ServerProcessHandler(process!!, cloudServer)
+        handler = ServerProcessHandler(process!!, cloudServer, serverScreen)
         handler!!.onExit { runBlocking { stop(false) } }
 
         cloudServer.state = CloudServerState.STARTING
@@ -95,7 +102,20 @@ class ServerProcess(
         if (cloudServer != null) {
             cloudServer!!.state = CloudServerState.STOPPING
             serverRepository.updateServer(cloudServer!!)
-            packetManager.publish(CloudServiceShutdownPacket(), cloudServer!!.serviceId)
+            val response = packetManager.publish(CloudServiceShutdownPacket(), cloudServer!!.serviceId)
+            val answer = response.withTimeOut(4.seconds).waitBlocking()
+            if (answer != null) {
+                var seconds = 0
+                while (cloudServer!!.connected && seconds < SERVER_STOP_TIMEOUT) {
+                    Thread.sleep(1000)
+                    seconds++
+                }
+                if (cloudServer!!.connected) {
+                    logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stop request timed out. Stopping process manually!")
+                }
+            } else {
+                logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} does not respond to stop request. Stopping process manually!")
+            }
         }
 
         if (process != null && process!!.isAlive) {

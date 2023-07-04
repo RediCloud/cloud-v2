@@ -57,8 +57,9 @@ class ServerRepository(
 
 
     suspend fun <T : CloudServer> deleteServer(cloudServer: T) {
+        val unregister = getRegisteredIds().contains(cloudServer.serviceId)
         deleteService(cloudServer)
-        eventManager.fireEvent(CloudServerUnregisteredEvent(cloudServer.serviceId))
+        if (unregister) eventManager.fireEvent(CloudServerUnregisteredEvent(cloudServer.serviceId))
     }
 
     suspend fun getConnectedServers(): List<CloudServer> =
