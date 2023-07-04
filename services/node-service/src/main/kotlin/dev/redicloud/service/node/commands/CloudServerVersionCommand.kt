@@ -232,6 +232,7 @@ class CloudServerVersionCommand(
             actor.sendMessage("§8- %tc%Version§8: %hc%${version.version.name}")
             actor.sendMessage("§8- %tc%Version-Handler§8: %hc%${type?.versionHandlerName ?: "unknown"}")
             actor.sendMessage("§8- %tc%Download-Url§8: %hc%${version.customDownloadUrl ?: "not set"}")
+            actor.sendMessage("§8- %tc%Build§8: %hc%${version.buildId ?: "not set"}")
             val javaVersion = if (version.javaVersionId != null) javaVersionRepository.getVersion(version.javaVersionId!!) else null
             actor.sendMessage("§8- %tc%Java version§8: %hc%${javaVersion?.name ?: "not set"}")
             actor.sendMessage("")
