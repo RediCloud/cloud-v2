@@ -1,6 +1,9 @@
 package dev.redicloud.server.factory
 
 import dev.redicloud.api.server.CloudServerState
+import dev.redicloud.commands.api.CommandArgumentParser
+import dev.redicloud.commands.api.ICommandSuggester
+import dev.redicloud.console.Console
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
@@ -15,6 +18,9 @@ import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
+import dev.redicloud.server.factory.screens.ServerScreen
+import dev.redicloud.server.factory.screens.ServerScreenParser
+import dev.redicloud.server.factory.screens.ServerScreenSuggester
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
@@ -32,7 +38,8 @@ class ServerFactory(
     private val fileTemplateRepository: AbstractFileTemplateRepository,
     private val javaVersionRepository: JavaVersionRepository,
     private val packetManager: PacketManager,
-    private val bindHost: String
+    private val bindHost: String,
+    private val console: Console
 ) {
 
     internal val startQueue: RList<ServerQueueInformation> =
@@ -41,6 +48,11 @@ class ServerFactory(
         databaseConnection.getClient().getList("server-factory:queue:stop")
     private val processes: MutableList<ServerProcess> = mutableListOf()
     private val logger = LogManager.logger(ServerFactory::class)
+
+    init {
+        CommandArgumentParser.PARSERS[ServerScreen::class] = ServerScreenParser(console)
+        ICommandSuggester.SUGGESTERS.add(ServerScreenSuggester(console))
+    }
 
     suspend fun getStartList(): List<ServerQueueInformation> {
         return startQueue.toMutableList().sortedWith(compareBy<ServerQueueInformation>
@@ -157,6 +169,10 @@ class ServerFactory(
                 )
             }
 
+            // Create server screen
+            val serverScreen = ServerScreen(cloudServer.serviceId, cloudServer.name, this.console)
+            console.createScreen(serverScreen)
+
             // Change memory usage on node
             thisNode.currentMemoryUsage = thisNode.currentMemoryUsage + configurationTemplate.maxMemory
             thisNode.hostedServers.add(cloudServer.serviceId)
@@ -180,7 +196,7 @@ class ServerFactory(
             copier.copyConnector()
 
             // start the server
-            return serverProcess.start(cloudServer)
+            return serverProcess.start(cloudServer, serverScreen)
         } catch (e: Exception) {
             // delete the server if it is created and not static
             if (cloudServer != null && !cloudServer.configurationTemplate.static) {

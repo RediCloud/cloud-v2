@@ -275,8 +275,8 @@ open class Console(
         printLock.lock()
         try {
             if (cancelAnimations) cancelAnimations()
-            screen.display()
             currentScreen = screen
+            screen.display()
         } finally {
             printLock.unlock()
         }
@@ -299,13 +299,30 @@ open class Console(
         return screen
     }
 
+    override fun createScreen(screen: Screen): Screen {
+        if (screen.console != this) throw IllegalArgumentException("Screen is not from this console")
+        screens.add(screen)
+        return screen
+    }
+
+    override fun deleteScreen(
+        name: String
+    ) {
+        val screen = getScreen(name) ?: return
+        if (screen.isDefault()) throw IllegalArgumentException("Cannot delete default screen")
+        if (screen.isActive()) {
+            switchToDefaultScreen()
+        }
+        screens.remove(screen)
+    }
+
     override fun switchToDefaultScreen(cancelAnimations: Boolean) {
         if (currentScreen == defaultScreen) return
         printLock.lock()
         try {
             if (cancelAnimations) cancelAnimations()
-            defaultScreen.display()
             currentScreen = defaultScreen
+            defaultScreen.display()
         } finally {
             printLock.unlock()
         }
@@ -340,7 +357,9 @@ open class Console(
         printLock.lock()
         try {
             s.split("\n").forEach {
-                this.print(formatText(it, "\n", true, getLevelColor(logRecord.level).ansiCode + getNormedLevelName(logRecord.level)))
+                defaultScreen.history.add(it)
+                val text = formatText(it, "\n", true, getLevelColor(logRecord.level).ansiCode + getNormedLevelName(logRecord.level))
+                this.print(text)
                 runningAnimations.values.forEach { it.second.addToCursorUp(1) }
             }
         } finally {
@@ -370,10 +389,17 @@ open class Console(
         }
     }
 
-    override fun forceWriteLine(text: String): Console {
+    override fun forceWriteLine(text: String, source: Screen?, history: Boolean): Console {
         printLock.lock()
         try {
-            currentScreen.addLine(text)
+            if (history) {
+                if (source == null) {
+                    defaultScreen.addLine(text)
+                }else {
+                    source.addLine(text)
+                }
+            }
+
             val content = this.formatText(textColor.ansiCode + text, System.lineSeparator())
 
             if (ansiSupported) {
@@ -392,9 +418,15 @@ open class Console(
         return this
     }
 
-    override fun writeLine(text: String): Console {
+    override fun writeLine(text: String, source: Screen?, history: Boolean): Console {
         if (!printingEnabled) return this
-        forceWriteLine(text)
+        if (source != null && source != currentScreen) {
+            if (history) {
+                source.addLine(text)
+            }
+            return this
+        }
+        forceWriteLine(text, source, history)
         return this
     }
 

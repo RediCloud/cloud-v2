@@ -2,6 +2,7 @@ package dev.redicloud.server.factory
 
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.CloudServer
+import dev.redicloud.server.factory.screens.ServerScreen
 import dev.redicloud.utils.History
 import dev.redicloud.utils.isOpen
 import kotlinx.coroutines.CoroutineScope
@@ -12,7 +13,8 @@ import java.io.InputStreamReader
 
 class ServerProcessHandler(
     private val process: Process,
-    private val cloudServer: CloudServer
+    private val cloudServer: CloudServer,
+    private val serverScreen: ServerScreen
 ) {
 
     companion object {
@@ -28,7 +30,6 @@ class ServerProcessHandler(
     private val errorStream = process.errorStream
     private val exits = mutableListOf<(Int) -> Unit>()
     private val lines = mutableListOf<(String) -> Unit>()
-    val history = History<String>(100)
 
     private fun run() {
         PROCESS_SCOPE.launch {
@@ -37,7 +38,7 @@ class ServerProcessHandler(
             while (process.isAlive && inputStream.isOpen()) {
                 val line = bufferedReader.readLine()
                 if (line == null || line.isEmpty()) continue
-                history.add(line)
+                serverScreen.println(line)
                 lines.forEach { it(line) }
             }
             bufferedReader.close()
@@ -49,8 +50,10 @@ class ServerProcessHandler(
                 while (errorStream.isOpen() && errorReader.ready()) {
                     val line = errorBufferedReader.readLine()
                     if (line == null || line.isEmpty()) continue
-                    LOGGER.warning("[${cloudServer.name}]: $line")
-                    history.add(line)
+                    if (!serverScreen.isActive()) {
+                        LOGGER.warning("[${cloudServer.name}]: $line")
+                    }
+                    serverScreen.println(line)
                     lines.forEach { it(line) }
                 }
                 errorBufferedReader.close()
@@ -59,6 +62,7 @@ class ServerProcessHandler(
 
             if (!process.isAlive) {
                 exits.forEach { it(process.exitValue()) }
+                serverScreen.destroy()
             }else {
                 run()
             }

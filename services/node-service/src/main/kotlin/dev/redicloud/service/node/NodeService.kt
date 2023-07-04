@@ -53,7 +53,7 @@ class NodeService(
         fileCluster = FileCluster(configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
         fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console)
-        serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress)
+        serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress, console)
 
         runBlocking {
             registerDefaults()
@@ -200,6 +200,7 @@ class NodeService(
         register(ConfigurationTemplateCommand(this.configurationTemplateRepository, this.javaVersionRepository, this.serverRepository, this.serverVersionRepository, this.nodeRepository, this.fileTemplateRepository))
         register(FileTemplateCommand(this.fileTemplateRepository))
         register(ServerCommand(this.serverFactory, this.serverRepository, this.nodeRepository))
+        register(ScreenCommand(this.console))
     }
 
     private fun initShutdownHook() {

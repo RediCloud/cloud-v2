@@ -44,6 +44,10 @@ interface IConsole : AutoCloseable {
         historySize: Int = 50
     ): Screen
 
+    fun createScreen(screen: Screen): Screen
+
+    fun deleteScreen(name: String)
+
     fun hasAnimationSupport(): Boolean {
         return hasColorSupport()
     }
@@ -69,9 +73,9 @@ interface IConsole : AutoCloseable {
         restoreCursor: Boolean = false
     ): Console
 
-    fun forceWriteLine(text: String): Console
+    fun forceWriteLine(text: String, source: Screen? = null, history: Boolean = true): Console
 
-    fun writeLine(text: String): Console
+    fun writeLine(text: String, source: Screen? = null, history: Boolean = true): Console
 
     fun hasColorSupport(): Boolean
 
