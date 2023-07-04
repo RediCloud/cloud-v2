@@ -41,7 +41,10 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
         val messageListener = MessageListener<PackedPacket> { channel, messageData ->
             val data = messageData.data
             val p = registeredPackets.firstOrNull { it.qualifiedName == messageData.clazz }
-                ?: return@MessageListener
+            if (p == null) {
+                LOGGER.warning("Received packet in channel $channel but packet is not registered: ${messageData.clazz}")
+                return@MessageListener
+            }
             val packet = gson.fromJson(data, p.java)
             if (!packet.allowLocalReceiver && packet.sender == serviceId) return@MessageListener
             LOGGER.finest("Received packet ${p.simpleName} in channel $channel")
