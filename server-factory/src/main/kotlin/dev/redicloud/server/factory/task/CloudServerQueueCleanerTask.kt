@@ -35,14 +35,7 @@ class CloudServerQueueCleanerTask(
                 serverFactory.startQueue.remove(info)
                 return@forEach
             }
-            // Check if all nodes failed to start //TODO fix this
-            if (info.failedStarts.getFailedNodes().none { serviceId -> nodes.any { it.serviceId == serviceId } }) {
-                logger.warning("§cAll nodes for template ${info.configurationTemplate.name} failed to start, cancelling server start!")
-                serverFactory.startQueue.remove(info)
-                return@forEach
-            }
         }
-
         return false
     }
 
