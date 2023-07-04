@@ -13,6 +13,8 @@ import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.MINECRAFT_VERSIONS_FOLDER
 import java.io.File
+import java.util.*
+import java.util.concurrent.locks.ReentrantLock
 
 interface IServerVersionHandler {
 
@@ -65,6 +67,8 @@ interface IServerVersionHandler {
         File(MINECRAFT_VERSIONS_FOLDER.getFile().absolutePath, version.getDisplayName())
 
     fun register() = registerHandler(this)
+
+    fun getLock(version: CloudServerVersion): ReentrantLock
 
     companion object {
 

@@ -29,16 +29,19 @@ class PaperMcServerVersionHandler(
     override val nodeRepository: NodeRepository,
     val console: Console,
     override val name: String = "papermc",
-    override var lastUpdateCheck: Long = System.currentTimeMillis()
+    override var lastUpdateCheck: Long = -1
 ) : IServerVersionHandler {
 
     private val requester = PaperMcApiRequester()
     private val locks = mutableMapOf<UUID, ReentrantLock>()
 
+    override fun getLock(version: CloudServerVersion): ReentrantLock {
+        return locks.getOrPut(version.uniqueId) { ReentrantLock() }
+    }
+
     override suspend fun download(version: CloudServerVersion, force: Boolean): File {
         val jar = getJar(version)
         if (jar.exists() && !force) return jar
-        locks.getOrDefault(version.uniqueId, ReentrantLock()).lock()
         var canceled = false
         var downloaded = false
         var error = false
@@ -52,10 +55,11 @@ class PaperMcServerVersionHandler(
                 canceled = true
                 "Downloading version %hc%${version.getDisplayName()}§8: ${if (error) "§4✘" else "§2✓"}"
             } else {
-                "Downloading version %hc%${version.getDisplayName()}§8: %hc%%loading%"
+                "Downloading version %hc%${version.getDisplayName()}§8: %tc%%loading%"
             }
         }
         console.startAnimation(animation)
+        getLock(version).lock()
         try {
             if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
 
@@ -83,7 +87,7 @@ class PaperMcServerVersionHandler(
             throw e
         } finally {
             downloaded = true
-            locks[version.uniqueId]?.unlock()
+            getLock(version).unlock()
         }
 
         return jar
@@ -133,7 +137,6 @@ class PaperMcServerVersionHandler(
     }
 
     override suspend fun patch(version: CloudServerVersion) {
-        locks.getOrDefault(version.uniqueId, ReentrantLock()).lock()
         var canceled = false
         var patched = false
         var error = false
@@ -151,6 +154,7 @@ class PaperMcServerVersionHandler(
             }
         }
         console.startAnimation(animation)
+        getLock(version).lock()
         try {
             val jar = getJar(version)
             if (!jar.exists()) download(version, true)
@@ -197,7 +201,7 @@ class PaperMcServerVersionHandler(
             throw e
         } finally {
             patched = true
-            locks[version.uniqueId]?.unlock()
+            getLock(version).unlock()
         }
     }
 

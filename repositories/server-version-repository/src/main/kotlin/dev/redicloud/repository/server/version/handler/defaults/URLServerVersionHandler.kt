@@ -10,6 +10,7 @@ import khttp.get
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
 import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.minutes
 
@@ -20,23 +21,33 @@ class URLServerVersionHandler(
 
     override val name: String = "urldownloader"
     override var lastUpdateCheck: Long = -1
+    private val locks = mutableMapOf<UUID, ReentrantLock>()
+
+    override fun getLock(version: CloudServerVersion): ReentrantLock {
+        return locks.getOrPut(version.uniqueId) { ReentrantLock() }
+    }
 
     override suspend fun download(version: CloudServerVersion, force: Boolean): File {
         val jar = getJar(version)
         if (jar.exists() && !force) return jar
-        if (version.customDownloadUrl == null) throw NullPointerException("Download url of ${version.getDisplayName()} is null")
+        getLock(version).lock()
+        try {
+            if (version.customDownloadUrl == null) throw NullPointerException("Download url of ${version.getDisplayName()} is null")
 
-        val response = get(version.customDownloadUrl!!)
-        if (response.statusCode != 200) throw IllegalStateException(
-            "Download of ${version.getDisplayName()} is not available (${response.statusCode}):\n" +
-                    response.text
-        )
+            val response = get(version.customDownloadUrl!!)
+            if (response.statusCode != 200) throw IllegalStateException(
+                "Download of ${version.getDisplayName()} is not available (${response.statusCode}):\n" +
+                        response.text
+            )
 
-        val folder = getFolder(version)
-        if (folder.exists()) folder.deleteRecursively()
-        folder.mkdirs()
-        if (jar.exists()) jar.delete()
-        jar.writeBytes(response.content)
+            val folder = getFolder(version)
+            if (folder.exists()) folder.deleteRecursively()
+            folder.mkdirs()
+            if (jar.exists()) jar.delete()
+            jar.writeBytes(response.content)
+        }finally {
+            getLock(version).unlock()
+        }
         return jar
     }
 
@@ -62,32 +73,37 @@ class URLServerVersionHandler(
         val jar = getJar(version)
         if (!jar.exists()) download(version, true)
 
-        val versionDir = getFolder(version)
-        val tempDir = File(UUID.randomUUID().toString(), TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath)
-        val tempJar = jar.copyTo(tempDir)
+        getLock(version).lock()
+        try {
+            val versionDir = getFolder(version)
+            val tempDir = File(UUID.randomUUID().toString(), TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath)
+            val tempJar = jar.copyTo(tempDir)
 
-        val processBuilder = ProcessBuilder("java", "-jar", tempJar.absolutePath)
-        processBuilder.directory(tempDir)
-        processBuilder.start().waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+            val processBuilder = ProcessBuilder("java", "-jar", tempJar.absolutePath)
+            processBuilder.directory(tempDir)
+            processBuilder.start().waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
 
-        if (!versionDir.exists()) versionDir.mkdirs()
+            if (!versionDir.exists()) versionDir.mkdirs()
 
-        tempJar.copyTo(jar, true)
-        if (version.libPattern != null) {
-            val pattern = Pattern.compile(version.libPattern!!)
-            tempDir.listFiles()?.forEach {
-                if (!pattern.matcher(it.name).find()) {
-                    if (it.isDirectory) {
-                        it.deleteRecursively()
-                    } else {
-                        it.delete()
+            tempJar.copyTo(jar, true)
+            if (version.libPattern != null) {
+                val pattern = Pattern.compile(version.libPattern!!)
+                tempDir.listFiles()?.forEach {
+                    if (!pattern.matcher(it.name).find()) {
+                        if (it.isDirectory) {
+                            it.deleteRecursively()
+                        } else {
+                            it.delete()
+                        }
+                        return@forEach
                     }
-                    return@forEach
                 }
             }
+            versionDir.deleteRecursively()
+            tempDir.copyRecursively(versionDir, true)
+            File(versionDir, ".patched").createNewFile()
+        }finally {
+            getLock(version).unlock()
         }
-        versionDir.deleteRecursively()
-        tempDir.copyRecursively(versionDir, true)
-        File(versionDir, ".patched").createNewFile()
     }
 }

@@ -94,16 +94,18 @@ class FileCopier(
     suspend fun copyVersionFiles() {
         logger.fine("Copying files for $serviceId of version ${serverVersion.getDisplayName()}")
         val versionHandler = IServerVersionHandler.getHandler(serverVersionType)
-        if (versionHandler.isUpdateAvailable(serverVersion)) {
-            versionHandler.update(serverVersion)
+        versionHandler.getLock(serverVersion).lock()
+        try {
+            if (!versionHandler.isPatched(serverVersion) && versionHandler.isPatchVersion(serverVersion)) {
+                versionHandler.patch(serverVersion)
+            }else if(!versionHandler.isDownloaded(serverVersion)) {
+                versionHandler.download(serverVersion)
+            }
+            versionHandler.getFolder(serverVersion).copyRecursively(workDirectory)
+            serverVersionType.doFileEdits(workDirectory)
+        }finally {
+            versionHandler.getLock(serverVersion).unlock()
         }
-        if (!versionHandler.isPatched(serverVersion) && versionHandler.isPatchVersion(serverVersion)) {
-            versionHandler.patch(serverVersion)
-        }else if(!versionHandler.isDownloaded(serverVersion)) {
-            versionHandler.download(serverVersion)
-        }
-        versionHandler.getFolder(serverVersion).copyRecursively(workDirectory)
-        serverVersionType.doFileEdits(workDirectory)
     }
 
     /**

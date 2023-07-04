@@ -1,6 +1,5 @@
 package dev.redicloud.repository.server.version.utils
 
-import com.google.gson.annotations.Expose
 import com.google.gson.reflect.TypeToken
 import dev.redicloud.utils.getRawUserContentUrl
 import dev.redicloud.utils.prettyPrintGson
