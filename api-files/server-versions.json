@@ -352,6 +352,14 @@
     "versionTypes": []
   },
   {
+    "name": "1.20.1",
+    "protocolId": 763,
+    "supportedJavaVersion": [
+      "17"
+    ],
+    "versionTypes": []
+  },
+  {
     "name": "3.2.0-SNAPSHOT",
     "protocolId": 763,
     "supportedJavaVersion": [
