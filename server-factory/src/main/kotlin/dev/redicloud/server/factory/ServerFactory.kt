@@ -66,7 +66,6 @@ class ServerFactory(
             stopQueue.add(serviceId)
         }
 
-    //TODO: events
     /**
      * Starts a server with the given configuration template and returns the result
      * @param configurationTemplate the configuration template to use
@@ -78,43 +77,17 @@ class ServerFactory(
         force: Boolean = false
     ): StartResult {
         logger.fine("Prepare server ${configurationTemplate.uniqueId}...")
-        val thisNode = nodeRepository.getNode(nodeRepository.serviceId)!!
-        if (!force) {
-            // check if the node is allowed to start the server
-            if (configurationTemplate.nodeIds.contains(thisNode.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
-
-            // check if the node has enough ram
-            val ramUsage = processes.sumOf { configurationTemplate.maxMemory }
-            val calculatedRamUsage = ramUsage + configurationTemplate.maxMemory
-            if (calculatedRamUsage > thisNode.maxMemory) return NotEnoughRamOnNodeStartResult()
-            if (configurationTemplate.maxMemory > Runtime.getRuntime()
-                    .freeMemory()
-            ) return NotEnoughRamOnJVMStartResult()
-
-            val servers = serverRepository.getRegisteredServers()
-
-            // Check how many servers of the template are already started and cancel if the configured globally total amount is reached
-            val startAmountOfTemplate =
-                servers.count { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }
-            if (startAmountOfTemplate >= configurationTemplate.maxStartedServices && configurationTemplate.maxStartedServices != -1) return TooMuchServicesOfTemplateStartResult()
-
-            // Check how many servers of the template are already started on this node and cancel if the configured node total amount is reached
-            val startedAmountOfTemplateOnNode =
-                servers.count { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId && it.hostNodeId == thisNode.serviceId }
-            if (startedAmountOfTemplateOnNode >= configurationTemplate.maxStartedServicesPerNode && configurationTemplate.maxStartedServicesPerNode != -1) return TooMuchServicesOfTemplateOnNodeStartResult()
-        }
 
         // check if the server version is known
-        if (configurationTemplate.serverVersionId == null) return UnknownServerVersionStartResult(null)
+        if (configurationTemplate.serverVersionId == null) return UnknownJavaVersionStartResult(configurationTemplate.serverVersionId)
         val version = serverVersionRepository.getVersion(configurationTemplate.serverVersionId!!)
-            ?: return UnknownServerVersionStartResult(null)
-        if (version.typeId == null) return UnknownServerVersionStartResult(null)
+            ?: return UnknownJavaVersionStartResult(configurationTemplate.serverVersionId)
+        if (version.typeId == null) return UnknownJavaVersionStartResult(null)
         val type =
-            serverVersionTypeRepository.getType(version.typeId!!) ?: return UnknownServerVersionStartResult(version)
-        if (type.isUnknown()) return UnknownServerVersionStartResult(version)
+            serverVersionTypeRepository.getType(version.typeId!!) ?: return UnknownServerVersionTypeStartResult(version.typeId)
+        if (type.isUnknown()) return UnknownServerVersionTypeStartResult(version.typeId)
         // get the version handler and update/patch the version if needed
         val versionHandler = IServerVersionHandler.getHandler(type)
-        if (versionHandler.isUpdateAvailable(version)) versionHandler.update(version)
         if (!versionHandler.isPatched(version) && versionHandler.isPatchVersion(version)) versionHandler.patch(version)
 
         // create the server process
@@ -129,6 +102,30 @@ class ServerFactory(
         )
         var cloudServer: CloudServer? = null
         try {
+
+            val thisNode = nodeRepository.getNode(nodeRepository.serviceId)!!
+            if (!force) {
+                // check if the node is allowed to start the server
+                if (configurationTemplate.nodeIds.contains(thisNode.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
+
+                // check if the node has enough ram
+                val ramUsage = processes.sumOf { configurationTemplate.maxMemory }
+                val calculatedRamUsage = ramUsage + configurationTemplate.maxMemory
+                if (calculatedRamUsage > thisNode.maxMemory) return NotEnoughRamOnNodeStartResult()
+
+                val servers = serverRepository.getRegisteredServers()
+
+                // Check how many servers of the template are already started and cancel if the configured globally total amount is reached
+                val startAmountOfTemplate =
+                    servers.count { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }
+                if (startAmountOfTemplate >= configurationTemplate.maxStartedServices && configurationTemplate.maxStartedServices != -1) return TooMuchServicesOfTemplateStartResult()
+
+                // Check how many servers of the template are already started on this node and cancel if the configured node total amount is reached
+                val startedAmountOfTemplateOnNode =
+                    servers.count { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId && it.hostNodeId == thisNode.serviceId }
+                if (startedAmountOfTemplateOnNode >= configurationTemplate.maxStartedServicesPerNode && configurationTemplate.maxStartedServicesPerNode != -1) return TooMuchServicesOfTemplateOnNodeStartResult()
+            }
+
             // store the process
             processes.add(serverProcess)
 
@@ -160,6 +157,11 @@ class ServerFactory(
                 )
             }
 
+            // Change memory usage on node
+            thisNode.currentMemoryUsage = thisNode.currentMemoryUsage + configurationTemplate.maxMemory
+            thisNode.hostedServers.add(cloudServer.serviceId)
+            nodeRepository.updateNode(thisNode)
+
             // copy the files to copy server necessary files
             val copier = FileCopier(
                 serverProcess,
@@ -178,9 +180,7 @@ class ServerFactory(
             copier.copyConnector()
 
             // start the server
-            serverProcess.start(cloudServer)
-
-            return SuccessStartResult(cloudServer, serverProcess)
+            return serverProcess.start(cloudServer)
         } catch (e: Exception) {
             // delete the server if it is created and not static
             if (cloudServer != null && !cloudServer.configurationTemplate.static) {
@@ -190,12 +190,18 @@ class ServerFactory(
         }
     }
 
-    //TODO: events
     suspend internal fun stopServer(serviceId: ServiceId, force: Boolean = true) {
-        val server = serverRepository.getServer<CloudServer>(serviceId) ?: throw IllegalArgumentException("Server not found")
+        val server = serverRepository.getServer<CloudServer>(serviceId) ?: throw NullPointerException("Server not found")
         if (server.hostNodeId != nodeRepository.serviceId) throw IllegalArgumentException("Server is not on this node")
         if (server.state == CloudServerState.STOPPED || server.state == CloudServerState.STOPPING && !force) return
-        val process = processes.firstOrNull { it.cloudServer!!.serviceId == serviceId }
+        val thisNode = nodeRepository.getNode(nodeRepository.serviceId)
+        if (thisNode != null) {
+            thisNode.currentMemoryUsage = thisNode.currentMemoryUsage - server.configurationTemplate.maxMemory
+            if (thisNode.currentMemoryUsage < 0) thisNode.currentMemoryUsage = 0
+            thisNode.hostedServers.remove(serviceId)
+            nodeRepository.updateNode(thisNode)
+        }
+        val process = processes.firstOrNull { it.cloudServer?.serviceId == serviceId }
         if (process != null) {
             process.stop()
             processes.remove(process)
@@ -213,7 +219,8 @@ class ServerFactory(
                 try {
                     stopServer(it.cloudServer!!.serviceId, true)
                 } catch (e1: Exception) {
-                    logger.severe("Error while stopping server ${it.cloudServer!!.serviceId}", e1)
+                    if (e1 is NullPointerException) return@forEach
+                    logger.severe("Error while stopping server ${it.cloudServer!!.serviceId.toName()}", e1)
                 }
             }
         }
@@ -224,14 +231,12 @@ class ServerFactory(
      * Gets the next id for a server with the given configuration template
      */
     private suspend fun getIdForServer(configuration: ConfigurationTemplate): Int {
+        val usedIds = serverRepository.getRegisteredServers()
+            .filter { it.configurationTemplate.name == configuration.name }
+            .map { it.id }
         var i = 1
-        for (cloudServer in serverRepository.getRegisteredServers()) {
-            if (cloudServer.configurationTemplate.name != configuration.name) continue
-            val id = cloudServer.configurationTemplate.name
-                .replace(configuration.name, "")
-                .replace(configuration.serverSplitter, "")
-                .toIntOrNull() ?: continue
-            if (id == cloudServer.id) i++
+        while (usedIds.contains(i)) {
+            i++
         }
         return i
     }
