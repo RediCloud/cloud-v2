@@ -48,7 +48,7 @@ class EventManager(val identifier: String, val packetManager: PacketManager?) {
     }
 
     inline fun <reified T : CloudEvent> listen(noinline handler: (T) -> Unit): InlineEventCaller<T> {
-        val listener = InlineEventCaller(handler)
+        val listener = InlineEventCaller(this, handler)
         InlineEventCaller::class.declaredMemberFunctions.forEach { function ->
             val annotation = function.findAnnotation<CloudEventListener>()
             if (annotation != null) {
@@ -67,7 +67,7 @@ class EventManager(val identifier: String, val packetManager: PacketManager?) {
     }
 
     fun <T : CloudEvent> listen(clazz: KClass<T>, handler: (T) -> Unit): InlineEventCaller<T> {
-        val listener = InlineEventCaller(handler)
+        val listener = InlineEventCaller(this, handler)
         InlineEventCaller::class.declaredMemberFunctions.forEach { function ->
             val annotation = function.findAnnotation<CloudEventListener>()
             if (annotation != null) {
