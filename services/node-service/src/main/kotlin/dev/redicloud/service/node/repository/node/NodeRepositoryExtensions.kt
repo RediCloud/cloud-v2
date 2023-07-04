@@ -27,6 +27,8 @@ suspend fun NodeRepository.connect(nodeService: NodeService) {
         //TODO: Update current memory by task
         createNode(CloudNode(serviceId, nodeService.configuration.nodeName, mutableListOf(), mutableListOf(), false, toMb(allocated), memory))
     }
+    node.currentMemoryUsage = 0
+    node.hostedServers.clear()
     node.startSession(nodeService.configuration.hostAddress)
     node.connected = true
     updateNode(node)
@@ -39,6 +41,8 @@ suspend fun NodeRepository.disconnect(nodeService: NodeService) {
     val node = getNode(serviceId) ?: return
     node.connected = false
     node.endSession()
+    node.currentMemoryUsage = 0
+    node.hostedServers.clear()
     if (node.master) node.master = false
     updateNode(node)
     nodeService.eventManager.fireEvent(NodeDisconnectEvent(node.serviceId))

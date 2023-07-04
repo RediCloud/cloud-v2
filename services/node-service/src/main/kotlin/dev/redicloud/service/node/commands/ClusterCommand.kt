@@ -35,10 +35,11 @@ class ClusterCommand(private val nodeService: NodeService) : CommandBase() {
                         else if (node.isConnected()) "§2● §8(§fconnected§8)"
                         else "§c● §8(§fdisconnected§8)"
                     }")
+                    actor.sendMessage("   - Memory§8: %hc%${node.currentMemoryUsage} §8/ %hc%${node.maxMemory}")
                     actor.sendMessage("   - IP§8: %hc%${node.currentOrLastsession()?.ipAddress ?: "Unknown"}")
                     if (node.isConnected()) {
                         sendPingMessage(node, actor, "   - Ping§8: ")
-                        val server = node.getHostedServers().mapNotNull { nodeService.serverRepository.getServer<CloudServer>(it)?.name }
+                        val server = node.hostedServers.mapNotNull { nodeService.serverRepository.getServer<CloudServer>(it)?.name }
                         actor.sendMessage("   - Server§8: %hc%${if (server.isEmpty()) "None" else server.joinToString(", ")}")
                     }
                 }
@@ -92,7 +93,7 @@ class ClusterCommand(private val nodeService: NodeService) : CommandBase() {
             actor.sendHeader("Suspend")
             actor.sendMessage("")
             actor.sendMessage("Node§8: %hc%${node.getIdentifyingName()}")
-            actor.sendMessage("Servers§8: %hc%${node.getHostedServers().mapNotNull { nodeService.serverRepository.getServer<CloudServer>(it)?.name }.joinToString(", ")}")
+            actor.sendMessage("Servers§8: %hc%${node.hostedServers.mapNotNull { nodeService.serverRepository.getServer<CloudServer>(it)?.name }.joinToString(", ")}")
             sendPingMessage(node, actor, "Ping§8: %hc%")
             actor.sendMessage("")
             actor.sendMessage("§cThis will suspend the node and all hosted servers will be stopped!")
