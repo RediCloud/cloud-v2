@@ -108,11 +108,6 @@ fun ServerQueueInformation.calculateStartPriority(cloudNode: CloudNode): Int {
         return -1
     }
 
-    if (cloudNode.currentMemoryUsage + configurationTemplate.maxMemory > cloudNode.maxMemory) {
-        addFailedStart(cloudNode.serviceId, StartResultType.RAM_USAGE_TOO_HIGH)
-        return -1
-    }
-
     // Calculate memory usage in percent
     val memoryUsagePercent = cloudNode.currentMemoryUsage / cloudNode.maxMemory * 100
     count += memoryUsagePercent.toInt()

@@ -8,7 +8,10 @@ import dev.redicloud.service.base.events.node.NodeConnectEvent
 import dev.redicloud.service.base.events.node.NodeDisconnectEvent
 import dev.redicloud.service.base.events.node.NodeSuspendedEvent
 import dev.redicloud.tasks.CloudTask
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
 
 class CloudServerStartTask(
     private val serverFactory: ServerFactory,
@@ -57,6 +60,7 @@ class CloudServerStartTask(
 
     companion object {
         private val logger = LogManager.logger(CloudServerStartTask::class)
+
         @OptIn(DelicateCoroutinesApi::class)
         private val scope = CoroutineScope(newSingleThreadContext("server-factory-start"))
     }
@@ -72,44 +76,86 @@ class CloudServerStartTask(
                     val result = serverFactory.startServer(template)
                     when (result.type) {
                         StartResultType.ALREADY_RUNNING -> {
-                            info.addFailedStart(nodeRepository.serviceId, StartResultType.ALREADY_RUNNING)
                             serverFactory.startQueue.remove(info)
+                            info.addFailedStart(nodeRepository.serviceId, StartResultType.ALREADY_RUNNING)
                             serverFactory.startQueue.add(info)
-                            val alreadyRunningStartResult = result as AlreadyRunningStartResult
-                            logger.warning("§cServer ${alreadyRunningStartResult.server.getIdentifyingName(false)} was removed from the start queue because it is already running!")
+                            result as AlreadyRunningStartResult
+                            logger.warning("§cServer ${result.server.getIdentifyingName(false)} was removed from the start queue because it is already running!")
                         }
+
                         StartResultType.RAM_USAGE_TOO_HIGH -> {
+                            serverFactory.startQueue.remove(info)
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.RAM_USAGE_TOO_HIGH)
                             info.addFailedNode(nodeRepository.serviceId)
-                            serverFactory.startQueue.remove(info)
                             serverFactory.startQueue.add(info)
                             logger.warning("§cCan´t start server of template '${template.name}' because the ram usage is too high!")
                         }
+
                         StartResultType.TOO_MUCH_SERVICES_OF_TEMPLATE -> {
+                            serverFactory.startQueue.remove(info)
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.TOO_MUCH_SERVICES_OF_TEMPLATE)
-                            serverFactory.startQueue.remove(info)
-                            serverFactory.startQueue.add(info)
-                            logger.warning("§cCan´t start server of template '${template.name}' because there are too much services of this template!")
+                            if (result is TooMuchServicesOfTemplateOnNodeStartResult) {
+                                info.addFailedNode(nodeRepository.serviceId)
+                                serverFactory.startQueue.add(info)
+                                logger.warning("§cCan´t start server of template '${template.name}' on this node because there are too much services of this template!")
+                            }
+
                         }
+
                         StartResultType.UNKNOWN_SERVER_VERSION -> {
-                            info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_SERVER_VERSION)
                             serverFactory.startQueue.remove(info)
-                            serverFactory.startQueue.add(info)
+                            info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_SERVER_VERSION)
                             logger.warning("§cCan´t start server of template '${template.name}' because the server version is not set!")
                         }
+
+                        StartResultType.NODE_IS_NOT_ALLOWED -> {
+                            serverFactory.startQueue.remove(info)
+                            info.addFailedStart(nodeRepository.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
+                            serverFactory.startQueue.add(info)
+                        }
+
+                        StartResultType.NODE_NOT_CONNECTED -> {
+                            info.addFailedStart(nodeRepository.serviceId, StartResultType.NODE_NOT_CONNECTED)
+                            serverFactory.startQueue.remove(info)
+                            serverFactory.startQueue.add(info)
+                        }
+
+                        StartResultType.UNKNOWN_JAVA_VERSION -> {
+                            info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_JAVA_VERSION)
+                            serverFactory.startQueue.remove(info)
+                            logger.severe("§cCan´t start server of template '${template.name}' because the java version is not set!")
+                        }
+
+                        StartResultType.JAVA_VERSION_NOT_INSTALLED -> {
+                            info.addFailedStart(nodeRepository.serviceId, StartResultType.JAVA_VERSION_NOT_INSTALLED)
+                            serverFactory.startQueue.remove(info)
+                            result as JavaVersionNotInstalledStartResult
+                            logger.severe("§cCan´t start server of template '${template.name}' because the java version '${result.javaVersion.name} is not installed!")
+                        }
+
+                        StartResultType.UNKNOWN_SERVER_TYPE_VERSION -> {
+                            info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_SERVER_TYPE_VERSION)
+                            serverFactory.startQueue.remove(info)
+                            logger.severe("§cCan´t start server of template '${template.name}' because the server type version is not set!")
+                        }
+
                         StartResultType.UNKNOWN_ERROR -> {
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_ERROR)
                             serverFactory.startQueue.remove(info)
                             serverFactory.startQueue.add(info)
                             val errorResult = result as UnknownErrorStartResult
-                            logger.severe("§cAn unknown error occurred while starting server of template '${template.name}'!", errorResult.throwable)
+                            logger.severe(
+                                "§cAn unknown error occurred while starting server of template '${template.name}'!",
+                                errorResult.throwable
+                            )
                         }
+
                         else -> {}
                     }
                 }
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 logger.severe("§cAn unknown error occurred while starting servers!", e)
-            }finally {
+            } finally {
                 nextTick = true
             }
         }

@@ -16,10 +16,8 @@ import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.utils.CLOUD_PATH
 import dev.redicloud.utils.LIB_FOLDER
-import dev.redicloud.utils.LOG_FOLDER
 import dev.redicloud.utils.findFreePort
 import kotlinx.coroutines.runBlocking
-import java.io.File
 
 class ServerProcess(
     val configurationTemplate: ConfigurationTemplate,
@@ -42,7 +40,7 @@ class ServerProcess(
      * Starts the server process
      * @param cloudServer the cloud server instance
      */
-    suspend fun start(cloudServer: CloudServer) {
+    suspend fun start(cloudServer: CloudServer): StartResult {
         this.cloudServer = cloudServer
         cloudServer.port = port
         val processBuilder = ProcessBuilder()
@@ -55,22 +53,24 @@ class ServerProcess(
         processBuilder.environment()["LIBRARY_FOLDER"] = LIB_FOLDER.getFile().absolutePath
         processBuilder.environment().putAll(configurationTemplate.environments)
 
-        if (configurationTemplate.serverVersionId == null) throw IllegalStateException("Server version is not set that is required of ${configurationTemplate.name} configuration")
+        if (configurationTemplate.serverVersionId == null) return UnknownServerVersionStartResult(configurationTemplate.serverVersionId)
         val serverVersion = serverVersionRepository.getVersion(configurationTemplate.serverVersionId!!)
-            ?: throw IllegalStateException("Server version ${configurationTemplate.serverVersionId} not found that is required of ${configurationTemplate.name} configuration")
+            ?: return UnknownServerVersionStartResult(configurationTemplate.serverVersionId)
 
-        if (serverVersion.javaVersionId == null) throw IllegalStateException("Java version is not set that is required of ${configurationTemplate.name} configuration")
+        if (serverVersion.javaVersionId == null) return UnknownJavaVersionStartResult(serverVersion.javaVersionId)
         val javaVersion = javaVersionRepository.getVersion(serverVersion.javaVersionId!!)
-            ?: throw IllegalStateException("Java version ${serverVersion.javaVersionId} not found that is required of ${configurationTemplate.name} configuration")
+            ?: return UnknownJavaVersionStartResult(serverVersion.javaVersionId)
 
-        if (serverVersion.typeId == null)
-            throw IllegalStateException("Server version type of version ${serverVersion.getDisplayName()} is not set that is required of ${configurationTemplate.name} configuration")
+        if (serverVersion.typeId == null) return UnknownServerVersionTypeStartResult(serverVersion.typeId)
         val versionType = serverVersionTypeRepository.getType(serverVersion.typeId!!)
-            ?: throw IllegalStateException("Server version type ${serverVersion.typeId} not found")
+            ?: return UnknownServerVersionTypeStartResult(serverVersion.typeId)
+
+        val javaPath = javaVersion.located[serverRepository.serviceId.id]
+        if (javaPath.isNullOrEmpty()) return JavaVersionNotInstalledStartResult(javaVersion)
 
         // set command
         processBuilder.command(
-            startCommand(versionType, javaVersion)
+            startCommand(versionType, javaVersion, javaPath)
         )
         // set working directory
         processBuilder.directory(fileCopier.workDirectory)
@@ -83,6 +83,7 @@ class ServerProcess(
         serverRepository.updateServer(cloudServer)
 
         logger.fine("Started server process ${cloudServer.serviceId.toName()}")
+        return SuccessStartResult(cloudServer, this)
     }
 
     /**
@@ -124,28 +125,32 @@ class ServerProcess(
      * Creates the command to start the server with based server version type configurations
      * provide also placeholders like %PORT% or %SERVICE_ID%
      */
-    private fun startCommand(type: CloudServerVersionType, javaVersion: JavaVersion): List<String> {
+    private fun startCommand(type: CloudServerVersionType, javaVersion: JavaVersion, javaPath: String): List<String> {
         if (!javaVersion.isLocated(serverRepository.serviceId)) {
             javaVersion.located[serverRepository.serviceId.id] = javaVersion.autoLocate()?.absolutePath
                 ?: throw IllegalStateException("Java version ${javaVersion.id} not found")
         }
-        val javaPath = javaVersion.located[serverRepository.serviceId.id]
-        if (javaPath == null || javaPath.isEmpty()) throw IllegalStateException("Java version ${javaVersion.id} not found")
 
         val list = mutableListOf<String>(
             javaPath,
-            "--add-opens=java.base/java.lang=ALL-UNNAMED",
-            "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED",
-            "--add-opens=java.base/java.text=ALL-UNNAMED",
-            "--add-opens=java.base/java.util=ALL-UNNAMED",
-            "--add-opens=java.base/java.math=ALL-UNNAMED",
-            "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED",
-            "--add-opens=java.base/java.net=ALL-UNNAMED",
-            "--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED",
-            *configurationTemplate.jvmArguments.toTypedArray(),
-            "-Xms${configurationTemplate.maxMemory}M",
-            "-Xmx${configurationTemplate.maxMemory}M",
         )
+
+        if ((javaVersion.info?.major ?: -1) > 8) {
+            list.apply {
+                add("--add-opens=java.base/java.lang=ALL-UNNAMED")
+                add("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED")
+                add("--add-opens=java.base/java.text=ALL-UNNAMED")
+                add("--add-opens=java.base/java.util=ALL-UNNAMED")
+                add("--add-opens=java.base/java.math=ALL-UNNAMED")
+                add("--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED")
+                add("--add-opens=java.base/java.net=ALL-UNNAMED")
+                add("--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED")
+            }
+        }
+        configurationTemplate.jvmArguments.forEach { list.add(replacePlaceholders(it)) }
+        list.add("-Xms${configurationTemplate.maxMemory}M")
+        list.add("-Xmx${configurationTemplate.maxMemory}M")
+
         type.jvmArguments.forEach { list.add(replacePlaceholders(it)) }
         list.add("-jar")
         val versionHandler = IServerVersionHandler.getHandler(type)

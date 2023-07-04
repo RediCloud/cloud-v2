@@ -1,7 +1,8 @@
 package dev.redicloud.server.factory
 
+import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.server.CloudServer
-import dev.redicloud.repository.server.version.CloudServerVersion
+import java.util.UUID
 
 open class StartResult(val type: StartResultType)
 class SuccessStartResult(val server: CloudServer, val process: ServerProcess) : StartResult(StartResultType.SUCCESS)
@@ -11,7 +12,10 @@ class NotEnoughRamOnJVMStartResult() : StartResult(StartResultType.RAM_USAGE_TOO
 class TooMuchServicesOfTemplateStartResult() : StartResult(StartResultType.TOO_MUCH_SERVICES_OF_TEMPLATE)
 class TooMuchServicesOfTemplateOnNodeStartResult(): StartResult(StartResultType.TOO_MUCH_SERVICES_OF_TEMPLATE)
 class NodeIsNotAllowedStartResult() : StartResult(StartResultType.NODE_IS_NOT_ALLOWED)
-class UnknownServerVersionStartResult(val serviceVersion: CloudServerVersion?) : StartResult(StartResultType.UNKNOWN_SERVER_VERSION)
+class UnknownServerVersionStartResult(val serverVersionId: UUID?) : StartResult(StartResultType.UNKNOWN_SERVER_VERSION)
+class UnknownJavaVersionStartResult(val javaVersionId: UUID?) : StartResult(StartResultType.UNKNOWN_JAVA_VERSION)
+class JavaVersionNotInstalledStartResult(val javaVersion: JavaVersion) : StartResult(StartResultType.JAVA_VERSION_NOT_INSTALLED)
+class UnknownServerVersionTypeStartResult(val serverVersionTypeId: UUID?) : StartResult(StartResultType.UNKNOWN_SERVER_TYPE_VERSION)
 class UnknownErrorStartResult(val throwable: Throwable) : StartResult(StartResultType.UNKNOWN_ERROR)
 
 
@@ -23,5 +27,8 @@ enum class StartResultType {
     NODE_IS_NOT_ALLOWED,
     NODE_NOT_CONNECTED,
     UNKNOWN_SERVER_VERSION,
-    UNKNOWN_ERROR
+    UNKNOWN_SERVER_TYPE_VERSION,
+    UNKNOWN_JAVA_VERSION,
+    UNKNOWN_ERROR,
+    JAVA_VERSION_NOT_INSTALLED
 }
