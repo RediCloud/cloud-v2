@@ -12,6 +12,7 @@ class CloudServerVersion(
     var buildId: String?,
     var version: ServerVersion,
     var javaVersionId: UUID?,
+    val defaultFiles: MutableMap<String, String>
 ) {
     fun getDisplayName(): String {
         return "${projectName}_${version.name}"

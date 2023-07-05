@@ -27,3 +27,13 @@ suspend fun isValidUrl(url: String?): Boolean {
         false
     }
 }
+
+val URL.fileName: String
+    get() {
+        val lastIndexOf = path.removeSuffix("/").lastIndexOf("/")
+        return if (lastIndexOf >= 0) {
+            path.removeSuffix("/").substring(lastIndexOf + 1)
+        } else {
+            path.removeSuffix("/")
+        }
+    }

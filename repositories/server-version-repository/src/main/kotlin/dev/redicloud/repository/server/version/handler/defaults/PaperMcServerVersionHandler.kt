@@ -3,6 +3,7 @@ package dev.redicloud.repository.server.version.handler.defaults
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
@@ -11,11 +12,11 @@ import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.requester.PaperMcApiRequester
 import dev.redicloud.repository.server.version.utils.ServerVersion
-import dev.redicloud.utils.TEMP_SERVER_VERSION_FOLDER
-import dev.redicloud.utils.findFreePort
-import dev.redicloud.utils.isValidUrl
+import dev.redicloud.utils.*
 import khttp.get
+import kotlinx.coroutines.launch
 import java.io.File
+import java.net.URL
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
@@ -31,6 +32,10 @@ class PaperMcServerVersionHandler(
     override val name: String = "papermc",
     override var lastUpdateCheck: Long = -1
 ) : IServerVersionHandler {
+
+    companion object {
+        private val logger = LogManager.logger(PaperMcServerVersionHandler::class)
+    }
 
     private val requester = PaperMcApiRequester()
     private val locks = mutableMapOf<UUID, ReentrantLock>()
@@ -80,6 +85,36 @@ class PaperMcServerVersionHandler(
             jar.writeBytes(response.content)
 
             version.buildId = buildId.toString()
+
+            var total = 0
+            var filesDownloaded = 0
+            version.defaultFiles.forEach {
+                total++
+                defaultScope.launch {
+                    val url1 = it.key
+                    val path = it.value
+                    try {
+                        if (!isValidUrl(url1)) {
+                            logger.warning("§cInvalid default file with url ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)}")
+                            return@launch
+                        }
+                        val file = File(folder, path)
+                        val response1 = get(url1)
+                        if (response1.statusCode != 200) {
+                            logger.warning("§cDownload of default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)} is not available (${response.statusCode}):\n${response.text}")
+                            return@launch
+                        }
+                        file.writeBytes(response1.content)
+                    }finally {
+                        filesDownloaded++
+                    }
+                }
+            }
+
+            while (filesDownloaded < total) {
+                Thread.sleep(150)
+            }
+
             serverVersionRepository.updateVersion(version)
             lastUpdateCheck = System.currentTimeMillis()
         }catch (e: Exception) {
@@ -170,7 +205,7 @@ class PaperMcServerVersionHandler(
             if (version.javaVersionId == null) throw NullPointerException("Cant find java version for ${version.getDisplayName()}")
             val javaVersion = javaVersionRepository.getVersion(version.javaVersionId!!)
                 ?: throw NullPointerException("Cant find java version for ${version.getDisplayName()}")
-            val port = findFreePort(40000..60000)
+            findFreePort(40000..60000)
 
             val processBuilder = ProcessBuilder(patchCommand(type, javaVersion, tempJar))
             processBuilder.directory(tempDir)
@@ -179,17 +214,23 @@ class PaperMcServerVersionHandler(
             if (!versionDir.exists()) versionDir.mkdirs()
 
             tempJar.copyTo(jar, true)
-            if (version.libPattern != null) {
+            if (version.libPattern != null || version.defaultFiles.isNotEmpty()) {
                 val pattern = Pattern.compile(version.libPattern!!)
-                tempDir.listFiles()?.forEach {
-                    if (!pattern.matcher(it.name).find()) {
-                        if (it.isDirectory) {
-                            it.deleteRecursively()
+                fun deleteFiles(file: File): Boolean {
+                    val paths = version.defaultFiles.values
+                    if (paths.any { file.absolutePath.endsWith(it) }) return false
+                    if (!pattern.matcher(file.name).find()) {
+                        if (file.isDirectory) {
+                            if (file.listFiles()?.any { deleteFiles(it) } == true) file.deleteRecursively()
                         } else {
-                            it.delete()
+                            file.delete()
+                            return true
                         }
-                        return@forEach
                     }
+                    return false
+                }
+                tempDir.listFiles()?.forEach {
+                    deleteFiles(it)
                 }
             }
             versionDir.deleteRecursively()

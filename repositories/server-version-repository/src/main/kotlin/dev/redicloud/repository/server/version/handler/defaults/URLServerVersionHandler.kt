@@ -1,12 +1,17 @@
 package dev.redicloud.repository.server.version.handler.defaults
 
+import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.TEMP_SERVER_VERSION_FOLDER
+import dev.redicloud.utils.defaultScope
+import dev.redicloud.utils.isValidUrl
 import khttp.get
+import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -18,6 +23,10 @@ class URLServerVersionHandler(
     override val serverVersionRepository: CloudServerVersionRepository,
     override val nodeRepository: NodeRepository
 ) : IServerVersionHandler {
+
+    companion object {
+        private val logger = LogManager.logger(URLServerVersionHandler::class)
+    }
 
     override val name: String = "urldownloader"
     override var lastUpdateCheck: Long = -1
@@ -45,6 +54,35 @@ class URLServerVersionHandler(
             folder.mkdirs()
             if (jar.exists()) jar.delete()
             jar.writeBytes(response.content)
+
+            var total = 0
+            var filesDownloaded = 0
+            version.defaultFiles.forEach {
+                total++
+                defaultScope.launch {
+                    val url1 = it.key
+                    val path = it.value
+                    try {
+                        if (!isValidUrl(url1)) {
+                            logger.warning("§cInvalid default file with url ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)}")
+                            return@launch
+                        }
+                        val file = File(folder, path)
+                        val response1 = get(url1)
+                        if (response1.statusCode != 200) {
+                            logger.warning("§cDownload of default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)} is not available (${response.statusCode}):\n${response.text}")
+                            return@launch
+                        }
+                        file.writeBytes(response1.content)
+                    }finally {
+                        filesDownloaded++
+                    }
+                }
+            }
+
+            while (filesDownloaded < total) {
+                Thread.sleep(150)
+            }
         }finally {
             getLock(version).unlock()
         }

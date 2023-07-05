@@ -20,9 +20,12 @@ import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepo
 import dev.redicloud.service.base.suggester.*
 import dev.redicloud.service.node.repository.node.LOGGER
 import dev.redicloud.utils.defaultScope
+import dev.redicloud.utils.fileName
+import dev.redicloud.utils.isValid
 import dev.redicloud.utils.isValidUrl
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.net.URL
 import java.util.*
 
 @Command("sv")
@@ -134,12 +137,54 @@ class CloudServerVersionCommand(
         }
     }
 
-    @CommandSubPath("create <project> <mcversion>")
+    @CommandSubPath("edit <version> files add <url> [path]")
+    @CommandDescription("Add a file to the server version that will be downloaded")
+    fun onEditFilesAdd(
+        actor: ConsoleActor,
+        @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion,
+        @CommandParameter("url") url: String,
+        @CommandParameter("path") path: String?
+    ) {
+        runBlocking {
+            if (version.defaultFiles.any { it.key.lowercase() == url.lowercase() }) {
+                actor.sendMessage("§cThe file with the url '$url' is already added to the version ${toConsoleValue(version.getDisplayName())}!")
+                return@runBlocking
+            }
+            val u = URL(url)
+            if (!u.isValid()) {
+                actor.sendMessage("§cThe url '$url' is not valid!")
+                return@runBlocking
+            }
+            version.defaultFiles[url] = path ?: u.fileName
+            serverVersionRepository.updateVersion(version)
+            actor.sendMessage("Added file with url ${toConsoleValue(url)} to ${toConsoleValue(version.getDisplayName())}")
+        }
+    }
+
+    @CommandSubPath("edit <version> files remove <url>")
+    @CommandDescription("Remove a file from the server version that will be downloaded")
+    fun onEditFilesRemove(
+        actor: ConsoleActor,
+        @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion,
+        @CommandParameter("url") url: String
+    ) {
+        runBlocking {
+            if (version.defaultFiles.none { it.key.lowercase() == url.lowercase() }) {
+                actor.sendMessage("§cThe file with the url '$url' is not added to the version ${toConsoleValue(version.getDisplayName())}!")
+                return@runBlocking
+            }
+            version.defaultFiles.remove(url)
+            serverVersionRepository.updateVersion(version)
+            actor.sendMessage("Removed file with url ${toConsoleValue(url)} from ${toConsoleValue(version.getDisplayName())}")
+        }
+    }
+
+    @CommandSubPath("create <project> <version>")
     @CommandDescription("Create a new server version")
     fun onCreate(
         actor: ConsoleActor,
         @CommandParameter("project", true) projectName: String,
-        @CommandParameter("mcversion", true, ServerVersionSuggester::class) mcVersion: ServerVersion
+        @CommandParameter("version", true, ServerVersionSuggester::class) mcVersion: ServerVersion
     ) {
         runBlocking {
             val version = CloudServerVersion(
@@ -150,7 +195,8 @@ class CloudServerVersionCommand(
                 null,
                 null,
                 mcVersion,
-                null
+                null,
+                mutableMapOf()
             )
             if (serverVersionRepository.existsVersion(version.getDisplayName())) {
                 actor.sendMessage("§cA server version with the project name $projectName and the mc version ${mcVersion.name }already exists!")
