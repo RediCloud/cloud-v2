@@ -143,7 +143,7 @@ class CloudServerVersionCommand(
         actor: ConsoleActor,
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion,
         @CommandParameter("url") url: String,
-        @CommandParameter("path") path: String?
+        @CommandParameter("path", false) path: String?
     ) {
         runBlocking {
             if (version.defaultFiles.any { it.key.lowercase() == url.lowercase() }) {
