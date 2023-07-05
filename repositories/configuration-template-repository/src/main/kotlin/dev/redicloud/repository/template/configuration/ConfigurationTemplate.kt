@@ -23,7 +23,8 @@ data class ConfigurationTemplate(
     var serverVersionId: UUID?,
     var static: Boolean = false,
     var startPort: Int = 40000,
-    var joinPermission: String? = null
+    var joinPermission: String? = null,
+    var maxPlayers: Int = 50
 ) : Comparable<ConfigurationTemplate> {
 
     override fun compareTo(other: ConfigurationTemplate): Int
