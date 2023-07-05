@@ -21,15 +21,17 @@ A redis based cluster cloud system for minecraft.
   , [bukkit](https://getbukkit.org/download/craftbukkit), [paper](https://papermc.io) based forks)
 - start proxy services ([bungeecord](https://www.spigotmc.org/wiki/bungeecord/)
   , [waterfall](https://github.com/PaperMC/Waterfall), [velocity](https://github.com/PaperMC/Velocity))
+- minestom impl also usable
 - mods support
 - gui to manage the cloud
 - console + commands
 - dynamic and static services
 - templates (clustered)
 - api for developer (modules/plugins)
-- 1.8-latest support
+- mc version: 1.8-latest support
 - custom server versions (like custom paper)
-- java start command is customizable for each server version (multi java support)
+- auto java version detection
+- mutli java versions support (versions: 8-20)
 - modify programm arguments and jvm flags for each group
 - external proxy server (start external proxy server and connect them to the cloud)
 - easy dev plugin test (create external server, that you can start for e.g via your IDE. The services will connect without a node to the cloud cluster)
@@ -38,4 +40,8 @@ A redis based cluster cloud system for minecraft.
 - limbo fallbacks
 - only proxy join (but please use your firewall: [guide](https://www.spigotmc.org/wiki/firewall-guide/))
 - module system
+- report server crashes
+- log server exceptions to node
+- suspend system (suspend time outed nodes...)
+- server version support (auto update, pre versions...)
 - ...
