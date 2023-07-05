@@ -60,3 +60,6 @@ findProject(":services:minecraft-server-service")?.name = "minecraft-server-serv
 
 include("services:proxy-server-service")
 findProject(":services:proxy-server-service")?.name = "proxy-server-service"
+
+include("repositories:player-repository")
+findProject(":repositories:player-repository")?.name = "player-repository"
