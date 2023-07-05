@@ -11,9 +11,6 @@ class JavaVersionSuggester(
     private val javaVersionRepository: JavaVersionRepository
 ) : ICommandSuggester {
 
-    private val easyCache = SingleCache(5.seconds) {
-        runBlocking { javaVersionRepository.getVersions().map { it.name }.toTypedArray() }
-    }
 
     override fun suggest(context: CommandContext): Array<String> =
         runBlocking {

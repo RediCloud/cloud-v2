@@ -8,11 +8,8 @@ import kotlin.time.Duration.Companion.seconds
 
 class ServerVersionHandlerSuggester : ICommandSuggester {
 
-    private val easyCache = SingleCache(5.seconds) {
+    override fun suggest(context: CommandContext): Array<String> =
         IServerVersionHandler.CACHE_HANDLERS.map { it.name }.toTypedArray()
-    }
-
-    override fun suggest(context: CommandContext): Array<String> = easyCache.get()!!
 
 
 }

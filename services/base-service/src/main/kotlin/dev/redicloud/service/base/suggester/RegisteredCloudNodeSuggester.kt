@@ -9,10 +9,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class RegisteredCloudNodeSuggester(private val nodeRepository: NodeRepository) : ICommandSuggester {
 
-    private val easyCache = SingleCache(5.seconds) {
+    override fun suggest(context: CommandContext): Array<String> =
         runBlocking { nodeRepository.getRegisteredNodes().map { it.name }.toTypedArray() }
-    }
-
-    override fun suggest(context: CommandContext): Array<String> = easyCache.get()!!
 
 }

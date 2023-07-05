@@ -1,7 +1,5 @@
 package dev.redicloud.commands.api
 
-import dev.redicloud.utils.defaultScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.callSuspend

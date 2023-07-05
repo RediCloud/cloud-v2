@@ -64,10 +64,10 @@ abstract class CommandManager<K : ICommandActor<*>> {
                 .filter { actor.hasPermission(it.permission) }
 
             if (possibleSubCommands.size == 1) {
-                list.addAll(possibleSubCommands.first().suggester.suggest(CommandContext(input, emptyArray())))
+                list.addAll(possibleSubCommands.first().suggester.preSuggest(CommandContext(input, emptyArray())))
                 possibleSubCommands.first().arguments
                     .filter { it.isThis(input, true) }
-                    .map { it.subCommand.suggester.suggest(CommandContext(input, it.suggesterParameter)) }
+                    .map { it.subCommand.suggester.preSuggest(CommandContext(input, it.suggesterParameter)) }
             }else{
                 possibleSubCommands.forEach {
                     list.addAll(it.getSubPaths())
@@ -124,7 +124,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
                         ?.getSubCommands()?.firstOrNull { it.isThis(input, true) }
                         ?: return@forEach
                     val argument = subCommand.arguments.firstOrNull { it.isThis(input, true) } ?: return@forEach
-                    results.addAll(argument.suggester.suggest(CommandContext(input, argument.suggesterParameter)))
+                    results.addAll(argument.suggester.preSuggest(CommandContext(input, argument.suggesterParameter)))
                 }
             }
         }
