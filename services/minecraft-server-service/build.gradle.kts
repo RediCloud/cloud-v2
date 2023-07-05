@@ -12,6 +12,7 @@ dependencies {
     compileOnly(project(":repositories:configuration-template-repository"))
     compileOnly(project(":repositories:server-version-repository"))
     compileOnly(project(":repositories:java-version-repository"))
+    compileOnly(project(":repositories:player-repository"))
     compileOnly(project(":events"))
     compileOnly(project(":tasks"))
     compileOnly(project(":console"))
