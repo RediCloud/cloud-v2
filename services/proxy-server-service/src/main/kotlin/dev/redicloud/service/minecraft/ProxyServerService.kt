@@ -10,7 +10,6 @@ abstract class ProxyServerService<T> : MinecraftServerService<T>() {
     init {
         runBlocking {
             registerListeners()
-            registerStartedServers()
         }
     }
 
@@ -22,7 +21,7 @@ abstract class ProxyServerService<T> : MinecraftServerService<T>() {
         this.eventManager.register(CloudServerListener(this))
     }
 
-    private suspend fun registerStartedServers() {
+    protected suspend fun registerStartedServers() {
         this.serverRepository.getConnectedServers<CloudMinecraftServer>(ServiceType.MINECRAFT_SERVER).forEach {
             registerServer(it)
         }
