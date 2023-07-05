@@ -22,7 +22,7 @@
         "connection-throttle": "0"
       },
       "spigot.yml": {
-        "\"bungeecord\"": "true"
+        "bungeecord": "true"
       }
     },
     "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%.jar",
@@ -52,7 +52,7 @@
         "connection-throttle": "0"
       },
       "spigot.yml": {
-        "\"bungeecord\"": "true"
+        "bungeecord": "true"
       }
     },
     "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%.jar",
@@ -82,7 +82,7 @@
         "connection-throttle": "0"
       },
       "spigot.yml": {
-        "\"bungeecord\"": "true"
+        "bungeecord": "true"
       }
     },
     "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%.jar",
