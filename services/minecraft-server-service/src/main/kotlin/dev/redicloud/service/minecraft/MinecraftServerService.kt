@@ -9,10 +9,13 @@ import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.service.base.BaseService
 import dev.redicloud.service.base.repository.BaseFileTemplateRepository
+import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
 import dev.redicloud.service.minecraft.repositories.connect
+import dev.redicloud.service.minecraft.tasks.CloudServerInfoTask
 import dev.redicloud.utils.DATABASE_JSON
 import dev.redicloud.utils.service.ServiceId
 import kotlinx.coroutines.runBlocking
+import kotlin.time.Duration.Companion.milliseconds
 
 abstract class MinecraftServerService<T> : BaseService(
     DatabaseConfiguration.fromFile(DATABASE_JSON.getFile()),
@@ -24,6 +27,7 @@ abstract class MinecraftServerService<T> : BaseService(
     final override val fileTemplateRepository: AbstractFileTemplateRepository
     final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
     final override val serverRepository: ServerRepository
+    abstract val serverPlayerProvider: IServerPlayerProvider
     val logger = LogManager.Companion.logger(MinecraftServerService::class)
 
     init {
@@ -61,6 +65,14 @@ abstract class MinecraftServerService<T> : BaseService(
         }
         super.shutdown()
         Thread.sleep(1500) // Wait for all threads to finish their work
+    }
+
+    protected fun registerTasks() {
+        taskManager.builder()
+            .task(CloudServerInfoTask(serverRepository, serverPlayerProvider))
+            .instant()
+            .period(1500.milliseconds)
+            .register()
     }
 
     abstract fun getConnectorPlugin(): T

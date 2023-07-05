@@ -15,6 +15,7 @@ import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.CloudNode
+import dev.redicloud.repository.player.PlayerRepository
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
@@ -60,6 +61,7 @@ abstract class BaseService(
     abstract val serverRepository: ServerRepository
     val configurationTemplateRepository: ConfigurationTemplateRepository
     val javaVersionRepository: JavaVersionRepository
+    val playerRepository: PlayerRepository
 
     val packetManager: PacketManager
     val eventManager: EventManager
@@ -85,6 +87,7 @@ abstract class BaseService(
         eventManager = EventManager("base-event-manager", packetManager)
         taskManager = CloudTaskManager(eventManager, packetManager)
 
+        playerRepository = PlayerRepository(databaseConnection, eventManager)
         javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection)
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager, eventManager)
         serverVersionRepository = CloudServerVersionRepository(databaseConnection)
