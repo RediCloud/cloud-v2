@@ -98,9 +98,15 @@ class ServerFactory(
         val type =
             serverVersionTypeRepository.getType(version.typeId!!) ?: return UnknownServerVersionTypeStartResult(version.typeId)
         if (type.isUnknown()) return UnknownServerVersionTypeStartResult(version.typeId)
+
+        if (version.javaVersionId == null) return UnknownJavaVersionStartResult(version.javaVersionId)
+        val javaVersion = javaVersionRepository.getVersion(version.javaVersionId!!)
+            ?: return UnknownJavaVersionStartResult(version.javaVersionId)
+
         // get the version handler and update/patch the version if needed
         val versionHandler = IServerVersionHandler.getHandler(type)
         if (!versionHandler.isPatched(version) && versionHandler.isPatchVersion(version)) versionHandler.patch(version)
+
 
         // create the server process
         val serverProcess = ServerProcess(
