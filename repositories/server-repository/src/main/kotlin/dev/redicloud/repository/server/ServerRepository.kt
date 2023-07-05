@@ -12,7 +12,6 @@ import dev.redicloud.service.base.events.server.CloudServerRegisteredEvent
 import dev.redicloud.service.base.events.server.CloudServerStateChangeEvent
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
-import org.redisson.api.RBucket
 
 class ServerRepository(
     databaseConnection: DatabaseConnection,
@@ -23,6 +22,10 @@ class ServerRepository(
 
     suspend fun <T : CloudServer> getServer(serviceId: ServiceId): T? =
         getService(serviceId)
+
+    suspend fun <T : CloudServer> getServer(name: String, type: ServiceType): T? =
+        getRegisteredServices().filter { it.serviceId.type == type }
+            .firstOrNull { it.name.lowercase() == name.lowercase() } as? T
 
     suspend fun getMinecraftServer(serviceId: ServiceId): CloudMinecraftServer? =
         getServer(serviceId)
@@ -78,6 +81,16 @@ class ServerRepository(
     override suspend fun transformShutdownable(service: CloudServer): CloudServer {
         service.state = CloudServerState.STOPPING
         return service
+    }
+
+    suspend fun getFallback(currentServerId: ServiceId?): CloudMinecraftServer? {
+        return getConnectedServers<CloudMinecraftServer>(ServiceType.MINECRAFT_SERVER)
+            .filter { currentServerId != it.serviceId }
+            //TODO check permissions
+            .filter { it.configurationTemplate.fallbackServer }
+            .filter { it.state == CloudServerState.RUNNING }
+            .filter { it.connectedPlayers.size < it.maxPlayers }
+            .minByOrNull { it.connectedPlayers.size }
     }
 
 }
