@@ -91,10 +91,10 @@ class ServerFactory(
         logger.fine("Prepare server ${configurationTemplate.uniqueId}...")
 
         // check if the server version is known
-        if (configurationTemplate.serverVersionId == null) return UnknownJavaVersionStartResult(configurationTemplate.serverVersionId)
+        if (configurationTemplate.serverVersionId == null) return UnknownServerVersionStartResult(configurationTemplate.serverVersionId)
         val version = serverVersionRepository.getVersion(configurationTemplate.serverVersionId!!)
-            ?: return UnknownJavaVersionStartResult(configurationTemplate.serverVersionId)
-        if (version.typeId == null) return UnknownJavaVersionStartResult(null)
+            ?: return UnknownServerVersionTypeStartResult(configurationTemplate.serverVersionId)
+        if (version.typeId == null) return UnknownServerVersionTypeStartResult(null)
         val type =
             serverVersionTypeRepository.getType(version.typeId!!) ?: return UnknownServerVersionTypeStartResult(version.typeId)
         if (type.isUnknown()) return UnknownServerVersionTypeStartResult(version.typeId)
@@ -158,7 +158,9 @@ class ServerFactory(
                         thisNode.serviceId,
                         mutableListOf(),
                         false,
-                        CloudServerState.PREPARING
+                        CloudServerState.PREPARING,
+                        -1,
+                        configurationTemplate.maxPlayers
                     )
                 )
             }else {
@@ -170,7 +172,9 @@ class ServerFactory(
                         thisNode.serviceId,
                         mutableListOf(),
                         false,
-                        CloudServerState.PREPARING
+                        CloudServerState.PREPARING,
+                        -1,
+                        configurationTemplate.maxPlayers
                     )
                 )
             }
@@ -197,7 +201,7 @@ class ServerFactory(
             // copy all templates
             copier.copyTemplates()
             // copy all version files
-            copier.copyVersionFiles()
+            copier.copyVersionFiles { serverProcess.replacePlaceholders(it) }
             // copy connector
             copier.copyConnector()
 
@@ -205,8 +209,8 @@ class ServerFactory(
             return serverProcess.start(cloudServer, serverScreen)
         } catch (e: Exception) {
             // delete the server if it is created and not static
-            if (cloudServer != null && !cloudServer.configurationTemplate.static) {
-                serverRepository.deleteServer(cloudServer)
+            if (cloudServer != null) {
+                stopServer(cloudServer.serviceId, true)
             }
             return UnknownErrorStartResult(e)
         }

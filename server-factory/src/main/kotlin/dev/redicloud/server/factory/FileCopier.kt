@@ -91,7 +91,7 @@ class FileCopier(
     /**
      * Copies all files for the server version to the work directory
      */
-    suspend fun copyVersionFiles() {
+    suspend fun copyVersionFiles(action: (String) -> String = { it }) {
         logger.fine("Copying files for $serviceId of version ${serverVersion.getDisplayName()}")
         val versionHandler = IServerVersionHandler.getHandler(serverVersionType)
         versionHandler.getLock(serverVersion).lock()
@@ -102,7 +102,7 @@ class FileCopier(
                 versionHandler.download(serverVersion)
             }
             versionHandler.getFolder(serverVersion).copyRecursively(workDirectory)
-            serverVersionType.doFileEdits(workDirectory)
+            serverVersionType.doFileEdits(workDirectory, action)
         }finally {
             versionHandler.getLock(serverVersion).unlock()
         }

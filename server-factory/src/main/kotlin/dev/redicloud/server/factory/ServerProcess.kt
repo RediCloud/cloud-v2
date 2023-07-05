@@ -94,6 +94,7 @@ class ServerProcess(
         handler!!.onExit { runBlocking { stop(internalCall =  true) } }
 
         cloudServer.state = CloudServerState.STARTING
+        cloudServer.port = port
         serverRepository.updateServer(cloudServer)
 
         logger.fine("Started server process ${cloudServer.serviceId.toName()}")
@@ -148,6 +149,7 @@ class ServerProcess(
         if (cloudServer != null) {
             cloudServer!!.state = CloudServerState.STOPPED
             cloudServer!!.connected = false
+            cloudServer!!.connectedPlayers.clear()
             serverRepository.updateServer(cloudServer!!)
         }
 
@@ -198,7 +200,7 @@ class ServerProcess(
         return list
     }
 
-    private fun replacePlaceholders(text: String): String =
+    fun replacePlaceholders(text: String): String =
         text.replace("%PORT%", port.toString())
             .replace("%SERVICE_ID%", cloudServer?.serviceId?.toName() ?: "unknown")
             .replace("%SERVICE_NAME%", cloudServer?.serviceId?.toName() ?: "unknown")
