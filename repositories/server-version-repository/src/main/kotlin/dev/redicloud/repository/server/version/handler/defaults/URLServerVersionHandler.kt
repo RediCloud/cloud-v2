@@ -115,7 +115,8 @@ class URLServerVersionHandler(
         try {
             val versionDir = getFolder(version)
             val tempDir = File(UUID.randomUUID().toString(), TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath)
-            val tempJar = jar.copyTo(tempDir)
+            versionDir.copyRecursively(tempDir, true)
+            val tempJar = File(tempDir, jar.name)
 
             val processBuilder = ProcessBuilder("java", "-jar", tempJar.absolutePath)
             processBuilder.directory(tempDir)

@@ -197,7 +197,8 @@ class PaperMcServerVersionHandler(
             val versionDir = getFolder(version)
             val tempDir = File(TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath, UUID.randomUUID().toString())
             tempDir.mkdirs()
-            val tempJar = jar.copyTo(File(tempDir, jar.name))
+            versionDir.copyRecursively(tempDir, true)
+            val tempJar = File(tempDir, jar.name)
 
             if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
             val type = serverVersionTypeRepository.getType(version.typeId!!)

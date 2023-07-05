@@ -27,13 +27,13 @@ data class CloudServerVersionType(
 
     fun isUnknown(): Boolean = name.lowercase() == "unknown"
 
-    fun doFileEdits(folder: File) {
+    fun doFileEdits(folder: File, action: (String) -> String = { it }) {
         fileEdits.forEach { (file, editInfo) ->
             val fileToEdit = File(folder, file)
             if (!fileToEdit.exists()) return
             val editor = ConfigurationFileEditor.ofFile(fileToEdit) ?: return
             editInfo.forEach { key, value ->
-                editor.setValue(key, value)
+                editor.setValue(key, action(value))
             }
             editor.saveToFile(fileToEdit)
         }
