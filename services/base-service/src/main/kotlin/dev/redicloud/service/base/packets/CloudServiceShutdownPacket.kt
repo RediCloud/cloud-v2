@@ -1,4 +1,4 @@
-package dev.redicloud.api.service.packets
+package dev.redicloud.service.base.packets
 
 import dev.redicloud.packets.AbstractPacket
 

@@ -10,10 +10,3 @@ suspend fun ServerRepository.connect(serviceId: ServiceId) {
     thisServer.startSession(System.getenv("RC_HOST"))
     updateServer(thisServer)
 }
-
-suspend fun ServerRepository.disconnect(serviceId: ServiceId) {
-    val thisServer = this.getServer<CloudServer>(serviceId) ?: throw IllegalStateException("Server not found")
-    thisServer.connected = false
-    thisServer.endSession()
-    updateServer(thisServer)
-}

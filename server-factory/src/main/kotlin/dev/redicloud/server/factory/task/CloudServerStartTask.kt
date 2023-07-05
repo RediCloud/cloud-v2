@@ -75,6 +75,7 @@ class CloudServerStartTask(
                     val template = info.configurationTemplate
                     val result = serverFactory.startServer(template)
                     when (result.type) {
+
                         StartResultType.ALREADY_RUNNING -> {
                             serverFactory.startQueue.remove(info)
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.ALREADY_RUNNING)

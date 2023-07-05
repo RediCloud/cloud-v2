@@ -10,7 +10,6 @@ import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.service.base.BaseService
 import dev.redicloud.service.base.repository.BaseFileTemplateRepository
 import dev.redicloud.service.minecraft.repositories.connect
-import dev.redicloud.service.minecraft.repositories.disconnect
 import dev.redicloud.utils.DATABASE_JSON
 import dev.redicloud.utils.service.ServiceId
 import kotlinx.coroutines.runBlocking
@@ -25,7 +24,7 @@ abstract class MinecraftServerService<T> : BaseService(
     final override val fileTemplateRepository: AbstractFileTemplateRepository
     final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
     final override val serverRepository: ServerRepository
-    val logger = LogManager.Companion.logger("BukkitConnector")
+    val logger = LogManager.Companion.logger(MinecraftServerService::class)
 
     init {
         serverRepository = ServerRepository(this.databaseConnection, this.serviceId, this.packetManager, this.eventManager)
@@ -58,9 +57,10 @@ abstract class MinecraftServerService<T> : BaseService(
         if (SHUTTINGDOWN) return
         SHUTTINGDOWN = true
         runBlocking {
-            serverRepository.disconnect(serviceId)
+            serverRepository.shutdownAction.run()
         }
         super.shutdown()
+        Thread.sleep(1500) // Wait for all threads to finish their work
     }
 
     abstract fun getConnectorPlugin(): T

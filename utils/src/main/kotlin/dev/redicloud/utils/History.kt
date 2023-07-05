@@ -1,5 +1,6 @@
 package dev.redicloud.utils
 
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class History<T : Any>(val historySize: Int) {
@@ -27,14 +28,18 @@ class History<T : Any>(val historySize: Int) {
     private fun checkSize() {
         if (size > historySize && map.isNotEmpty()) return
         while (size > historySize) {
-            map.minBy { it.key }.let {
-                map.remove(it.key)
+            sorted().minByOrNull { it.key }?.let {
+                map.remove(it.key, it.value)
             }
         }
     }
 
     fun forEach(action: (T) -> Unit) {
-        map.toSortedMap { o1, o2 -> o1.compareTo(o2) }.values.toList().forEach(action)
+        sorted().values.toList().forEach(action)
+    }
+
+    fun sorted(): SortedMap<Long, T> {
+        return map.toSortedMap { o1, o2 -> o1.compareTo(o2) }
     }
 
 }

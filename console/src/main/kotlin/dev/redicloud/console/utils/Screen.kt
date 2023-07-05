@@ -10,7 +10,7 @@ open class Screen(
     val name: String,
     val allowedCommands: List<String> = mutableListOf("*"),
     val storeMessages: Boolean = true,
-    val maxStoredMessages: Int = 50,
+    val maxStoredMessages: Int = 100,
     historySize: Int = 100
 ) {
 
@@ -25,9 +25,9 @@ open class Screen(
         }
         console.clearScreen()
         console.eventManager?.fireEvent(ScreenChangedEvent(console, this, oldScreen))
-        history.forEach { console.writeLine(it, this, false) }
+        history.forEach { console.writeRaw(it, printDirectly = true) }
         if (storeMessages) {
-            queuedMessage.forEach { console.writeLine(it, this) }
+            queuedMessage.forEach { console.writeRaw(it, printDirectly = true) }
             queuedMessage.clear()
         }
     }
@@ -41,7 +41,14 @@ open class Screen(
     }
 
     open fun println(text: String) {
-        console.writeLine(text, this)
+        if (!console.printingEnabled) return
+        val content = this.console.formatText(console.textColor.ansiCode + text, System.lineSeparator())
+        if (!isActive()) {
+            addLine(content)
+            return
+        }
+        history.add(content)
+        console.writeRaw(content, printDirectly = true)
     }
 
     open fun addLine(text: String) {

@@ -20,10 +20,9 @@ abstract class AbstractPacket {
     }
 
     suspend fun respond(packet: AbstractPacket) {
-        if (sender == null) return
-        if (manager == null) return
-        packet.referenceId = packetId
-        manager!!.publish(packet, sender!!)
+        if (sender == null) throw IllegalStateException("Sender is null!")
+        if (manager == null) throw IllegalStateException("PacketManager is null!")
+        manager!!.publish(packet.asAnswerOf(this), sender!!)
     }
 
     fun getReferenceId(): UUID? = referenceId

@@ -18,6 +18,7 @@ class JavaVersionNotInstalledStartResult(val javaVersion: JavaVersion) : StartRe
 class UnknownServerVersionTypeStartResult(val serverVersionTypeId: UUID?) : StartResult(StartResultType.UNKNOWN_SERVER_TYPE_VERSION)
 class UnknownErrorStartResult(val throwable: Throwable) : StartResult(StartResultType.UNKNOWN_ERROR)
 
+class StoppedStartResult() : StartResult(StartResultType.STOPPED)
 
 enum class StartResultType {
     SUCCESS,
@@ -30,5 +31,6 @@ enum class StartResultType {
     UNKNOWN_SERVER_TYPE_VERSION,
     UNKNOWN_JAVA_VERSION,
     UNKNOWN_ERROR,
+    STOPPED,
     JAVA_VERSION_NOT_INSTALLED
 }

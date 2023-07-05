@@ -20,14 +20,12 @@ import dev.redicloud.service.base.events.node.NodeDisconnectEvent
 import dev.redicloud.service.base.events.node.NodeSuspendedEvent
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.repository.node.connect
-import dev.redicloud.service.node.repository.node.disconnect
 import dev.redicloud.service.node.commands.*
 import dev.redicloud.service.node.repository.template.file.NodeFileTemplateRepository
 import dev.redicloud.service.node.tasks.node.NodeChooseMasterTask
 import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
 import dev.redicloud.utils.TEMP_FOLDER
-import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -87,7 +85,7 @@ class NodeService(
         runBlocking {
             serverFactory.shutdown()
             fileCluster.disconnect(true)
-            nodeRepository.disconnect(this@NodeService)
+            nodeRepository.shutdownAction.run()
             super.shutdown()
             TEMP_FOLDER.getFile().deleteRecursively()
         }

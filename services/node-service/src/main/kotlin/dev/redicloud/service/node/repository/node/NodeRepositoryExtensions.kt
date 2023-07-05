@@ -33,20 +33,6 @@ suspend fun NodeRepository.connect(nodeService: NodeService) {
     node.connected = true
     updateNode(node)
     nodeService.eventManager.fireEvent(NodeConnectEvent(node.serviceId))
-    LOGGER.info("Connected to node cluster!")
-}
-
-suspend fun NodeRepository.disconnect(nodeService: NodeService) {
-    val serviceId = nodeService.configuration.toServiceId()
-    val node = getNode(serviceId) ?: return
-    node.connected = false
-    node.endSession()
-    node.currentMemoryUsage = 0
-    node.hostedServers.clear()
-    if (node.master) node.master = false
-    updateNode(node)
-    nodeService.eventManager.fireEvent(NodeDisconnectEvent(node.serviceId))
-    LOGGER.info("Disconnected from node cluster!")
 }
 
 //TODO: unregister services etc...

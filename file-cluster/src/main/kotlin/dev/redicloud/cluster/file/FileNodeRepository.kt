@@ -37,4 +37,8 @@ class FileNodeRepository(databaseConnection: DatabaseConnection, packetManager: 
         return getAll()
     }
 
+    override suspend fun transformShutdownable(service: FileNode): FileNode {
+        return service
+    }
+
 }

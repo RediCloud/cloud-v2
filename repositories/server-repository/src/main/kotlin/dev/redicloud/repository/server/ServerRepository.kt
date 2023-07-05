@@ -36,10 +36,11 @@ class ServerRepository(
         if (oldServer?.state != cloudServer.state) {
             eventManager.fireEvent(CloudServerStateChangeEvent(cloudServer.serviceId, cloudServer.state))
         }
-        if (oldServer != null && oldServer.connected != cloudServer.connected) {
+
+        if (oldServer != null && (oldServer.connected != cloudServer.connected || (oldServer.state != cloudServer.state && cloudServer.state == CloudServerState.STOPPED))) {
             if (cloudServer.connected) {
                 eventManager.fireEvent(CloudServerConnectedEvent(cloudServer.serviceId))
-            } else {
+            } else if (cloudServer.state == CloudServerState.STOPPED) {
                 eventManager.fireEvent(CloudServerDisconnectedEvent(cloudServer.serviceId))
             }
         }
@@ -73,5 +74,10 @@ class ServerRepository(
 
     suspend fun <T : CloudServer> getRegisteredServers(type: ServiceType): List<T> =
         getRegisteredIds().filter { it.type == type }.mapNotNull { getServer(it) }
+
+    override suspend fun transformShutdownable(service: CloudServer): CloudServer {
+        service.state = CloudServerState.STOPPING
+        return service
+    }
 
 }

@@ -18,12 +18,15 @@ abstract class ServiceRepository<T : CloudService>(
     protected val connectedServices: RList<ServiceId>
     protected val registeredServices: RList<ServiceId>
     val shutdownAction: Runnable
+    private var shutdownCalled = false
 
     init {
         connectedServices = databaseConnection.getClient().getList("service:connected")
         registeredServices = databaseConnection.getClient().getList("service:registered")
 
         shutdownAction = Runnable {
+            if (shutdownCalled) return@Runnable
+            shutdownCalled = true
             runBlocking {
                 if (!databaseConnection.isConnected()) {
                     throw Exception("Database connection is not connected! Cannot remove service from cluster")
@@ -31,18 +34,19 @@ abstract class ServiceRepository<T : CloudService>(
                 if (serviceId.type != serviceType) return@runBlocking
                 connectedServices.remove(serviceId)
                 val service = getService(serviceId) as T? ?: return@runBlocking
-                if (service.isConnected()) {
-                    service.currentSession()!!.endTime = System.currentTimeMillis()
-                }
-                if (service.unregisterAfterDisconnect()) {
+                service.connected = false
+                if (service.currentSession() != null) service.endSession()
+                if (service.canSelfUnregister()) {
                     registeredServices.remove(serviceId)
-                    delete(serviceId.id.toString())
+                    deleteService(transformShutdownable(service))
                 }else {
-                    set(serviceId.id.toString(), service)
+                    updateService(transformShutdownable(service))
                 }
             }
         }
     }
+
+    abstract suspend fun transformShutdownable(service: T): T
 
     protected suspend fun <C : CloudService> getService(serviceId: ServiceId): C?
         = getUnsafeHandle<C>(serviceId.toDatabaseIdentifier(), true).get()

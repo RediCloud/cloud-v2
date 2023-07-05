@@ -1,7 +1,7 @@
 package dev.redicloud.server.factory
 
 import dev.redicloud.api.server.CloudServerState
-import dev.redicloud.api.service.packets.CloudServiceShutdownPacket
+import dev.redicloud.service.base.packets.CloudServiceShutdownPacket
 import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.logging.getDefaultLogLevel
@@ -38,6 +38,7 @@ class ServerProcess(
     private val logger = LogManager.logger(ServerProcess::class)
     internal lateinit var fileCopier: FileCopier
     internal var cloudServer: CloudServer? = null
+    internal var stopped = false
 
     companion object {
         val SERVER_STOP_TIMEOUT = System.getProperty("redicloud.server.stop.timeout", "20").toInt()
@@ -48,6 +49,7 @@ class ServerProcess(
      * @param cloudServer the cloud server instance
      */
     suspend fun start(cloudServer: CloudServer, serverScreen: ServerScreen): StartResult {
+        if (stopped) return StoppedStartResult()
         this.cloudServer = cloudServer
         cloudServer.port = port
         val processBuilder = ProcessBuilder()
@@ -60,6 +62,8 @@ class ServerProcess(
         processBuilder.environment()["LIBRARY_FOLDER"] = LIB_FOLDER.getFile().absolutePath
         processBuilder.environment().putAll(configurationTemplate.environments)
 
+
+        //TODO: snapshot all these data on start
         if (configurationTemplate.serverVersionId == null) return UnknownServerVersionStartResult(configurationTemplate.serverVersionId)
         val serverVersion = serverVersionRepository.getVersion(configurationTemplate.serverVersionId!!)
             ?: return UnknownServerVersionStartResult(configurationTemplate.serverVersionId)
@@ -81,10 +85,13 @@ class ServerProcess(
         )
         // set working directory
         processBuilder.directory(fileCopier.workDirectory)
+
+        if (stopped) return StoppedStartResult()
+
         process = processBuilder.start()
         // create handler and listen for exit
         handler = ServerProcessHandler(process!!, cloudServer, serverScreen)
-        handler!!.onExit { runBlocking { stop(false) } }
+        handler!!.onExit { runBlocking { stop(internalCall =  true) } }
 
         cloudServer.state = CloudServerState.STARTING
         serverRepository.updateServer(cloudServer)
@@ -96,10 +103,20 @@ class ServerProcess(
     /**
      * Stops the server process
      */
-    suspend fun stop(force: Boolean = false) {
-        logger.fine("Stopped server process ${configurationTemplate.uniqueId}")
+    suspend fun stop(force: Boolean = false, internalCall: Boolean = false) {
+        if (stopped) return
+        stopped = true
+        val identifier = cloudServer?.serviceId?.toName() ?: configurationTemplate.uniqueId
+        if (internalCall) {
+            logger.fine("Detected process exit of $identifier")
+            if (cloudServer?.connected == true) {
+                logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stopped unexpectedly!")
+            }
+        }else {
+            logger.fine("Stopped server process $identifier")
+        }
 
-        if (cloudServer != null) {
+        if (cloudServer != null && !internalCall) {
             cloudServer!!.state = CloudServerState.STOPPING
             serverRepository.updateServer(cloudServer!!)
             val response = packetManager.publish(CloudServiceShutdownPacket(), cloudServer!!.serviceId)

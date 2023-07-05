@@ -63,14 +63,15 @@ interface IConsole : AutoCloseable {
     fun disableCommands()
 
     fun writeRaw(
-        rawText: String,
+         rawText: String,
          ensureEndsWith: String = "",
          level: String = "§f INFO",
          lineFormat: Boolean = true,
          cursorUp: Boolean = false,
          eraseLine: Boolean = true,
          ansi: Ansi? = null,
-        restoreCursor: Boolean = false
+         restoreCursor: Boolean = false,
+         printDirectly: Boolean = false
     ): Console
 
     fun forceWriteLine(text: String, source: Screen? = null, history: Boolean = true): Console

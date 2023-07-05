@@ -14,6 +14,7 @@ class VelocityConnector(
     val proxyServer: ProxyServer
 ) : ProxyServerService<VelocityConnectorBootstrap>() {
 
+    private var velocityShuttingDown = false
     private val registered = mutableMapOf<ServiceId, ServerInfo>()
 
     override fun registerServer(server: CloudMinecraftServer) {
@@ -35,6 +36,14 @@ class VelocityConnector(
         if (server.serviceId.type != ServiceType.MINECRAFT_SERVER) return
         val serverInfo = registered.remove(server.serviceId) ?: return
         proxyServer.unregisterServer(serverInfo)
+    }
+
+    override fun onDisable() {
+        if (!velocityShuttingDown) {
+            proxyServer.shutdown()
+            return
+        }
+        super.onDisable()
     }
 
     override fun getConnectorPlugin(): VelocityConnectorBootstrap = bootstrap

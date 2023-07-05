@@ -357,8 +357,8 @@ open class Console(
         printLock.lock()
         try {
             s.split("\n").forEach {
-                defaultScreen.history.add(it)
                 val text = formatText(it, "\n", true, getLevelColor(logRecord.level).ansiCode + getNormedLevelName(logRecord.level))
+                defaultScreen.history.add(text)
                 this.print(text)
                 runningAnimations.values.forEach { it.second.addToCursorUp(1) }
             }
@@ -367,9 +367,13 @@ open class Console(
         }
     }
 
-    override fun writeRaw(rawText: String, ensureEndsWith: String, level: String, lineFormat: Boolean, cursorUp: Boolean, eraseLine: Boolean, ansi: Ansi?, restoreCursor: Boolean): Console {
+    override fun writeRaw(rawText: String, ensureEndsWith: String, level: String, lineFormat: Boolean, cursorUp: Boolean, eraseLine: Boolean, ansi: Ansi?, restoreCursor: Boolean, printDirectly: Boolean): Console {
         printLock.lock()
         try {
+            if (printDirectly) {
+                this.print(rawText)
+                return this
+            }
             val content = formatText(rawText, ensureEndsWith, lineFormat, level, ansi, restoreCursor)
             if (ansiSupported && eraseLine) {
                 this.print(
@@ -392,15 +396,15 @@ open class Console(
     override fun forceWriteLine(text: String, source: Screen?, history: Boolean): Console {
         printLock.lock()
         try {
+            val content = this.formatText(textColor.ansiCode + text, System.lineSeparator())
+
             if (history) {
                 if (source == null) {
-                    defaultScreen.addLine(text)
+                    defaultScreen.addLine(content)
                 }else {
-                    source.addLine(text)
+                    source.addLine(content)
                 }
             }
-
-            val content = this.formatText(textColor.ansiCode + text, System.lineSeparator())
 
             if (ansiSupported) {
                 this.print(
@@ -422,7 +426,7 @@ open class Console(
         if (!printingEnabled) return this
         if (source != null && source != currentScreen) {
             if (history) {
-                source.addLine(text)
+                source.addLine(formatText(textColor.ansiCode + text, System.lineSeparator()))
             }
             return this
         }

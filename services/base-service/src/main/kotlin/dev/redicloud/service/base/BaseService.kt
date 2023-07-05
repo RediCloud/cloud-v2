@@ -1,7 +1,7 @@
 package dev.redicloud.service.base
 
-import dev.redicloud.api.service.packets.CloudServiceShutdownPacket
-import dev.redicloud.api.service.packets.CloudServiceShutdownResponse
+import dev.redicloud.service.base.packets.CloudServiceShutdownPacket
+import dev.redicloud.service.base.packets.CloudServiceShutdownResponse
 import dev.redicloud.commands.api.CommandArgumentParser
 import dev.redicloud.commands.api.ICommandSuggester
 import dev.redicloud.repository.node.NodeRepository
@@ -33,7 +33,10 @@ import dev.redicloud.service.base.packets.listener.CloudServiceShutdownPacketLis
 import dev.redicloud.service.base.parser.*
 import dev.redicloud.service.base.suggester.*
 import dev.redicloud.tasks.CloudTaskManager
+import dev.redicloud.utils.defaultScope
+import dev.redicloud.utils.ioScope
 import dev.redicloud.utils.service.ServiceId
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlin.system.exitProcess
 
@@ -83,7 +86,7 @@ abstract class BaseService(
         taskManager = CloudTaskManager(eventManager, packetManager)
 
         javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection)
-        nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager)
+        nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager, eventManager)
         serverVersionRepository = CloudServerVersionRepository(databaseConnection)
         configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection)
         this.registerPackets()
@@ -97,11 +100,15 @@ abstract class BaseService(
 
     open fun shutdown() {
         SHUTTINGDOWN = true
-        nodeRepository.shutdownAction.run()
-        serverRepository.shutdownAction.run()
-        taskManager.getTasks().forEach { it.cancel() }
-        packetManager.disconnect()
-        databaseConnection.disconnect()
+        runBlocking {
+            nodeRepository.shutdownAction.run()
+            serverRepository.shutdownAction.run()
+            taskManager.getTasks().forEach { it.cancel() }
+            packetManager.disconnect()
+            databaseConnection.disconnect()
+            defaultScope.cancel()
+            ioScope.cancel()
+        }
     }
 
     private fun registerDefaultParsers() {
@@ -139,7 +146,7 @@ abstract class BaseService(
 
     private fun registerPacketListeners() {
         fun register(listener: PacketListener<*>) {
-            packetManager.unregisterListener(listener)
+            packetManager.registerListener(listener)
         }
         register(CloudServiceShutdownPacketListener(this))
     }
