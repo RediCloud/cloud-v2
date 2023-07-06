@@ -44,6 +44,7 @@ class NodeService(
     val fileNodeRepository: FileNodeRepository
     val fileCluster: FileCluster
     val serverFactory: ServerFactory
+
     init {
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager)
         console = NodeConsole(configuration, eventManager, nodeRepository, serverRepository)
@@ -51,7 +52,7 @@ class NodeService(
         fileCluster = FileCluster(configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
         fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console)
-        serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress, console)
+        serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress, console, clusterConfiguration)
 
         runBlocking {
             registerDefaults()

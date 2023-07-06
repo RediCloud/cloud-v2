@@ -21,6 +21,7 @@ import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.server.factory.screens.ServerScreen
 import dev.redicloud.server.factory.screens.ServerScreenParser
 import dev.redicloud.server.factory.screens.ServerScreenSuggester
+import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
@@ -39,7 +40,8 @@ class ServerFactory(
     private val javaVersionRepository: JavaVersionRepository,
     private val packetManager: PacketManager,
     private val bindHost: String,
-    private val console: Console
+    private val console: Console,
+    private val clusterConfiguration: ClusterConfiguration
 ) {
 
     internal val startQueue: RList<ServerQueueInformation> =
@@ -116,7 +118,8 @@ class ServerFactory(
             serverVersionRepository,
             serverVersionTypeRepository,
             packetManager,
-            bindHost
+            bindHost,
+            clusterConfiguration
         )
         var cloudServer: CloudServer? = null
         try {

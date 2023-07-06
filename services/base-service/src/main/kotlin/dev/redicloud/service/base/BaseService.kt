@@ -33,12 +33,14 @@ import dev.redicloud.service.base.packets.ServicePingResponse
 import dev.redicloud.service.base.packets.listener.CloudServiceShutdownPacketListener
 import dev.redicloud.service.base.parser.*
 import dev.redicloud.service.base.suggester.*
+import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.tasks.CloudTaskManager
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.ioScope
 import dev.redicloud.utils.service.ServiceId
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
+import org.redisson.api.RBucket
 import kotlin.system.exitProcess
 
 abstract class BaseService(
@@ -66,6 +68,7 @@ abstract class BaseService(
     val packetManager: PacketManager
     val eventManager: EventManager
     val taskManager: CloudTaskManager
+    val clusterConfiguration: ClusterConfiguration
 
     init {
         runBlocking {
@@ -82,6 +85,8 @@ abstract class BaseService(
             LOGGER.severe("Failed to connect to database", e)
             exitProcess(-1)
         }
+
+        clusterConfiguration = ClusterConfiguration(databaseConnection)
 
         packetManager = PacketManager(databaseConnection, serviceId)
         eventManager = EventManager("base-event-manager", packetManager)
