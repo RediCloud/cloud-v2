@@ -102,9 +102,11 @@ class CloudPlayerListener(
     @Subscribe(order = PostOrder.FIRST)
     fun onKickedFromServer(event: KickedFromServerEvent) = runBlocking {
         val player = event.player
-        val cloudPlayer = playerRepository.getPlayer(player.uniqueId) ?: throw IllegalStateException("Player ${player.uniqueId} not found!")
-        cloudPlayer.serverId = serverRepository.getServer<CloudMinecraftServer>(event.server.serverInfo.name, ServiceType.MINECRAFT_SERVER)?.serviceId
-        playerRepository.updatePlayer(cloudPlayer)
+        val cloudPlayer = playerRepository.getPlayer(player.uniqueId)
+        if (cloudPlayer != null) {
+            cloudPlayer.serverId = serverRepository.getServer<CloudMinecraftServer>(event.server.serverInfo.name, ServiceType.MINECRAFT_SERVER)?.serviceId
+            playerRepository.updatePlayer(cloudPlayer)
+        }
 
         val fallback = runBlocking { serverRepository.getFallback(serverRepository.serviceId) }
         if (fallback == null) {
