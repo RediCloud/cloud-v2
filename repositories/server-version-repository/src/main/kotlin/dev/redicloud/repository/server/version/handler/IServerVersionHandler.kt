@@ -86,7 +86,7 @@ interface IServerVersionHandler {
         }
 
         fun registerDefaultHandlers(cloudServerVersionRepository: CloudServerVersionRepository, serverVersionTypeRepository: CloudServerVersionTypeRepository, javaVersionRepository: JavaVersionRepository, nodeRepository: NodeRepository, console: Console) {
-            registerHandler(URLServerVersionHandler(cloudServerVersionRepository, nodeRepository))
+            registerHandler(URLServerVersionHandler(cloudServerVersionRepository, nodeRepository, serverVersionTypeRepository))
             registerHandler(PaperMcServerVersionHandler(cloudServerVersionRepository, serverVersionTypeRepository, javaVersionRepository, nodeRepository, console))
         }
 
