@@ -43,6 +43,10 @@ class ScreenCommand(
             actor.sendMessage("§cThe screen session is already active!")
             return
         }
+        if (!console.getCurrentScreen().isDefault()) {
+            actor.sendMessage("§cYou are already in this screen session!")
+            return
+        }
         console.switchScreen(serverScreen, true)
     }
 
@@ -58,6 +62,24 @@ class ScreenCommand(
         }
         console.switchToDefaultScreen(true)
         console.writeLine("You left the screen session ${toConsoleValue(currentScreen.name)}")
+    }
+
+    @CommandSubPath("toggle <screen>")
+    @CommandDescription("Toggle a screen session")
+    fun toggle(
+        actor: ConsoleActor,
+        @CommandParameter("screen", true, ServerScreenSuggester::class) serverScreen: ServerScreen
+    ) {
+        if (serverScreen.isActive()) {
+            actor.sendMessage("§cThe screen session is already active!")
+            return
+        }
+        if (!console.getCurrentScreen().isDefault()) {
+            console.switchToDefaultScreen(true)
+            console.writeLine("You left the screen session ${toConsoleValue(serverScreen.name)}")
+            return
+        }
+        console.switchScreen(serverScreen, true)
     }
 
 }
