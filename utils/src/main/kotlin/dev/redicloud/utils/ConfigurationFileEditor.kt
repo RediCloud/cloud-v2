@@ -3,10 +3,10 @@ package dev.redicloud.utils
 import java.io.File
 import java.nio.charset.StandardCharsets
 
-class ConfigurationFileEditor(
+class ConfigurationFileEditor private constructor(
     private val linesWithSpaces: List<String>,
     private val keyValueSplitter: String
-) {
+){
 
     companion object {
         const val YAML_SPLITTER = ": "
@@ -14,9 +14,10 @@ class ConfigurationFileEditor(
         const val TOML_SPLITTER = " = "
         fun ofFile(file: File): ConfigurationFileEditor? {
             val keyValueSplitter = when(file.extension) {
-                "yml" -> ConfigurationFileEditor.YAML_SPLITTER
-                "properties" -> ConfigurationFileEditor.PROPERTIES_SPLITTER
+                "yml" -> YAML_SPLITTER
+                "properties" -> PROPERTIES_SPLITTER
                 "toml" -> TOML_SPLITTER
+                "secret" -> ""
                 else -> return null
             }
             return ConfigurationFileEditor(file.readLines(StandardCharsets.UTF_8), keyValueSplitter)
