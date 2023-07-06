@@ -5,6 +5,7 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
+import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.TEMP_SERVER_VERSION_FOLDER
@@ -21,7 +22,8 @@ import kotlin.time.Duration.Companion.minutes
 
 class URLServerVersionHandler(
     override val serverVersionRepository: CloudServerVersionRepository,
-    override val nodeRepository: NodeRepository
+    override val nodeRepository: NodeRepository,
+    val serverVersionTypeRepository: CloudServerVersionTypeRepository
 ) : IServerVersionHandler {
 
     companion object {
@@ -41,6 +43,10 @@ class URLServerVersionHandler(
         if (jar.exists() && !force) return jar
         getLock(version).lock()
         try {
+            if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
+
+            val type = serverVersionTypeRepository.getType(version.typeId!!)
+                ?: throw NullPointerException("Cant find server version type ${version.typeId}")
             if (version.customDownloadUrl == null) throw NullPointerException("Download url of ${version.getDisplayName()} is null")
 
             val response = get(version.customDownloadUrl!!)
@@ -57,7 +63,10 @@ class URLServerVersionHandler(
 
             var total = 0
             var filesDownloaded = 0
-            version.defaultFiles.forEach {
+            val fileEdits = mutableMapOf<String, String>()
+            fileEdits.putAll(version.defaultFiles)
+            fileEdits.putAll(type.defaultFiles)
+            fileEdits.forEach {
                 total++
                 defaultScope.launch {
                     val url1 = it.key
@@ -68,6 +77,7 @@ class URLServerVersionHandler(
                             return@launch
                         }
                         val file = File(folder, path)
+                        if (!file.parentFile.exists()) file.parentFile.mkdirs()
                         val response1 = get(url1)
                         if (response1.statusCode != 200) {
                             logger.warning("§cDownload of default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)} is not available (${response.statusCode}):\n${response.text}")

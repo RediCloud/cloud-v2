@@ -51,9 +51,9 @@ class FileCopier(
             .flatMap { runBlocking { fileTemplateRepository.collectTemplates(it) } }
         // create work directory
         workDirectory = if(configurationTemplate.static) {
-            File(STATIC_FOLDER.getFile().absolutePath, serverUniqueId.toString())
+            File(STATIC_FOLDER.getFile().absolutePath, "${cloudServer.name}-${serverUniqueId}")
         }else {
-            File(TEMP_SERVER_FOLDER.getFile().absolutePath, serverUniqueId.toString())
+            File(TEMP_SERVER_FOLDER.getFile().absolutePath, "${cloudServer.name}-${serverUniqueId}")
         }
         if (!workDirectory.exists()) workDirectory.mkdirs()
     }
@@ -103,6 +103,7 @@ class FileCopier(
             }
             versionHandler.getFolder(serverVersion).copyRecursively(workDirectory)
             serverVersionType.doFileEdits(workDirectory, action)
+            serverVersion.doFileEdits(workDirectory, action)
         }finally {
             versionHandler.getLock(serverVersion).unlock()
         }

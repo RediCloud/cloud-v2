@@ -3,20 +3,20 @@ package dev.redicloud.service.node.commands
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.service.base.suggester.CloudConnectorFileNameSelector
+import dev.redicloud.service.base.suggester.CloudServerVersionSuggester
 import dev.redicloud.service.base.suggester.CloudServerVersionTypeSuggester
 import dev.redicloud.service.base.suggester.ServerVersionHandlerSuggester
-import dev.redicloud.utils.CLOUD_VERSION
-import dev.redicloud.utils.CONNECTORS_FOLDER
-import dev.redicloud.utils.isValidUrl
-import dev.redicloud.utils.toSymbol
+import dev.redicloud.utils.*
 import kotlinx.coroutines.runBlocking
 import java.io.File
+import java.net.URL
 import java.util.*
 
 @Command("svt")
@@ -91,7 +91,7 @@ class CloudServerVersionTypeCommand(
         type.programmArguments.forEach {
             actor.sendMessage("\t§8- %hc%$it")
         }
-        actor.sendMessage("File edits§8:")
+        actor.sendMessage("File edits§8:${if (type.fileEdits.isEmpty()) " %hc%not set" else ""}")
         type.fileEdits.keys.forEach {
             actor.sendMessage("\t§8- %hc%$it")
             type.fileEdits[it]?.forEach { edit ->
@@ -100,6 +100,48 @@ class CloudServerVersionTypeCommand(
         }
         actor.sendMessage("")
         actor.sendHeader("Server-Version type")
+    }
+
+    @CommandSubPath("edit <type> files add <url> [path]")
+    @CommandDescription("Add a file to the server version type that will be downloaded")
+    fun onEditFilesAdd(
+        actor: ConsoleActor,
+        @CommandParameter("type", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
+        @CommandParameter("url") url: String,
+        @CommandParameter("path", false) path: String?
+    ) {
+        runBlocking {
+            if (!isValidUrl(url)) {
+                actor.sendMessage("§cThe url '$url' is not valid!")
+                return@runBlocking
+            }
+            val file = path ?: URL(url).fileName
+            if (type.defaultFiles.any { it.value.lowercase() == file.lowercase() }) {
+                actor.sendMessage("§cThe file with the url '$url' is already added to the version ${toConsoleValue(type.name)}!")
+                return@runBlocking
+            }
+            type.defaultFiles[url] = file
+            serverVersionTypeRepository.updateType(type)
+            actor.sendMessage("Added file with url ${toConsoleValue(url)} to ${toConsoleValue(type.name)}")
+        }
+    }
+
+    @CommandSubPath("edit <type> files remove <url>")
+    @CommandDescription("Remove a file from the server version type that will be downloaded")
+    fun onEditFilesRemove(
+        actor: ConsoleActor,
+        @CommandParameter("type", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
+        @CommandParameter("url") url: String
+    ) {
+        runBlocking {
+            if (type.defaultFiles.none { it.value.lowercase() == url.lowercase() }) {
+                actor.sendMessage("§cThe file with the url '$url' is not added to the version ${toConsoleValue(type.name)}!")
+                return@runBlocking
+            }
+            type.defaultFiles.remove(url)
+            serverVersionTypeRepository.updateType(type)
+            actor.sendMessage("Removed file with url ${toConsoleValue(url)} from ${toConsoleValue(type.name)}")
+        }
     }
 
     @CommandSubPath("create <name>")
@@ -120,6 +162,7 @@ class CloudServerVersionTypeCommand(
                 false,
                 mutableListOf(),
                 mutableListOf(),
+                mutableMapOf(),
                 mutableMapOf(),
                 false,
                 "redicloud-$name-%cloud_version%.jar",

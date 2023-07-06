@@ -35,6 +35,7 @@ class CloudServerVersionTypeRepository(
                         mutableListOf(),
                         mutableListOf(),
                         mutableMapOf(),
+                        mutableMapOf(),
                         true,
                         "redicloud-unknown-${CLOUD_VERSION}.jar",
                         null,
@@ -121,6 +122,9 @@ class CloudServerVersionTypeRepository(
         val defaultTypes = getDefaultTypes()
         defaultTypes.forEach {
             if (existsType(it.uniqueId)) {
+                val current = getType(it.uniqueId)!!
+                if (current == it) return@forEach
+                LOGGER.info("Updating default server version type ${toConsoleValue(it.name)}...")
                 updateType(it)
                 return@forEach
             }

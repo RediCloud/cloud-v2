@@ -146,16 +146,16 @@ class CloudServerVersionCommand(
         @CommandParameter("path", false) path: String?
     ) {
         runBlocking {
-            if (version.defaultFiles.any { it.key.lowercase() == url.lowercase() }) {
-                actor.sendMessage("§cThe file with the url '$url' is already added to the version ${toConsoleValue(version.getDisplayName())}!")
-                return@runBlocking
-            }
-            val u = URL(url)
-            if (!u.isValid()) {
+            if (!isValidUrl(url)) {
                 actor.sendMessage("§cThe url '$url' is not valid!")
                 return@runBlocking
             }
-            version.defaultFiles[url] = path ?: u.fileName
+            val file = path ?: URL(url).fileName
+            if (version.defaultFiles.any { it.value.lowercase() == file.lowercase() }) {
+                actor.sendMessage("§cThe file with the url '$url' is already added to the version ${toConsoleValue(version.getDisplayName())}!")
+                return@runBlocking
+            }
+            version.defaultFiles[url] = file
             serverVersionRepository.updateVersion(version)
             actor.sendMessage("Added file with url ${toConsoleValue(url)} to ${toConsoleValue(version.getDisplayName())}")
         }
@@ -169,7 +169,7 @@ class CloudServerVersionCommand(
         @CommandParameter("url") url: String
     ) {
         runBlocking {
-            if (version.defaultFiles.none { it.key.lowercase() == url.lowercase() }) {
+            if (version.defaultFiles.none { it.value.lowercase() == url.lowercase() }) {
                 actor.sendMessage("§cThe file with the url '$url' is not added to the version ${toConsoleValue(version.getDisplayName())}!")
                 return@runBlocking
             }
@@ -196,6 +196,7 @@ class CloudServerVersionCommand(
                 null,
                 mcVersion,
                 null,
+                mutableMapOf(),
                 mutableMapOf()
             )
             if (serverVersionRepository.existsVersion(version.getDisplayName())) {
@@ -281,6 +282,17 @@ class CloudServerVersionCommand(
             actor.sendMessage("§8- %tc%Build§8: %hc%${version.buildId ?: "not set"}")
             val javaVersion = if (version.javaVersionId != null) javaVersionRepository.getVersion(version.javaVersionId!!) else null
             actor.sendMessage("§8- %tc%Java version§8: %hc%${javaVersion?.name ?: "not set"}")
+            actor.sendMessage("§8- %tc%Default-Files§8:${if (version.defaultFiles.isEmpty()) " %hc%not set" else ""}")
+            version.defaultFiles.forEach {
+                actor.sendMessage("§8  - %hc%${it.key} §8➔ %tc%${it.value}")
+            }
+            actor.sendMessage("File edits§8:${if (version.fileEdits.isEmpty()) " %hc%not set" else ""}")
+            version.fileEdits.keys.forEach {
+                actor.sendMessage("\t§8- %hc%$it")
+                version.fileEdits[it]?.forEach { edit ->
+                    actor.sendMessage("\t    §8➥ %tc%${edit.key} §8➜ %tc%${edit.value}")
+                }
+            }
             actor.sendMessage("")
             actor.sendHeader("Server-Version info")
         }

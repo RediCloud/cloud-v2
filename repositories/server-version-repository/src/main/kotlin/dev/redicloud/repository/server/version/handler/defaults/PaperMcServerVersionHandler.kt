@@ -88,17 +88,21 @@ class PaperMcServerVersionHandler(
 
             var total = 0
             var filesDownloaded = 0
-            version.defaultFiles.forEach {
+            val fileEdits = mutableMapOf<String, String>()
+            fileEdits.putAll(version.defaultFiles)
+            fileEdits.putAll(type.defaultFiles)
+            fileEdits.forEach {
                 total++
                 defaultScope.launch {
-                    val url1 = it.key
-                    val path = it.value
+                    val url1 = it.value
+                    val path = it.key
                     try {
                         if (!isValidUrl(url1)) {
                             logger.warning("§cInvalid default file with url ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)}")
                             return@launch
                         }
                         val file = File(folder, path)
+                        if (!file.parentFile.exists()) file.parentFile.mkdirs()
                         val response1 = get(url1)
                         if (response1.statusCode != 200) {
                             logger.warning("§cDownload of default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)} is not available (${response.statusCode}):\n${response.text}")
