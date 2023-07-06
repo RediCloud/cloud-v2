@@ -12,6 +12,12 @@
     "programmArguments": [
       "nogui"
     ],
+    "defaultFiles": {
+      "config/paper-global.yml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/paper-global.yml",
+      "server.properties": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/server.properties",
+      "bukkit.yml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/bukkit.yml",
+      "spigot.yml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/spigot.yml"
+    },
     "fileEdits": {
       "server.properties": {
         "server-ip": "%HOSTNAME%",
@@ -23,6 +29,9 @@
       },
       "spigot.yml": {
         "bungeecord": "true"
+      },
+      "config/paper-global.yml": {
+        "secret": "%PROXY_SECRET%"
       }
     },
     "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%.jar",
@@ -42,6 +51,11 @@
     "programmArguments": [
       "nogui"
     ],
+    "defaultFiles": {
+      "server.properties": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/server.properties",
+      "bukkit.yml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/bukkit.yml",
+      "spigot.yml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/spigot.yml"
+    },
     "fileEdits": {
       "server.properties": {
         "server-ip": "%HOSTNAME%",
@@ -72,6 +86,11 @@
     "programmArguments": [
       "nogui"
     ],
+    "defaultFiles": {
+      "server.properties": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/server.properties",
+      "bukkit.yml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/bukkit.yml",
+      "spigot.yml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/spigot.yml"
+    },
     "fileEdits": {
       "server.properties": {
         "server-ip": "%HOSTNAME%",
@@ -97,6 +116,10 @@
     "proxy": true,
     "jvmArguments": [],
     "programmArguments": [],
+    "defaultFiles": {
+      "velocity.toml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/velocity.toml",
+      "forwarding.secret": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/forwarding.secret"
+    },
     "fileEdits": {
       "velocity.toml": {
         "bind": "\"%HOSTNAME%:%PORT%\""
@@ -117,6 +140,9 @@
     "proxy": true,
     "jvmArguments": [],
     "programmArguments": [],
+    "defaultFiles": {
+      "config.yml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/config.yml"
+    },
     "fileEdits": {
       "config.yml": {
         "host": "%HOSTNAME%",
@@ -135,6 +161,9 @@
     "proxy": true,
     "jvmArguments": [],
     "programmArguments": [],
+    "defaultFiles": {
+      "config.yml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/config.yml"
+    },
     "fileEdits": {
       "config.yml": {
         "host": "%HOSTNAME%",
@@ -158,6 +187,9 @@
     "programmArguments": [
       "nogui"
     ],
+    "defaultFiles": {
+      "server.properties": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/server.properties"
+    },
     "fileEdits": {
       "server.properties": {
         "server-ip": "%HOSTNAME%",
@@ -176,6 +208,7 @@
     "proxy": false,
     "jvmArguments": [],
     "programmArguments": [],
+    "defaultFiles": [],
     "fileEdits": {},
     "connectorPluginName": "redicloud-minestom-connector-%cloud_version%.jar",
     "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-minestom-connector-%cloud_version%.jar",
@@ -189,6 +222,7 @@
     "proxy": false,
     "jvmArguments": [],
     "programmArguments": [],
+    "defaultFiles": [],
     "fileEdits": {},
     "connectorPluginName": "redicloud-limbo-connector-%cloud_version%.jar",
     "connectorDownloadUrl": "https://files.redicloud.dev/api-files/%cloud_version%/redicloud-limbo-connector-%cloud_version%.jar",
@@ -202,6 +236,7 @@
     "proxy": false,
     "jvmArguments": [],
     "programmArguments": [],
+    "defaultFiles": [],
     "fileEdits": {},
     "connectorPluginName": null,
     "connectorDownloadUrl": null,
