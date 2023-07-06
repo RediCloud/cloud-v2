@@ -36,6 +36,7 @@ abstract class ServiceRepository<T : CloudService>(
                 val service = getService(serviceId) as T? ?: return@runBlocking
                 service.connected = false
                 if (service.currentSession() != null) service.endSession()
+                if (!service.unregisterAfterDisconnect()) return@runBlocking
                 if (service.canSelfUnregister()) {
                     registeredServices.remove(serviceId)
                     deleteService(transformShutdownable(service))

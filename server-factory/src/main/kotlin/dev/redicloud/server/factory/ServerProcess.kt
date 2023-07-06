@@ -20,6 +20,7 @@ import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.CLOUD_PATH
 import dev.redicloud.utils.LIB_FOLDER
 import dev.redicloud.utils.findFreePort
+import dev.redicloud.utils.service.ServiceId
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.seconds
 
@@ -31,7 +32,8 @@ class ServerProcess(
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     private val packetManager: PacketManager,
     private val bindHost: String,
-    private val clusterConfiguration: ClusterConfiguration
+    private val clusterConfiguration: ClusterConfiguration,
+    val serverId: ServiceId
 ) {
 
     val port = findFreePort(configurationTemplate.startPort, !configurationTemplate.static)
@@ -109,6 +111,8 @@ class ServerProcess(
     suspend fun stop(force: Boolean = false, internalCall: Boolean = false) {
         if (stopped) return
         stopped = true
+        if (!serverRepository.existsServer<CloudServer>(serverId)) return
+        cloudServer = serverRepository.getServer(serverId) ?: return
         val identifier = cloudServer?.serviceId?.toName() ?: configurationTemplate.uniqueId
         if (internalCall) {
             logger.fine("Detected process exit of $identifier")

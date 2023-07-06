@@ -109,6 +109,7 @@ class ServerFactory(
         val versionHandler = IServerVersionHandler.getHandler(type)
         if (!versionHandler.isPatched(version) && versionHandler.isPatchVersion(version)) versionHandler.patch(version)
 
+        val serviceId = ServiceId(UUID.randomUUID(), if (type.proxy) ServiceType.PROXY_SERVER else ServiceType.MINECRAFT_SERVER)
 
         // create the server process
         val serverProcess = ServerProcess(
@@ -119,8 +120,10 @@ class ServerFactory(
             serverVersionTypeRepository,
             packetManager,
             bindHost,
-            clusterConfiguration
+            clusterConfiguration,
+            serviceId
         )
+        processes.add(serverProcess)
         var cloudServer: CloudServer? = null
         try {
 
@@ -147,15 +150,12 @@ class ServerFactory(
                 if (startedAmountOfTemplateOnNode >= configurationTemplate.maxStartedServicesPerNode && configurationTemplate.maxStartedServicesPerNode != -1) return TooMuchServicesOfTemplateOnNodeStartResult()
             }
 
-            // store the process
-            processes.add(serverProcess)
-
             // get the next id for the server and create it
             val id = getIdForServer(configurationTemplate)
             cloudServer = if (type.proxy) {
                 serverRepository.createServer(
                     CloudProxyServer(
-                        ServiceId(UUID.randomUUID(), ServiceType.PROXY_SERVER),
+                        serviceId,
                         configurationTemplate,
                         id,
                         thisNode.serviceId,
@@ -169,7 +169,7 @@ class ServerFactory(
             }else {
                 serverRepository.createServer(
                     CloudMinecraftServer(
-                        ServiceId(UUID.randomUUID(), ServiceType.MINECRAFT_SERVER),
+                        serviceId,
                         configurationTemplate,
                         id,
                         thisNode.serviceId,
@@ -212,17 +212,17 @@ class ServerFactory(
             return serverProcess.start(cloudServer, serverScreen)
         } catch (e: Exception) {
             // delete the server if it is created and not static
-            if (cloudServer != null) {
-                stopServer(cloudServer.serviceId, true)
-            }
+            try {
+                stopServer(serviceId, true, true)
+            }catch (_: NullPointerException) {}
             return UnknownErrorStartResult(e)
         }
     }
 
-    suspend internal fun stopServer(serviceId: ServiceId, force: Boolean = true) {
+    suspend internal fun stopServer(serviceId: ServiceId, force: Boolean = true, internalCall: Boolean = false) {
         val server = serverRepository.getServer<CloudServer>(serviceId) ?: throw NullPointerException("Server not found")
         if (server.hostNodeId != nodeRepository.serviceId) throw IllegalArgumentException("Server is not on this node")
-        if (server.state == CloudServerState.STOPPED || server.state == CloudServerState.STOPPING && !force) return
+        if (server.state == CloudServerState.STOPPED && !force || server.state == CloudServerState.STOPPING && !force) return
         val thisNode = nodeRepository.getNode(nodeRepository.serviceId)
         if (thisNode != null) {
             thisNode.currentMemoryUsage = thisNode.currentMemoryUsage - server.configurationTemplate.maxMemory
@@ -230,9 +230,9 @@ class ServerFactory(
             thisNode.hostedServers.remove(serviceId)
             nodeRepository.updateNode(thisNode)
         }
-        val process = processes.firstOrNull { it.cloudServer?.serviceId == serviceId }
+        val process = processes.firstOrNull { it.serverId == serviceId }
         if (process != null) {
-            process.stop()
+            process.stop(force, internalCall)
             processes.remove(process)
         }
     }

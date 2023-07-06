@@ -20,6 +20,10 @@ class ServerRepository(
     private val eventManager: EventManager
 ) : ServiceRepository<CloudServer>(databaseConnection, serviceId, serviceId.type, packetManager) {
 
+    suspend fun <T : CloudServer> existsServer(serviceId: ServiceId): Boolean {
+        return existsService<T>(serviceId)
+    }
+
     suspend fun <T : CloudServer> getServer(serviceId: ServiceId): T? =
         getService(serviceId)
 
