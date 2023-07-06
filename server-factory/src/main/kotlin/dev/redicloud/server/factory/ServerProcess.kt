@@ -16,6 +16,7 @@ import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.server.factory.screens.ServerScreen
+import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.CLOUD_PATH
 import dev.redicloud.utils.LIB_FOLDER
 import dev.redicloud.utils.findFreePort
@@ -29,7 +30,8 @@ class ServerProcess(
     private val serverVersionRepository: CloudServerVersionRepository,
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     private val packetManager: PacketManager,
-    private val bindHost: String
+    private val bindHost: String,
+    private val clusterConfiguration: ClusterConfiguration
 ) {
 
     val port = findFreePort(configurationTemplate.startPort, !configurationTemplate.static)
@@ -205,5 +207,6 @@ class ServerProcess(
             .replace("%SERVICE_ID%", cloudServer?.serviceId?.toName() ?: "unknown")
             .replace("%SERVICE_NAME%", cloudServer?.serviceId?.toName() ?: "unknown")
             .replace("%HOSTNAME%", cloudServer?.currentOrLastsession()?.ipAddress ?: "127.0.0.1")
+            .replace("%PROXY_SECRET%", clusterConfiguration.get("proxy-secret")!!)
 
 }
