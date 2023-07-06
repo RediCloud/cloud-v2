@@ -143,6 +143,7 @@ class ServerCommand(
         actor.sendMessage("§8- %tc%Configuration template§8: %hc%${server.configurationTemplate.name}")
         val node = nodeRepository.getNode(server.hostNodeId)
         actor.sendMessage("§8- %tc%Node§8: %hc%${node?.name ?: "unknown"}")
+        actor.sendMessage("§8- %tc%Port§8: %hc%${server.port}")
         actor.sendMessage("")
         actor.sendHeader("Server information")
     }
