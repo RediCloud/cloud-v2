@@ -10,6 +10,6 @@ class CloudServerVersionTypeSuggester(
 ) : ICommandSuggester {
 
     override fun suggest(context: CommandContext): Array<String> =
-        runBlocking { serverVersionTypeRepository.getTypes().map { it.name }.toTypedArray() }
+        runBlocking { serverVersionTypeRepository.getTypes().filter { !it.isUnknown() }.map { it.name }.toTypedArray() }
 
 }
