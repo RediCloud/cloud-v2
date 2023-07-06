@@ -142,6 +142,7 @@ class CloudServerStartTask(
 
                         StartResultType.UNKNOWN_ERROR -> {
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_ERROR)
+                            info.addFailedNode(nodeRepository.serviceId)
                             serverFactory.startQueue.remove(info)
                             serverFactory.startQueue.add(info)
                             val errorResult = result as UnknownErrorStartResult
