@@ -20,10 +20,8 @@ class GsonCodec : BaseCodec() {
         val out = ByteBufAllocator.DEFAULT.buffer()
         try {
             val os = ByteBufOutputStream(out)
-            val jsonElement = gson.toJsonTree(`in`)
-            val jsonObject = jsonElement.asJsonObject
-            jsonObject.add("class", JsonPrimitive(`in`::class.java.name))
-            os.writeUTF(jsonObject.toString())
+            val p = GsonPackage(`in`.javaClass.name, gson.toJson(`in`))
+            os.writeUTF(gson.toJson(p))
             return@Encoder os.buffer()
         } catch (e: Exception) {
             out.release()
@@ -32,11 +30,13 @@ class GsonCodec : BaseCodec() {
     }
     private val decoder: Decoder<Any> = Decoder { buf: ByteBuf?, _: State? ->
         ByteBufInputStream(buf).use { stream ->
-            val json = stream.readUTF()
-            val jsonObject = gson.fromJson(json, JsonObject::class.java)
-            val clazz = Class.forName(jsonObject.get("class").asString)
-            jsonObject.remove("class")
-            return@Decoder gson.fromJson(json, clazz)
+            try {
+                val data = stream.readUTF()
+                val p = gson.fromJson(data, GsonPackage::class.java)
+                return@Decoder gson.fromJson(p.json, Class.forName(p.clazz))
+            }catch (e: ClassNotFoundException) {
+                return@Decoder null
+            }
         }
     }
 
@@ -45,3 +45,8 @@ class GsonCodec : BaseCodec() {
     override fun getValueDecoder() = decoder
 
 }
+
+data class GsonPackage(
+    val clazz: String,
+    val json: String
+)
