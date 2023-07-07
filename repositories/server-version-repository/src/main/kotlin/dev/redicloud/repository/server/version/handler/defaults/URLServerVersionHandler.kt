@@ -2,6 +2,7 @@ package dev.redicloud.repository.server.version.handler.defaults
 
 import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.logging.LogManager
+import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
@@ -10,6 +11,7 @@ import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.TEMP_SERVER_VERSION_FOLDER
 import dev.redicloud.utils.defaultScope
+import dev.redicloud.utils.findFreePort
 import dev.redicloud.utils.isValidUrl
 import khttp.get
 import kotlinx.coroutines.launch
@@ -23,7 +25,8 @@ import kotlin.time.Duration.Companion.minutes
 class URLServerVersionHandler(
     override val serverVersionRepository: CloudServerVersionRepository,
     override val nodeRepository: NodeRepository,
-    val serverVersionTypeRepository: CloudServerVersionTypeRepository
+    private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
+    private val javaVersionRepository: JavaVersionRepository
 ) : IServerVersionHandler {
 
     companion object {
@@ -39,10 +42,10 @@ class URLServerVersionHandler(
     }
 
     override suspend fun download(version: CloudServerVersion, force: Boolean): File {
-        val jar = getJar(version)
-        if (jar.exists() && !force) return jar
         getLock(version).lock()
+        val jar = getJar(version)
         try {
+            if (jar.exists() && !force) return jar
             if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
 
             val type = serverVersionTypeRepository.getType(version.typeId!!)
@@ -118,38 +121,63 @@ class URLServerVersionHandler(
     }
 
     override suspend fun patch(version: CloudServerVersion) {
-        val jar = getJar(version)
-        if (!jar.exists()) download(version, true)
-
         getLock(version).lock()
         try {
+            val jar = getJar(version)
+            if (!jar.exists()) download(version, true)
+
             val versionDir = getFolder(version)
-            val tempDir = File(UUID.randomUUID().toString(), TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath)
+            val tempDir = File(TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath, UUID.randomUUID().toString())
+            tempDir.mkdirs()
             versionDir.copyRecursively(tempDir, true)
             val tempJar = File(tempDir, jar.name)
 
-            val processBuilder = ProcessBuilder("java", "-jar", tempJar.absolutePath)
+            if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
+            val type = serverVersionTypeRepository.getType(version.typeId!!)
+                ?: throw NullPointerException("Cant find server version type ${version.typeId}")
+            if (version.javaVersionId == null) throw NullPointerException("Cant find java version for ${version.getDisplayName()}")
+            val javaVersion = javaVersionRepository.getVersion(version.javaVersionId!!)
+                ?: throw NullPointerException("Cant find java version for ${version.getDisplayName()}")
+            findFreePort(40000..60000)
+
+            val processBuilder = ProcessBuilder(patchCommand(type, javaVersion, tempJar))
             processBuilder.directory(tempDir)
             processBuilder.start().waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
 
             if (!versionDir.exists()) versionDir.mkdirs()
 
             tempJar.copyTo(jar, true)
-            if (version.libPattern != null) {
-                val pattern = Pattern.compile(version.libPattern!!)
-                tempDir.listFiles()?.forEach {
-                    if (!pattern.matcher(it.name).find()) {
-                        if (it.isDirectory) {
-                            it.deleteRecursively()
+            if (version.libPattern != null || version.defaultFiles.isNotEmpty() || type.defaultFiles.isNotEmpty() || type.libPattern != null) {
+                val patterns = mutableListOf<Pattern>()
+                if (version.libPattern != null) patterns.add(Pattern.compile(version.libPattern!!))
+                if (type.libPattern != null) patterns.add(Pattern.compile(type.libPattern!!))
+                val files = mutableListOf<String>()
+                files.addAll(type.defaultFiles.keys)
+                files.addAll(version.defaultFiles.keys)
+                patterns.add(Pattern.compile("(${files.joinToString("|")})"))
+
+                fun deleteFiles(file: File): Boolean {
+                    val paths = version.defaultFiles.values
+                    val workDirPath = file.absolutePath.replace(tempDir.absolutePath, "")
+                    if (paths.any { file.absolutePath.endsWith(it) }) return false
+                    if (patterns.any { it.matcher(workDirPath).find() }) {
+                        if (file.isDirectory) {
+                            if (file.listFiles()?.any { deleteFiles(it) } == true) file.deleteRecursively()
                         } else {
-                            it.delete()
+                            file.delete()
+                            return true
                         }
-                        return@forEach
                     }
+                    return false
+                }
+
+                tempDir.listFiles()?.forEach {
+                    deleteFiles(it)
                 }
             }
             versionDir.deleteRecursively()
             tempDir.copyRecursively(versionDir, true)
+            tempDir.deleteRecursively()
             File(versionDir, ".patched").createNewFile()
         }finally {
             getLock(version).unlock()

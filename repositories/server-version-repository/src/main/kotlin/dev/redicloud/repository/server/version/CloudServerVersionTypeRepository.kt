@@ -39,7 +39,8 @@ class CloudServerVersionTypeRepository(
                         true,
                         "redicloud-unknown-${CLOUD_VERSION}.jar",
                         null,
-                        "plugins"
+                        "plugins",
+                        null
                     )
                 )
             }

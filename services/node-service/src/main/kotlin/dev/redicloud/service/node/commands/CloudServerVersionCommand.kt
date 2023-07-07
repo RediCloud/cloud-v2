@@ -286,7 +286,7 @@ class CloudServerVersionCommand(
             version.defaultFiles.forEach {
                 actor.sendMessage("§8  - %hc%${it.key} §8➔ %tc%${it.value}")
             }
-            actor.sendMessage("File edits§8:${if (version.fileEdits.isEmpty()) " %hc%not set" else ""}")
+            actor.sendMessage("§8- File edits§8:${if (version.fileEdits.isEmpty()) " %hc%not set" else ""}")
             version.fileEdits.keys.forEach {
                 actor.sendMessage("\t§8- %hc%$it")
                 version.fileEdits[it]?.forEach { edit ->

@@ -21,7 +21,8 @@ data class CloudServerVersionType(
     val defaultType: Boolean = false,
     var connectorPluginName: String,
     var connectorDownloadUrl: String?,
-    var connectorFolder: String
+    var connectorFolder: String,
+    var libPattern: String?
 ) {
 
     companion object {

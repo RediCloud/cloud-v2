@@ -45,8 +45,6 @@ class PaperMcServerVersionHandler(
     }
 
     override suspend fun download(version: CloudServerVersion, force: Boolean): File {
-        val jar = getJar(version)
-        if (jar.exists() && !force) return jar
         var canceled = false
         var downloaded = false
         var error = false
@@ -65,7 +63,9 @@ class PaperMcServerVersionHandler(
         }
         console.startAnimation(animation)
         getLock(version).lock()
+        val jar = getJar(version)
         try {
+            if (jar.exists() && !force) return jar
             if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
 
             val type = serverVersionTypeRepository.getType(version.typeId!!)
@@ -219,12 +219,20 @@ class PaperMcServerVersionHandler(
             if (!versionDir.exists()) versionDir.mkdirs()
 
             tempJar.copyTo(jar, true)
-            if (version.libPattern != null || version.defaultFiles.isNotEmpty()) {
-                val pattern = Pattern.compile(version.libPattern!!)
+            if (version.libPattern != null || version.defaultFiles.isNotEmpty() || type.defaultFiles.isNotEmpty() || type.libPattern != null) {
+                val patterns = mutableListOf<Pattern>()
+                if (version.libPattern != null) patterns.add(Pattern.compile(version.libPattern!!))
+                if (type.libPattern != null) patterns.add(Pattern.compile(type.libPattern!!))
+                val files = mutableListOf<String>()
+                files.addAll(type.defaultFiles.keys)
+                files.addAll(version.defaultFiles.keys)
+                patterns.add(Pattern.compile("(${files.joinToString("|")})"))
+
                 fun deleteFiles(file: File): Boolean {
                     val paths = version.defaultFiles.values
+                    val workDirPath = file.absolutePath.replace(tempDir.absolutePath, "")
                     if (paths.any { file.absolutePath.endsWith(it) }) return false
-                    if (!pattern.matcher(file.name).find()) {
+                    if (patterns.any { it.matcher(workDirPath).find() }) {
                         if (file.isDirectory) {
                             if (file.listFiles()?.any { deleteFiles(it) } == true) file.deleteRecursively()
                         } else {
@@ -234,6 +242,7 @@ class PaperMcServerVersionHandler(
                     }
                     return false
                 }
+
                 tempDir.listFiles()?.forEach {
                     deleteFiles(it)
                 }

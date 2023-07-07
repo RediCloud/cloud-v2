@@ -98,6 +98,10 @@ class CloudServerVersionTypeCommand(
                 actor.sendMessage("\t    §8➥ %tc%${edit.key} §8➜ %tc%${edit.value}")
             }
         }
+        actor.sendMessage("Default files§8:${if (type.defaultFiles.isEmpty()) " %hc%not set" else ""}")
+        type.defaultFiles.keys.forEach {
+            actor.sendMessage("\t§8- %hc%$it §8➜ %hc%${type.defaultFiles[it]}")
+        }
         actor.sendMessage("")
         actor.sendHeader("Server-Version type")
     }
@@ -123,6 +127,20 @@ class CloudServerVersionTypeCommand(
             type.defaultFiles[url] = file
             serverVersionTypeRepository.updateType(type)
             actor.sendMessage("Added file with url ${toConsoleValue(url)} to ${toConsoleValue(type.name)}")
+        }
+    }
+
+    @CommandSubPath("edit <version> libPattern <pattern>")
+    @CommandDescription("Set the lib pattern for the files that should be stored after the patch. Set to 'null' to disable the patching")
+    fun onEditLibPattern(
+        actor: ConsoleActor,
+        @CommandParameter("version", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
+        @CommandParameter("pattern", true) pattern: String
+    ) {
+        runBlocking {
+            type.libPattern = if (pattern != "null") pattern else null
+            serverVersionTypeRepository.updateType(type)
+            actor.sendMessage("Updated lib pattern of ${toConsoleValue(type.name)} to ${toConsoleValue(type.libPattern!!)}")
         }
     }
 
@@ -167,7 +185,8 @@ class CloudServerVersionTypeCommand(
                 false,
                 "redicloud-$name-%cloud_version%.jar",
                 null,
-                "plugins"
+                "plugins",
+                null
             )
             serverVersionTypeRepository.createType(type)
             actor.sendMessage("Successfully created server version type ${toConsoleValue(type.name)}")
