@@ -31,6 +31,7 @@
         "bungeecord": "true"
       },
       "config/paper-global.yml": {
+        "secret": "'%PROXY_SECRET%'",
         "online-mode": "true"
       }
     },
