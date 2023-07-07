@@ -137,6 +137,43 @@ class CloudServerVersionCommand(
         }
     }
 
+    @CommandSubPath("edit <name> fileedits add <file> <key>")
+    @CommandAlias(["edit <name> fe add <file> <key>"])
+    @CommandDescription("Add a file edit that should be applied before the server is starts")
+    fun addFileEdit(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, CloudServerVersionSuggester::class) type: CloudServerVersion,
+        @CommandParameter("file") file: String,
+        @CommandParameter("key") key: String,
+        @CommandParameter("value") value: String
+    ) {
+        runBlocking {
+            val subMap = type.fileEdits.getOrDefault(file, mutableMapOf())
+            subMap[key] = value
+            type.fileEdits[file] = subMap
+            serverVersionRepository.updateVersion(type)
+            actor.sendMessage("Successfully added file edit to server version type!")
+        }
+    }
+
+    @CommandSubPath("edit <name> fileedits remove <file> <key>")
+    @CommandAlias(["edit <name> fe remove <file> <key>"])
+    @CommandDescription("Remove a file edit that should be applied before the server is starts")
+    fun removeFileEdit(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, CloudServerVersionSuggester::class) version: CloudServerVersion,
+        @CommandParameter("file") file: String,
+        @CommandParameter("key") key: String
+    ) {
+        runBlocking {
+            val subMap = version.fileEdits.getOrDefault(file, mutableMapOf())
+            subMap.remove(key)
+            version.fileEdits[file] = subMap
+            serverVersionRepository.updateVersion(version)
+            actor.sendMessage("Successfully removed file edit from server version type!")
+        }
+    }
+
     @CommandSubPath("edit <version> files add <url> [path]")
     @CommandDescription("Add a file to the server version that will be downloaded")
     fun onEditFilesAdd(

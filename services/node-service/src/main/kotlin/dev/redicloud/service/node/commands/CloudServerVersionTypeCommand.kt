@@ -396,7 +396,8 @@ class CloudServerVersionTypeCommand(
         }
     }
 
-    @CommandSubPath("edit <name> file add <file> <key> <value>")
+    @CommandSubPath("edit <name> fileedits add <file> <key>")
+    @CommandAlias(["edit <name> fe add <file> <key>"])
     @CommandDescription("Add a file edit that should be applied before the server is starts")
     fun addFileEdit(
         actor: ConsoleActor,
@@ -418,7 +419,8 @@ class CloudServerVersionTypeCommand(
         }
     }
 
-    @CommandSubPath("edit <name> file remove <file> <key>")
+    @CommandSubPath("edit <name> fileedits remove <file> <key>")
+    @CommandAlias(["edit <name> fe remove <file> <key>"])
     @CommandDescription("Remove a file edit that should be applied before the server is starts")
     fun removeFileEdit(
         actor: ConsoleActor,
