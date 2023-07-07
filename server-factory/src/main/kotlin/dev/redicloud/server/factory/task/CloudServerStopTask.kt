@@ -23,22 +23,25 @@ class CloudServerStopTask(
         var responded = 0
         var total = 0
         serverFactory.stopQueue.forEach {
-            val server = serverRepository.getServer<CloudServer>(it)
-            if (server == null) {
-                serverFactory.stopQueue.remove(it)
-                return@forEach
-            }
-            if (server.hostNodeId == serviceId) {
-                total++
-                serverFactory.stopQueue.remove(it)
-                defaultScope.launch {
-                    try {
-                        serverFactory.stopServer(it)
-                    }catch (e: Exception) {
-                        logger.severe("Failed to stop server ${server.name}", e)
-                    }finally {
+            total++
+            defaultScope.launch {
+                try {
+                    val server = serverRepository.getServer<CloudServer>(it)
+                    if (server == null) {
+                        serverFactory.stopQueue.remove(it)
                         responded++
+                        return@launch
                     }
+                    if (server.hostNodeId == serviceId) {
+                        serverFactory.stopQueue.remove(it)
+                        defaultScope.launch {
+                            serverFactory.stopServer(it)
+                        }
+                    }
+                }catch (e: Exception) {
+                    logger.severe("Failed to stop server ${it.toName()}", e)
+                }finally {
+                    responded++
                 }
             }
         }
