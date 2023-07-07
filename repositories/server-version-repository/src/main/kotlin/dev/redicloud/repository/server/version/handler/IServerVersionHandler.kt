@@ -22,6 +22,7 @@ interface IServerVersionHandler {
     val serverVersionRepository: CloudServerVersionRepository
     val nodeRepository: NodeRepository
     var lastUpdateCheck: Long
+    val console: Console
 
     suspend fun download(version: CloudServerVersion, force: Boolean = false): File
 
@@ -86,7 +87,7 @@ interface IServerVersionHandler {
         }
 
         fun registerDefaultHandlers(cloudServerVersionRepository: CloudServerVersionRepository, serverVersionTypeRepository: CloudServerVersionTypeRepository, javaVersionRepository: JavaVersionRepository, nodeRepository: NodeRepository, console: Console) {
-            registerHandler(URLServerVersionHandler(cloudServerVersionRepository, nodeRepository, serverVersionTypeRepository, javaVersionRepository))
+            registerHandler(URLServerVersionHandler(cloudServerVersionRepository, nodeRepository, console, serverVersionTypeRepository, javaVersionRepository))
             registerHandler(PaperMcServerVersionHandler(cloudServerVersionRepository, serverVersionTypeRepository, javaVersionRepository, nodeRepository, console))
         }
 

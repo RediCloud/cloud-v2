@@ -28,10 +28,10 @@ class PaperMcServerVersionHandler(
     val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     val javaVersionRepository: JavaVersionRepository,
     override val nodeRepository: NodeRepository,
-    val console: Console,
+    override val console: Console,
     override val name: String = "papermc",
     override var lastUpdateCheck: Long = -1
-) : IServerVersionHandler {
+) : URLServerVersionHandler(serverVersionRepository, nodeRepository, console, serverVersionTypeRepository, javaVersionRepository) {
 
     companion object {
         private val logger = LogManager.logger(PaperMcServerVersionHandler::class)
@@ -174,91 +174,5 @@ class PaperMcServerVersionHandler(
         if (isPatchVersion(version)) patch(version)
         return getFolder(version)
     }
-
-    override suspend fun patch(version: CloudServerVersion) {
-        var canceled = false
-        var patched = false
-        var error = false
-        val animation = AnimatedLineAnimation(
-            console,
-            200
-        ) {
-            if (canceled) {
-                null
-            } else if (patched) {
-                canceled = true
-                "Patching version %tc%${toConsoleValue(version.getDisplayName())}§8: ${if (error) "§4✘" else "§2✓"}"
-            } else {
-                "Patching version %tc%${toConsoleValue(version.getDisplayName())}§8: %tc%%loading%"
-            }
-        }
-        console.startAnimation(animation)
-        getLock(version).lock()
-        try {
-            val jar = getJar(version)
-            if (!jar.exists()) download(version, true)
-
-            val versionDir = getFolder(version)
-            val tempDir = File(TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath, UUID.randomUUID().toString())
-            tempDir.mkdirs()
-            versionDir.copyRecursively(tempDir, true)
-            val tempJar = File(tempDir, jar.name)
-
-            if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
-            val type = serverVersionTypeRepository.getType(version.typeId!!)
-                ?: throw NullPointerException("Cant find server version type ${version.typeId}")
-            if (version.javaVersionId == null) throw NullPointerException("Cant find java version for ${version.getDisplayName()}")
-            val javaVersion = javaVersionRepository.getVersion(version.javaVersionId!!)
-                ?: throw NullPointerException("Cant find java version for ${version.getDisplayName()}")
-            findFreePort(40000..60000)
-
-            val processBuilder = ProcessBuilder(patchCommand(type, javaVersion, tempJar))
-            processBuilder.directory(tempDir)
-            processBuilder.start().waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
-
-            if (!versionDir.exists()) versionDir.mkdirs()
-
-            tempJar.copyTo(jar, true)
-            if (version.libPattern != null || version.defaultFiles.isNotEmpty() || type.defaultFiles.isNotEmpty() || type.libPattern != null) {
-                val patterns = mutableListOf<Pattern>()
-                if (version.libPattern != null) patterns.add(Pattern.compile(version.libPattern!!))
-                if (type.libPattern != null) patterns.add(Pattern.compile(type.libPattern!!))
-                val files = mutableListOf<String>()
-                files.addAll(type.defaultFiles.keys)
-                files.addAll(version.defaultFiles.keys)
-                patterns.add(Pattern.compile("(${files.joinToString("|")})"))
-
-                fun deleteFiles(file: File): Boolean {
-                    val paths = version.defaultFiles.values
-                    val workDirPath = file.absolutePath.replace(tempDir.absolutePath, "")
-                    if (paths.any { file.absolutePath.endsWith(it) }) return false
-                    if (patterns.any { it.matcher(workDirPath).find() }) {
-                        if (file.isDirectory) {
-                            if (file.listFiles()?.any { deleteFiles(it) } == true) file.deleteRecursively()
-                        } else {
-                            file.delete()
-                            return true
-                        }
-                    }
-                    return false
-                }
-
-                tempDir.listFiles()?.forEach {
-                    deleteFiles(it)
-                }
-            }
-            versionDir.deleteRecursively()
-            tempDir.copyRecursively(versionDir, true)
-            tempDir.deleteRecursively()
-            File(versionDir, ".patched").createNewFile()
-        }catch (e: Exception) {
-            error = true
-            throw e
-        } finally {
-            patched = true
-            getLock(version).unlock()
-        }
-    }
-
 
 }

@@ -1,5 +1,7 @@
 package dev.redicloud.repository.server.version.handler.defaults
 
+import dev.redicloud.console.Console
+import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.java.version.JavaVersionRepository
@@ -22,9 +24,10 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.minutes
 
-class URLServerVersionHandler(
+open class URLServerVersionHandler(
     override val serverVersionRepository: CloudServerVersionRepository,
     override val nodeRepository: NodeRepository,
+    override val console: Console,
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     private val javaVersionRepository: JavaVersionRepository
 ) : IServerVersionHandler {
@@ -121,6 +124,23 @@ class URLServerVersionHandler(
     }
 
     override suspend fun patch(version: CloudServerVersion) {
+        var canceled = false
+        var patched = false
+        var error = false
+        val animation = AnimatedLineAnimation(
+            console,
+            200
+        ) {
+            if (canceled) {
+                null
+            } else if (patched) {
+                canceled = true
+                "Patching version %tc%${toConsoleValue(version.getDisplayName())}§8: ${if (error) "§4✘" else "§2✓"}"
+            } else {
+                "Patching version %tc%${toConsoleValue(version.getDisplayName())}§8: %tc%%loading%"
+            }
+        }
+        console.startAnimation(animation)
         getLock(version).lock()
         try {
             val jar = getJar(version)
@@ -154,6 +174,7 @@ class URLServerVersionHandler(
                 val files = mutableListOf<String>()
                 files.addAll(type.defaultFiles.keys)
                 files.addAll(version.defaultFiles.keys)
+                files.add(tempJar.name)
                 patterns.add(Pattern.compile("(${files.joinToString("|")})"))
 
                 fun deleteFiles(file: File): Boolean {
@@ -179,7 +200,11 @@ class URLServerVersionHandler(
             tempDir.copyRecursively(versionDir, true)
             tempDir.deleteRecursively()
             File(versionDir, ".patched").createNewFile()
-        }finally {
+        }catch (e: Exception) {
+            error = true
+            throw e
+        } finally {
+            patched = true
             getLock(version).unlock()
         }
     }
