@@ -31,7 +31,8 @@
         "bungeecord": "true"
       },
       "config/paper-global.yml": {
-        "secret": "'%PROXY_SECRET%'"
+        "secret": "'%PROXY_SECRET%'",
+        "online-mode": "true"
       }
     },
     "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%.jar",
