@@ -52,7 +52,7 @@ class ServerProcess(
      * Starts the server process
      * @param cloudServer the cloud server instance
      */
-    suspend fun start(cloudServer: CloudServer, serverScreen: ServerScreen): StartResult {
+    suspend fun start(cloudServer: CloudServer, serverScreen: ServerScreen, snapshotData: StartDataSnapshot): StartResult {
         if (stopped) return StoppedStartResult()
         this.cloudServer = cloudServer
         cloudServer.port = port
@@ -66,26 +66,12 @@ class ServerProcess(
         processBuilder.environment()["LIBRARY_FOLDER"] = LIB_FOLDER.getFile().absolutePath
         processBuilder.environment().putAll(configurationTemplate.environments)
 
-
-        //TODO: snapshot all these data on start
-        if (configurationTemplate.serverVersionId == null) return UnknownServerVersionStartResult(configurationTemplate.serverVersionId)
-        val serverVersion = serverVersionRepository.getVersion(configurationTemplate.serverVersionId!!)
-            ?: return UnknownServerVersionStartResult(configurationTemplate.serverVersionId)
-
-        if (serverVersion.javaVersionId == null) return UnknownJavaVersionStartResult(serverVersion.javaVersionId)
-        val javaVersion = javaVersionRepository.getVersion(serverVersion.javaVersionId!!)
-            ?: return UnknownJavaVersionStartResult(serverVersion.javaVersionId)
-
-        if (serverVersion.typeId == null) return UnknownServerVersionTypeStartResult(serverVersion.typeId)
-        val versionType = serverVersionTypeRepository.getType(serverVersion.typeId!!)
-            ?: return UnknownServerVersionTypeStartResult(serverVersion.typeId)
-
-        val javaPath = javaVersion.located[serverRepository.serviceId.id]
-        if (javaPath.isNullOrEmpty()) return JavaVersionNotInstalledStartResult(javaVersion)
+        val javaPath = snapshotData.javaVersion.located[serverRepository.serviceId.id]
+        if (javaPath.isNullOrEmpty()) return JavaVersionNotInstalledStartResult(snapshotData.javaVersion)
 
         // set command
         processBuilder.command(
-            startCommand(versionType, javaVersion, javaPath)
+            startCommand(snapshotData.versionType, snapshotData.javaVersion, javaPath)
         )
         // set working directory
         processBuilder.directory(fileCopier.workDirectory)

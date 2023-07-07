@@ -92,24 +92,23 @@ class ServerFactory(
     ): StartResult {
         logger.fine("Prepare server ${configurationTemplate.uniqueId}...")
 
-        // check if the server version is known
-        if (configurationTemplate.serverVersionId == null) return UnknownServerVersionStartResult(configurationTemplate.serverVersionId)
-        val version = serverVersionRepository.getVersion(configurationTemplate.serverVersionId!!)
-            ?: return UnknownServerVersionTypeStartResult(configurationTemplate.serverVersionId)
-        if (version.typeId == null) return UnknownServerVersionTypeStartResult(null)
-        val type =
-            serverVersionTypeRepository.getType(version.typeId!!) ?: return UnknownServerVersionTypeStartResult(version.typeId)
-        if (type.isUnknown()) return UnknownServerVersionTypeStartResult(version.typeId)
+        val snapshotData = StartDataSnapshot.of(configurationTemplate)
+        val dataResult = snapshotData.loadData(
+            serverVersionRepository,
+            serverVersionTypeRepository,
+            javaVersionRepository
+        )
+        if (dataResult != null) return dataResult
 
-        if (version.javaVersionId == null) return UnknownJavaVersionStartResult(version.javaVersionId)
-        val javaVersion = javaVersionRepository.getVersion(version.javaVersionId!!)
-            ?: return UnknownJavaVersionStartResult(version.javaVersionId)
+        if (!snapshotData.versionHandler.isPatched(snapshotData.version)
+            && snapshotData.versionHandler.isPatchVersion(snapshotData.version)) {
+            snapshotData.versionHandler.patch(snapshotData.version)
+        }
 
-        // get the version handler and update/patch the version if needed
-        val versionHandler = IServerVersionHandler.getHandler(type)
-        if (!versionHandler.isPatched(version) && versionHandler.isPatchVersion(version)) versionHandler.patch(version)
-
-        val serviceId = ServiceId(UUID.randomUUID(), if (type.proxy) ServiceType.PROXY_SERVER else ServiceType.MINECRAFT_SERVER)
+        val serviceId = ServiceId(
+            UUID.randomUUID(),
+            if (snapshotData.versionType.proxy) ServiceType.PROXY_SERVER else ServiceType.MINECRAFT_SERVER
+        )
 
         // create the server process
         val serverProcess = ServerProcess(
@@ -152,7 +151,7 @@ class ServerFactory(
 
             // get the next id for the server and create it
             val id = getIdForServer(configurationTemplate)
-            cloudServer = if (type.proxy) {
+            cloudServer = if (snapshotData.versionType.proxy) {
                 serverRepository.createServer(
                     CloudProxyServer(
                         serviceId,
@@ -195,9 +194,9 @@ class ServerFactory(
             val copier = FileCopier(
                 serverProcess,
                 cloudServer,
-                serverVersionRepository,
                 serverVersionTypeRepository,
-                fileTemplateRepository
+                fileTemplateRepository,
+                snapshotData
             )
             serverProcess.fileCopier = copier
 
@@ -209,7 +208,7 @@ class ServerFactory(
             copier.copyConnector()
 
             // start the server
-            return serverProcess.start(cloudServer, serverScreen)
+            return serverProcess.start(cloudServer, serverScreen, snapshotData)
         } catch (e: Exception) {
             // delete the server if it is created and not static
             try {

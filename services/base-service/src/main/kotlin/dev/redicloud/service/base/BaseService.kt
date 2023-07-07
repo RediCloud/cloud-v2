@@ -38,9 +38,9 @@ import dev.redicloud.tasks.CloudTaskManager
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.ioScope
 import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
-import org.redisson.api.RBucket
 import kotlin.system.exitProcess
 
 abstract class BaseService(
@@ -77,7 +77,11 @@ abstract class BaseService(
         databaseConnection = if (_databaseConnection != null && _databaseConnection.isConnected()) {
             _databaseConnection
         } else {
-            DatabaseConnection(databaseConfiguration, serviceId, GsonCodec())
+            DatabaseConnection(
+                databaseConfiguration,
+                serviceId,
+                GsonCodec()
+            )
         }
         try {
             if (!databaseConnection.isConnected()) databaseConnection.connect()

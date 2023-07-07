@@ -23,29 +23,20 @@ import java.util.*
 class FileCopier(
     serverProcess: ServerProcess,
     cloudServer: CloudServer,
-    serverVersionRepository: CloudServerVersionRepository,
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
-    fileTemplateRepository: AbstractFileTemplateRepository
+    fileTemplateRepository: AbstractFileTemplateRepository,
+    private val snapshot: StartDataSnapshot
 ) {
 
     val serverUniqueId = UUID.randomUUID()
     val serviceId: ServiceId
     val configurationTemplate = serverProcess.configurationTemplate
-    val serverVersion: CloudServerVersion
-    val serverVersionType: CloudServerVersionType
     val templates: List<FileTemplate>
     val workDirectory: File
     private val logger = LogManager.logger(FileCopier::class)
 
     init {
-        if (configurationTemplate.serverVersionId == null) throw IllegalStateException("Server version is not set for configuration template ${configurationTemplate.name}!")
-        // get server version
-        serverVersion = runBlocking { serverVersionRepository.getVersion(configurationTemplate.serverVersionId!!) }
-            ?: throw IllegalStateException("Server version is not set for configuration template ${configurationTemplate.name}!")
-        if (serverVersion.typeId == null) throw IllegalStateException("Server version type is not set for server version ${serverVersion.getDisplayName()}!")
-        serverVersionType = runBlocking { serverVersionTypeRepository.getType(serverVersion.typeId!!) }
-            ?: throw IllegalStateException("Server version type is not set for server version ${serverVersion.getDisplayName()}!")
-        serviceId = ServiceId(serverUniqueId, if (serverVersionType.proxy) ServiceType.PROXY_SERVER else ServiceType.MINECRAFT_SERVER)
+        serviceId = ServiceId(serverUniqueId, if (snapshot.versionType.proxy) ServiceType.PROXY_SERVER else ServiceType.MINECRAFT_SERVER)
         // get templates by given configuration template and collect also inherited templates
         templates = configurationTemplate.fileTemplateIds.mapNotNull { runBlocking { fileTemplateRepository.getTemplate(it) } }
             .flatMap { runBlocking { fileTemplateRepository.collectTemplates(it) } }
@@ -61,29 +52,29 @@ class FileCopier(
     suspend fun copyConnector() {
         logger.fine("Copying connector for $serviceId")
         CONNECTORS_FOLDER.createIfNotExists()
-        val connectorFile = File(CONNECTORS_FOLDER.getFile(), serverVersionType.connectorPluginName.replace("%cloud_version%", CLOUD_VERSION))
+        val connectorFile = File(CONNECTORS_FOLDER.getFile(), snapshot.versionType.connectorPluginName.replace("%cloud_version%", CLOUD_VERSION))
         if (!connectorFile.exists()) {
             connectorFile.createNewFile()
-            if (serverVersionType.connectorDownloadUrl == null) {
-                logger.warning("Connector download url for ${serverVersionType.name} is not set! The server will not connect to the cloud cluster!")
+            if (snapshot.versionType.connectorDownloadUrl == null) {
+                logger.warning("Connector download url for ${snapshot.versionType.name} is not set! The server will not connect to the cloud cluster!")
                 logger.warning("You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'")
                 return
             }
             try {
-                serverVersionTypeRepository.downloadConnector(serverVersionType)
+                serverVersionTypeRepository.downloadConnector(snapshot.versionType)
                 if (!connectorFile.exists()) {
-                    logger.warning("Connector file for ${serverVersionType.name} does not exist! The server will not connect to the cloud cluster!")
+                    logger.warning("Connector file for ${snapshot.versionType.name} does not exist! The server will not connect to the cloud cluster!")
                     logger.warning("You can set the connector file in the server version type settings with: 'svt edit <name> connector jar <connector>'")
                     return
                 }
             }catch (e: Exception) {
-                logger.warning("Failed to download connector for ${serverVersionType.name} from ${serverVersionType.connectorDownloadUrl}", e)
+                logger.warning("Failed to download connector for ${snapshot.versionType.name} from ${snapshot.versionType.connectorDownloadUrl}", e)
                 logger.warning("The server will not connect to the cloud cluster!")
                 logger.warning("You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'")
                 return
             }
         }
-        val pluginFolder = File(workDirectory, serverVersionType.connectorFolder)
+        val pluginFolder = File(workDirectory, snapshot.versionType.connectorFolder)
         if (!pluginFolder.exists()) pluginFolder.mkdirs()
         connectorFile.copyRecursively(File(pluginFolder, connectorFile.name))
     }
@@ -92,20 +83,20 @@ class FileCopier(
      * Copies all files for the server version to the work directory
      */
     suspend fun copyVersionFiles(action: (String) -> String = { it }) {
-        logger.fine("Copying files for $serviceId of version ${serverVersion.getDisplayName()}")
-        val versionHandler = IServerVersionHandler.getHandler(serverVersionType)
-        versionHandler.getLock(serverVersion).lock()
+        logger.fine("Copying files for $serviceId of version ${snapshot.version.getDisplayName()}")
+        val versionHandler = IServerVersionHandler.getHandler(snapshot.versionType)
+        versionHandler.getLock(snapshot.version).lock()
         try {
-            if (!versionHandler.isPatched(serverVersion) && versionHandler.isPatchVersion(serverVersion)) {
-                versionHandler.patch(serverVersion)
-            }else if(!versionHandler.isDownloaded(serverVersion)) {
-                versionHandler.download(serverVersion)
+            if (!versionHandler.isPatched(snapshot.version) && versionHandler.isPatchVersion(snapshot.version)) {
+                versionHandler.patch(snapshot.version)
+            }else if(!versionHandler.isDownloaded(snapshot.version)) {
+                versionHandler.download(snapshot.version)
             }
-            versionHandler.getFolder(serverVersion).copyRecursively(workDirectory)
-            serverVersionType.doFileEdits(workDirectory, action)
-            serverVersion.doFileEdits(workDirectory, action)
+            versionHandler.getFolder(snapshot.version).copyRecursively(workDirectory)
+            snapshot.versionType.doFileEdits(workDirectory, action)
+            snapshot.version.doFileEdits(workDirectory, action)
         }finally {
-            versionHandler.getLock(serverVersion).unlock()
+            versionHandler.getLock(snapshot.version).unlock()
         }
     }
 
