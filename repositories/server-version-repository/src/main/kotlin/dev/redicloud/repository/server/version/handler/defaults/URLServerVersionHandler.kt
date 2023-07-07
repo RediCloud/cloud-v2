@@ -179,11 +179,12 @@ open class URLServerVersionHandler(
 
                 fun deleteFiles(file: File): Boolean {
                     val paths = version.defaultFiles.values
-                    val workDirPath = file.absolutePath.replace(tempDir.absolutePath, "")
+                    var workDirPath = file.absolutePath.replace(tempDir.absolutePath, "").replace("\\", "/")
+                    if (workDirPath.startsWith("/")) workDirPath = workDirPath.substring(1)
                     if (paths.any { file.absolutePath.endsWith(it) }) return false
-                    if (patterns.any { it.matcher(workDirPath).find() }) {
+                    if (patterns.none { it.matcher(workDirPath).find() }) {
                         if (file.isDirectory) {
-                            if (file.listFiles()?.any { deleteFiles(it) } == true) file.deleteRecursively()
+                            if (file.listFiles()?.all { deleteFiles(it) } == true) file.deleteRecursively()
                         } else {
                             file.delete()
                             return true
