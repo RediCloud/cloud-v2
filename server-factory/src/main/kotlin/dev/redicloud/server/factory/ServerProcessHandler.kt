@@ -51,7 +51,7 @@ class ServerProcessHandler(
                     val line = errorBufferedReader.readLine()
                     if (line == null || line.isEmpty()) continue
                     if (!serverScreen.isActive()) {
-                        LOGGER.warning("[${cloudServer.name}]: $line")
+                        LOGGER.warning("[${cloudServer.name}]: §c$line")
                     }
                     serverScreen.println(line)
                     lines.forEach { it(line) }

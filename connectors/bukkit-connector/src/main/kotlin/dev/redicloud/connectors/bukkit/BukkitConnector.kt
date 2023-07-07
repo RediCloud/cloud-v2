@@ -20,16 +20,11 @@ class BukkitConnector(val plugin: JavaPlugin) : MinecraftServerService<JavaPlugi
     }
 
     override fun onDisable() {
-        bukkitShuttingDown = true
-        super.onDisable()
-    }
-
-    override fun shutdown() {
         if (!bukkitShuttingDown) {
             Bukkit.shutdown()
             return
         }
-        super.shutdown()
+        super.onDisable()
     }
 
 }

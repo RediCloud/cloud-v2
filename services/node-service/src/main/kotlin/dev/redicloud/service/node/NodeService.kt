@@ -79,15 +79,18 @@ class NodeService(
         }
     }
 
-    override fun shutdown() {
-        if (SHUTTINGDOWN) return
+    override fun shutdown(force: Boolean) {
+        if (SHUTTINGDOWN && !force) return
         SHUTTINGDOWN = true
         LOGGER.info("Shutting down node service...")
         runBlocking {
+            IServerVersionHandler.CACHE_HANDLERS.forEach {
+                it.shutdown(force, serverVersionRepository)
+            }
             serverFactory.shutdown()
             fileCluster.disconnect(true)
             nodeRepository.shutdownAction.run()
-            super.shutdown()
+            super.shutdown(force)
             TEMP_FOLDER.getFile().deleteRecursively()
         }
     }

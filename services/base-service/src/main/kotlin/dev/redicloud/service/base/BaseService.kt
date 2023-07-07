@@ -110,7 +110,7 @@ abstract class BaseService(
         this.registerDefaultSuggesters()
     }
 
-    open fun shutdown() {
+    open fun shutdown(force: Boolean = false) {
         SHUTTINGDOWN = true
         runBlocking {
             nodeRepository.shutdownAction.run()

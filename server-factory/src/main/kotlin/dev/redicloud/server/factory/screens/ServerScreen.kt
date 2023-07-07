@@ -22,7 +22,7 @@ class ServerScreen(
     }
 
     override fun println(text: String) {
-        super.println(SCREEN_LINE_FORMAT.replace("%name%", name).replace("%message%", text))
+        super.println(SCREEN_LINE_FORMAT.replace("%name%", name).replace("%message%", "§7$text"))
     }
 
     override fun destroy() {

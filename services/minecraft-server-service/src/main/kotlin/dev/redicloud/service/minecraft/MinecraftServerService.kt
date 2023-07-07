@@ -57,13 +57,13 @@ abstract class MinecraftServerService<T> : BaseService(
         shutdown()
     }
 
-    override fun shutdown() {
-        if (SHUTTINGDOWN) return
+    override fun shutdown(force: Boolean) {
+        if (SHUTTINGDOWN && !force) return
         SHUTTINGDOWN = true
         runBlocking {
             serverRepository.shutdownAction.run()
         }
-        super.shutdown()
+        super.shutdown(force)
         Thread.sleep(1500) // Wait for all threads to finish their work
     }
 

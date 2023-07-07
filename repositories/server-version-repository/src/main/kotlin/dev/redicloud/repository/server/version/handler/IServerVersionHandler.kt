@@ -1,6 +1,7 @@
 package dev.redicloud.repository.server.version.handler
 
 import dev.redicloud.console.Console
+import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.NodeRepository
@@ -12,6 +13,10 @@ import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.MINECRAFT_VERSIONS_FOLDER
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.newSingleThreadContext
 import java.io.File
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
@@ -71,9 +76,29 @@ interface IServerVersionHandler {
 
     fun getLock(version: CloudServerVersion): ReentrantLock
 
+    suspend fun shutdown(force: Boolean, serverVersionRepository: CloudServerVersionRepository) {
+        serverVersionRepository.getVersions().forEach {
+            val lock = getLock(it)
+            if (lock.isLocked) {
+                if (!force) {
+                    LOGGER.warning("Server version ${it.getDisplayName()} currently updating, waiting for it to finish...")
+                    lock.lock()
+                    lock.unlock()
+                }else {
+                    LOGGER.warning("Server version ${it.getDisplayName()} currently updating, forcing shutdown...")
+                }
+            }
+        }
+        runCatching { VERSION_SCOPE.cancel() }
+    }
+
     companion object {
+        val LOGGER = LogManager.logger(IServerVersionHandler::class)
 
         val CACHE_HANDLERS = mutableListOf<IServerVersionHandler>()
+
+        @OptIn(DelicateCoroutinesApi::class)
+        val VERSION_SCOPE = CoroutineScope(newSingleThreadContext("VersionScope"))
 
         fun getHandler(type: CloudServerVersionType): IServerVersionHandler =
             CACHE_HANDLERS.firstOrNull { it.name.lowercase() == type.versionHandlerName.lowercase() }
