@@ -118,6 +118,10 @@ class CloudPlayerListener(
             event.result = KickedFromServerEvent.DisconnectPlayer.create(event.serverKickReason.getOrElse { Component.text("You were kicked from the server and no fallback was found!") })
             return@runBlocking
         }
+        if (event.server.serverInfo.name == server.get().serverInfo.name) {
+            event.result = KickedFromServerEvent.DisconnectPlayer.create(event.serverKickReason.getOrElse { Component.text("You were kicked from the server and no fallback was found!") })
+            return@runBlocking
+        }
         event.result = KickedFromServerEvent.RedirectPlayer.create(server.get())
     }
 
