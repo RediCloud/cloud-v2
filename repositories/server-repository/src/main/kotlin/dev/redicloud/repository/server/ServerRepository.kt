@@ -18,7 +18,7 @@ class ServerRepository(
     serviceId: ServiceId,
     packetManager: PacketManager,
     private val eventManager: EventManager
-) : ServiceRepository<CloudServer>(databaseConnection, serviceId, serviceId.type, packetManager) {
+) : ServiceRepository<CloudServer>(databaseConnection, serviceId, if (serviceId.type.isServer()) serviceId.type else ServiceType.MINECRAFT_SERVER, packetManager) {
 
     suspend fun <T : CloudServer> existsServer(serviceId: ServiceId): Boolean {
         return existsService<T>(serviceId)
