@@ -113,6 +113,7 @@ class ServerProcess(
                 while (cloudServer!!.connected && seconds < SERVER_STOP_TIMEOUT) {
                     Thread.sleep(1000)
                     seconds++
+                    cloudServer = serverRepository.getServer(serverId)!!
                 }
                 if (cloudServer!!.connected) {
                     logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stop request timed out. Stopping process manually!")
@@ -133,6 +134,7 @@ class ServerProcess(
         fileCopier.workDirectory.deleteRecursively()
 
         if (cloudServer != null) {
+            cloudServer = serverRepository.getServer(serverId)!!
             cloudServer!!.state = CloudServerState.STOPPED
             cloudServer!!.connected = false
             cloudServer!!.connectedPlayers.clear()
