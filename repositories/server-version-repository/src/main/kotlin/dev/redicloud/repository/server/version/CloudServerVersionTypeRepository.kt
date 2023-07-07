@@ -7,6 +7,7 @@ import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.logging.LogManager
+import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.utils.*
 import kotlinx.coroutines.runBlocking
 import java.util.*
@@ -45,12 +46,6 @@ class CloudServerVersionTypeRepository(
                 )
             }
             list.toList()
-        }
-    }
-
-    init {
-        runBlocking {
-            createDefaultTypes()
         }
     }
 
@@ -119,17 +114,25 @@ class CloudServerVersionTypeRepository(
         }
     }
 
-    private suspend fun createDefaultTypes() {
+    suspend fun updateDefaultTypes(serverVersionRepository: CloudServerVersionRepository) {
         val defaultTypes = getDefaultTypes()
-        defaultTypes.forEach {
-            if (existsType(it.uniqueId)) {
-                val current = getType(it.uniqueId)!!
-                if (current == it) return@forEach
-                LOGGER.info("Updating default server version type ${toConsoleValue(it.name)}...")
-                updateType(it)
+        defaultTypes.forEach { onlineType ->
+            if (existsType(onlineType.uniqueId)) {
+                val current = getType(onlineType.uniqueId)!!
+                if (current == onlineType) return@forEach
+                LOGGER.info("Updating default server version type ${toConsoleValue(onlineType.name)}...")
+                updateType(onlineType)
+                serverVersionRepository.getVersions().forEach {
+                    if (it.typeId == current.uniqueId) {
+                        if (current.defaultFiles != it.defaultFiles) {
+                            val handler = IServerVersionHandler.getHandler(current)
+                            handler.update(it)
+                        }
+                    }
+                }
                 return@forEach
             }
-            createType(it)
+            createType(onlineType)
         }
     }
 

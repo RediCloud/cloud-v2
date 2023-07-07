@@ -18,6 +18,8 @@ class CloudServerVersionUpdateTask(
 
     override suspend fun execute(): Boolean {
 
+        serverVersionTypeRepository.updateDefaultTypes(this.serverVersionRepository)
+
         serverVersionRepository.getVersions().forEach {
             if (it.typeId == null) return@forEach
             val type = serverVersionTypeRepository.getType(it.typeId!!) ?: return@forEach

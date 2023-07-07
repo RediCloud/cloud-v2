@@ -6,7 +6,6 @@ import java.util.*
 
 class CloudServerVersionRepository(databaseConnection: DatabaseConnection) : DatabaseBucketRepository<CloudServerVersion>(databaseConnection, "server-version"){
 
-
     suspend fun getVersion(uniqueId: UUID): CloudServerVersion? {
         return getHandle(uniqueId.toString()).get()
     }
