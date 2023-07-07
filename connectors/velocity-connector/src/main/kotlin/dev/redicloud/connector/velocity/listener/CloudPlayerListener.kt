@@ -32,10 +32,6 @@ class CloudPlayerListener(
             event.player.disconnect(Component.text("No fallback server found!"))
             return@runBlocking
         }
-    }
-
-    @Subscribe(order = PostOrder.FIRST)
-    fun onLogin(event: LoginEvent) = runBlocking {
         val player = event.player
         if (playerRepository.existsPlayer(player.uniqueId)) {
             val cloudPlayer = playerRepository.getPlayer(player.uniqueId)!!
@@ -94,7 +90,11 @@ class CloudPlayerListener(
     @Subscribe(order = PostOrder.FIRST)
     fun onServerConnected(event: ServerConnectedEvent) = runBlocking {
         val player = event.player
-        val cloudPlayer = playerRepository.getPlayer(player.uniqueId) ?: throw IllegalStateException("Player ${player.uniqueId} not found!")
+        val cloudPlayer = playerRepository.getPlayer(player.uniqueId)
+        if (cloudPlayer == null) {
+            player.disconnect(Component.text("Player not found!"))
+            throw IllegalStateException("Player ${player.uniqueId} not found!")
+        }
         cloudPlayer.serverId = serverRepository.getServer<CloudMinecraftServer>(event.server.serverInfo.name, ServiceType.MINECRAFT_SERVER)?.serviceId
         playerRepository.updatePlayer(cloudPlayer)
     }
