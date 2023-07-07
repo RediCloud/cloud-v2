@@ -100,7 +100,7 @@ class CloudServerVersionTypeCommand(
         }
         actor.sendMessage("Default files§8:${if (type.defaultFiles.isEmpty()) " %hc%not set" else ""}")
         type.defaultFiles.keys.forEach {
-            actor.sendMessage("\t§8- %hc%$it §8➜ %hc%${type.defaultFiles[it]}")
+            actor.sendMessage("\t§8- %hc%$it §8➜ %tc%${type.defaultFiles[it]}")
         }
         actor.sendMessage("")
         actor.sendHeader("Server-Version type")
