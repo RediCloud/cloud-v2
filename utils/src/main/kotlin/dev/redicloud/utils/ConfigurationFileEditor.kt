@@ -85,7 +85,7 @@ class ConfigurationFileEditor private constructor(
 
     private fun getLineIndexByKey(key: String): Int {
         val lineStart = key + this.keyValueSplitter
-        val line = lines.firstOrNull { it.startsWith(lineStart) } ?: return -1
+        val line = lines.lastOrNull { it.startsWith(lineStart) } ?: return -1
         return this.lines.indexOf(line)
     }
 
