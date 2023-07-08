@@ -70,11 +70,11 @@ class ScreenCommand(
         actor: ConsoleActor,
         @CommandParameter("screen", true, ServerScreenSuggester::class) serverScreen: ServerScreen
     ) {
-        if (serverScreen.isActive()) {
-            actor.sendMessage("§cThe screen session is already active!")
+        if (serverScreen.isDefault()) {
+            actor.sendMessage("§cYou can't toggle the default screen session!")
             return
         }
-        if (!console.getCurrentScreen().isDefault()) {
+        if (serverScreen.isActive()) {
             console.switchToDefaultScreen(true)
             console.writeLine("You left the screen session ${toConsoleValue(serverScreen.name)}")
             return
