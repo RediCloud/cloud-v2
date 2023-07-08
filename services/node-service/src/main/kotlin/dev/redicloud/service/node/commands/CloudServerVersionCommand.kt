@@ -112,7 +112,7 @@ class CloudServerVersionCommand(
     fun onEditPatch(
         actor: ConsoleActor,
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion,
-        @CommandParameter("state", true) state: Boolean
+        @CommandParameter("state", true, BooleanSuggester::class) state: Boolean
     ) {
         runBlocking {
             version.patch = state
@@ -438,7 +438,7 @@ class CloudServerVersionCommand(
             }
             val handler = IServerVersionHandler.getHandler(type)
             if (!handler.isPatchVersion(version)) {
-                actor.sendMessage("§cThis version is not patchable! Set the lib pattern with '/sv edit ${version.getDisplayName()} libpattern <pattern>'")
+                actor.sendMessage("§cThis version is not patchable! Set the lib pattern with '/sv edit ${version.getDisplayName()} patchh true'")
                 return@launch
             }
             try {
