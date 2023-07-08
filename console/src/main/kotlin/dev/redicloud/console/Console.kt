@@ -148,6 +148,7 @@ open class Console(
             var line: String? = null
             while (!Thread.currentThread().isInterrupted) {
                 line = readLineInput() ?: continue
+                defaultScreen.addLine(prompt + line + "\r\n")
                 runningAnimations.forEach { (_, animation) -> animation.second.addToCursorUp(1) }
 
                 inputReader.forEach { it.acceptInput(line) }
