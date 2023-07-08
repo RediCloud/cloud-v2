@@ -107,12 +107,10 @@ class ServerFactory(
      * @param force if the server should be started even if the configuration template does not allow it (e.g. max memory)
      * @return the result of the start
      */
-    suspend internal fun startServer(
+    suspend fun startServer(
         configurationTemplate: ConfigurationTemplate,
-        force: Boolean = false,
-        newStatic: Boolean = false
+        force: Boolean = false
     ): StartResult {
-        if (configurationTemplate.static && !newStatic) throw IllegalStateException("Cannot start static server as non static server")
         logger.fine("Prepare server ${configurationTemplate.uniqueId}...")
 
         val snapshotData = StartDataSnapshot.of(configurationTemplate)

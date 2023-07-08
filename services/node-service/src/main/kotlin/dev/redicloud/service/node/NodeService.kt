@@ -52,7 +52,7 @@ class NodeService(
         fileCluster = FileCluster(configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
         fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console)
-        serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress, console, clusterConfiguration)
+        serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress, console, clusterConfiguration, configurationTemplateRepository)
 
         runBlocking {
             registerDefaults()
@@ -108,7 +108,7 @@ class NodeService(
             .period(10.seconds)
             .register()
         taskManager.builder()
-            .task(CloudServerStartTask(this.serverFactory, this.eventManager, this.nodeRepository))
+            .task(CloudServerStartTask(this.serverFactory, this.eventManager, this.nodeRepository, this.serverRepository))
             .event(NodeConnectEvent::class)
             .period(3.seconds)
             .register()
