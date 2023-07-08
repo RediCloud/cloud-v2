@@ -22,6 +22,8 @@ class UnknownServerVersionHandlerResult(val serverVersionTypeId: UUID?) : StartR
 
 class StoppedStartResult() : StartResult(StartResultType.STOPPED)
 
+class UnknownConfigurationTemplateStartResult(val uniqueId: UUID) : StartResult(StartResultType.UNKNOWN_CONFIGURATION_TEMPLATE)
+
 enum class StartResultType {
     SUCCESS,
     ALREADY_RUNNING,
@@ -33,6 +35,7 @@ enum class StartResultType {
     UNKNOWN_SERVER_TYPE_VERSION,
     UNKNOWN_SERVER_VERSION_HANDLER,
     UNKNOWN_JAVA_VERSION,
+    UNKNOWN_CONFIGURATION_TEMPLATE,
     UNKNOWN_ERROR,
     STOPPED,
     JAVA_VERSION_NOT_INSTALLED

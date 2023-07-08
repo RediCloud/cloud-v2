@@ -79,9 +79,10 @@ class CloudServerStartTask(
                         StartResultType.ALREADY_RUNNING -> {
                             serverFactory.startQueue.remove(info)
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.ALREADY_RUNNING)
-                            serverFactory.startQueue.add(info)
+                            info.addFailedNode(nodeRepository.serviceId)
+                            serverFactory.startQueue.remove(info)
                             result as AlreadyRunningStartResult
-                            logger.warning("§cServer ${result.server.getIdentifyingName(false)} was removed from the start queue because it is already running!")
+                            logger.severe("§cServer ${result.server.getIdentifyingName(false)} was removed from the start queue because it is already running!")
                         }
 
                         StartResultType.RAM_USAGE_TOO_HIGH -> {
@@ -106,29 +107,34 @@ class CloudServerStartTask(
                         StartResultType.UNKNOWN_SERVER_VERSION -> {
                             serverFactory.startQueue.remove(info)
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_SERVER_VERSION)
+                            info.addFailedNode(nodeRepository.serviceId)
                             logger.warning("§cCan´t start server of template '${template.name}' because the server version is not set!")
                         }
 
                         StartResultType.NODE_IS_NOT_ALLOWED -> {
                             serverFactory.startQueue.remove(info)
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
+                            info.addFailedNode(nodeRepository.serviceId)
                             serverFactory.startQueue.add(info)
                         }
 
                         StartResultType.NODE_NOT_CONNECTED -> {
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.NODE_NOT_CONNECTED)
+                            info.addFailedNode(nodeRepository.serviceId)
                             serverFactory.startQueue.remove(info)
                             serverFactory.startQueue.add(info)
                         }
 
                         StartResultType.UNKNOWN_JAVA_VERSION -> {
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_JAVA_VERSION)
+                            info.addFailedNode(nodeRepository.serviceId)
                             serverFactory.startQueue.remove(info)
                             logger.severe("§cCan´t start server of template '${template.name}' because the java version is not set!")
                         }
 
                         StartResultType.JAVA_VERSION_NOT_INSTALLED -> {
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.JAVA_VERSION_NOT_INSTALLED)
+                            info.addFailedNode(nodeRepository.serviceId)
                             serverFactory.startQueue.remove(info)
                             result as JavaVersionNotInstalledStartResult
                             logger.severe("§cCan´t start server of template '${template.name}' because the java version '${result.javaVersion.name} is not installed!")
@@ -136,8 +142,15 @@ class CloudServerStartTask(
 
                         StartResultType.UNKNOWN_SERVER_TYPE_VERSION -> {
                             info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_SERVER_TYPE_VERSION)
+                            info.addFailedNode(nodeRepository.serviceId)
                             serverFactory.startQueue.remove(info)
                             logger.severe("§cCan´t start server of template '${template.name}' because the server type version is not set!")
+                        }
+
+                        StartResultType.UNKNOWN_CONFIGURATION_TEMPLATE -> {
+                            info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_CONFIGURATION_TEMPLATE)
+                            serverFactory.startQueue.remove(info)
+                            logger.severe("§cCan´t start static server because the configuration template is unknown?!")
                         }
 
                         StartResultType.UNKNOWN_ERROR -> {
