@@ -82,7 +82,7 @@ class FileCopier(
     /**
      * Copies all files for the server version to the work directory
      */
-    suspend fun copyVersionFiles(action: (String) -> String = { it }) {
+    suspend fun copyVersionFiles(force: Boolean = true, action: (String) -> String = { it }) {
         logger.fine("Copying files for $serviceId of version ${snapshot.version.getDisplayName()}")
         val versionHandler = IServerVersionHandler.getHandler(snapshot.versionType)
         versionHandler.getLock(snapshot.version).lock()
@@ -92,7 +92,14 @@ class FileCopier(
             }else if(!versionHandler.isDownloaded(snapshot.version)) {
                 versionHandler.download(snapshot.version)
             }
-            versionHandler.getFolder(snapshot.version).copyRecursively(workDirectory)
+            if (force && configurationTemplate.static || !configurationTemplate.static) {
+                versionHandler.getFolder(snapshot.version).copyRecursively(workDirectory)
+            }else {
+                val jar = versionHandler.getJar(snapshot.version)
+                if (jar.exists()) {
+                    jar.copyTo(workDirectory)
+                }
+            }
             snapshot.versionType.doFileEdits(workDirectory, action)
             snapshot.version.doFileEdits(workDirectory, action)
         }finally {
@@ -103,7 +110,8 @@ class FileCopier(
     /**
      * Copies all templates to the work directory
      */
-    suspend fun copyTemplates() {
+    suspend fun copyTemplates(force: Boolean = true) {
+        if (!force && configurationTemplate.static) return
         logger.fine("Copying templates for $serviceId")
         templates.forEach {
             it.getFolder().copyRecursively(workDirectory)
