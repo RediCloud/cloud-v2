@@ -339,7 +339,7 @@ class ServerFactory(
                 return UnknownErrorStartResult(e)
             }
         }else {
-            return startServer(configurationTemplate!!, force, true)
+            return startServer(configurationTemplate!!, force)
         }
     }
 
