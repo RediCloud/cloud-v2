@@ -5,8 +5,8 @@ import com.google.gson.FieldAttributes
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.Expose
 
-val prettyPrintGson = GsonBuilder().fixKotlinAnnotations().setPrettyPrinting().create()
-val gson = GsonBuilder().fixKotlinAnnotations().create()
+val prettyPrintGson = GsonBuilder().fixKotlinAnnotations().serializeNulls().setPrettyPrinting().create()
+val gson = GsonBuilder().fixKotlinAnnotations().serializeNulls().create()
 
 fun GsonBuilder.fixKotlinAnnotations(): GsonBuilder {
     addSerializationExclusionStrategy(object : ExclusionStrategy {

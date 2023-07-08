@@ -14,7 +14,7 @@ import org.redisson.client.protocol.Encoder
 
 class GsonCodec : BaseCodec() {
 
-    private val gson: Gson = GsonBuilder().fixKotlinAnnotations().setPrettyPrinting().create()
+    private val gson: Gson = GsonBuilder().fixKotlinAnnotations().serializeNulls().setPrettyPrinting().create()
 
     private val encoder: Encoder = Encoder { `in`: Any ->
         val out = ByteBufAllocator.DEFAULT.buffer()
