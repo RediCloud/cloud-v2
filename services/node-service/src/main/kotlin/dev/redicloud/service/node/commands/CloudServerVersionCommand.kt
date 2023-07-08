@@ -2,12 +2,10 @@ package dev.redicloud.service.node.commands
 
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.Console
-import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
-import dev.redicloud.repository.java.version.getJavaVersion
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionType
@@ -15,14 +13,13 @@ import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
-import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.service.base.suggester.*
 import dev.redicloud.service.node.repository.node.LOGGER
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.fileName
-import dev.redicloud.utils.isValid
 import dev.redicloud.utils.isValidUrl
+import dev.redicloud.utils.toSymbol
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.net.URL
@@ -110,6 +107,20 @@ class CloudServerVersionCommand(
         }
     }
 
+    @CommandSubPath("edit <version> patch <state>")
+    @CommandDescription("Enable or disable the patching of the server version")
+    fun onEditPatch(
+        actor: ConsoleActor,
+        @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion,
+        @CommandParameter("state", true) state: Boolean
+    ) {
+        runBlocking {
+            version.patch = state
+            serverVersionRepository.updateVersion(version)
+            actor.sendMessage("Updated patching of ${toConsoleValue(version.getDisplayName())} to ${toConsoleValue(state)}")
+        }
+    }
+
     @CommandSubPath("edit <version> javaversion <java>")
     @CommandAlias(["edit <version> jv <java>"])
     @CommandDescription("Edit the Java version of a server version")
@@ -134,6 +145,36 @@ class CloudServerVersionCommand(
             version.version = minecraftVersion
             serverVersionRepository.updateVersion(version)
             actor.sendMessage("Updated minecraft version of ${toConsoleValue(version.getDisplayName())} to ${toConsoleValue(minecraftVersion.name)}")
+        }
+    }
+
+    @CommandSubPath("edit <name> jvmargument add <argument>")
+    @CommandAlias(["edit <name> jvmarg add <argument>"])
+    @CommandDescription("Add a jvm argument to the server version")
+    fun addJvmArgument(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, CloudServerVersionSuggester::class) type: CloudServerVersion,
+        @CommandParameter("argument") argument: String
+    ) {
+        runBlocking {
+            type.jvmArguments.add(argument)
+            serverVersionRepository.updateVersion(type)
+            actor.sendMessage("The JVM argument ${toConsoleValue(argument)} was added to the server version ${toConsoleValue(type.getDisplayName())}!")
+        }
+    }
+
+    @CommandSubPath("edit <name> jvmargument remove <argument>")
+    @CommandAlias(["edit <name> jvmarg remove <argument>"])
+    @CommandDescription("Remove a jvm argument from the server version")
+    fun removeJvmArgument(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, CloudServerVersionSuggester::class) type: CloudServerVersion,
+        @CommandParameter("argument") argument: String
+    ) {
+        runBlocking {
+            type.jvmArguments.remove(argument)
+            serverVersionRepository.updateVersion(type)
+            actor.sendMessage("The JVM argument ${toConsoleValue(argument)} was removed from the server version ${toConsoleValue(type.getDisplayName())}!")
         }
     }
 
@@ -168,7 +209,11 @@ class CloudServerVersionCommand(
         runBlocking {
             val subMap = version.fileEdits.getOrDefault(file, mutableMapOf())
             subMap.remove(key)
-            version.fileEdits[file] = subMap
+            if (subMap.isEmpty()) {
+                version.fileEdits.remove(file)
+            } else {
+                version.fileEdits[file] = subMap
+            }
             serverVersionRepository.updateVersion(version)
             actor.sendMessage("Successfully removed file edit from server version type!")
         }
@@ -216,6 +261,43 @@ class CloudServerVersionCommand(
         }
     }
 
+    @CommandSubPath("edit <name> programmparameter add <parameter>")
+    @CommandDescription("Add a programm parameter to the version")
+    fun addProgrammParameter(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, CloudServerVersionSuggester::class) version: CloudServerVersion,
+        @CommandParameter("parameter") parameter: String
+    ) {
+        runBlocking {
+            if (version.programmParameters.contains(parameter)) {
+                actor.sendMessage("§cThe programm parameter '$parameter' is already added to the version ${toConsoleValue(version.getDisplayName())}!")
+                return@runBlocking
+            }
+            version.programmParameters.add(parameter)
+            serverVersionRepository.updateVersion(version)
+            actor.sendMessage("Added programm parameter ${toConsoleValue(parameter)} to ${toConsoleValue(version.getDisplayName())}")
+        }
+    }
+
+    @CommandSubPath("edit <name> programmparameter remove <parameter>")
+    @CommandDescription("Remove a programm parameter from the version")
+    fun removeProgrammParameter(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, CloudServerVersionSuggester::class) version: CloudServerVersion,
+        @CommandParameter("parameter") parameter: String
+    ) {
+        runBlocking {
+            if (!version.programmParameters.contains(parameter)) {
+                actor.sendMessage("§cThe programm parameter '$parameter' is not added to the version ${toConsoleValue(version.getDisplayName())}!")
+                return@runBlocking
+            }
+            version.programmParameters.remove(parameter)
+            serverVersionRepository.updateVersion(version)
+            actor.sendMessage("Removed programm parameter ${toConsoleValue(parameter)} from ${toConsoleValue(version.getDisplayName())}")
+        }
+    }
+
+
     @CommandSubPath("create <project> <version>")
     @CommandDescription("Create a new server version")
     fun onCreate(
@@ -230,11 +312,8 @@ class CloudServerVersionCommand(
                 projectName,
                 null,
                 null,
-                null,
                 mcVersion,
                 null,
-                mutableMapOf(),
-                mutableMapOf()
             )
             if (serverVersionRepository.existsVersion(version.getDisplayName())) {
                 actor.sendMessage("§cA server version with the project name $projectName and the mc version ${mcVersion.name }already exists!")
@@ -314,6 +393,7 @@ class CloudServerVersionCommand(
             actor.sendMessage("§8- %tc%Type§8: %hc%${type?.name ?: "unknown"}")
             actor.sendMessage("§8- %tc%Lib-Pattern§8: %hc%${version.libPattern ?: "not set"}")
             actor.sendMessage("§8- %tc%Version§8: %hc%${version.version.name}")
+            actor.sendMessage("§8- %tc%Patch§8: ${version.patch.toSymbol()}")
             actor.sendMessage("§8- %tc%Version-Handler§8: %hc%${type?.versionHandlerName ?: "unknown"}")
             actor.sendMessage("§8- %tc%Download-Url§8: %hc%${version.customDownloadUrl ?: "not set"}")
             actor.sendMessage("§8- %tc%Build§8: %hc%${version.buildId ?: "not set"}")
@@ -322,6 +402,14 @@ class CloudServerVersionCommand(
             actor.sendMessage("§8- %tc%Default-Files§8:${if (version.defaultFiles.isEmpty()) " %hc%not set" else ""}")
             version.defaultFiles.forEach {
                 actor.sendMessage("§8  - %hc%${it.key} §8➔ %tc%${it.value}")
+            }
+            actor.sendMessage("§8- %tc%JVM arguments§8:${if (version.jvmArguments.isEmpty()) " %hc%not set" else ""}")
+            version.jvmArguments.forEach {
+                actor.sendMessage("§8  - %hc%$it")
+            }
+            actor.sendMessage("§8- %tc%Programm parameters§8:${if (version.programmParameters.isEmpty()) " %hc%not set" else ""}")
+            version.programmParameters.forEach {
+                actor.sendMessage("§8  - %hc%$it")
             }
             actor.sendMessage("§8- File edits§8:${if (version.fileEdits.isEmpty()) " %hc%not set" else ""}")
             version.fileEdits.keys.forEach {

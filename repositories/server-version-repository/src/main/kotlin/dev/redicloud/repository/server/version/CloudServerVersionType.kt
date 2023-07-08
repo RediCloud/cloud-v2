@@ -4,25 +4,32 @@ import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.CLOUD_VERSION
 import dev.redicloud.utils.ConfigurationFileEditor
+import dev.redicloud.utils.ProcessConfiguration
 import java.io.File
 import java.util.*
 
 
-data class CloudServerVersionType(
+class CloudServerVersionType(
     val uniqueId: UUID = UUID.randomUUID(),
     var name: String,
     var versionHandlerName: String,
     var proxy: Boolean,
-    val jvmArguments: MutableList<String> = mutableListOf(),
-    val programmArguments: MutableList<String> = mutableListOf(),
-    // key = file, pair first = key, pair second = value
-    val fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf(),
-    val defaultFiles: MutableMap<String, String> = mutableMapOf(),
     val defaultType: Boolean = false,
     var connectorPluginName: String,
     var connectorDownloadUrl: String?,
     var connectorFolder: String,
-    var libPattern: String?
+    var libPattern: String? = null,
+    jvmArguments: MutableList<String> = mutableListOf(),
+    environmentVariables: MutableMap<String, String> = mutableMapOf(),
+    programmParameters: MutableList<String> = mutableListOf(),
+    defaultFiles: MutableMap<String, String> = mutableMapOf(),
+    fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf()
+) : ProcessConfiguration(
+    jvmArguments,
+    environmentVariables,
+    programmParameters,
+    defaultFiles,
+    fileEdits
 ) {
 
     companion object {

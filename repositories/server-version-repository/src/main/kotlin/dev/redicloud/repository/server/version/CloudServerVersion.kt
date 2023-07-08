@@ -4,6 +4,7 @@ import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.ConfigurationFileEditor
+import dev.redicloud.utils.ProcessConfiguration
 import java.io.File
 import java.util.UUID
 
@@ -12,18 +13,27 @@ class CloudServerVersion(
     var typeId: UUID?,
     var projectName: String,
     var customDownloadUrl: String?,
-    var libPattern: String?,
     var buildId: String?,
     var version: ServerVersion,
     var javaVersionId: UUID?,
-    val defaultFiles: MutableMap<String, String>,
-    val fileEdits: MutableMap<String, MutableMap<String, String>>
-) {
+    var libPattern: String? = null,
+    var patch: Boolean = false,
+    jvmArguments: MutableList<String> = mutableListOf(),
+    environmentVariables: MutableMap<String, String> = mutableMapOf(),
+    programmParameters: MutableList<String> = mutableListOf(),
+    defaultFiles: MutableMap<String, String> = mutableMapOf(),
+    fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf()
+): ProcessConfiguration(
+    jvmArguments,
+    environmentVariables,
+    programmParameters,
+    defaultFiles,
+    fileEdits
+){
 
     companion object {
         private val logger = LogManager.Companion.logger(CloudServerVersion::class)
     }
-
 
     fun getDisplayName(): String {
         return "${projectName}_${version.name}"

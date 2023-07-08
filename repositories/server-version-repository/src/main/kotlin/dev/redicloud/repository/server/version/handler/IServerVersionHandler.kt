@@ -18,7 +18,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.newSingleThreadContext
 import java.io.File
-import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 
 interface IServerVersionHandler {
@@ -63,9 +62,9 @@ interface IServerVersionHandler {
     }
 
     fun isPatched(version: CloudServerVersion): Boolean =
-        version.libPattern != null && File(getFolder(version).absolutePath, ".patched").exists()
+        isPatchVersion(version) && File(getFolder(version).absolutePath, ".patched").exists()
 
-    fun isPatchVersion(version: CloudServerVersion): Boolean = version.libPattern != null
+    fun isPatchVersion(version: CloudServerVersion): Boolean = version.patch
 
     fun getJar(version: CloudServerVersion): File = File(getFolder(version).absolutePath, "${version.getDisplayName()}.jar")
 

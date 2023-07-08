@@ -9,9 +9,10 @@
       "-Dcom.mojang.eula.agree=true",
       "-Djline.terminal=jline.UnsupportedTerminal"
     ],
-    "programmArguments": [
+    "programmParameters": [
       "nogui"
     ],
+    "environmentVariables": {},
     "defaultFiles": {
       "config/paper-global.yml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/paper-global.yml",
       "server.properties": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/server.properties",
@@ -50,9 +51,10 @@
       "-Dcom.mojang.eula.agree=true",
       "-Djline.terminal=jline.UnsupportedTerminal"
     ],
-    "programmArguments": [
+    "programmParameters": [
       "nogui"
     ],
+    "environmentVariables": {},
     "defaultFiles": {
       "server.properties": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/server.properties",
       "bukkit.yml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/bukkit.yml",
@@ -86,9 +88,10 @@
       "-Dcom.mojang.eula.agree=true",
       "-Djline.terminal=jline.UnsupportedTerminal"
     ],
-    "programmArguments": [
+    "programmParameters": [
       "nogui"
     ],
+    "environmentVariables": {},
     "defaultFiles": {
       "server.properties": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/server.properties",
       "bukkit.yml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/bukkit.yml",
@@ -119,7 +122,8 @@
     "versionHandlerName": "papermc",
     "proxy": true,
     "jvmArguments": [],
-    "programmArguments": [],
+    "programmParameters": [],
+    "environmentVariables": {},
     "defaultFiles": {
       "velocity.toml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/velocity.toml",
       "forwarding.secret": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/forwarding.secret"
@@ -144,7 +148,8 @@
     "versionHandlerName": "urldownloader",
     "proxy": true,
     "jvmArguments": [],
-    "programmArguments": [],
+    "programmParameters": [],
+    "environmentVariables": {},
     "defaultFiles": {
       "config.yml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/config.yml"
     },
@@ -165,7 +170,8 @@
     "versionHandlerName": "urldownloader",
     "proxy": true,
     "jvmArguments": [],
-    "programmArguments": [],
+    "programmParameters": [],
+    "environmentVariables": {},
     "defaultFiles": {
       "config.yml": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/config.yml"
     },
@@ -190,9 +196,10 @@
       "-Dcom.mojang.eula.agree=true",
       "-Djline.terminal=jline.UnsupportedTerminal"
     ],
-    "programmArguments": [
+    "programmParameters": [
       "nogui"
     ],
+    "environmentVariables": {},
     "defaultFiles": {
       "server.properties": "https://raw.githubusercontent.com/RediCloud/cloud-v2/master/api-files/defaultFiles/server.properties"
     },
@@ -214,7 +221,8 @@
     "versionHandlerName": "urldownloader",
     "proxy": false,
     "jvmArguments": [],
-    "programmArguments": [],
+    "programmParameters": [],
+    "environmentVariables": {},
     "defaultFiles": [],
     "fileEdits": {},
     "connectorPluginName": "redicloud-minestom-connector-%cloud_version%.jar",
@@ -229,7 +237,8 @@
     "versionHandlerName": "urldownloader",
     "proxy": false,
     "jvmArguments": [],
-    "programmArguments": [],
+    "programmParameters": [],
+    "environmentVariables": {},
     "defaultFiles": [],
     "fileEdits": {},
     "connectorPluginName": "redicloud-limbo-connector-%cloud_version%.jar",
@@ -244,7 +253,8 @@
     "versionHandlerName": "urldownloader",
     "proxy": false,
     "jvmArguments": [],
-    "programmArguments": [],
+    "programmParameters": [],
+    "environmentVariables": {},
     "defaultFiles": [],
     "fileEdits": {},
     "connectorPluginName": null,

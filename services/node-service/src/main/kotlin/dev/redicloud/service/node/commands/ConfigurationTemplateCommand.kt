@@ -18,8 +18,11 @@ import dev.redicloud.service.base.suggester.CloudServerVersionSuggester
 import dev.redicloud.service.base.suggester.ConfigurationTemplateSuggester
 import dev.redicloud.service.base.suggester.JavaVersionSuggester
 import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
+import dev.redicloud.utils.fileName
+import dev.redicloud.utils.isValidUrl
 import dev.redicloud.utils.toSymbol
 import kotlinx.coroutines.runBlocking
+import java.net.URL
 import java.util.*
 
 @Command("configurationtemplate")
@@ -48,9 +51,6 @@ class ConfigurationTemplateCommand(
             ConfigurationTemplate(
                 UUID.randomUUID(),
                 name,
-                mutableListOf(),
-                mutableListOf(),
-                mutableMapOf(),
                 512,
                 mutableListOf(),
                 mutableListOf(),
@@ -137,17 +137,106 @@ class ConfigurationTemplateCommand(
         template.jvmArguments.forEach {
             actor.sendMessage("§8  - %hc%$it")
         }
-        actor.sendMessage("§8- %tc%Programm arguments§8:${if (template.programmArguments.isEmpty()) " %hc%None" else ""}")
-        template.programmArguments.forEach {
+        actor.sendMessage("§8- %tc%Programm parameter§8:${if (template.programmParameters.isEmpty()) " %hc%None" else ""}")
+        template.programmParameters.forEach {
             actor.sendMessage("§8  - %hc%$it")
         }
-        actor.sendMessage("§8- %tc%Environment variables§8:${if (template.environments.isEmpty()) " %hc%None" else ""}")
-        template.environments.forEach {
+        actor.sendMessage("§8- %tc%Environment variables§8:${if (template.environmentVariables.isEmpty()) " %hc%None" else ""}")
+        template.environmentVariables.forEach {
             actor.sendMessage("§8  - %hc%${it.key}§8=%tc%${it.value}")
+        }
+        actor.sendMessage("§8- %tc%Default files§8:${if (template.defaultFiles.isEmpty()) " %hc%None" else ""}")
+        template.defaultFiles.forEach {
+            actor.sendMessage("§8  - %hc%${it.key} §8➜ %tc%${it.value}")
+        }
+        actor.sendMessage("§8- %tc%File edits§8:${if (template.fileEdits.isEmpty()) " %hc%None" else ""}")
+        template.fileEdits.keys.forEach {
+            actor.sendMessage("\t§8- %hc%$it")
+            template.fileEdits[it]?.forEach {
+                actor.sendMessage("\t    §8- %tc%${it.key} §8➜ %tc%${it.value}")
+            }
         }
         actor.sendMessage("")
         actor.sendHeader("Configuration template")
     }
+
+    @CommandSubPath("edit <name> fileedits add <file> <key> <value>")
+    @CommandDescription("Add a file edit to a configuration template")
+    fun editFileEditsAdd(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
+        @CommandParameter("file") file: String,
+        @CommandParameter("key") key: String,
+        @CommandParameter("value") value: String
+    ) = runBlocking {
+        val subMap = template.fileEdits.getOrDefault(file, mutableMapOf())
+        subMap[key] = value
+        template.fileEdits[file] = subMap
+        configurationTemplateRepository.updateTemplate(template)
+        actor.sendMessage("Successfully added file edit to the configuration template!")
+    }
+
+    @CommandSubPath("edit <name> fileedits remove <file> <key>")
+    @CommandDescription("Remove a file edit from a configuration template")
+    fun editFileEditsRemove(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
+        @CommandParameter("file") file: String,
+        @CommandParameter("key") key: String
+    ) = runBlocking {
+        val subMap = template.fileEdits.getOrDefault(file, mutableMapOf())
+        if (subMap.remove(key) == null) {
+            actor.sendMessage("§cThe file edit with the key ${toConsoleValue(key, false)} does not exist!")
+            return@runBlocking
+        }
+        if (subMap.isEmpty()) {
+            template.fileEdits.remove(file)
+        } else {
+            template.fileEdits[file] = subMap
+        }
+        configurationTemplateRepository.updateTemplate(template)
+        actor.sendMessage("Successfully removed file edit from configuration template!")
+    }
+
+    @CommandSubPath("edit <name> files add <url> [path]")
+    @CommandDescription("Add a default file to a configuration template")
+    fun editFilesAdd(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
+        @CommandParameter("url") url: String,
+        @CommandParameter("path", true) path: String?
+    ) = runBlocking {
+        if (!isValidUrl(url)) {
+            actor.sendMessage("§cThe url '$url' is not valid!")
+            return@runBlocking
+        }
+        val file = path ?: URL(url).fileName
+        if (template.defaultFiles.any { it.value.lowercase() == file.lowercase() }) {
+            actor.sendMessage("§cThe file with the url ${toConsoleValue(url, false)} was already added to the configuration template ${toConsoleValue(template.name, false)}!")
+            return@runBlocking
+        }
+        template.defaultFiles[path ?: url] = url
+        configurationTemplateRepository.updateTemplate(template)
+        actor.sendMessage("Added file with url ${toConsoleValue(url)} to the configuration template ${toConsoleValue(template.name)}!")
+    }
+
+    @CommandSubPath("edit <name> files remove <url>")
+    @CommandDescription("Remove a default file from a configuration template")
+    fun editFilesRemove(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
+        @CommandParameter("url") url: String
+    ) = runBlocking {
+        if (template.defaultFiles.none { it.value.lowercase() == url.lowercase() }) {
+            actor.sendMessage("§cThe file with the url ${toConsoleValue(url)} is not added to the configuration template ${toConsoleValue(template.name, false)}!")
+            return@runBlocking
+        }
+        template.defaultFiles.remove(url)
+        configurationTemplateRepository.updateTemplate(template)
+        actor.sendMessage("Removed file with url ${toConsoleValue(url)} from the configuration template ${toConsoleValue(template.name)}!")
+    }
+
+
 
     @CommandSubPath("edit <name> name <new-name>")
     @CommandDescription("Edit the name of a configuration template")
@@ -160,34 +249,35 @@ class ConfigurationTemplateCommand(
             actor.sendMessage("§cA configuration template with this name already exists!")
             return@runBlocking
         }
-        configurationTemplateRepository.updateTemplate(template.copy(name = newName))
+        template.name = newName
+        configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage("The name was changed to ${toConsoleValue(newName)}!")
     }
 
-    @CommandSubPath("edit <name> programmargument add <argument>")
-    @CommandAlias(["edit <name> pa <argument> add <argument>"])
-    @CommandDescription("Add a programm argument to a configuration template")
-    fun editProgrammArgumentAdd(
+    @CommandSubPath("edit <name> programmparameter add <parameter>")
+    @CommandDescription("Add a programm parameter to a configuration template")
+    fun editProgrammParameterAdd(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
-        @CommandParameter("argument") argument: String
+        @CommandParameter("parameter") parameter: String
     ) = runBlocking {
-        template.programmArguments.add(argument)
+        template.programmParameters.add(parameter)
         configurationTemplateRepository.updateTemplate(template)
-        actor.sendMessage("The programm argument ${toConsoleValue(argument)} was added to the configuration template ${toConsoleValue(template.name)}!")
+        actor.sendMessage("The programm parameter ${toConsoleValue(parameter)} was added to the configuration template ${toConsoleValue(template.name)}!")
     }
 
-    @CommandSubPath("edit <name> programmargument remove <argument>")
-    @CommandAlias(["edit <name> pa <argument> remove <argument>"])
-    @CommandDescription("Remove a programm argument from a configuration template")
-    fun editProgrammArgumentRemove(
+
+
+    @CommandSubPath("edit <name> programmparameter remove <parameter>")
+    @CommandDescription("Remove a programm parameter from a configuration template")
+    fun editProgrammParameterRemove(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
-        @CommandParameter("argument") argument: String
+        @CommandParameter("parameter") parameter: String
     ) = runBlocking {
-        template.programmArguments.remove(argument)
+        template.programmParameters.remove(parameter)
         configurationTemplateRepository.updateTemplate(template)
-        actor.sendMessage("The programm argument ${toConsoleValue(argument)} was removed from the configuration template ${toConsoleValue(template.name)}!")
+        actor.sendMessage("The programm parameter ${toConsoleValue(parameter)} was removed from the configuration template ${toConsoleValue(template.name)}!")
     }
 
     @CommandSubPath("edit <name> jvmargument add <argument>")
@@ -225,7 +315,7 @@ class ConfigurationTemplateCommand(
         @CommandParameter("key") key: String,
         @CommandParameter("value") value: String
     ) = runBlocking {
-        template.environments[key] = value
+        template.environmentVariables[key] = value
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage("The environment variable ${toConsoleValue(key)} was added to the configuration template ${toConsoleValue(template.name)}!")
     }
@@ -239,7 +329,7 @@ class ConfigurationTemplateCommand(
         @CommandParameter("key") key: String,
         @CommandParameter("value") value: String
     ) = runBlocking {
-        template.environments.remove(key)
+        template.environmentVariables.remove(key)
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage("The environment variable ${toConsoleValue(key)} was removed from the configuration template ${toConsoleValue(template.name)}!")
     }

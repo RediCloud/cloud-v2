@@ -11,10 +11,7 @@ import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
-import dev.redicloud.utils.TEMP_SERVER_VERSION_FOLDER
-import dev.redicloud.utils.defaultScope
-import dev.redicloud.utils.findFreePort
-import dev.redicloud.utils.isValidUrl
+import dev.redicloud.utils.*
 import khttp.get
 import kotlinx.coroutines.launch
 import java.io.File
@@ -124,6 +121,7 @@ open class URLServerVersionHandler(
     }
 
     override suspend fun patch(version: CloudServerVersion) {
+        if (!version.patch) return
         var canceled = false
         var patched = false
         var error = false
@@ -167,15 +165,15 @@ open class URLServerVersionHandler(
             if (!versionDir.exists()) versionDir.mkdirs()
 
             tempJar.copyTo(jar, true)
-            if (version.libPattern != null || version.defaultFiles.isNotEmpty() || type.defaultFiles.isNotEmpty() || type.libPattern != null) {
-                val patterns = mutableListOf<Pattern>()
-                if (version.libPattern != null) patterns.add(Pattern.compile(version.libPattern!!))
-                if (type.libPattern != null) patterns.add(Pattern.compile(type.libPattern!!))
-                val files = mutableListOf<String>()
-                files.addAll(type.defaultFiles.keys)
-                files.addAll(version.defaultFiles.keys)
-                files.add(tempJar.name)
-                patterns.add(Pattern.compile("(${files.joinToString("|")})"))
+            val processConfiguration = ProcessConfiguration.collect(
+                version,
+                type
+            )
+            val patterns = processConfiguration.getLibPatterns().toMutableList()
+            if (version.libPattern != null) patterns.add(Pattern.compile(version.libPattern!!))
+            if (type.libPattern != null) patterns.add(Pattern.compile(type.libPattern!!))
+            if (patterns.isNotEmpty()) {
+                patterns.add(Pattern.compile("(${tempJar.name})"))
 
                 fun deleteFiles(file: File): Boolean {
                     val paths = version.defaultFiles.values

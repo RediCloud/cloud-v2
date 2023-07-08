@@ -16,6 +16,7 @@ import dev.redicloud.server.factory.screens.ServerScreen
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.CLOUD_PATH
 import dev.redicloud.utils.LIB_FOLDER
+import dev.redicloud.utils.ProcessConfiguration
 import dev.redicloud.utils.findFreePort
 import dev.redicloud.utils.service.ServiceId
 import kotlinx.coroutines.runBlocking
@@ -33,6 +34,7 @@ class ServerProcess(
     val port = findFreePort(configurationTemplate.startPort, !configurationTemplate.static)
     var process: Process? = null
     var handler: ServerProcessHandler? = null
+    var processConfiguration: ProcessConfiguration? = null
     private val logger = LogManager.logger(ServerProcess::class)
     internal lateinit var fileCopier: FileCopier
     internal var cloudServer: CloudServer? = null
@@ -49,6 +51,11 @@ class ServerProcess(
     suspend fun start(cloudServer: CloudServer, serverScreen: ServerScreen, snapshotData: StartDataSnapshot): StartResult {
         if (stopped) return StoppedStartResult()
         this.cloudServer = cloudServer
+        processConfiguration = ProcessConfiguration.collect(
+            configurationTemplate,
+            snapshotData.version,
+            snapshotData.versionType
+        )
         cloudServer.port = port
         val processBuilder = ProcessBuilder()
         // set environment variables
@@ -58,14 +65,14 @@ class ServerProcess(
         processBuilder.environment()["RC_PORT"] = port.toString()
         processBuilder.environment()["RC_LOG_LEVEL"] = getDefaultLogLevel().localizedName
         processBuilder.environment()["LIBRARY_FOLDER"] = LIB_FOLDER.getFile().absolutePath
-        processBuilder.environment().putAll(configurationTemplate.environments)
+        processBuilder.environment().putAll(processConfiguration!!.environmentVariables)
 
         val javaPath = snapshotData.javaVersion.located[serverRepository.serviceId.id]
         if (javaPath.isNullOrEmpty()) return JavaVersionNotInstalledStartResult(snapshotData.javaVersion)
 
         // set command
         processBuilder.command(
-            startCommand(snapshotData.versionType, snapshotData.javaVersion, javaPath, snapshotData)
+            startCommand(snapshotData.versionType, javaPath, snapshotData)
         )
         // set working directory
         processBuilder.directory(fileCopier.workDirectory)
@@ -152,17 +159,17 @@ class ServerProcess(
      * Creates the command to start the server with based server version type configurations
      * provide also placeholders like %PORT% or %SERVICE_ID%
      */
-    private fun startCommand(type: CloudServerVersionType, javaVersion: JavaVersion, javaPath: String, snapshotData: StartDataSnapshot): List<String> {
-        if (!javaVersion.isLocated(serverRepository.serviceId)) {
-            javaVersion.located[serverRepository.serviceId.id] = javaVersion.autoLocate()?.absolutePath
-                ?: throw IllegalStateException("Java version ${javaVersion.id} not found")
+    private fun startCommand(type: CloudServerVersionType, javaPath: String, snapshotData: StartDataSnapshot): List<String> {
+        if (!snapshotData.javaVersion.isLocated(serverRepository.serviceId)) {
+            snapshotData.javaVersion.located[serverRepository.serviceId.id] = snapshotData.javaVersion.autoLocate()?.absolutePath
+                ?: throw IllegalStateException("Java version ${snapshotData.javaVersion.id} not found")
         }
 
         val list = mutableListOf<String>(
             javaPath,
         )
 
-        if ((javaVersion.info?.major ?: -1) > 8) {
+        if ((snapshotData.javaVersion.info?.major ?: -1) > 8) {
             list.apply {
                 add("--add-opens=java.base/java.lang=ALL-UNNAMED")
                 add("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED")
@@ -183,8 +190,8 @@ class ServerProcess(
         val versionHandler = IServerVersionHandler.getHandler(type)
         val jarToExecute = versionHandler.getJar(snapshotData.version)
         list.add(jarToExecute.absolutePath)
-        type.programmArguments.forEach { list.add(replacePlaceholders(it)) }
-        list.addAll(configurationTemplate.programmArguments)
+        processConfiguration!!.programmParameters.forEach { list.add(replacePlaceholders(it)) }
+        list.addAll(processConfiguration!!.programmParameters)
         return list
     }
 

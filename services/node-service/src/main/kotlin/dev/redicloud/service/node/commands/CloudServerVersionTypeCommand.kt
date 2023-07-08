@@ -87,8 +87,8 @@ class CloudServerVersionTypeCommand(
         type.jvmArguments.forEach {
             actor.sendMessage("\t§8- %hc%$it")
         }
-        actor.sendMessage("Programm arguments§8:${if (type.programmArguments.isEmpty()) " %hc%None" else ""}")
-        type.programmArguments.forEach {
+        actor.sendMessage("Programm parameters§8:${if (type.programmParameters.isEmpty()) " %hc%None" else ""}")
+        type.programmParameters.forEach {
             actor.sendMessage("\t§8- %hc%$it")
         }
         actor.sendMessage("File edits§8:${if (type.fileEdits.isEmpty()) " %hc%not set" else ""}")
@@ -121,7 +121,7 @@ class CloudServerVersionTypeCommand(
             }
             val file = path ?: URL(url).fileName
             if (type.defaultFiles.any { it.value.lowercase() == file.lowercase() }) {
-                actor.sendMessage("§cThe file with the url '$url' is already added to the version ${toConsoleValue(type.name)}!")
+                actor.sendMessage("§cThe file with the url ${toConsoleValue(url, false)} was already added to the version ${toConsoleValue(type.name, false)}!")
                 return@runBlocking
             }
             type.defaultFiles[url] = file
@@ -178,15 +178,10 @@ class CloudServerVersionTypeCommand(
                 name,
                 "urldownloader",
                 false,
-                mutableListOf(),
-                mutableListOf(),
-                mutableMapOf(),
-                mutableMapOf(),
                 false,
                 "redicloud-$name-%cloud_version%.jar",
                 null,
-                "plugins",
-                null
+                "plugins"
             )
             serverVersionTypeRepository.createType(type)
             actor.sendMessage("Successfully created server version type ${toConsoleValue(type.name)}")
@@ -364,7 +359,7 @@ class CloudServerVersionTypeCommand(
     fun removeJvmArgument(
         actor: ConsoleActor,
         @CommandParameter("name", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
-        @CommandParameter("argument") argument: String
+        @CommandParameter("parameter") argument: String
     ) {
         runBlocking {
             if (type.defaultType) {
@@ -373,31 +368,48 @@ class CloudServerVersionTypeCommand(
             }
             type.jvmArguments.remove(argument)
             serverVersionTypeRepository.updateType(type)
-            actor.sendMessage("Successfully removed jvm argument from server version type!")
+            actor.sendMessage("Successfully removed jvm parameter from server version type!")
         }
     }
 
-    @CommandSubPath("edit <name> programmargument add <argument>")
-    @CommandAlias(["edit <name> progarg add <argument>"])
-    @CommandDescription("Add a programm argument to a server version type")
-    fun addProgrammArgument(
+    @CommandSubPath("edit <name> programmparameter add <parameter>")
+    @CommandDescription("Add a programm parameter to a server version type")
+    fun addProgrammParameter(
         actor: ConsoleActor,
         @CommandParameter("name", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
-        @CommandParameter("argument") argument: String
+        @CommandParameter("parameter") parameter: String
     ) {
         runBlocking {
             if (type.defaultType) {
                 actor.sendMessage("§cYou can't edit the name of the default server version type!")
                 return@runBlocking
             }
-            type.programmArguments.add(argument)
+            type.programmParameters.add(parameter)
             serverVersionTypeRepository.updateType(type)
-            actor.sendMessage("Successfully added programm argument to server version type!")
+            actor.sendMessage("Successfully added programm parameter to server version type!")
         }
     }
 
-    @CommandSubPath("edit <name> fileedits add <file> <key>")
-    @CommandAlias(["edit <name> fe add <file> <key>"])
+    @CommandSubPath("edit <name> programmparameter remove <parameter>")
+    @CommandDescription("Remove a programm parameter to a server version type")
+    fun removeProgrammParameter(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
+        @CommandParameter("parameter") parameter: String
+    ) {
+        runBlocking {
+            if (type.defaultType) {
+                actor.sendMessage("§cYou can't edit the name of the default server version type!")
+                return@runBlocking
+            }
+            type.programmParameters.remove(parameter)
+            serverVersionTypeRepository.updateType(type)
+            actor.sendMessage("Successfully removed the programm parameter from server version type!")
+        }
+    }
+
+    @CommandSubPath("edit <name> fileedits add <file> <key> <value>")
+    @CommandAlias(["edit <name> fe add <file> <key> <value>"])
     @CommandDescription("Add a file edit that should be applied before the server is starts")
     fun addFileEdit(
         actor: ConsoleActor,
@@ -413,7 +425,11 @@ class CloudServerVersionTypeCommand(
             }
             val subMap = type.fileEdits.getOrDefault(file, mutableMapOf())
             subMap[key] = value
-            type.fileEdits[file] = subMap
+            if (subMap.isEmpty()) {
+                type.fileEdits.remove(file)
+            } else {
+                type.fileEdits[file] = subMap
+            }
             serverVersionTypeRepository.updateType(type)
             actor.sendMessage("Successfully added file edit to server version type!")
         }

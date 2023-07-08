@@ -33,15 +33,10 @@ class CloudServerVersionTypeRepository(
                         "unknown",
                         "urldownloader",
                         false,
-                        mutableListOf(),
-                        mutableListOf(),
-                        mutableMapOf(),
-                        mutableMapOf(),
                         true,
                         "redicloud-unknown-${CLOUD_VERSION}.jar",
                         null,
-                        "plugins",
-                        null
+                        "plugins"
                     )
                 )
             }
