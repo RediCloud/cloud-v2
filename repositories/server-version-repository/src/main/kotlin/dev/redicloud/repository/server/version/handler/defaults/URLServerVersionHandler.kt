@@ -176,7 +176,7 @@ open class URLServerVersionHandler(
                 patterns.add(Pattern.compile("(${tempJar.name})"))
 
                 fun deleteFiles(file: File): Boolean {
-                    val paths = version.defaultFiles.values
+                    val paths = processConfiguration.defaultFiles.values
                     var workDirPath = file.absolutePath.replace(tempDir.absolutePath, "").replace("\\", "/")
                     if (workDirPath.startsWith("/")) workDirPath = workDirPath.substring(1)
                     if (paths.any { file.absolutePath.endsWith(it) }) return false

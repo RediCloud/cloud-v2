@@ -10,15 +10,22 @@ open class ProcessConfiguration(
     val defaultFiles: MutableMap<String, String> = mutableMapOf(),
     // Path -> (edit key -> edit value)
     val fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf(),
-    val references: MutableList<ProcessConfiguration>? = mutableListOf()
+    var references: MutableList<ProcessConfiguration>? = mutableListOf()
 ) {
 
     fun getLibPatterns(vararg files: String): List<Pattern> {
         val patterns = mutableListOf<Pattern>()
-        patterns.add(Pattern.compile("(${files.joinToString("|")})"))
+        if (files.isNotEmpty()) {
+            patterns.add(Pattern.compile("(${files.joinToString("|")})"))
+        }
+        if (defaultFiles.keys.isNotEmpty()) {
+            patterns.add(Pattern.compile("(${defaultFiles.keys.joinToString("|")})"))
+        }
         references?.forEach {
             patterns.addAll(it.getLibPatterns())
-            patterns.add(Pattern.compile("(${it.defaultFiles.keys.joinToString("|")})"))
+            if (it.defaultFiles.isNotEmpty()) {
+                patterns.add(Pattern.compile("(${it.defaultFiles.keys.joinToString("|")})"))
+            }
         }
         return patterns
     }
@@ -32,7 +39,8 @@ open class ProcessConfiguration(
                 collected.programmParameters.addAll(it.programmParameters)
                 collected.defaultFiles.putAll(it.defaultFiles)
                 collected.fileEdits.putAll(it.fileEdits)
-                collected.references?.addAll(it.references ?: listOf())
+                if (collected.references == null) collected.references = mutableListOf()
+                collected.references!!.add(it)
             }
             return collected
         }

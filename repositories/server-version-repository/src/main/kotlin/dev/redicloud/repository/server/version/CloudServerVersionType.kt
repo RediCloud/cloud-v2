@@ -65,4 +65,18 @@ class CloudServerVersionType(
         }
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (other !is CloudServerVersionType) return false
+
+        if (uniqueId != other.uniqueId) return false
+        if (name != other.name) return false
+        if (versionHandlerName != other.versionHandlerName) return false
+        if (proxy != other.proxy) return false
+        if (defaultType != other.defaultType) return false
+        if (connectorPluginName != other.connectorPluginName) return false
+        if (connectorDownloadUrl != other.connectorDownloadUrl) return false
+        if (connectorFolder != other.connectorFolder) return false
+        return libPattern == other.libPattern
+    }
+
 }
