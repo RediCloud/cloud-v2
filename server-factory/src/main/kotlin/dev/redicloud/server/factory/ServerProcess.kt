@@ -138,7 +138,9 @@ class ServerProcess(
             }
         }
 
-        fileCopier.workDirectory.deleteRecursively()
+        if (!configurationTemplate.static) {
+            fileCopier.workDirectory.deleteRecursively()
+        }
 
         if (cloudServer != null) {
             cloudServer = serverRepository.getServer(serverId)!!
