@@ -1,5 +1,6 @@
 package dev.redicloud.server.factory.task
 
+import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.server.factory.ServerFactory
@@ -23,15 +24,27 @@ class CloudServerQueueCleanerTask(
         if (masterNode?.serviceId != nodeRepository.serviceId) return false
 
         serverFactory.getStartList().forEach { info ->
+            val name = if (info.configurationTemplate != null) {
+                info.configurationTemplate.name
+            } else if (info.serviceId != null) {
+                info.serviceId.toName()
+            } else null
+
+            if (name == null) {
+                logger.warning("§cCould not get name of server to start, cancelling server start!")
+                serverFactory.startQueue.remove(info)
+                return@forEach
+            }
+
             // Check if queue time is too long
             if ((System.currentTimeMillis() - info.queueTime) - MAX_QUEUE_TIME > 0) {
-                logger.warning("§cStart of template ${info.configurationTemplate.name} took too long, cancelling server start!")
+                logger.warning("§cStart of template ${toConsoleValue(name, false)} took too long, cancelling server start!")
                 serverFactory.startQueue.remove(info)
                 return@forEach
             }
             // Check if no node is available
             if (info.nodeStartOrder.isEmpty()) {
-                logger.warning("§cNo node for template ${info.configurationTemplate.name} available, cancelling server start!")
+                logger.warning("§cNo node for template ${toConsoleValue(name, false)} available, cancelling server start!")
                 serverFactory.startQueue.remove(info)
                 return@forEach
             }
