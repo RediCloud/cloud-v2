@@ -55,6 +55,25 @@ class ServerCommand(
         serverFactory.queueStart(template, count ?: 1)
     }
 
+    @CommandSubPath("startstatic <name> <id>")
+    @CommandAlias(["ss <name> <id>"])
+    @CommandDescription("Queue a registered static server with the given name and id")
+    fun startStatic(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, ConfigurationTemplateSuggester::class) name: String,
+        @CommandParameter("id", true, IntegerSuggester::class) id: Int
+    ) = defaultScope.launch {
+        val server = serverRepository.getRegisteredServers().firstOrNull {
+            it.configurationTemplate.name.lowercase() == name.lowercase() && it.id == id
+        }
+        if (server == null) {
+            actor.sendMessage("§cThere is no registered static server with name ${toConsoleValue(name, false)} and id ${toConsoleValue(id, false)}!")
+            return@launch
+        }
+        actor.sendMessage("Queued static server ${server.getIdentifyingName()}...")
+        serverFactory.queueStart(server.serviceId)
+    }
+
     @CommandSubPath("stop <server> [force]")
     @CommandDescription("Stop a server")
     fun stop(
