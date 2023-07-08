@@ -12,7 +12,7 @@ class ConfigurationTemplateRepository(databaseConnection: DatabaseConnection) :
     }
 
     suspend fun getTemplate(name: String): ConfigurationTemplate? {
-        return getTemplates().firstOrNull { it.name == name }
+        return getTemplates().firstOrNull { it.name.lowercase() == name.lowercase() }
     }
 
     suspend fun existsTemplate(uniqueId: UUID): Boolean {
@@ -20,7 +20,7 @@ class ConfigurationTemplateRepository(databaseConnection: DatabaseConnection) :
     }
 
     suspend fun existsTemplate(name: String): Boolean {
-        return getTemplates().any { it.name == name }
+        return getTemplates().any { it.name.lowercase() == name.lowercase() }
     }
 
     suspend fun createTemplate(configurationTemplate: ConfigurationTemplate) {
