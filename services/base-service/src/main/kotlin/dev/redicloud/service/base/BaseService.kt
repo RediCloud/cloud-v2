@@ -1,7 +1,5 @@
 package dev.redicloud.service.base
 
-import dev.redicloud.service.base.packets.CloudServiceShutdownPacket
-import dev.redicloud.service.base.packets.CloudServiceShutdownResponse
 import dev.redicloud.commands.api.CommandArgumentParser
 import dev.redicloud.commands.api.AbstractCommandSuggester
 import dev.redicloud.repository.node.NodeRepository
@@ -28,8 +26,7 @@ import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
-import dev.redicloud.service.base.packets.ServicePingPacket
-import dev.redicloud.service.base.packets.ServicePingResponse
+import dev.redicloud.service.base.packets.*
 import dev.redicloud.service.base.packets.listener.CloudServiceShutdownPacketListener
 import dev.redicloud.service.base.parser.*
 import dev.redicloud.service.base.suggester.*
@@ -38,8 +35,11 @@ import dev.redicloud.tasks.CloudTaskManager
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.ioScope
 import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.util.logging.Level
 import kotlin.system.exitProcess
 
 abstract class BaseService(
@@ -122,6 +122,18 @@ abstract class BaseService(
         }
     }
 
+    fun sendClusterMessage(message: String, level: Level = Level.INFO, vararg serviceIds: ServiceId) {
+        defaultScope.launch {
+            packetManager.publish(ClusterMessagePacket(message, level), *serviceIds)
+        }
+    }
+
+    fun sendClusterMessage(message: String, level: Level = Level.INFO, serviceTargetType: ServiceType) {
+        defaultScope.launch {
+            packetManager.publish(ClusterMessagePacket(message, level), serviceTargetType)
+        }
+    }
+
     private fun registerDefaultParsers() {
         CommandArgumentParser.PARSERS[CloudNode::class] = CloudNodeParser(this.nodeRepository)
         CommandArgumentParser.PARSERS[CloudServer::class] = CloudServerParser(this.serverRepository)
@@ -153,6 +165,7 @@ abstract class BaseService(
         packetManager.registerPacket(ServicePingResponse::class)
         packetManager.registerPacket(CloudServiceShutdownPacket::class)
         packetManager.registerPacket(CloudServiceShutdownResponse::class)
+        packetManager.registerPacket(ClusterMessagePacket::class)
     }
 
     private fun registerPacketListeners() {
