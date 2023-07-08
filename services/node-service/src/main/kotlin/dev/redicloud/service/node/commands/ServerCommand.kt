@@ -70,6 +70,18 @@ class ServerCommand(
             actor.sendMessage("§cThere is no registered static server with name ${toConsoleValue(name, false)} and id ${toConsoleValue(id, false)}!")
             return@launch
         }
+        if (!server.configurationTemplate.static) {
+            actor.sendMessage("§cThe server ${toConsoleValue(server.getIdentifyingName(), false)} is not a static server!")
+            return@launch
+        }
+        if (server.state == CloudServerState.STARTING || server.state == CloudServerState.PREPARING) {
+            actor.sendMessage("§cThe server ${toConsoleValue(server.getIdentifyingName(), false)} is already starting!")
+            return@launch
+        }
+        if (server.state == CloudServerState.RUNNING || server.state == CloudServerState.STOPPING) {
+            actor.sendMessage("§cThe server ${toConsoleValue(server.getIdentifyingName(), false)} is already running!")
+            return@launch
+        }
         actor.sendMessage("Queued static server ${server.getIdentifyingName()}...")
         serverFactory.queueStart(server.serviceId)
     }
