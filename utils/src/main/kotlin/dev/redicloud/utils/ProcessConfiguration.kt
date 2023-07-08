@@ -15,7 +15,7 @@ open class ProcessConfiguration(
 
     fun getLibPatterns(vararg files: String): List<Pattern> {
         val patterns = mutableListOf<Pattern>()
-        patterns.add(Pattern.compile("(${files.joinToString("|")}"))
+        patterns.add(Pattern.compile("(${files.joinToString("|")})"))
         references?.forEach {
             patterns.addAll(it.getLibPatterns())
             patterns.add(Pattern.compile("(${it.defaultFiles.keys.joinToString("|")})"))
