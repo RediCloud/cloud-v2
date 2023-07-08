@@ -11,33 +11,33 @@ open class EasyCache<T, I>(
     private var cachedValues: MutableMap<I, Pair<Long, T?>> = mutableMapOf()
     private var singleCachedValue: Pair<Long, T?>? = null
 
-    fun get(value: I? = null): T? {
-        if (!isCacheValid(value)) {
-            setCached(value, runBlocking { block(value) })
+    fun get(key: I? = null): T? {
+        if (!isCacheValid(key)) {
+            setCached(key, runBlocking { block(key) })
         }
-        return getCached(value)
+        return getCached(key)
     }
 
-    fun isCached(value: I?): Boolean {
-        if (value == null) return singleCachedValue != null
-        return cachedValues.containsKey(value)
+    fun isCached(key: I?): Boolean {
+        if (key == null) return singleCachedValue != null
+        return cachedValues.containsKey(key)
     }
 
-    fun getCached(value: I?): T? {
-        if (value == null) return singleCachedValue?.second
-        return cachedValues[value]?.second
+    fun getCached(key: I?): T? {
+        if (key == null) return singleCachedValue?.second
+        return cachedValues[key]?.second
     }
 
-    fun setCached(value: I?, newValue: T?) {
-        if (value == null) {
-            singleCachedValue = System.currentTimeMillis() to newValue
+    fun setCached(key: I?, value: T?) {
+        if (key == null) {
+            singleCachedValue = System.currentTimeMillis() to value
             return
         }
-        cachedValues[value] = System.currentTimeMillis() to newValue
+        cachedValues[key] = System.currentTimeMillis() to value
     }
 
-    fun isCacheValid(value: I?): Boolean {
-        return isCached(value) && System.currentTimeMillis() - (if (value != null) cachedValues[value]!!.first else singleCachedValue?.first
+    fun isCacheValid(key: I?): Boolean {
+        return isCached(key) && System.currentTimeMillis() - (if (key != null) cachedValues[key]!!.first else singleCachedValue?.first
             ?: -1) < cacheTime.inWholeMilliseconds
     }
 

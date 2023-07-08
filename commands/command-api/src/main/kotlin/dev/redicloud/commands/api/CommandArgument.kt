@@ -10,7 +10,7 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
     val required: Boolean //TODO
     val clazz: KClass<*>
     val parser: CommandArgumentParser<*>?
-    val annotatedSuggester: ICommandSuggester
+    val annotatedSuggester: AbstractCommandSuggester
     val suggester: CommandArgumentSuggester
     val suggesterParameter: Array<String>
 
@@ -32,7 +32,7 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
                 val annotation = parameter.getAnnotation(CommandParameter::class.java)
                 name = annotation.name.ifEmpty { parameter.name }
                 required = annotation.required //TODO check String? and Int? etc.
-                annotatedSuggester = ICommandSuggester.SUGGESTERS.firstOrNull { it::class == annotation.suggester } ?: EmptySuggester()
+                annotatedSuggester = AbstractCommandSuggester.SUGGESTERS.firstOrNull { it::class == annotation.suggester } ?: EmptySuggester()
                 suggesterParameter = annotation.suggesterArguments
             }
             clazz = parameter.type.kotlin

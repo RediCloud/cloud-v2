@@ -10,7 +10,7 @@ abstract class CommandBase {
     private var description: String = ""
     private var aliases: Array<String> = arrayOf()
     private var permission: String? = null
-    val suggester: ICommandSuggester = CommandSuggester(this)
+    val suggester: AbstractCommandSuggester = CommandSuggester(this)
 
     internal fun load() {
         name = this::class.findAnnotation<Command>()?.name

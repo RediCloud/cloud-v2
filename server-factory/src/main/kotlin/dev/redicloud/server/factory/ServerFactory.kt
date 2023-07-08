@@ -2,7 +2,7 @@ package dev.redicloud.server.factory
 
 import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.commands.api.CommandArgumentParser
-import dev.redicloud.commands.api.ICommandSuggester
+import dev.redicloud.commands.api.AbstractCommandSuggester
 import dev.redicloud.console.Console
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
@@ -52,7 +52,7 @@ class ServerFactory(
 
     init {
         CommandArgumentParser.PARSERS[ServerScreen::class] = ServerScreenParser(console)
-        ICommandSuggester.SUGGESTERS.add(ServerScreenSuggester(console))
+        AbstractCommandSuggester.SUGGESTERS.add(ServerScreenSuggester(console))
     }
 
     suspend fun getStartList(): List<ServerQueueInformation> {

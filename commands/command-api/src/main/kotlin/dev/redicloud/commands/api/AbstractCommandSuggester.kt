@@ -3,7 +3,7 @@ package dev.redicloud.commands.api
 import dev.redicloud.utils.EasyCache
 import kotlin.time.Duration.Companion.seconds
 
-interface ICommandSuggester {
+abstract class AbstractCommandSuggester {
     companion object {
         val SUGGESTERS = mutableListOf(
             EmptySuggester(),
@@ -13,23 +13,22 @@ interface ICommandSuggester {
         )
     }
 
-    private val cache: EasyCache<Array<String>, CommandContext>
-        get() = EasyCache(5.seconds) {
-            suggest(it!!)
-        }
+    private val cache: EasyCache<Array<String>, CommandContext> = EasyCache(5.seconds) {
+        suggest(it!!)
+    }
 
     fun preSuggest(context: CommandContext): Array<String> {
         return cache.get(context)!!
     }
 
-    fun suggest(context: CommandContext): Array<String>
+    abstract fun suggest(context: CommandContext): Array<String>
 }
 
-class EmptySuggester() : ICommandSuggester {
+class EmptySuggester() : AbstractCommandSuggester() {
     override fun suggest(context: CommandContext): Array<String> = arrayOf()
 }
 
-class MemorySuggester() : ICommandSuggester {
+class MemorySuggester() : AbstractCommandSuggester() {
     private val memoryList = mutableListOf<Long>(
         524,
         1024,
@@ -51,11 +50,11 @@ class MemorySuggester() : ICommandSuggester {
     }
 }
 
-class BooleanSuggester() : ICommandSuggester {
+class BooleanSuggester() : AbstractCommandSuggester() {
     override fun suggest(context: CommandContext): Array<String> = arrayOf("true", "false")
 }
 
-class IntegerSuggester() : ICommandSuggester {
+class IntegerSuggester() : AbstractCommandSuggester() {
     override fun suggest(context: CommandContext): Array<String> {
         val min = context.getOr(0, 1)
         val max = context.getOr(1, 10)
@@ -64,18 +63,16 @@ class IntegerSuggester() : ICommandSuggester {
     }
 }
 
-class CommandSubPathSuggester(val subCommand: CommandSubBase) :
-    ICommandSuggester {
+class CommandSubPathSuggester(val subCommand: CommandSubBase) : AbstractCommandSuggester() {
     override fun suggest(context: CommandContext): Array<String> = subCommand.getSubPaths().toTypedArray()
 }
 
-class CommandSuggester(val command: CommandBase) : ICommandSuggester {
+class CommandSuggester(val command: CommandBase) : AbstractCommandSuggester() {
     override fun suggest(context: CommandContext): Array<String> =
         arrayOf(command.getName(), *command.getAliases())
 }
 
-class CommandArgumentSuggester(val commandArgument: CommandArgument) :
-    ICommandSuggester {
+class CommandArgumentSuggester(val commandArgument: CommandArgument) : AbstractCommandSuggester() {
 
     override fun suggest(context: CommandContext): Array<String> {
         if (!commandArgument.isThis(context.input, true)) return arrayOf()

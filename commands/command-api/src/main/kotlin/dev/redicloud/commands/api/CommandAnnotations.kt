@@ -13,7 +13,7 @@ annotation class CommandSubPath(val path: String)
 annotation class CommandAlias(val aliases: Array<String>)
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
-annotation class CommandParameter(val name: String = "", val required: Boolean = true, val suggester: KClass<out ICommandSuggester> = EmptySuggester::class, val suggesterArguments: Array<String> = []) //TODO: required will be automatically set to false if the type is nullable
+annotation class CommandParameter(val name: String = "", val required: Boolean = true, val suggester: KClass<out AbstractCommandSuggester> = EmptySuggester::class, val suggesterArguments: Array<String> = []) //TODO: required will be automatically set to false if the type is nullable
 
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 annotation class CommandDescription(val description: String)

@@ -3,7 +3,7 @@ package dev.redicloud.service.base
 import dev.redicloud.service.base.packets.CloudServiceShutdownPacket
 import dev.redicloud.service.base.packets.CloudServiceShutdownResponse
 import dev.redicloud.commands.api.CommandArgumentParser
-import dev.redicloud.commands.api.ICommandSuggester
+import dev.redicloud.commands.api.AbstractCommandSuggester
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.codec.GsonCodec
@@ -38,7 +38,6 @@ import dev.redicloud.tasks.CloudTaskManager
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.ioScope
 import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlin.system.exitProcess
@@ -136,17 +135,17 @@ abstract class BaseService(
     }
 
     private fun registerDefaultSuggesters() {
-        ICommandSuggester.SUGGESTERS.add(RegisteredCloudNodeSuggester(this.nodeRepository))
-        ICommandSuggester.SUGGESTERS.add(ConnectedCloudNodeSuggester(this.nodeRepository))
-        ICommandSuggester.SUGGESTERS.add(CloudServerVersionSuggester(this.serverVersionRepository))
-        ICommandSuggester.SUGGESTERS.add(CloudServerVersionTypeSuggester(this.serverVersionTypeRepository))
-        ICommandSuggester.SUGGESTERS.add(ConfigurationTemplateSuggester(this.configurationTemplateRepository))
-        ICommandSuggester.SUGGESTERS.add(JavaVersionSuggester(this.javaVersionRepository))
-        ICommandSuggester.SUGGESTERS.add(ServerVersionSuggester())
-        ICommandSuggester.SUGGESTERS.add(ServerVersionHandlerSuggester())
-        ICommandSuggester.SUGGESTERS.add(FileTemplateSuggester(this.fileTemplateRepository))
-        ICommandSuggester.SUGGESTERS.add(CloudServerSuggester(this.serverRepository))
-        ICommandSuggester.SUGGESTERS.add(CloudConnectorFileNameSelector())
+        AbstractCommandSuggester.SUGGESTERS.add(RegisteredCloudNodeSuggester(this.nodeRepository))
+        AbstractCommandSuggester.SUGGESTERS.add(ConnectedCloudNodeSuggester(this.nodeRepository))
+        AbstractCommandSuggester.SUGGESTERS.add(CloudServerVersionSuggester(this.serverVersionRepository))
+        AbstractCommandSuggester.SUGGESTERS.add(CloudServerVersionTypeSuggester(this.serverVersionTypeRepository))
+        AbstractCommandSuggester.SUGGESTERS.add(ConfigurationTemplateSuggester(this.configurationTemplateRepository))
+        AbstractCommandSuggester.SUGGESTERS.add(JavaVersionSuggester(this.javaVersionRepository))
+        AbstractCommandSuggester.SUGGESTERS.add(ServerVersionSuggester())
+        AbstractCommandSuggester.SUGGESTERS.add(ServerVersionHandlerSuggester())
+        AbstractCommandSuggester.SUGGESTERS.add(FileTemplateSuggester(this.fileTemplateRepository))
+        AbstractCommandSuggester.SUGGESTERS.add(CloudServerSuggester(this.serverRepository))
+        AbstractCommandSuggester.SUGGESTERS.add(CloudConnectorFileNameSelector())
     }
 
     private fun registerPackets() {

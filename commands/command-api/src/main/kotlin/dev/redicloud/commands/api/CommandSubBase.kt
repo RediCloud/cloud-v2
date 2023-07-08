@@ -17,7 +17,7 @@ class CommandSubBase(
     val arguments: List<CommandArgument>
     val aliasePaths: Array<String>
     val permission: String?
-    val suggester: ICommandSuggester
+    val suggester: AbstractCommandSuggester
 
     init {
         suspend = function.isSuspend
