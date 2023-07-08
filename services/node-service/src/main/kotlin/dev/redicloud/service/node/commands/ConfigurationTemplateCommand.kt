@@ -555,6 +555,11 @@ class ConfigurationTemplateCommand(
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("state", true, BooleanSuggester::class) staticService: Boolean
     ) = runBlocking {
+        val servers = serverRepository.getRegisteredServers().filter { it.configurationTemplate.uniqueId == template.uniqueId }
+        if (servers.isNotEmpty()) {
+            actor.sendMessage("§cYou cannot edit the static state of a template while there are still servers registered! Delete all static servers or stop all dynamic servers first!")
+            actor.sendMessage("§cRegistered servers: ${servers.joinToString(", ") { it.name}}")
+        }
         template.static = staticService
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage("Static service of ${toConsoleValue(template.name)} was updated to ${toConsoleValue(staticService)}!")
