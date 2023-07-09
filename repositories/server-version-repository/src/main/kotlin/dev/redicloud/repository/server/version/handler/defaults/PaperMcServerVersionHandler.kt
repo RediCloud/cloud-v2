@@ -9,18 +9,16 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.requester.PaperMcApiRequester
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.*
 import khttp.get
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
-import java.net.URL
 import java.util.*
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
-import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.minutes
 
 class PaperMcServerVersionHandler(
@@ -85,41 +83,57 @@ class PaperMcServerVersionHandler(
             jar.writeBytes(response.content)
 
             version.buildId = buildId.toString()
+            serverVersionRepository.updateVersion(version)
 
-            var total = 0
-            var filesDownloaded = 0
-            val fileEdits = mutableMapOf<String, String>()
-            fileEdits.putAll(version.defaultFiles)
-            fileEdits.putAll(type.defaultFiles)
-            fileEdits.forEach {
-                total++
-                defaultScope.launch {
+            val downloader = MultiAsyncAction()
+
+            val defaultFiles = mutableMapOf<String, String>()
+            defaultFiles.putAll(version.defaultFiles)
+            defaultFiles.putAll(type.defaultFiles)
+            defaultFiles.forEach {
+                downloader.add {
                     val url1 = it.value
                     val path = it.key
                     try {
                         if (!isValidUrl(url1)) {
-                            logger.warning("§cInvalid default file with url ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)}")
-                            return@launch
+                            logger.warning(
+                                "§cInvalid default file with url ${
+                                    toConsoleValue(
+                                        url1,
+                                        false
+                                    )
+                                } for ${toConsoleValue(version.getDisplayName(), false)}"
+                            )
+                            return@add
                         }
                         val file = File(folder, path)
                         if (!file.parentFile.exists()) file.parentFile.mkdirs()
                         val response1 = get(url1)
                         if (response1.statusCode != 200) {
-                            logger.warning("§cDownload of default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)} is not available (${response.statusCode}):\n${response.text}")
-                            return@launch
+                            logger.warning(
+                                "§cDownload of default file ${
+                                    toConsoleValue(
+                                        url1,
+                                        false
+                                    )
+                                } for ${
+                                    toConsoleValue(
+                                        version.getDisplayName(),
+                                        false
+                                    )
+                                } is not available (${response.statusCode}):\n${response.text}"
+                            )
+                            return@add
                         }
                         file.writeBytes(response1.content)
-                    }finally {
-                        filesDownloaded++
+                    }catch (e: Exception) {
+                        logger.warning("§cFailed to download default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)}", e)
                     }
                 }
             }
 
-            while (filesDownloaded < total) {
-                Thread.sleep(150)
-            }
+            downloader.joinAll()
 
-            serverVersionRepository.updateVersion(version)
             lastUpdateCheck = System.currentTimeMillis()
         }catch (e: Exception) {
             error = true

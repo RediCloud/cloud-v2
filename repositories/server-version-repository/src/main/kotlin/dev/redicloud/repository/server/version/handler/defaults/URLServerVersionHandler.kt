@@ -13,7 +13,6 @@ import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.*
 import khttp.get
-import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -64,38 +63,34 @@ open class URLServerVersionHandler(
             if (jar.exists()) jar.delete()
             jar.writeBytes(response.content)
 
-            var total = 0
-            var filesDownloaded = 0
-            val fileEdits = mutableMapOf<String, String>()
-            fileEdits.putAll(version.defaultFiles)
-            fileEdits.putAll(type.defaultFiles)
-            fileEdits.forEach {
-                total++
-                defaultScope.launch {
+            val downloader = MultiAsyncAction()
+            val defaultFiles = mutableMapOf<String, String>()
+            defaultFiles.putAll(version.defaultFiles)
+            defaultFiles.putAll(type.defaultFiles)
+            defaultFiles.forEach {
+                downloader.add {
                     val url1 = it.key
                     val path = it.value
                     try {
                         if (!isValidUrl(url1)) {
                             logger.warning("§cInvalid default file with url ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)}")
-                            return@launch
+                            return@add
                         }
                         val file = File(folder, path)
                         if (!file.parentFile.exists()) file.parentFile.mkdirs()
                         val response1 = get(url1)
                         if (response1.statusCode != 200) {
                             logger.warning("§cDownload of default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)} is not available (${response.statusCode}):\n${response.text}")
-                            return@launch
+                            return@add
                         }
                         file.writeBytes(response1.content)
-                    }finally {
-                        filesDownloaded++
+                    }catch (e: Exception) {
+                        logger.warning("§cFailed to download default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)}", e)
                     }
                 }
             }
 
-            while (filesDownloaded < total) {
-                Thread.sleep(150)
-            }
+            downloader.joinAll()
         }finally {
             getLock(version).unlock()
         }
