@@ -11,10 +11,7 @@ import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.task.CloudServerVersionUpdateTask
 import dev.redicloud.server.factory.ServerFactory
-import dev.redicloud.server.factory.task.CloudServerDeleteTask
-import dev.redicloud.server.factory.task.CloudServerQueueCleanerTask
-import dev.redicloud.server.factory.task.CloudServerStartTask
-import dev.redicloud.server.factory.task.CloudServerStopTask
+import dev.redicloud.server.factory.task.*
 import dev.redicloud.service.base.BaseService
 import dev.redicloud.service.base.events.node.NodeConnectEvent
 import dev.redicloud.service.base.events.node.NodeDisconnectEvent
@@ -53,7 +50,7 @@ class NodeService(
         fileCluster = FileCluster(configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
         fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console)
-        serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress, console, clusterConfiguration, configurationTemplateRepository, eventManager)
+        serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress, console, clusterConfiguration, configurationTemplateRepository, eventManager, fileCluster)
 
         runBlocking {
             registerDefaults()
@@ -118,11 +115,15 @@ class NodeService(
             .period(2.seconds)
             .register()
         taskManager.builder()
-            .task(CloudServerQueueCleanerTask(this.serverFactory, this.nodeRepository))
+            .task(CloudServerQueueCleanerTask(this.serverFactory, this.nodeRepository, this.serverRepository))
             .event(NodeConnectEvent::class)
             .event(NodeDisconnectEvent::class)
             .event(NodeSuspendedEvent::class)
             .period(5.seconds)
+            .register()
+        taskManager.builder()
+            .task(CloudServerTransferTask(this.serverFactory))
+            .period(7.seconds)
             .register()
         taskManager.builder()
             .task(CloudServerDeleteTask(this.serverFactory))
