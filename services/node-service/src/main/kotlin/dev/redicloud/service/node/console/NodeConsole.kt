@@ -3,6 +3,7 @@ package dev.redicloud.service.node.console
 import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.api.server.events.server.CloudServerConnectedEvent
 import dev.redicloud.api.server.events.server.CloudServerDeleteEvent
+import dev.redicloud.api.server.events.server.CloudServerTransferredEvent
 import dev.redicloud.console.Console
 import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.event.EventManager
@@ -78,8 +79,16 @@ class NodeConsole(
         runBlocking {
             val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@runBlocking
             if (it.state == CloudServerState.PREPARING) {
-                writeLine("${server.getIdentifyingName()}§8: §6● §8(%tc%starting§8)")
+                writeLine("${server.getIdentifyingName()}§8: §6● §8(%tc%preparing start§8)")
             }
+        }
+    }
+
+    private val onServerTransferredEvent = eventManager.listen<CloudServerTransferredEvent> {
+        runBlocking {
+            val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@runBlocking
+            val node = nodeRepository.getNode(server.hostNodeId) ?: return@runBlocking
+            writeLine("${server.getIdentifyingName()}§8: §5● §8(%tc%transferred to ${node.getIdentifyingName()}§8)")
         }
     }
 
