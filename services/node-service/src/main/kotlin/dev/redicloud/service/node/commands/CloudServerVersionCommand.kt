@@ -393,7 +393,7 @@ class CloudServerVersionCommand(
             actor.sendMessage("§8- %tc%Type§8: %hc%${type?.name ?: "unknown"}")
             actor.sendMessage("§8- %tc%Lib-Pattern§8: %hc%${version.libPattern ?: "not set"}")
             actor.sendMessage("§8- %tc%Version§8: %hc%${version.version.name}")
-            actor.sendMessage("§8- %tc%Patch§8: ${version.patch.toSymbol()}")
+            actor.sendMessage("§8- %tc%Patch-Version§8: ${version.patch.toSymbol()}")
             actor.sendMessage("§8- %tc%Version-Handler§8: %hc%${type?.versionHandlerName ?: "unknown"}")
             actor.sendMessage("§8- %tc%Download-Url§8: %hc%${version.customDownloadUrl ?: "not set"}")
             actor.sendMessage("§8- %tc%Build§8: %hc%${version.buildId ?: "not set"}")
@@ -411,7 +411,7 @@ class CloudServerVersionCommand(
             version.programmParameters.forEach {
                 actor.sendMessage("§8  - %hc%$it")
             }
-            actor.sendMessage("§8- File edits§8:${if (version.fileEdits.isEmpty()) " %hc%not set" else ""}")
+            actor.sendMessage("§8- %tc%File edits§8:${if (version.fileEdits.isEmpty()) " %hc%not set" else ""}")
             version.fileEdits.keys.forEach {
                 actor.sendMessage("\t§8- %hc%$it")
                 version.fileEdits[it]?.forEach { edit ->
