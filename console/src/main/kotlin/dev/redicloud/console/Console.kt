@@ -1,5 +1,6 @@
 package dev.redicloud.console
 
+import dev.redicloud.commands.api.CommandArgumentParser
 import dev.redicloud.commands.api.CommandResponseType
 import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.commands.ConsoleCommandManager
@@ -44,6 +45,7 @@ open class Console(
     companion object {
         val LOGGER: Logger = LogManager.logger(Console::class.java)
         private val DATE_FORMAT = SimpleDateFormat("HH:mm:ss.SSS")
+        private var FIRST_INIT = true
     }
 
     internal val currentQuestion: ConsoleQuestion? = null
@@ -286,7 +288,7 @@ open class Console(
 
     override fun getScreens(): List<Screen> = screens.toList()
 
-    override fun getScreen(name: String): Screen? = screens.firstOrNull { it.name == name }
+    override fun getScreen(name: String): Screen? = screens.firstOrNull { it.name.lowercase() == name.lowercase() }
 
 
     override fun createScreen(

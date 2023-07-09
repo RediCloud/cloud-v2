@@ -3,6 +3,7 @@ package dev.redicloud.server.factory
 import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.service.base.packets.CloudServiceShutdownPacket
 import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.console.utils.ScreenProcessHandler
 import dev.redicloud.logging.LogManager
 import dev.redicloud.logging.getDefaultLogLevel
 import dev.redicloud.packets.PacketManager
@@ -33,7 +34,7 @@ class ServerProcess(
 
     val port = findFreePort(configurationTemplate.startPort, !configurationTemplate.static)
     var process: Process? = null
-    var handler: ServerProcessHandler? = null
+    var handler: ScreenProcessHandler? = null
     var processConfiguration: ProcessConfiguration? = null
     private val logger = LogManager.logger(ServerProcess::class)
     internal lateinit var fileCopier: FileCopier
@@ -81,7 +82,7 @@ class ServerProcess(
 
         process = processBuilder.start()
         // create handler and listen for exit
-        handler = ServerProcessHandler(process!!, cloudServer, serverScreen)
+        handler = ScreenProcessHandler(process!!, serverScreen)
         handler!!.onExit { runBlocking { stop(internalCall =  true) } }
 
         cloudServer.state = CloudServerState.STARTING

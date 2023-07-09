@@ -1,29 +1,21 @@
-package dev.redicloud.server.factory
+package dev.redicloud.console.utils
 
 import dev.redicloud.logging.LogManager
-import dev.redicloud.repository.server.CloudServer
-import dev.redicloud.server.factory.screens.ServerScreen
-import dev.redicloud.utils.History
 import dev.redicloud.utils.isOpen
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
-class ServerProcessHandler(
+class ScreenProcessHandler(
     private val process: Process,
-    private val cloudServer: CloudServer,
-    private val serverScreen: ServerScreen
-) {
+    private val screen: Screen
+) : Thread(screen.name) {
 
     companion object {
-        val PROCESS_SCOPE = CoroutineScope(Dispatchers.Default)
-        val LOGGER = LogManager.logger(ServerProcessHandler::class)
+        val LOGGER = LogManager.logger(ScreenProcessHandler::class)
     }
 
     init {
-        run()
+        start()
     }
 
     private val inputStream = process.inputStream
@@ -31,14 +23,15 @@ class ServerProcessHandler(
     private val exits = mutableListOf<(Int) -> Unit>()
     private val lines = mutableListOf<(String) -> Unit>()
 
-    private fun run() {
-        PROCESS_SCOPE.launch {
+    override fun run() {
+        var stopped = false
+        while (!stopped) {
             val inputReader = InputStreamReader(inputStream)
             val bufferedReader = BufferedReader(inputReader)
             while (process.isAlive && inputStream.isOpen()) {
                 val line = bufferedReader.readLine()
                 if (line == null || line.isEmpty()) continue
-                serverScreen.println(line)
+                screen.println(line)
                 lines.forEach { it(line) }
             }
             bufferedReader.close()
@@ -50,10 +43,10 @@ class ServerProcessHandler(
                 while (errorStream.isOpen() && errorReader.ready()) {
                     val line = errorBufferedReader.readLine()
                     if (line == null || line.isEmpty()) continue
-                    if (!serverScreen.isActive()) {
-                        LOGGER.warning("[${cloudServer.name}]: §c$line")
+                    if (!screen.isActive()) {
+                        LOGGER.warning("[${screen.name}]: §c$line")
                     }
-                    serverScreen.println(line)
+                    screen.println(line)
                     lines.forEach { it(line) }
                 }
                 errorBufferedReader.close()
@@ -62,9 +55,8 @@ class ServerProcessHandler(
 
             if (!process.isAlive) {
                 exits.forEach { it(process.exitValue()) }
-                serverScreen.destroy()
-            }else {
-                run()
+                screen.destroy()
+                stopped = true
             }
         }
     }

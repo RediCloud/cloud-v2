@@ -9,6 +9,7 @@ import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.commands.api.CommandArgumentParser
 import dev.redicloud.commands.api.AbstractCommandSuggester
 import dev.redicloud.console.Console
+import dev.redicloud.console.utils.ScreenProcessHandler
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
@@ -475,7 +476,6 @@ class ServerFactory(
                 }
             }
         }
-        ServerProcessHandler.PROCESS_SCOPE.cancel()
     }
 
     /**

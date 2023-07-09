@@ -3,6 +3,7 @@ package dev.redicloud.repository.server.version.handler.defaults
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.console.utils.ScreenProcessHandler
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.NodeRepository
@@ -155,7 +156,10 @@ open class URLServerVersionHandler(
 
             val processBuilder = ProcessBuilder(patchCommand(type, javaVersion, tempJar))
             processBuilder.directory(tempDir)
-            processBuilder.start().waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+            val process = processBuilder.start()
+            val screen = console.createScreen("patch_${version.getDisplayName()}")
+            ScreenProcessHandler(process, screen)
+            process.waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
 
             if (!versionDir.exists()) versionDir.mkdirs()
 

@@ -4,6 +4,7 @@ import dev.redicloud.commands.api.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.console.utils.Screen
 import dev.redicloud.server.factory.screens.ServerScreen
 import dev.redicloud.server.factory.screens.ServerScreenSuggester
 
@@ -21,7 +22,7 @@ class ScreenCommand(
     ) {
         val screens = console.getScreens().filterIsInstance<ServerScreen>()
         if (screens.isEmpty()) {
-            actor.sendMessage("§cThere are no screen sessions running!")
+            actor.sendMessage("§cThere are no server screen sessions running!")
             return
         }
         actor.sendHeader("Screen Sessions")
@@ -37,9 +38,9 @@ class ScreenCommand(
     @CommandDescription("Join a screen session")
     fun join(
         actor: ConsoleActor,
-        @CommandParameter("screen", true, ServerScreenSuggester::class) serverScreen: ServerScreen
+        @CommandParameter("screen", true, ServerScreenSuggester::class) screen: Screen
     ) {
-        if (serverScreen.isActive()) {
+        if (screen.isActive()) {
             actor.sendMessage("§cThe screen session is already active!")
             return
         }
@@ -47,7 +48,7 @@ class ScreenCommand(
             actor.sendMessage("§cYou are already in this screen session!")
             return
         }
-        console.switchScreen(serverScreen, true)
+        console.switchScreen(screen, true)
     }
 
     @CommandSubPath("leave")
@@ -56,7 +57,7 @@ class ScreenCommand(
         actor: ConsoleActor
     ) {
         val currentScreen = console.getCurrentScreen()
-        if (currentScreen !is ServerScreen) {
+        if (currentScreen.isDefault()) {
             actor.sendMessage("§cYou are not in a screen session!")
             return
         }
@@ -68,18 +69,18 @@ class ScreenCommand(
     @CommandDescription("Toggle a screen session")
     fun toggle(
         actor: ConsoleActor,
-        @CommandParameter("screen", true, ServerScreenSuggester::class) serverScreen: ServerScreen
+        @CommandParameter("screen", true, ServerScreenSuggester::class) screen: Screen
     ) {
-        if (serverScreen.isDefault()) {
+        if (screen.isDefault()) {
             actor.sendMessage("§cYou can't toggle the default screen session!")
             return
         }
-        if (serverScreen.isActive()) {
+        if (screen.isActive()) {
             console.switchToDefaultScreen(true)
-            console.writeLine("You left the screen session ${toConsoleValue(serverScreen.name)}")
+            console.writeLine("You left the screen session ${toConsoleValue(screen.name)}")
             return
         }
-        console.switchScreen(serverScreen, true)
+        console.switchScreen(screen, true)
     }
 
 }

@@ -4,8 +4,11 @@ import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.api.server.events.server.CloudServerConnectedEvent
 import dev.redicloud.api.server.events.server.CloudServerDeleteEvent
 import dev.redicloud.api.server.events.server.CloudServerTransferredEvent
+import dev.redicloud.commands.api.CommandArgumentParser
 import dev.redicloud.console.Console
 import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.console.utils.Screen
+import dev.redicloud.console.utils.ScreenParser
 import dev.redicloud.event.EventManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
@@ -94,6 +97,7 @@ class NodeConsole(
 
     init {
         this.sendHeader()
+        CommandArgumentParser.PARSERS[Screen::class] = ScreenParser(this)
     }
 
     override fun handleUserInterrupt(e: Exception) {
