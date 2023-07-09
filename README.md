@@ -34,7 +34,7 @@ A redis based cluster cloud system for minecraft.
 - custom server versions (like custom paper)
 - auto java version detection
 - mutli java versions support (versions: 8-20)
-- modify programm arguments and jvm flags for each group
+- modify programm arguments and jvm flags for each group / server version
 - external proxy server (start external proxy server and connect them to the cloud)
 - easy dev plugin test (create external server, that you can start for e.g via your IDE. The services will connect without a node to the cloud cluster)
 - offline/online player support at the same time
