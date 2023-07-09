@@ -1,10 +1,12 @@
 package dev.redicloud.server.factory
 
 import dev.redicloud.api.server.CloudServerState
+import dev.redicloud.api.server.events.server.CloudServerDeleteEvent
 import dev.redicloud.commands.api.CommandArgumentParser
 import dev.redicloud.commands.api.AbstractCommandSuggester
 import dev.redicloud.console.Console
 import dev.redicloud.database.DatabaseConnection
+import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.java.version.JavaVersionRepository
@@ -22,6 +24,7 @@ import dev.redicloud.server.factory.screens.ServerScreen
 import dev.redicloud.server.factory.screens.ServerScreenParser
 import dev.redicloud.server.factory.screens.ServerScreenSuggester
 import dev.redicloud.service.base.utils.ClusterConfiguration
+import dev.redicloud.utils.STATIC_FOLDER
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
@@ -29,6 +32,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.redisson.api.RList
+import java.io.File
 import java.util.*
 
 class ServerFactory(
@@ -43,13 +47,16 @@ class ServerFactory(
     private val bindHost: String,
     private val console: Console,
     private val clusterConfiguration: ClusterConfiguration,
-    private val configurationTemplateRepository: ConfigurationTemplateRepository
+    private val configurationTemplateRepository: ConfigurationTemplateRepository,
+    private val eventManager: EventManager
 ) {
 
     internal val startQueue: RList<ServerQueueInformation> =
         databaseConnection.getClient().getList("server-factory:queue:start")
     internal val stopQueue: RList<ServiceId> =
         databaseConnection.getClient().getList("server-factory:queue:stop")
+    internal val deleteQueue: RList<ServiceId> =
+        databaseConnection.getClient().getList("server-factory:queue:delete")
     private val processes: MutableList<ServerProcess> = mutableListOf()
     private val logger = LogManager.logger(ServerFactory::class)
 
@@ -77,7 +84,7 @@ class ServerFactory(
 
     fun queueStart(configurationTemplate: ConfigurationTemplate, count: Int = 1) =
         defaultScope.launch {
-            val info = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, null, queueTime = -1)
+            val info = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, null, queueTime = System.currentTimeMillis())
             val nodes = nodeRepository.getRegisteredNodes()
             info.calculateStartOrder(nodes, serverRepository)
             for (i in 1..count) {
@@ -88,7 +95,7 @@ class ServerFactory(
 
     fun queueStart(serviceId: ServiceId) =
         defaultScope.launch {
-            val info = ServerQueueInformation(UUID.randomUUID(), null, serviceId, queueTime = -1)
+            val info = ServerQueueInformation(UUID.randomUUID(), null, serviceId, queueTime = System.currentTimeMillis())
             val nodes = nodeRepository.getRegisteredNodes()
             info.calculateStartOrder(nodes, serverRepository)
             startQueue.add(info)
@@ -100,6 +107,25 @@ class ServerFactory(
             if (server.state == CloudServerState.STOPPED || server.state == CloudServerState.STOPPING && !force) return@launch
             stopQueue.add(serviceId)
         }
+
+    fun queueDelete(serviceId: ServiceId) {
+        defaultScope.launch {
+            deleteQueue.add(serviceId)
+        }
+    }
+
+    suspend fun deleteServer(serviceId: ServiceId): Boolean {
+        if (!serviceId.type.isServer()) throw IllegalArgumentException("Service id that was queued for deletion is not a server: ${serviceId.toName()}")
+        val server = serverRepository.getServer<CloudServer>(serviceId) ?: return false
+        if (server.hostNodeId != this.serverRepository.serviceId) return false
+        if (server.state != CloudServerState.STOPPED) return false
+        if (!server.configurationTemplate.static) throw IllegalArgumentException("Service id that was queued for deletion is not static: ${serviceId.toName()}")
+        serverRepository.deleteServer(server)
+        val workDir = File(STATIC_FOLDER.getFile(), "${server.name}-${server.serviceId.id}")
+        if (workDir.exists() && workDir.isDirectory) workDir.deleteRecursively()
+        eventManager.fireEvent(CloudServerDeleteEvent(server.serviceId, server.name))
+        return true
+    }
 
     /**
      * Starts a server with the given configuration template and returns the result
@@ -243,6 +269,7 @@ class ServerFactory(
     ): StartResult {
         if (serviceId == null && configurationTemplate == null) throw NullPointerException("serviceId and configurationTemplate are null")
         if (serviceId != null) {
+            if (!serviceId.type.isServer()) throw IllegalArgumentException("Queued service id to start a server must be a server!")
             if (!serverRepository.existsServer<CloudServer>(serviceId)) throw NullPointerException("Static server ${serviceId.toName()} not found")
             logger.fine("Prepare static server ${serviceId.toName()}...")
             val server = serverRepository.getServer<CloudServer>(serviceId)!!
