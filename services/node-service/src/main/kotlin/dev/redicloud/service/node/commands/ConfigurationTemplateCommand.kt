@@ -121,7 +121,7 @@ class ConfigurationTemplateCommand(
         actor.sendMessage("§8- %tc%Start priority§8: %hc%${template.startPriority}")
         actor.sendMessage("§8- %tc%Fallback server§8: %hc%${template.fallbackServer.toSymbol()}")
         actor.sendMessage("§8- %tc%Server splitter§8: %hc%${template.serverSplitter}")
-        actor.sendMessage("§8- %tc%Start port§8: %hc%${template.startPort}")
+        actor.sendMessage("§8- %tc%Start port§8: %hc%${if (template.startPort == -1) "unknown" else template.startPort}")
         actor.sendMessage("§8- %tc%Permission§8: %hc%${template.joinPermission ?: "Not set"}")
         actor.sendMessage("§8- %tc%Min. started servers§8: %hc%${template.minStartedServices}")
         actor.sendMessage("§8- %tc%Max. started servers§8: %hc%${template.maxStartedServices}")
