@@ -28,23 +28,21 @@ class FileCopier(
     private val snapshot: StartDataSnapshot
 ) {
 
-    val serverUniqueId = UUID.randomUUID()
-    val serviceId: ServiceId
+    val serviceId = cloudServer.serviceId
     val configurationTemplate = serverProcess.configurationTemplate
     val templates: List<FileTemplate>
     val workDirectory: File
     private val logger = LogManager.logger(FileCopier::class)
 
     init {
-        serviceId = ServiceId(serverUniqueId, if (snapshot.versionType.proxy) ServiceType.PROXY_SERVER else ServiceType.MINECRAFT_SERVER)
         // get templates by given configuration template and collect also inherited templates
         templates = configurationTemplate.fileTemplateIds.mapNotNull { runBlocking { fileTemplateRepository.getTemplate(it) } }
             .flatMap { runBlocking { fileTemplateRepository.collectTemplates(it) } }
         // create work directory
         workDirectory = if(configurationTemplate.static) {
-            File(STATIC_FOLDER.getFile().absolutePath, "${cloudServer.name}-${serverUniqueId}")
+            File(STATIC_FOLDER.getFile().absolutePath, "${cloudServer.name}-${serviceId.id}")
         }else {
-            File(TEMP_SERVER_FOLDER.getFile().absolutePath, "${cloudServer.name}-${serverUniqueId}")
+            File(TEMP_SERVER_FOLDER.getFile().absolutePath, "${cloudServer.name}-${serviceId.id}")
         }
         if (!workDirectory.exists()) workDirectory.mkdirs()
     }
@@ -76,13 +74,13 @@ class FileCopier(
         }
         val pluginFolder = File(workDirectory, snapshot.versionType.connectorFolder)
         if (!pluginFolder.exists()) pluginFolder.mkdirs()
-        connectorFile.copyRecursively(File(pluginFolder, connectorFile.name))
+        connectorFile.copyTo(File(pluginFolder, connectorFile.name), overwrite = true)
     }
 
     /**
      * Copies all files for the server version to the work directory
      */
-    suspend fun copyVersionFiles(action: (String) -> String = { it }) {
+    suspend fun copyVersionFiles(force: Boolean = true, action: (String) -> String = { it }) {
         logger.fine("Copying files for $serviceId of version ${snapshot.version.getDisplayName()}")
         val versionHandler = IServerVersionHandler.getHandler(snapshot.versionType)
         versionHandler.getLock(snapshot.version).lock()
@@ -92,7 +90,14 @@ class FileCopier(
             }else if(!versionHandler.isDownloaded(snapshot.version)) {
                 versionHandler.download(snapshot.version)
             }
-            versionHandler.getFolder(snapshot.version).copyRecursively(workDirectory)
+            if (force && configurationTemplate.static || !configurationTemplate.static) {
+                versionHandler.getFolder(snapshot.version).copyRecursively(workDirectory)
+            }else {
+                val jar = versionHandler.getJar(snapshot.version)
+                if (jar.exists()) {
+                    jar.copyTo(File(workDirectory, jar.name), overwrite = true)
+                }
+            }
             snapshot.versionType.doFileEdits(workDirectory, action)
             snapshot.version.doFileEdits(workDirectory, action)
         }finally {
@@ -103,7 +108,8 @@ class FileCopier(
     /**
      * Copies all templates to the work directory
      */
-    suspend fun copyTemplates() {
+    suspend fun copyTemplates(force: Boolean = true) {
+        if (!force && configurationTemplate.static) return
         logger.fine("Copying templates for $serviceId")
         templates.forEach {
             it.getFolder().copyRecursively(workDirectory)

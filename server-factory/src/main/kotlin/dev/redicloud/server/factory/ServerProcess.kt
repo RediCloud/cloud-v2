@@ -138,11 +138,14 @@ class ServerProcess(
             }
         }
 
-        fileCopier.workDirectory.deleteRecursively()
+        if (!configurationTemplate.static) {
+            fileCopier.workDirectory.deleteRecursively()
+        }
 
         if (cloudServer != null) {
             cloudServer = serverRepository.getServer(serverId)!!
             cloudServer!!.state = CloudServerState.STOPPED
+            cloudServer!!.port = -1
             cloudServer!!.connected = false
             cloudServer!!.connectedPlayers.clear()
             serverRepository.updateServer(cloudServer!!)

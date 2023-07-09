@@ -121,7 +121,7 @@ class ConfigurationTemplateCommand(
         actor.sendMessage("§8- %tc%Start priority§8: %hc%${template.startPriority}")
         actor.sendMessage("§8- %tc%Fallback server§8: %hc%${template.fallbackServer.toSymbol()}")
         actor.sendMessage("§8- %tc%Server splitter§8: %hc%${template.serverSplitter}")
-        actor.sendMessage("§8- %tc%Start port§8: %hc%${template.startPort}")
+        actor.sendMessage("§8- %tc%Start port§8: %hc%${if (template.startPort == -1) "unknown" else template.startPort}")
         actor.sendMessage("§8- %tc%Permission§8: %hc%${template.joinPermission ?: "Not set"}")
         actor.sendMessage("§8- %tc%Min. started servers§8: %hc%${template.minStartedServices}")
         actor.sendMessage("§8- %tc%Max. started servers§8: %hc%${template.maxStartedServices}")
@@ -555,6 +555,11 @@ class ConfigurationTemplateCommand(
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("state", true, BooleanSuggester::class) staticService: Boolean
     ) = runBlocking {
+        val servers = serverRepository.getRegisteredServers().filter { it.configurationTemplate.uniqueId == template.uniqueId }
+        if (servers.isNotEmpty()) {
+            actor.sendMessage("§cYou cannot edit the static state of a template while there are still servers registered! Delete all static servers or stop all dynamic servers first!")
+            actor.sendMessage("§cRegistered servers: ${servers.joinToString(", ") { it.name}}")
+        }
         template.static = staticService
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage("Static service of ${toConsoleValue(template.name)} was updated to ${toConsoleValue(staticService)}!")

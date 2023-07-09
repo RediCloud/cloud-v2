@@ -2,6 +2,7 @@ package dev.redicloud.service.node.console
 
 import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.api.server.events.server.CloudServerConnectedEvent
+import dev.redicloud.api.server.events.server.CloudServerDeleteEvent
 import dev.redicloud.console.Console
 import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.event.EventManager
@@ -64,6 +65,12 @@ class NodeConsole(
         runBlocking {
             val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@runBlocking
             writeLine("${server.getIdentifyingName()}§8: §c● §8(%tc%disconnected from the cluster§8)")
+        }
+    }
+
+    private val onServerDeleteEvent = eventManager.listen<CloudServerDeleteEvent> {
+        runBlocking {
+            writeLine("%hc%${it.name}§8#%tc%${it.serviceId.id}§8: §4● §8(%tc%deleted§8)")
         }
     }
 

@@ -55,6 +55,52 @@ class ServerCommand(
         serverFactory.queueStart(template, count ?: 1)
     }
 
+    @CommandSubPath("startstatic <name> <id>")
+    @CommandAlias(["ss <name> <id>"])
+    @CommandDescription("Queue a registered static server with the given name and id")
+    fun startStatic(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, ConfigurationTemplateSuggester::class) name: String,
+        @CommandParameter("id", true, IntegerSuggester::class) id: Int
+    ) = defaultScope.launch {
+        val server = serverRepository.getRegisteredServers().firstOrNull {
+            it.configurationTemplate.name.lowercase() == name.lowercase() && it.id == id
+        }
+        if (server == null) {
+            actor.sendMessage("§cThere is no registered static server with name ${toConsoleValue(name, false)} and id ${toConsoleValue(id, false)}!")
+            return@launch
+        }
+        if (!server.configurationTemplate.static) {
+            actor.sendMessage("§cThe server ${toConsoleValue(server.getIdentifyingName(), false)} is not a static server!")
+            return@launch
+        }
+        if (server.state == CloudServerState.STARTING || server.state == CloudServerState.PREPARING) {
+            actor.sendMessage("§cThe server ${toConsoleValue(server.getIdentifyingName(), false)} is already starting!")
+            return@launch
+        }
+        if (server.state == CloudServerState.RUNNING || server.state == CloudServerState.STOPPING) {
+            actor.sendMessage("§cThe server ${toConsoleValue(server.getIdentifyingName(), false)} is already running!")
+            return@launch
+        }
+        actor.sendMessage("Queued static server ${server.getIdentifyingName()}...")
+        serverFactory.queueStart(server.serviceId)
+    }
+
+    @CommandSubPath("delete <server>")
+    @CommandDescription("Delete a static server")
+    fun delete(
+        actor: ConsoleActor,
+        @CommandParameter("server", true, CloudServerSuggester::class) server: CloudServer
+    ) {
+        if (server.state != CloudServerState.STOPPED) {
+            actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is not stopped!")
+            return
+        }
+        actor.sendMessage("Queued deletion of static server ${server.getIdentifyingName()}...")
+        actor.sendMessage("Note: If the hosted node is not connected to the cluster, the server will be deleted when the node connects to the cluster!")
+        serverFactory.queueDelete(server.serviceId)
+    }
+
     @CommandSubPath("stop <server> [force]")
     @CommandDescription("Stop a server")
     fun stop(

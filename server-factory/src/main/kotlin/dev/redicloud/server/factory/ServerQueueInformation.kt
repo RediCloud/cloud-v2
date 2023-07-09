@@ -1,6 +1,8 @@
 package dev.redicloud.server.factory
 
 import dev.redicloud.repository.node.CloudNode
+import dev.redicloud.repository.server.CloudServer
+import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
@@ -10,7 +12,8 @@ import kotlin.time.Duration.Companion.minutes
 
 data class ServerQueueInformation(
     val uniqueId: UUID = UUID.randomUUID(),
-    val configurationTemplate: ConfigurationTemplate,
+    val configurationTemplate: ConfigurationTemplate?,
+    val serviceId: ServiceId?,
     val failedStarts: FailedStarts = FailedStarts(),
     val nodeStartOrder: MutableList<ServiceId> = mutableListOf(),
     val queueTime: Long
@@ -83,11 +86,11 @@ fun ServerQueueInformation.getFailedStarts(): Int {
     return failedStarts.getFailedStats()
 }
 
-fun ServerQueueInformation.calculateStartOrder(nodes: List<CloudNode>): MutableList<ServiceId> {
+suspend fun ServerQueueInformation.calculateStartOrder(nodes: List<CloudNode>, serverRepository: ServerRepository): MutableList<ServiceId> {
     nodeStartOrder.clear()
 
     nodes.forEach {
-        val priority = calculateStartPriority(it)
+        val priority = calculateStartPriority(it, serverRepository)
         if (priority < 0) return@forEach
         nodeStartOrder.add(it.serviceId)
     }
@@ -95,17 +98,34 @@ fun ServerQueueInformation.calculateStartOrder(nodes: List<CloudNode>): MutableL
     return nodeStartOrder
 }
 
-fun ServerQueueInformation.calculateStartPriority(cloudNode: CloudNode): Int {
+suspend fun ServerQueueInformation.calculateStartPriority(cloudNode: CloudNode, serverRepository: ServerRepository): Int {
     var count = 0
 
     if (!cloudNode.isConnected()) {
         addFailedStart(cloudNode.serviceId, StartResultType.NODE_NOT_CONNECTED)
+        addFailedNode(cloudNode.serviceId)
         return -1
     }
 
-    if (configurationTemplate.nodeIds.isNotEmpty() && !configurationTemplate.nodeIds.contains(cloudNode.serviceId)) {
-        addFailedStart(cloudNode.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
-        return -1
+    if (configurationTemplate != null) {
+        if (configurationTemplate.nodeIds.isNotEmpty() && !configurationTemplate.nodeIds.contains(cloudNode.serviceId)) {
+            addFailedStart(cloudNode.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
+            addFailedNode(cloudNode.serviceId)
+            return -1
+        }
+    }else if(serviceId != null) {
+        val server = serverRepository.getServer<CloudServer>(serviceId)
+        val storedConfigurationTemplate = server?.configurationTemplate
+        if (storedConfigurationTemplate != null && storedConfigurationTemplate.nodeIds.isNotEmpty() && !storedConfigurationTemplate.nodeIds.contains(cloudNode.serviceId)) {
+            addFailedStart(cloudNode.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
+            addFailedNode(cloudNode.serviceId)
+            return -1
+        }
+        if (server != null && server.configurationTemplate.static && server.hostNodeId != cloudNode.serviceId ) {
+            addFailedStart(cloudNode.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
+            addFailedNode(cloudNode.serviceId)
+            return -1
+        }
     }
 
     // Calculate memory usage in percent

@@ -9,9 +9,9 @@ import java.util.UUID
 
 abstract class CloudServer(
     serviceId: ServiceId,
-    val configurationTemplate: ConfigurationTemplate,
+    var configurationTemplate: ConfigurationTemplate,
     val id: Int,
-    val hostNodeId: ServiceId,
+    var hostNodeId: ServiceId,
     sessions: MutableList<ServiceSession>,
     var hidden: Boolean,
     var state: CloudServerState = CloudServerState.UNKNOWN,
