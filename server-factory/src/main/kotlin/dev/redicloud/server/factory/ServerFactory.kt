@@ -1,7 +1,11 @@
 package dev.redicloud.server.factory
 
+import com.jcraft.jsch.ChannelSftp
+import com.jcraft.jsch.Session
 import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.api.server.events.server.CloudServerDeleteEvent
+import dev.redicloud.api.server.events.server.CloudServerTransferredEvent
+import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.commands.api.CommandArgumentParser
 import dev.redicloud.commands.api.AbstractCommandSuggester
 import dev.redicloud.console.Console
@@ -23,9 +27,9 @@ import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.server.factory.screens.ServerScreen
 import dev.redicloud.server.factory.screens.ServerScreenParser
 import dev.redicloud.server.factory.screens.ServerScreenSuggester
+import dev.redicloud.server.factory.utils.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
-import dev.redicloud.utils.STATIC_FOLDER
-import dev.redicloud.utils.defaultScope
+import dev.redicloud.utils.*
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.cancel
@@ -48,7 +52,8 @@ class ServerFactory(
     private val console: Console,
     private val clusterConfiguration: ClusterConfiguration,
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
-    private val eventManager: EventManager
+    private val eventManager: EventManager,
+    private val fileCluster: FileCluster
 ) {
 
     internal val startQueue: RList<ServerQueueInformation> =
@@ -57,6 +62,8 @@ class ServerFactory(
         databaseConnection.getClient().getList("server-factory:queue:stop")
     internal val deleteQueue: RList<ServiceId> =
         databaseConnection.getClient().getList("server-factory:queue:delete")
+    internal val transferQueue: RList<TransferServerQueueInformation> =
+        databaseConnection.getClient().getList("server-factory:queue:transfer")
     private val processes: MutableList<ServerProcess> = mutableListOf()
     private val logger = LogManager.logger(ServerFactory::class)
 
@@ -83,7 +90,7 @@ class ServerFactory(
 
 
     fun queueStart(configurationTemplate: ConfigurationTemplate, count: Int = 1) =
-        defaultScope.launch {
+        ioScope.launch {
             val info = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, null, queueTime = System.currentTimeMillis())
             val nodes = nodeRepository.getRegisteredNodes()
             info.calculateStartOrder(nodes, serverRepository)
@@ -94,7 +101,7 @@ class ServerFactory(
         }
 
     fun queueStart(serviceId: ServiceId) =
-        defaultScope.launch {
+        ioScope.launch {
             val info = ServerQueueInformation(UUID.randomUUID(), null, serviceId, queueTime = System.currentTimeMillis())
             val nodes = nodeRepository.getRegisteredNodes()
             info.calculateStartOrder(nodes, serverRepository)
@@ -102,19 +109,23 @@ class ServerFactory(
         }
 
     fun queueStop(serviceId: ServiceId, force: Boolean = false) =
-        defaultScope.launch {
+        ioScope.launch {
             val server = serverRepository.getServer<CloudServer>(serviceId) ?: return@launch
             if (server.state == CloudServerState.STOPPED || server.state == CloudServerState.STOPPING && !force) return@launch
             stopQueue.add(serviceId)
         }
 
-    fun queueDelete(serviceId: ServiceId) {
-        defaultScope.launch {
+    fun queueDelete(serviceId: ServiceId) =
+        ioScope.launch {
             deleteQueue.add(serviceId)
         }
-    }
 
-    suspend fun deleteServer(serviceId: ServiceId): Boolean {
+    fun queueTransfer(serviceId: ServiceId, targetNodeId: ServiceId) =
+        ioScope.launch {
+            transferQueue.add(TransferServerQueueInformation(serviceId, targetNodeId))
+        }
+
+    suspend internal fun deleteServer(serviceId: ServiceId): Boolean {
         if (!serviceId.type.isServer()) throw IllegalArgumentException("Service id that was queued for deletion is not a server: ${serviceId.toName()}")
         val server = serverRepository.getServer<CloudServer>(serviceId) ?: return false
         if (server.hostNodeId != this.serverRepository.serviceId) return false
@@ -133,7 +144,7 @@ class ServerFactory(
      * @param force if the server should be started even if the configuration template does not allow it (e.g. max memory)
      * @return the result of the start
      */
-    suspend fun startServer(
+    suspend internal fun startServer(
         configurationTemplate: ConfigurationTemplate,
         force: Boolean = false
     ): StartResult {
@@ -146,11 +157,6 @@ class ServerFactory(
             javaVersionRepository
         )
         if (dataResult != null) return dataResult
-
-        if (!snapshotData.versionHandler.isPatched(snapshotData.version)
-            && snapshotData.versionHandler.isPatchVersion(snapshotData.version)) {
-            snapshotData.versionHandler.patch(snapshotData.version)
-        }
 
         val serviceId = ServiceId(
             UUID.randomUUID(),
@@ -229,6 +235,11 @@ class ServerFactory(
             val serverScreen = ServerScreen(cloudServer.serviceId, cloudServer.name, this.console)
             console.createScreen(serverScreen)
 
+            if (!snapshotData.versionHandler.isPatched(snapshotData.version)
+                && snapshotData.versionHandler.isPatchVersion(snapshotData.version)) {
+                snapshotData.versionHandler.patch(snapshotData.version)
+            }
+
             // Change memory usage on node
             thisNode.currentMemoryUsage = thisNode.currentMemoryUsage + configurationTemplate.maxMemory
             thisNode.hostedServers.add(cloudServer.serviceId)
@@ -262,7 +273,8 @@ class ServerFactory(
         }
     }
 
-    suspend fun startServer(
+
+    suspend internal fun startServer(
         serviceId: ServiceId?,
         configurationTemplate: ConfigurationTemplate?,
         force: Boolean = false
@@ -282,10 +294,7 @@ class ServerFactory(
                 javaVersionRepository
             )
             if (dataResult != null) return dataResult
-            if (!snapshotData.versionHandler.isPatched(snapshotData.version)
-                && snapshotData.versionHandler.isPatchVersion(snapshotData.version)) {
-                snapshotData.versionHandler.patch(snapshotData.version)
-            }
+
             // create the server process
             val serverProcess = ServerProcess(
                 newConfigurationTemplate,
@@ -330,6 +339,11 @@ class ServerFactory(
                 server.port = -1
                 serverRepository.updateServer(server)
 
+                if (!snapshotData.versionHandler.isPatched(snapshotData.version)
+                    && snapshotData.versionHandler.isPatchVersion(snapshotData.version)) {
+                    snapshotData.versionHandler.patch(snapshotData.version)
+                }
+
                 // Create server screen
                 val serverScreen = ServerScreen(server.serviceId, server.name, this.console)
                 console.createScreen(serverScreen)
@@ -370,7 +384,11 @@ class ServerFactory(
         }
     }
 
-    suspend internal fun stopServer(serviceId: ServiceId, force: Boolean = true, internalCall: Boolean = false) {
+    suspend internal fun stopServer(
+        serviceId: ServiceId,
+        force: Boolean = true,
+        internalCall: Boolean = false
+    ) {
         val server = serverRepository.getServer<CloudServer>(serviceId) ?: throw NullPointerException("Server not found")
         if (server.hostNodeId != nodeRepository.serviceId) throw IllegalArgumentException("Server is not on this node")
         if (server.state == CloudServerState.STOPPED && !force || server.state == CloudServerState.STOPPING && !force) return
@@ -386,6 +404,59 @@ class ServerFactory(
             process.stop(force, internalCall)
             processes.remove(process)
         }
+        server.state = CloudServerState.STOPPED
+        server.port = -1
+        server.connected = false
+        server.connectedPlayers.clear()
+        serverRepository.updateServer(server)
+
+        if (server.unregisterAfterDisconnect()) {
+            serverRepository.deleteServer(server)
+        }
+    }
+
+    suspend internal fun transferServer(
+        serverId: ServiceId,
+        nodeId: ServiceId
+    ): Boolean {
+        val server = serverRepository.getServer<CloudServer>(serverId) ?: return false
+        if (!server.configurationTemplate.static) return false
+        if (server.state != CloudServerState.STOPPED) return false
+        if (server.hostNodeId != nodeRepository.serviceId) return false
+        if (server.hostNodeId == nodeId) return false
+        var session: Session? = null
+        var channel: ChannelSftp? = null
+        try {
+            session = fileCluster.createSession(nodeId)
+            channel = fileCluster.openChannel(session)
+            val serverDir = File(STATIC_FOLDER.getFile(), "${server.name}-${serverId.id}")
+            if (!serverDir.exists()) return false
+            val id = UUID.randomUUID()
+            val workFolder = File(TEMP_FILE_TRANSFER_FOLDER.getFile().absolutePath, id.toString())
+            workFolder.mkdirs()
+            fileCluster.mkdirs(channel, toUniversalPath(workFolder))
+            fileCluster.mkdirs(channel, toUniversalPath(STATIC_FOLDER.getFile()))
+            val zip = File(workFolder, "data.zip")
+            zipFile(serverDir.absolutePath, zip.absolutePath)
+            fileCluster.shareFile(channel, zip, toUniversalPath(workFolder), "data.zip")
+            val response = fileCluster.unzip(nodeId, toUniversalPath(zip), toUniversalPath(STATIC_FOLDER.getFile()))
+            if (response == null) {
+                logger.warning("§cUnzip process does not response of transferring server ${serverId.toName()} to node ${nodeId.toName()}")
+            }
+            fileCluster.deleteFolderRecursive(channel, toUniversalPath(workFolder))
+            workFolder.deleteRecursively()
+            val event = CloudServerTransferredEvent(serverId, server.hostNodeId)
+            server.hostNodeId = nodeId
+            serverRepository.updateServer(server)
+            eventManager.fireEvent(event)
+            return true
+        }catch (e: Exception) {
+            logger.severe("§cError while transferring server ${serverId.toName()} to node ${nodeId.toName()}", e)
+        }finally {
+            channel?.disconnect()
+            session?.disconnect()
+        }
+        return false
     }
 
     /**
