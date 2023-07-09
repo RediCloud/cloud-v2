@@ -15,6 +15,7 @@ import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.utils.*
 import dev.redicloud.utils.service.ServiceId
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.sshd.common.file.virtualfs.VirtualFileSystemFactory
 import org.apache.sshd.common.keyprovider.FileHostKeyCertificateProvider
@@ -268,7 +269,9 @@ class FileCluster(
 
 
     suspend fun unzip(serviceId: ServiceId, file: String, unzipPath: String): AbstractPacket? {
-        return packetManager.publish(UnzipPacket(file, unzipPath), serviceId).withTimeOut(15.seconds).waitBlocking()
+        val response = packetManager.publish(UnzipPacket(file, unzipPath), serviceId).withTimeOut(60.seconds).waitBlocking()
+        if (response != null) delay(500)
+        return response
     }
 
     suspend fun requestFile(channel: ChannelSftp, targetFile: String, destinationFile: File): File {
