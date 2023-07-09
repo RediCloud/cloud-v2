@@ -27,7 +27,10 @@ open class Screen(
         console.eventManager?.fireEvent(ScreenChangedEvent(console, this, oldScreen))
         history.forEach { console.writeRaw(it, printDirectly = true) }
         if (storeMessages) {
-            queuedMessage.forEach { console.writeRaw(it, printDirectly = true) }
+            queuedMessage.forEach {
+                console.writeRaw(it, printDirectly = true)
+                history.add(it)
+            }
             queuedMessage.clear()
         }
     }
