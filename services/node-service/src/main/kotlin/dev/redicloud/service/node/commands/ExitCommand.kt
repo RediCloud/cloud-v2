@@ -4,7 +4,6 @@ import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.service.node.NodeService
 import dev.redicloud.utils.defaultScope
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -27,6 +26,20 @@ class ExitCommand(private val nodeService: NodeService) : CommandBase() {
             return
         }
         nodeService.shutdown()
+    }
+
+    @CommandSubPath("--force")
+    fun onForceStop(actor: ConsoleActor) {
+        if (!confirmed) {
+            actor.sendMessage("§cTo shutdown the node enter the command again within 10 seconds!")
+            confirmed = true
+            defaultScope.launch {
+                delay(10000)
+                confirmed = false
+            }
+            return
+        }
+        nodeService.shutdown(true)
     }
 
 }
