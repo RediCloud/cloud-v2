@@ -37,6 +37,12 @@ class ConfigurationTemplateCommand(
     private val fileTemplateRepository: AbstractFileTemplateRepository
 ) : CommandBase() {
 
+    companion object {
+        val invalidChars = Regex("[/\\\\?%*:|\"<>]")
+        val invalidNames = listOf("con", "prn", "aux", "nul", "com1", "com2", "com3", "com4", "com5", "com6",
+            "com7", "com8", "com9", "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9")
+    }
+
     @CommandSubPath("create <name>")
     @CommandDescription("Create a new configuration template")
     fun create(
@@ -473,17 +479,27 @@ class ConfigurationTemplateCommand(
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("value", true) splitter: String
     ) = runBlocking {
-        if (splitter.isBlank()) { //TODO empty splitter support ?
-            actor.sendMessage("§cThe splitter cannot be empty!")
-            return@runBlocking
-        }
         if (splitter.length > 3) {
             actor.sendMessage("§cThe splitter cannot be longer than 3 characters!")
             return@runBlocking
         }
-        template.serverSplitter = splitter
+        if (invalidChars.containsMatchIn(splitter)) {
+            actor.sendMessage("§cThe splitter cannot contain any of the following characters: ${invalidChars.pattern.split("").joinToString(", ")}")
+            return@runBlocking
+        }
+        if (invalidNames.contains(splitter.lowercase())) {
+            actor.sendMessage("§cThe splitter cannot be any of the following names: ${invalidNames.joinToString(", ")}")
+            return@runBlocking
+        }
+        val servers = serverRepository.getRegisteredServers().filter { it.configurationTemplate.uniqueId == template.uniqueId }
+        if (servers.isNotEmpty()) {
+            actor.sendMessage("§cThe splitter cannot be changed while there are still servers registered on this template!")
+            actor.sendMessage("§cRegistered servers: ${servers.joinToString(", ") { it.name }}")
+            return@runBlocking
+        }
+        template.serverSplitter = if (splitter == "''") "" else splitter
         configurationTemplateRepository.updateTemplate(template)
-        actor.sendMessage("The splitter of the template ${toConsoleValue(template.name)} was updated to ${toConsoleValue(splitter)}!")
+        actor.sendMessage("The splitter of the template ${toConsoleValue(template.name)} was updated to ${toConsoleValue(if (splitter == "''") "" else splitter)}!")
     }
 
     @CommandSubPath("edit <name> fallback <value>")
