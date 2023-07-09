@@ -4,6 +4,7 @@ import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
@@ -12,6 +13,7 @@ import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepo
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.service.base.suggester.CloudServerSuggester
 import dev.redicloud.service.base.suggester.ConfigurationTemplateSuggester
+import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
 import dev.redicloud.utils.defaultScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -99,6 +101,26 @@ class ServerCommand(
         actor.sendMessage("Queued deletion of static server ${server.getIdentifyingName()}...")
         actor.sendMessage("Note: If the hosted node is not connected to the cluster, the server will be deleted when the node connects to the cluster!")
         serverFactory.queueDelete(server.serviceId)
+    }
+
+    @CommandSubPath("transfer <server> <node>")
+    @CommandDescription("Transfer a static server to another node")
+    fun transfer(
+        actor: ConsoleActor,
+        @CommandParameter("server", true, CloudServerSuggester::class) server: CloudServer,
+        @CommandParameter("node", true, RegisteredCloudNodeSuggester::class) node: CloudNode
+    ) {
+        if (server.state != CloudServerState.STOPPED) {
+            actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is not stopped!")
+            return
+        }
+        if (server.hostNodeId == node.serviceId) {
+            actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is already hosted on node ${toConsoleValue(node.name, false)}!")
+            return
+        }
+        actor.sendMessage("Queued transfer of static server ${server.getIdentifyingName()} to node ${toConsoleValue(node.name, false)}...")
+        actor.sendMessage("Note: If the hosted node is not connected to the cluster, the server will be transferred when the node connects to the cluster!")
+        serverFactory.queueTransfer(server.serviceId, node.serviceId)
     }
 
     @CommandSubPath("stop <server> [force]")
