@@ -2,7 +2,10 @@ package dev.redicloud.cluster.file.packet
 
 import dev.redicloud.packets.AbstractPacket
 import dev.redicloud.utils.toCloudFile
+import dev.redicloud.utils.unzipFile
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 
 class UnzipPacket(
     val zipLocation: String,
@@ -17,11 +20,8 @@ class UnzipPacket(
     override fun received() {
         val zipLocation = toCloudFile(zipLocation)
         val unzipLocation = toCloudFile(unzipLocation)
-        val process = Runtime.getRuntime().exec("unzip -o ${zipLocation.absolutePath} -d ${unzipLocation.absolutePath}")
-        if (process.isAlive) {
-            process.waitFor()
-        }
-        runBlocking { getManager()!!.publish(UnzipResponse().asAnswerOf(this@UnzipPacket), sender!!) }
+        unzipFile(zipLocation.absolutePath, unzipLocation.absolutePath)
+        runBlocking { respond(UnzipResponse()) }
     }
 
 }
