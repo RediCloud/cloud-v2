@@ -3,7 +3,7 @@ package dev.redicloud.packets
 import com.google.gson.GsonBuilder
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
-import dev.redicloud.utils.fixKotlinAnnotations
+import dev.redicloud.utils.gson.fixKotlinAnnotations
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.*

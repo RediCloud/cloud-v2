@@ -1,6 +1,6 @@
 package dev.redicloud.database.config
 
-import dev.redicloud.utils.prettyPrintGson
+import dev.redicloud.utils.gson.gson
 import java.io.File
 
 data class DatabaseConfiguration(
@@ -23,7 +23,7 @@ data class DatabaseConfiguration(
         }
 
         fun fromFile(file: File): DatabaseConfiguration {
-            return prettyPrintGson.fromJson(file.readText(Charsets.UTF_8), DatabaseConfiguration::class.java)
+            return gson.fromJson(file.readText(Charsets.UTF_8), DatabaseConfiguration::class.java)
         }
 
     }
@@ -39,5 +39,5 @@ fun DatabaseConfiguration.toEnv(processBuilder: ProcessBuilder) {
 fun DatabaseConfiguration.toFile(file: File) {
     if (file.exists()) file.delete()
     file.createNewFile()
-    file.writeText(prettyPrintGson.toJson(this), Charsets.UTF_8)
+    file.writeText(gson.toJson(this), Charsets.UTF_8)
 }

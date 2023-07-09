@@ -1,12 +1,15 @@
-package dev.redicloud.utils
+package dev.redicloud.utils.gson
 
 import com.google.gson.ExclusionStrategy
 import com.google.gson.FieldAttributes
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.Expose
 
-val prettyPrintGson = GsonBuilder().fixKotlinAnnotations().serializeNulls().setPrettyPrinting().create()
-val gson = GsonBuilder().fixKotlinAnnotations().serializeNulls().create()
+val gson = GsonBuilder()
+    .scanInterfaceRoutes("dev.redicloud")
+    .fixKotlinAnnotations()
+    .serializeNulls()
+    .create()
 
 fun GsonBuilder.fixKotlinAnnotations(): GsonBuilder {
     addSerializationExclusionStrategy(object : ExclusionStrategy {

@@ -2,7 +2,7 @@ package dev.redicloud.repository.server.version.requester
 
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.utils.ServerVersion
-import dev.redicloud.utils.gson
+import dev.redicloud.utils.gson.gson
 import khttp.get
 
 class PaperMcApiRequester {

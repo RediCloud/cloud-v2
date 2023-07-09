@@ -1,7 +1,7 @@
 package dev.redicloud.event
 
 import dev.redicloud.packets.AbstractPacket
-import dev.redicloud.utils.gson
+import dev.redicloud.utils.gson.gson
 
 class CloudEventPacket(val eventData: String, val eventClazz: String, val managerIdentifier: String) : AbstractPacket() {
 

@@ -2,7 +2,7 @@ package dev.redicloud.service.node
 
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
-import dev.redicloud.utils.prettyPrintGson
+import dev.redicloud.utils.gson.gson
 import java.io.File
 import java.util.UUID
 
@@ -16,7 +16,7 @@ data class NodeConfiguration (
 
     companion object {
         fun fromFile(file: File): NodeConfiguration {
-            return prettyPrintGson.fromJson(file.readText(), NodeConfiguration::class.java)
+            return gson.fromJson(file.readText(), NodeConfiguration::class.java)
         }
 
     }
@@ -24,7 +24,7 @@ data class NodeConfiguration (
     fun toFile(file: File) {
         if (file.exists()) file.delete()
         file.createNewFile()
-        file.writeText(prettyPrintGson.toJson(this))
+        file.writeText(gson.toJson(this))
     }
 
     fun toServiceId(): ServiceId {

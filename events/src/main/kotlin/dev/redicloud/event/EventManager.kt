@@ -2,7 +2,7 @@ package dev.redicloud.event
 
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
-import dev.redicloud.utils.gson
+import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.locks.ReentrantLock

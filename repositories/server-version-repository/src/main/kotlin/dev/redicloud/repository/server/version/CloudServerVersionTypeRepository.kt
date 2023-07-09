@@ -9,7 +9,7 @@ import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.utils.*
-import kotlinx.coroutines.runBlocking
+import dev.redicloud.utils.gson.gson
 import java.util.*
 import java.util.logging.Level
 import kotlin.time.Duration.Companion.minutes
@@ -25,7 +25,7 @@ class CloudServerVersionTypeRepository(
             val json =
                 khttp.get("${getRawUserContentUrl()}/api-files/server-version-types.json").text
             val type = object : TypeToken<ArrayList<CloudServerVersionType>>() {}.type
-            val list: MutableList<CloudServerVersionType> = prettyPrintGson.fromJson(json, type)
+            val list: MutableList<CloudServerVersionType> = gson.fromJson(json, type)
             if (list.none { it.isUnknown() }) {
                 list.add(
                     CloudServerVersionType(

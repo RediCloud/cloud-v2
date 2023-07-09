@@ -1,7 +1,7 @@
 package dev.redicloud.service.base.utils
 
 import dev.redicloud.database.DatabaseConnection
-import dev.redicloud.utils.gson
+import dev.redicloud.utils.gson.gson
 import org.redisson.api.LocalCachedMapOptions
 import java.util.*
 

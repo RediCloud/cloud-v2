@@ -3,10 +3,9 @@ package dev.redicloud.repository.java.version
 import com.google.gson.reflect.TypeToken
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
-import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.*
+import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.service.ServiceId
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
@@ -21,7 +20,7 @@ class JavaVersionRepository(
             val json =
                 khttp.get("${getRawUserContentUrl()}/api-files/java-versions.json").text
             val type = object : TypeToken<ArrayList<JavaVersion>>() {}.type
-            prettyPrintGson.fromJson<List<JavaVersion>?>(json, type)
+            gson.fromJson<List<JavaVersion>?>(json, type)
         }
     }
 

@@ -2,7 +2,7 @@ package dev.redicloud.repository.server.version.utils
 
 import com.google.gson.reflect.TypeToken
 import dev.redicloud.utils.getRawUserContentUrl
-import dev.redicloud.utils.prettyPrintGson
+import dev.redicloud.utils.gson.gson
 import khttp.get
 
 class ServerVersion(
@@ -22,7 +22,7 @@ class ServerVersion(
             CACHED_MINECRAFT_VERSIONS.clear()
             val json = get("${getRawUserContentUrl()}/api-files/server-versions.json").text
             val type = object : TypeToken<ArrayList<ServerVersion>>() {}.type
-            val list = prettyPrintGson.fromJson<List<ServerVersion>?>(json, type).toMutableList()
+            val list = gson.fromJson<List<ServerVersion>?>(json, type).toMutableList()
             if (list.none { it.isUnknown() }) {
                 list.add(ServerVersion("unknown", -1))
             }
