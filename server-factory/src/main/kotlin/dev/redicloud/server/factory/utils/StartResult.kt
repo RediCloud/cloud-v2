@@ -1,7 +1,8 @@
-package dev.redicloud.server.factory
+package dev.redicloud.server.factory.utils
 
 import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.server.CloudServer
+import dev.redicloud.server.factory.ServerProcess
 import java.util.UUID
 
 open class StartResult(val type: StartResultType)

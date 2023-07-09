@@ -1,14 +1,12 @@
-package dev.redicloud.server.factory
+package dev.redicloud.server.factory.utils
 
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
 import java.util.LinkedList
 import java.util.UUID
-import kotlin.time.Duration.Companion.minutes
 
 data class ServerQueueInformation(
     val uniqueId: UUID = UUID.randomUUID(),

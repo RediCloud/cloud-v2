@@ -1,4 +1,4 @@
-package dev.redicloud.server.factory
+package dev.redicloud.server.factory.utils
 
 import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
