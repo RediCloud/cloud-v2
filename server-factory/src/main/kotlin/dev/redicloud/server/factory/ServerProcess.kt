@@ -6,13 +6,13 @@ import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.logging.getDefaultLogLevel
 import dev.redicloud.packets.PacketManager
-import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.server.factory.screens.ServerScreen
+import dev.redicloud.server.factory.utils.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.CLOUD_PATH
 import dev.redicloud.utils.LIB_FOLDER
@@ -142,20 +142,9 @@ class ServerProcess(
             fileCopier.workDirectory.deleteRecursively()
         }
 
-        if (cloudServer != null) {
-            cloudServer = serverRepository.getServer(serverId)!!
-            cloudServer!!.state = CloudServerState.STOPPED
-            cloudServer!!.port = -1
-            cloudServer!!.connected = false
-            cloudServer!!.connectedPlayers.clear()
-            serverRepository.updateServer(cloudServer!!)
-        }
+
 
         logger.fine("Stopped server process ${configurationTemplate.uniqueId}")
-
-        if (cloudServer?.unregisterAfterDisconnect() == true) {
-            serverRepository.deleteServer(cloudServer!!)
-        }
     }
 
     /**
