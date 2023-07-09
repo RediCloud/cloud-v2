@@ -28,23 +28,21 @@ class FileCopier(
     private val snapshot: StartDataSnapshot
 ) {
 
-    val serverUniqueId = UUID.randomUUID()
-    val serviceId: ServiceId
+    val serviceId = cloudServer.serviceId
     val configurationTemplate = serverProcess.configurationTemplate
     val templates: List<FileTemplate>
     val workDirectory: File
     private val logger = LogManager.logger(FileCopier::class)
 
     init {
-        serviceId = ServiceId(serverUniqueId, if (snapshot.versionType.proxy) ServiceType.PROXY_SERVER else ServiceType.MINECRAFT_SERVER)
         // get templates by given configuration template and collect also inherited templates
         templates = configurationTemplate.fileTemplateIds.mapNotNull { runBlocking { fileTemplateRepository.getTemplate(it) } }
             .flatMap { runBlocking { fileTemplateRepository.collectTemplates(it) } }
         // create work directory
         workDirectory = if(configurationTemplate.static) {
-            File(STATIC_FOLDER.getFile().absolutePath, "${cloudServer.name}-${serverUniqueId}")
+            File(STATIC_FOLDER.getFile().absolutePath, "${cloudServer.name}-${serviceId.id}")
         }else {
-            File(TEMP_SERVER_FOLDER.getFile().absolutePath, "${cloudServer.name}-${serverUniqueId}")
+            File(TEMP_SERVER_FOLDER.getFile().absolutePath, "${cloudServer.name}-${serviceId.id}")
         }
         if (!workDirectory.exists()) workDirectory.mkdirs()
     }
@@ -76,7 +74,7 @@ class FileCopier(
         }
         val pluginFolder = File(workDirectory, snapshot.versionType.connectorFolder)
         if (!pluginFolder.exists()) pluginFolder.mkdirs()
-        connectorFile.copyRecursively(File(pluginFolder, connectorFile.name))
+        connectorFile.copyTo(File(pluginFolder, connectorFile.name), overwrite = true)
     }
 
     /**
@@ -97,7 +95,7 @@ class FileCopier(
             }else {
                 val jar = versionHandler.getJar(snapshot.version)
                 if (jar.exists()) {
-                    jar.copyTo(workDirectory)
+                    jar.copyTo(File(workDirectory, jar.name), overwrite = true)
                 }
             }
             snapshot.versionType.doFileEdits(workDirectory, action)
