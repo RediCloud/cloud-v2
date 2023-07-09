@@ -1,6 +1,8 @@
 package dev.redicloud.console.animation
 
 import dev.redicloud.console.Console
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.fusesource.jansi.Ansi
 import java.time.Instant
 

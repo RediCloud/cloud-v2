@@ -4,6 +4,7 @@ import dev.redicloud.event.CloudEvent
 import dev.redicloud.event.EventManager
 import dev.redicloud.event.InlineEventCaller
 import dev.redicloud.tasks.CloudTask
+import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
 class EventBasedCloudExecutor(
@@ -25,7 +26,9 @@ class EventBasedCloudExecutor(
 
     private fun listener(clazz: KClass<out CloudEvent>) {
         val listener = eventManager.listen(clazz) {
-            cloudTask.preExecute(this)
+            cloudTask.taskManager.scope.launch {
+                cloudTask.preExecute(this@EventBasedCloudExecutor)?.join()
+            }
         }
         listeners.add(listener)
     }

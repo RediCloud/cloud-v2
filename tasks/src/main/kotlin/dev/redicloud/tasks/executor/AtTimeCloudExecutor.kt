@@ -11,7 +11,7 @@ class AtTimeCloudExecutor(task: CloudTask, val atTime: Long) : CloudTaskExecutor
         val now = System.currentTimeMillis()
         val time = atTime - now
         if (time > 0) delay(time)
-        cloudTask.preExecute(this)
+        cloudTask.preExecute(this)?.join()
     }
 
 }

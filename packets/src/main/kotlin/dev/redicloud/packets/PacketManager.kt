@@ -3,12 +3,10 @@ package dev.redicloud.packets
 import com.google.gson.GsonBuilder
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
-import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.fixKotlinAnnotations
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.redisson.api.RTopic
 import org.redisson.api.listener.MessageListener
 import kotlin.reflect.KClass
@@ -28,6 +26,7 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
     val listeners = mutableListOf<PacketListener<out AbstractPacket>>()
     internal val packetResponses = mutableListOf<PacketResponse>()
     internal val packetsOfLast3Seconds = mutableListOf<AbstractPacket>()
+    internal val packetScope = CoroutineScope(Dispatchers.IO)
 
     init {
         if (!databaseConnection.isConnected()) throw IllegalStateException("Database connection is not connected!")
@@ -51,7 +50,7 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
             packet.manager = this
             packet.received()
             packetsOfLast3Seconds.add(packet)
-            defaultScope.launch {
+            packetScope.launch {
                 delay(3.seconds)
                 packetsOfLast3Seconds.remove(packet)
             }
@@ -83,6 +82,7 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
         serviceTopic.removeAllListeners()
         broadcastTopic.removeAllListeners()
         typedTopics.forEach { (_, topic) -> topic.removeAllListeners() }
+        packetScope.cancel()
     }
 
     fun isPacketRegistered(packetClazz: KClass<out AbstractPacket>): Boolean {

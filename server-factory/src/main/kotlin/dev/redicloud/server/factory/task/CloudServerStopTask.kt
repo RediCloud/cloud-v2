@@ -5,9 +5,8 @@ import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.tasks.CloudTask
-import dev.redicloud.utils.defaultScope
+import dev.redicloud.utils.MultiAsyncAction
 import dev.redicloud.utils.service.ServiceId
-import kotlinx.coroutines.launch
 
 class CloudServerStopTask(
     private val serviceId: ServiceId,
@@ -20,34 +19,25 @@ class CloudServerStopTask(
     }
 
     override suspend fun execute(): Boolean {
-        var responded = 0
-        var total = 0
+        val actions = MultiAsyncAction()
         serverFactory.stopQueue.forEach {
-            total++
-            defaultScope.launch {
+            actions.add {
                 try {
                     val server = serverRepository.getServer<CloudServer>(it)
                     if (server == null) {
                         serverFactory.stopQueue.remove(it)
-                        responded++
-                        return@launch
+                        return@add
                     }
                     if (server.hostNodeId == serviceId) {
                         serverFactory.stopQueue.remove(it)
-                        defaultScope.launch {
-                            serverFactory.stopServer(it)
-                        }
+                        serverFactory.stopServer(it)
                     }
                 }catch (e: Exception) {
                     logger.severe("Failed to stop server ${it.toName()}", e)
-                }finally {
-                    responded++
                 }
             }
         }
-        while (responded != total) {
-            Thread.sleep(333)
-        }
+        actions.joinAll()
         return false
     }
 }

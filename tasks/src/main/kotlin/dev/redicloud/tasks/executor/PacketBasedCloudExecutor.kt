@@ -5,6 +5,7 @@ import dev.redicloud.packets.AbstractPacket
 import dev.redicloud.packets.PacketListener
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.tasks.CloudTask
+import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
 class PacketBasedCloudExecutor(
@@ -26,7 +27,9 @@ class PacketBasedCloudExecutor(
 
     private fun listener(clazz: KClass<out AbstractPacket>) {
         val listener = packetManager.listen(clazz) {
-            cloudTask.preExecute(this)
+            cloudTask.taskManager.scope.launch {
+                cloudTask.preExecute(this@PacketBasedCloudExecutor)?.join()
+            }
         }
         listeners.add(listener)
     }

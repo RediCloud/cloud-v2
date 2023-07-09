@@ -67,6 +67,7 @@ open class Console(
 
     @OptIn(DelicateCoroutinesApi::class)
     private val scope = CoroutineScope(newSingleThreadContext("console-scope"))
+    private val animationScope = CoroutineScope(Dispatchers.Default)
 
     init {
         ansiSupported = AnsiInstaller().install()
@@ -197,7 +198,7 @@ open class Console(
         this.lineReader.callWidget(LineReader.REDISPLAY)
     }
 
-    fun readNextInput(): String {
+    suspend fun readNextInput(): String {
         val reader = ConsoleInputReader()
         inputReader.add(reader)
         return reader.readNextInput()
@@ -248,7 +249,7 @@ open class Console(
         val uniqueId = UUID.randomUUID()
         var started = false
         animation.addStartHandler { started = true }
-        val job = defaultScope.launch {
+        val job = animationScope.launch {
             animation.running = true
             animation.run()
             runningAnimations.remove(uniqueId)
@@ -462,6 +463,7 @@ open class Console(
     override fun close() {
         cancelAnimations()
         this.scope.cancel()
+        this.animationScope.cancel()
         terminal.flush()
         terminal.close()
         if (uninstallAnsiOnClose) AnsiConsole.systemUninstall()

@@ -6,10 +6,12 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.server.factory.*
+import dev.redicloud.server.factory.utils.*
 import dev.redicloud.service.base.events.node.NodeConnectEvent
 import dev.redicloud.service.base.events.node.NodeDisconnectEvent
 import dev.redicloud.service.base.events.node.NodeSuspendedEvent
 import dev.redicloud.tasks.CloudTask
+import dev.redicloud.utils.MultiAsyncAction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
@@ -17,7 +19,7 @@ import kotlinx.coroutines.newSingleThreadContext
 
 class CloudServerStartTask(
     private val serverFactory: ServerFactory,
-    private val eventManager: EventManager,
+    eventManager: EventManager,
     private val nodeRepository: NodeRepository,
     private val serverRepository: ServerRepository
 ) : CloudTask() {
@@ -66,11 +68,14 @@ class CloudServerStartTask(
     }
 
     override suspend fun execute(): Boolean {
-        var nextTick = false
-        scope.launch {
-            try {
-                serverFactory.getStartList().forEach { info ->
-                    if (!info.isNextNode(nodeRepository.serviceId)) return@forEach
+        val actions = MultiAsyncAction()
+        serverFactory.getStartList().forEach { info ->
+            if (!info.isNextNode(nodeRepository.serviceId)) return@forEach
+
+            val name = if (info.configurationTemplate != null) info.configurationTemplate.name else info.serviceId?.toName() ?: "unknown"
+
+            actions.add {
+                try {
                     serverFactory.startQueue.remove(info)
                     val result = if (info.configurationTemplate != null) {
                         serverFactory.startServer(info.configurationTemplate)
@@ -78,9 +83,7 @@ class CloudServerStartTask(
                         serverFactory.startServer(info.serviceId, null)
                     }else null
 
-                    if (result == null) return@forEach
-
-                    val name = if (info.configurationTemplate != null) info.configurationTemplate.name else info.serviceId!!.toName()
+                    if (result == null) return@add
 
                     when (result.type) {
 
@@ -175,14 +178,12 @@ class CloudServerStartTask(
 
                         else -> {}
                     }
+                }catch (e: Exception) {
+                    logger.severe("§cAn error occurred while starting server ${toConsoleValue(name, false)}!", e)
                 }
-            } catch (e: Exception) {
-                logger.severe("§cAn unknown error occurred while starting servers!", e)
-            } finally {
-                nextTick = true
             }
         }
-        while (!nextTick) Thread.sleep(200)
+        actions.joinAll()
         return false
     }
 

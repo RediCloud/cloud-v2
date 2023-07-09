@@ -1,7 +1,5 @@
 package dev.redicloud.packets
 
-import dev.redicloud.utils.defaultScope
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -22,14 +20,14 @@ class PacketResponse(val packetManager: PacketManager, val packet: AbstractPacke
         packetManager.packetsOfLast3Seconds.filter { it.referenceId == packet.packetId }.forEach {
             handle(it)
         }
-        timeOutJob = defaultScope.launch {
+        timeOutJob = packetManager.packetScope.launch {
             delay(timeOut.inWholeMilliseconds)
             packetManager.packetResponses.remove(this@PacketResponse)
         }
         return this
     }
 
-    fun waitBlocking(): AbstractPacket? {
+    suspend fun waitBlocking(): AbstractPacket? {
         val timeOut = System.currentTimeMillis() + this.timeOut.inWholeMilliseconds
         if (!packetManager.packetResponses.contains(this)) packetManager.packetResponses.add(this)
         while (responses.isEmpty()) {
@@ -38,7 +36,7 @@ class PacketResponse(val packetManager: PacketManager, val packet: AbstractPacke
                 timeOutJob?.cancel()
                 return null
             }
-            Thread.sleep(this.timeOut.inWholeMilliseconds / 15)
+            delay(this.timeOut.inWholeMilliseconds / 15)
         }
         return responses.first()
     }

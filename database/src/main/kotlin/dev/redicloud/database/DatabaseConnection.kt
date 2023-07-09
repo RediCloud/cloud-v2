@@ -58,7 +58,7 @@ class DatabaseConnection(
         }
     }
 
-    fun connect() {
+    suspend fun connect() {
         client = Redisson.create(redissonConfig)
         LOGGER.info("Successfully connected to redis")
     }

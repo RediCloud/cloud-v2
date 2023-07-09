@@ -19,7 +19,7 @@ class CloudServerInfoTask(
         if (cloudServer.connectedPlayers.toList() != players) update = true
         cloudServer.connectedPlayers = players.toMutableList()
         if (update) serverRepository.updateServer(cloudServer)
-        return true
+        return false
     }
 
 }

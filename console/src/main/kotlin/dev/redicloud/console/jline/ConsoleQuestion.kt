@@ -15,7 +15,7 @@ class ConsoleQuestion(
     val completer: List<String> = mutableListOf()
 ) {
 
-    inline fun <reified T> ask(console: Console): T {
+    inline suspend fun <reified T> ask(console: Console): T {
         console.disableCommands()
         var result: T? = null
         while (result == null) {
@@ -50,7 +50,7 @@ interface ConsoleQuestionCondition {
     fun fail(input: String): Boolean
 }
 
-inline fun <reified T> Console.ask(
+inline suspend fun <reified T> Console.ask(
     question: String,
     condition: ConsoleQuestionCondition? = null,
     default: Any? = null,

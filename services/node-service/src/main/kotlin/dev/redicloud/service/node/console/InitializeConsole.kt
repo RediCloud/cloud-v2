@@ -17,6 +17,7 @@ import dev.redicloud.service.node.NodeConfiguration
 import dev.redicloud.utils.*
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
+import kotlinx.coroutines.runBlocking
 import java.util.*
 import java.util.logging.Filter
 import java.util.logging.Level
@@ -149,9 +150,11 @@ class InitializeConsole() : Console(
         sendHeader()
         LogManager.rootLogger().filter = Filter { record
             -> record.level != Level.INFO && !record.message.contains("org.redisson") }
-        nodeConfiguration = checkNode()
-        serviceId = nodeConfiguration!!.toServiceId()
-        databaseConnection = checkDatabase(serviceId!!)
+        runBlocking {
+            nodeConfiguration = checkNode()
+            serviceId = nodeConfiguration!!.toServiceId()
+            databaseConnection = checkDatabase(serviceId!!)
+        }
     }
 
     override fun sendHeader() {
@@ -199,7 +202,7 @@ class InitializeConsole() : Console(
         }
     }
 
-    private fun checkNode(): NodeConfiguration {
+    private suspend fun checkNode(): NodeConfiguration {
         val nodeFile = NODE_JSON.getFile()
         if (!nodeFile.exists()) {
             writeLine("Node file not found! Starting node setup in 5 seconds...")
@@ -223,7 +226,7 @@ class InitializeConsole() : Console(
         }
     }
 
-    private fun nodeSetup(): NodeConfiguration {
+    private suspend fun nodeSetup(): NodeConfiguration {
         firstStartDetected = true
         if (getCurrentScreen().name == "node-setup") {
             clearScreen()
@@ -255,7 +258,7 @@ class InitializeConsole() : Console(
         return config
     }
 
-    private fun checkDatabase(serviceId: ServiceId): DatabaseConnection {
+    private suspend fun checkDatabase(serviceId: ServiceId): DatabaseConnection {
         emptyPrompt()
         val databaseFile = DATABASE_JSON.getFile()
         if (!databaseFile.exists()) {
@@ -292,7 +295,7 @@ class InitializeConsole() : Console(
         }
     }
 
-    private fun testDatabase(config: DatabaseConfiguration, serviceId: ServiceId): Pair<DatabaseConnection, Throwable?> {
+    private suspend fun testDatabase(config: DatabaseConfiguration, serviceId: ServiceId): Pair<DatabaseConnection, Throwable?> {
         emptyPrompt()
         val connection = DatabaseConnection(config, serviceId)
         return try {
@@ -303,7 +306,7 @@ class InitializeConsole() : Console(
         }
     }
 
-    private fun databaseSetup(): DatabaseConnection {
+    private suspend fun databaseSetup(): DatabaseConnection {
         firstStartDetected = true
         if (getCurrentScreen().name == "database-setup") {
             clearScreen()

@@ -3,8 +3,7 @@ package dev.redicloud.server.factory.task
 import dev.redicloud.logging.LogManager
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.tasks.CloudTask
-import dev.redicloud.utils.defaultScope
-import kotlinx.coroutines.launch
+import dev.redicloud.utils.MultiAsyncAction
 
 class CloudServerDeleteTask(
     private val serverFactory: ServerFactory
@@ -15,25 +14,19 @@ class CloudServerDeleteTask(
     }
 
     override suspend fun execute(): Boolean {
-        var total = 0
-        var responded = 0
+        val actions = MultiAsyncAction()
         serverFactory.deleteQueue.forEach { queued ->
-            total++
             serverFactory.deleteQueue.remove(queued)
-            defaultScope.launch {
+            actions.add {
                 try {
                     serverFactory.deleteServer(queued)
                 }catch (e: Exception) {
                     LOGGER.severe("§cFailed to delete server ${queued.toName()}!")
-                }finally {
-                    responded++
                 }
             }
         }
 
-        while (responded < total) {
-            Thread.sleep(100)
-        }
+        actions.joinAll()
 
         return false
     }

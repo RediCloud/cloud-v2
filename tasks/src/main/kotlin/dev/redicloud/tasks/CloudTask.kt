@@ -3,50 +3,57 @@ package dev.redicloud.tasks
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.tasks.executor.CloudTaskExecutor
-import dev.redicloud.utils.defaultScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
 
 abstract class CloudTask(private val useLock: Boolean = true) {
-
 
     val id: UUID = UUID.randomUUID()
     private var canceled = false
     private var executors: MutableList<CloudTaskExecutor> = mutableListOf()
     private var executeCount: Int = 0
     private var started = false
-    private lateinit var taskManager: CloudTaskManager
+    internal lateinit var taskManager: CloudTaskManager
     private val finishListener = mutableListOf<() -> Unit>()
     private val lock = ReentrantLock()
 
     abstract suspend fun execute(): Boolean
 
-    internal fun preExecute(source: CloudTaskExecutor) {
-        if (canceled) return
-        defaultScope.launch {
-            if (useLock) lock.lock()
+    internal fun preExecute(source: CloudTaskExecutor): Job? {
+        if (canceled) return null
+        return taskManager.scope.launch {
+            executeCount++
             if (canceled) return@launch
+            if (useLock) {
+                lock.lock()
+            }
             try {
                 CloudTaskManager.LOGGER.log(
                     Level.FINEST,
                     "Cloud task ${this@CloudTask::class.simpleName} execute by ${source::class.simpleName}"
                 )
-                if (execute()) {
-                    cancel()
+                if (runBlocking { execute() }) {
+                    runBlocking { cancel() }
                 }
             } catch (e: Exception) {
                 CloudTaskManager.LOGGER.log(
                     Level.SEVERE,
-                    "Error while executing cloud task (${this::class.simpleName}) by ${source::class.simpleName}",
+                    "Error while executing cloud task (${this@CloudTask::class.simpleName}) by ${source::class.simpleName}",
                     e
                 )
             } finally {
-                if (useLock) lock.unlock()
+                if (useLock) {
+                    lock.unlock()
+                }
             }
         }
-        executeCount++
     }
 
     fun start(manager: CloudTaskManager) {

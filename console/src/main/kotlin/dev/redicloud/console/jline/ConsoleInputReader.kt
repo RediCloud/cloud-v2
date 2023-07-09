@@ -1,6 +1,7 @@
 package dev.redicloud.console.jline
 
 import dev.redicloud.logging.LogManager
+import kotlinx.coroutines.delay
 
 class ConsoleInputReader {
 
@@ -9,10 +10,10 @@ class ConsoleInputReader {
     }
 
     private var input: String? = null
-    fun readNextInput(): String {
+    suspend fun readNextInput(): String {
         while (input == null) {
             try {
-                Thread.sleep(500)
+                delay(500)
             }catch (e: InterruptedException) {
                 LOGGER.severe("Interrupted while waiting for input", e)
                 return ""

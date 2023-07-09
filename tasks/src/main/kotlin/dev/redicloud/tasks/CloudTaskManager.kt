@@ -14,7 +14,11 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
-class CloudTaskManager(internal val eventManager: EventManager, internal val packetManager: PacketManager) {
+class CloudTaskManager(
+    internal val eventManager: EventManager,
+    internal val packetManager: PacketManager,
+    threads: Int
+) {
 
     companion object {
         val LOGGER = LogManager.logger(CloudTaskManager::class)
@@ -23,7 +27,7 @@ class CloudTaskManager(internal val eventManager: EventManager, internal val pac
     internal val tasks = ConcurrentHashMap<UUID, CloudTask>()
 
     @OptIn(DelicateCoroutinesApi::class)
-    internal val scope = CoroutineScope(newFixedThreadPoolContext(2, "CloudTaskManager"))
+    internal val scope = CoroutineScope(newFixedThreadPoolContext(threads, "CloudTaskManager"))
 
     fun register(task: CloudTask): UUID {
         if (tasks.containsKey(task.id)) throw IllegalArgumentException("Task with id ${task.id} is already registered")

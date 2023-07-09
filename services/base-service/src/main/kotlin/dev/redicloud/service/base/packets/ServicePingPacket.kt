@@ -1,9 +1,7 @@
 package dev.redicloud.service.base.packets
 
 import dev.redicloud.packets.AbstractPacket
-import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.ioScope
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
 class ServicePingPacket : AbstractPacket() {

@@ -83,7 +83,7 @@ abstract class BaseService(
             )
         }
         try {
-            if (!databaseConnection.isConnected()) databaseConnection.connect()
+            if (!databaseConnection.isConnected()) runBlocking { databaseConnection.connect() }
         } catch (e: Exception) {
             LOGGER.severe("Failed to connect to database", e)
             exitProcess(-1)
@@ -93,7 +93,7 @@ abstract class BaseService(
 
         packetManager = PacketManager(databaseConnection, serviceId)
         eventManager = EventManager("base-event-manager", packetManager)
-        taskManager = CloudTaskManager(eventManager, packetManager)
+        taskManager = CloudTaskManager(eventManager, packetManager, if (serviceId.type.isServer()) 2 else 4)
 
         playerRepository = PlayerRepository(databaseConnection, eventManager)
         javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection)
@@ -123,13 +123,13 @@ abstract class BaseService(
     }
 
     fun sendClusterMessage(message: String, level: Level = Level.INFO, vararg serviceIds: ServiceId) {
-        defaultScope.launch {
+        ioScope.launch {
             packetManager.publish(ClusterMessagePacket(message, level), *serviceIds)
         }
     }
 
     fun sendClusterMessage(message: String, level: Level = Level.INFO, serviceTargetType: ServiceType) {
-        defaultScope.launch {
+        ioScope.launch {
             packetManager.publish(ClusterMessagePacket(message, level), serviceTargetType)
         }
     }
