@@ -20,7 +20,7 @@ class NodeFileTemplateRepository(
 
     override suspend fun pushTemplates(serviceId: ServiceId) {
         val node = nodeRepository.getNode(serviceId) ?: return
-        if (node.serviceId == serviceId) {
+        if (node.serviceId == nodeRepository.serviceId) {
             FileCluster.LOGGER.info("Skipping pushing templates to ${node.getIdentifyingName()} because it is the current node!")
             return
         }
@@ -40,7 +40,11 @@ class NodeFileTemplateRepository(
             fileCluster.mkdirs(sftpChannel, toUniversalPath(workFolder))
 
             fileCluster.shareFile(sftpChannel, zip, toUniversalPath(workFolder), "data.zip")
-            fileCluster.unzip(node.serviceId, toUniversalPath(zip), toUniversalPath(STORAGE_FOLDER.getFile()))
+            fileCluster.deleteFolderRecursive(sftpChannel, toUniversalPath(TEMPLATE_FOLDER.getFile()))
+            val response = fileCluster.unzip(node.serviceId, toUniversalPath(zip), toUniversalPath(STORAGE_FOLDER.getFile()))
+            if (response == null) {
+                FileCluster.LOGGER.warning("Unzip process of template pushing does not respond!")
+            }
             fileCluster.deleteFolderRecursive(sftpChannel, toUniversalPath(workFolder))
 
             workFolder.deleteRecursively()
