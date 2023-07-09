@@ -11,6 +11,7 @@ dependencies {
     compileOnly(project(":commands:command-api"))
     compileOnly(project(":services:base-service"))
     compileOnly(project(":events"))
+    compileOnly(project(":file-cluster"))
     compileOnly(project(":repositories:server-repository"))
     compileOnly(project(":repositories:node-repository"))
     compileOnly(project(":repositories:file-template-repository"))
@@ -18,4 +19,6 @@ dependencies {
     compileOnly(project(":repositories:java-version-repository"))
     compileOnly(project(":repositories:server-version-repository"))
     compileOnly(project(":repositories:service-repository"))
+
+    dependency("com.jcraft:jsch:0.1.55")
 }
