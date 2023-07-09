@@ -86,6 +86,21 @@ class ServerCommand(
         serverFactory.queueStart(server.serviceId)
     }
 
+    @CommandSubPath("delete <server>")
+    @CommandDescription("Delete a static server")
+    fun delete(
+        actor: ConsoleActor,
+        @CommandParameter("server", true, CloudServerSuggester::class) server: CloudServer
+    ) {
+        if (server.state != CloudServerState.STOPPED) {
+            actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is not stopped!")
+            return
+        }
+        actor.sendMessage("Queued deletion of static server ${server.getIdentifyingName()}...")
+        actor.sendMessage("Note: If the hosted node is not connected to the cluster, the server will be deleted when the node connects to the cluster!")
+        serverFactory.queueDelete(server.serviceId)
+    }
+
     @CommandSubPath("stop <server> [force]")
     @CommandDescription("Stop a server")
     fun stop(
