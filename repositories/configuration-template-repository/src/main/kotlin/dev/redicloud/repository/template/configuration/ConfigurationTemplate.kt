@@ -3,6 +3,7 @@ package dev.redicloud.repository.template.configuration
 import dev.redicloud.utils.ProcessConfiguration
 import dev.redicloud.utils.service.ServiceId
 import java.util.*
+import kotlin.time.Duration.Companion.seconds
 
 class ConfigurationTemplate(
     val uniqueId: UUID = UUID.randomUUID(),
@@ -23,6 +24,7 @@ class ConfigurationTemplate(
     var startPort: Int = 40000,
     var joinPermission: String? = null,
     var maxPlayers: Int = 50,
+    var timeAfterStopUselessServer: Long = 120.seconds.inWholeMilliseconds,
     jvmArguments: MutableList<String> = mutableListOf(),
     environmentVariables: MutableMap<String, String> = mutableMapOf(),
     processArguments: MutableList<String> = mutableListOf(),

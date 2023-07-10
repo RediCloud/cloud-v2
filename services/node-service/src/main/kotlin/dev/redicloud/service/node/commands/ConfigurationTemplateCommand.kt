@@ -24,6 +24,8 @@ import dev.redicloud.utils.toSymbol
 import kotlinx.coroutines.runBlocking
 import java.net.URL
 import java.util.*
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 
 @Command("configurationtemplate")
 @CommandAlias(["ct", "configurationtemplates", "ctemplate"])
@@ -129,6 +131,8 @@ class ConfigurationTemplateCommand(
         actor.sendMessage("§8- %tc%Server splitter§8: %hc%${template.serverSplitter}")
         actor.sendMessage("§8- %tc%Start port§8: %hc%${if (template.startPort == -1) "unknown" else template.startPort}")
         actor.sendMessage("§8- %tc%Permission§8: %hc%${template.joinPermission ?: "Not set"}")
+        actor.sendMessage("§8- %tc%Max-Players§8: %hc%${template.maxPlayers}")
+        actor.sendMessage("§8- %tc%Stop useless servers§8: %hc%${template.timeAfterStopUselessServer.milliseconds.inWholeMinutes} minutes")
         actor.sendMessage("§8- %tc%Min. started servers§8: %hc%${template.minStartedServices}")
         actor.sendMessage("§8- %tc%Max. started servers§8: %hc%${template.maxStartedServices}")
         actor.sendMessage("§8- %tc%Min. started servers per node§8: %hc%${template.minStartedServicesPerNode}")
@@ -164,6 +168,18 @@ class ConfigurationTemplateCommand(
         }
         actor.sendMessage("")
         actor.sendHeader("Configuration template")
+    }
+
+    @CommandSubPath("edit <name> stoptime <minutes>")
+    @CommandDescription("Set the time after a server should be stopped if it is useless")
+    fun editStopTime(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
+        @CommandParameter("time") time: Long
+    ) = runBlocking {
+        template.timeAfterStopUselessServer = time.minutes.inWholeMilliseconds
+        configurationTemplateRepository.updateTemplate(template)
+        actor.sendMessage("Successfully set the time after a server should be stopped if it is useless was set to ${toConsoleValue(time)} minutes!")
     }
 
     @CommandSubPath("edit <name> fileedits add <file> <key> <value>")
