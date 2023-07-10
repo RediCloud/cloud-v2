@@ -1,25 +1,59 @@
 package dev.redicloud.utils.gson
 
+import com.google.gson.ExclusionStrategy
+import com.google.gson.FieldAttributes
 import com.google.gson.GsonBuilder
+import com.google.gson.annotations.Expose
 import dev.redicloud.utils.getClassesWithPrefix
 import kotlin.reflect.KClass
 
+fun GsonBuilder.addInterfaceImpl(): GsonBuilder {
+    val factory = InterfaceTypeAdapterFactory()
+    addSerializationExclusionStrategy(object : ExclusionStrategy {
 
-fun GsonBuilder.registerInterfaceRoute(interfaceClazz: KClass<*>, implClazz: KClass<*>): GsonBuilder {
-    registerTypeAdapterFactory(InterfaceTypeAdapterFactory(interfaceClazz.java, implClazz.java))
-    return this
+        override fun shouldSkipClass(clazz: Class<*>?): Boolean {
+            return false
+        }
+
+        override fun shouldSkipField(f: FieldAttributes?): Boolean {
+            f?.getAnnotation(GsonInterface::class.java)?.let {
+                factory.register(f.declaredClass, it.value.java)
+            }
+            return false
+        }
+    }).addDeserializationExclusionStrategy(object : ExclusionStrategy {
+        override fun shouldSkipField(f: FieldAttributes?): Boolean {
+            f?.getAnnotation(GsonInterface::class.java)?.let {
+                factory.register(f.declaredClass, it.value.java)
+            }
+            return false
+        }
+
+        override fun shouldSkipClass(clazz: Class<*>?): Boolean {
+            return false
+        }
+
+    })
+    return registerTypeAdapterFactory(factory)
 }
 
-fun GsonBuilder.scanInterfaceRoutes(packagePrefix: String): GsonBuilder {
-    getClassesWithPrefix(packagePrefix).forEach { clazz ->
-        listOf(*clazz.fields, *clazz.declaredFields).forEach {
-            if (it.isAnnotationPresent(GsonInterface::class.java)) {
-                val annotation = it.getAnnotation(GsonInterface::class.java)
-                val interfaceClazz = it.type
-                val implClazz = annotation.value.java
-                registerTypeAdapterFactory(InterfaceTypeAdapterFactory(interfaceClazz, implClazz))
-            }
-        }
-    }
+fun GsonBuilder.fixKotlinAnnotations(): GsonBuilder {
+    addSerializationExclusionStrategy(object : ExclusionStrategy {
+
+        override fun shouldSkipField(f: FieldAttributes?): Boolean =
+            f?.getAnnotation(Expose::class.java)?.serialize == false
+
+        override fun shouldSkipClass(p0: Class<*>?): Boolean =
+            p0?.getAnnotation(Expose::class.java)?.serialize == false
+
+    }).addDeserializationExclusionStrategy(object : ExclusionStrategy {
+
+        override fun shouldSkipField(f: FieldAttributes?): Boolean =
+            f?.getAnnotation(Expose::class.java)?.deserialize == false
+
+        override fun shouldSkipClass(clazz: Class<*>?): Boolean =
+            clazz?.getAnnotation(Expose::class.java)?.deserialize == false
+
+    }).serializeNulls()
     return this
 }

@@ -1,15 +1,12 @@
 package dev.redicloud.utils.gson
 
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 
 class InterfaceTypeAdapter<T : Any>(
-    private val implClazz: Class<*>,
-    private val serializeNulls: Boolean = true,
-    private val prettyPrinting: Boolean = true
+    private val implClazz: Class<*>
 ) : TypeAdapter<T>() {
 
     companion object {

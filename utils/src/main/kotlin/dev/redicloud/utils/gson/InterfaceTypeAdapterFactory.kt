@@ -8,17 +8,28 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.isAccessible
 
 
-class InterfaceTypeAdapterFactory(
-    private val interfaceClazz: Class<*>,
-    private val implClazz: Class<*>
-) : TypeAdapterFactory {
+class InterfaceTypeAdapterFactory : TypeAdapterFactory {
+
+    private val routes: MutableMap<Class<*>, Class<*>> = mutableMapOf()
+    private val adapter = mutableMapOf<Class<*>, InterfaceTypeAdapter<*>>()
+
+    fun register(interfaceClass: Class<*>, implClass: Class<*>) {
+        if (routes.containsKey(interfaceClass)) return
+        routes[interfaceClass] = implClass
+    }
+
     override fun <T : Any> create(
         gson: Gson,
         type: TypeToken<T>
     ): TypeAdapter<T>? {
-        if (type.rawType == interfaceClazz) {
-            return InterfaceTypeAdapter<T>(implClazz).nullSafe()
+        if (routes.containsKey(type.rawType)) {
+            return adapter.getOrPut(type.rawType) {
+                InterfaceTypeAdapter<T>(
+                    routes[type.rawType]!!
+                )
+            } as TypeAdapter<T>
         }
         return null
     }
+
 }

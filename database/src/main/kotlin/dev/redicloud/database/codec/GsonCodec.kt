@@ -1,8 +1,8 @@
 package dev.redicloud.database.codec
 
 import com.google.gson.*
+import dev.redicloud.utils.gson.addInterfaceImpl
 import dev.redicloud.utils.gson.fixKotlinAnnotations
-import dev.redicloud.utils.gson.scanInterfaceRoutes
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufInputStream
@@ -16,19 +16,10 @@ class GsonCodec : BaseCodec() {
 
     private var gson: Gson = GsonBuilder()
         .fixKotlinAnnotations()
-        .scanInterfaceRoutes("dev.redicloud")
+        .addInterfaceImpl()
         .serializeNulls()
         .setPrettyPrinting()
         .create()
-
-    fun rescanForRoutes() {
-        gson = GsonBuilder()
-            .fixKotlinAnnotations()
-            .scanInterfaceRoutes("dev.redicloud")
-            .serializeNulls()
-            .setPrettyPrinting()
-            .create()
-    }
 
     private val encoder: Encoder = Encoder { `in`: Any ->
         val out = ByteBufAllocator.DEFAULT.buffer()
