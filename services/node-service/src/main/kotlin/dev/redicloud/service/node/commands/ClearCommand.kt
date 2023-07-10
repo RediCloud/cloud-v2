@@ -14,6 +14,9 @@ class ClearCommand(private val console: Console) : CommandBase() {
         actor: ConsoleActor
     ) {
         this.console.clearScreen()
+        this.console.getScreens().filter { it.isDefault() }.forEach {
+            it.clear()
+        }
         actor.sendMessage("Your console has been cleared!")
     }
 

@@ -19,6 +19,10 @@ class History<T : Any>(val historySize: Int) {
         map.remove(key, value)
     }
 
+    fun clear() {
+        map.clear()
+    }
+
     fun subList(fromIndex: Int, toIndex: Int): List<T> {
         val f = if (fromIndex < 0) 0 else fromIndex
         val t = if (toIndex > size) size else toIndex

@@ -17,6 +17,11 @@ open class Screen(
     val history = History<String>(historySize)
     protected val queuedMessage = mutableListOf<String>()
 
+    fun clear() {
+        history.clear()
+        queuedMessage.clear()
+    }
+
     fun display() {
         val oldScreen = console.getCurrentScreen()
         console.commandManager.enableCommands()
