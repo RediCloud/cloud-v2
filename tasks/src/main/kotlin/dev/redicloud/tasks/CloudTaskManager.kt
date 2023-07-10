@@ -80,6 +80,12 @@ class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManage
         return this
     }
 
+    fun delay(duration: Duration): CloudTaskExecutorBuilder {
+        if (duration.inWholeMilliseconds < 0) throw IllegalArgumentException("Delay must be positive")
+        executors.add(AtTimeCloudExecutor(this.task!!, System.currentTimeMillis() + duration.inWholeMilliseconds))
+        return this
+    }
+
     fun period(period: Duration, maxExecutions: Int = -1): CloudTaskExecutorBuilder {
         if (period.inWholeMilliseconds < 0) throw IllegalArgumentException("Period must be positive")
         executors.add(PeriodicallyCloudTaskExecutor(this.task!!, period, maxExecutions))
