@@ -419,6 +419,16 @@ class ConfigurationTemplateCommand(
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("count", true) count: Int
     ) = runBlocking {
+        if (count != -1) {
+            if (template.maxStartedServices in 1 until count) {
+                actor.sendMessage("The minimum amount of started services cannot be higher than the maximum amount of started services!")
+                return@runBlocking
+            }
+            if (template.maxStartedServicesPerNode in 1 until count) {
+                actor.sendMessage("The minimum amount of started services cannot be higher than the maximum amount of started services per node!")
+                return@runBlocking
+            }
+        }
         template.minStartedServices = count
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage("The minimum amount of started services of the configuration template ${toConsoleValue(template.name)} was updated to ${toConsoleValue(count)}!")
@@ -431,6 +441,16 @@ class ConfigurationTemplateCommand(
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("count", true) count: Int
     ) = runBlocking {
+        if (count != -1) {
+            if (count < template.minStartedServices && template.minStartedServices > 0) {
+                actor.sendMessage("The maximum amount of started services cannot be lower than the minimum amount of started services!")
+                return@runBlocking
+            }
+            if (count < template.minStartedServicesPerNode && template.minStartedServicesPerNode > 0) {
+                actor.sendMessage("The maximum amount of started services cannot be lower than the minimum amount of started services per node!")
+                return@runBlocking
+            }
+        }
         template.maxStartedServices = count
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage("The maximum amount of started services of the configuration template ${toConsoleValue(template.name)} was updated to ${toConsoleValue(count)}!")
@@ -443,6 +463,20 @@ class ConfigurationTemplateCommand(
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("count", true) count: Int
     ) = runBlocking {
+        if (count != -1) {
+            if (template.minStartedServices in 1 until count) {
+                actor.sendMessage("The minimum amount of started services per node cannot be higher than the maximum amount of started services!")
+                return@runBlocking
+            }
+            if (template.maxStartedServicesPerNode in 1 until count) {
+                actor.sendMessage("The minimum amount of started services per node cannot be higher than the maximum amount of started services per node!")
+                return@runBlocking
+            }
+            if (template.maxStartedServices in 1 until count) {
+                actor.sendMessage("The minimum amount of started services per node cannot be higher than the maximum amount of started services!")
+                return@runBlocking
+            }
+        }
         template.minStartedServicesPerNode = count
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage("The minimum amount of started services per node of the configuration template ${toConsoleValue(template.name)} was updated to ${toConsoleValue(count)}!")
@@ -455,6 +489,20 @@ class ConfigurationTemplateCommand(
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("count", true) count: Int
     ) = runBlocking {
+        if (count != -1) {
+            if (count < template.minStartedServicesPerNode && template.minStartedServicesPerNode > 0) {
+                actor.sendMessage("The maximum amount of started services per node cannot be lower than the minimum amount of started services per node!")
+                return@runBlocking
+            }
+            if (template.maxStartedServices in 1 until count) {
+                actor.sendMessage("The maximum amount of started services per node cannot be higher than the maximum amount of started services!")
+                return@runBlocking
+            }
+            if (template.maxStartedServicesPerNode in 1 until count) {
+                actor.sendMessage("The maximum amount of started services per node cannot be higher than the maximum amount of started services per node!")
+                return@runBlocking
+            }
+        }
         template.maxStartedServicesPerNode = count
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage("The maximum amount of started services per node of the configuration template ${toConsoleValue(template.name)} was updated to ${toConsoleValue(count)}!")

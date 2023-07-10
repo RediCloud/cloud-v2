@@ -1,5 +1,6 @@
 package dev.redicloud.service.node
 
+import dev.redicloud.api.server.events.server.CloudServerDisconnectedEvent
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.cluster.file.FileNodeRepository
 import dev.redicloud.commands.api.CommandBase
@@ -109,6 +110,12 @@ class NodeService(
             .task(CloudServerStartTask(this.serverFactory, this.eventManager, this.nodeRepository, this.serverRepository))
             .event(NodeConnectEvent::class)
             .period(3.seconds)
+            .register()
+        taskManager.builder()
+            .task(CloudStartAutoStartServicesTask(this.configurationTemplateRepository, this.serverRepository, this.serverFactory, this.nodeRepository))
+            .event(CloudServerDisconnectedEvent::class)
+            .delay(2.seconds)
+            .period(5.seconds)
             .register()
         taskManager.builder()
             .task(CloudServerStopTask(this.serviceId, this.serverRepository, this.serverFactory))

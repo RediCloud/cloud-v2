@@ -14,6 +14,7 @@ data class ServerQueueInformation(
     val serviceId: ServiceId?,
     val failedStarts: FailedStarts = FailedStarts(),
     val nodeStartOrder: MutableList<ServiceId> = mutableListOf(),
+    val nodeTarget: ServiceId? = null,
     val queueTime: Long
 )
 
@@ -56,6 +57,7 @@ class FailedStarts : LinkedList<String>() {
 }
 
 fun ServerQueueInformation.isNextNode(serviceId: ServiceId): Boolean {
+    if (nodeTarget != null && nodeTarget == serviceId) return true
     return nodeStartOrder.isNotEmpty() && nodeStartOrder[0] == serviceId
 }
 

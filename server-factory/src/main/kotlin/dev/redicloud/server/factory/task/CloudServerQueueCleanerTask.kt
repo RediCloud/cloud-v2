@@ -19,7 +19,6 @@ class CloudServerQueueCleanerTask(
     companion object {
         private val logger = LogManager.logger(CloudServerQueueCleanerTask::class)
         val MAX_QUEUE_TIME = System.getProperty("redicloud.server.factory.max-queue-time", 3.minutes.inWholeMilliseconds.toString()).toLong()
-
     }
 
     override suspend fun execute(): Boolean {
@@ -40,6 +39,15 @@ class CloudServerQueueCleanerTask(
                 return@forEach
             }
 
+            if (info.serviceId != null) {
+                val node = nodeRepository.getNode(info.serviceId)
+                if (node == null || !node.connected && info.queueTime - (MAX_QUEUE_TIME/3) > 0) {
+                    logger.warning("§cNode for template ${toConsoleValue(name, false)} is not connected, cancelling server start!")
+                    serverFactory.startQueue.remove(info)
+                    return@forEach
+                }
+            }
+
             // Check if queue time is too long
             if ((System.currentTimeMillis() - info.queueTime) - MAX_QUEUE_TIME > 0) {
                 logger.warning("§cStart of template ${toConsoleValue(name, false)} took too long, cancelling server start!")
@@ -47,7 +55,7 @@ class CloudServerQueueCleanerTask(
                 return@forEach
             }
             // Check if no node is available
-            if (info.nodeStartOrder.isEmpty()) {
+            if (info.nodeStartOrder.isEmpty() && info.nodeTarget == null) {
                 logger.warning("§cNo node for template ${toConsoleValue(name, false)} available, cancelling server start!")
                 serverFactory.startQueue.remove(info)
                 return@forEach

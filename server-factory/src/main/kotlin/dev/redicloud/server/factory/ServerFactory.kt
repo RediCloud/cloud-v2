@@ -67,6 +67,8 @@ class ServerFactory(
         databaseConnection.getClient().getList("server-factory:queue:transfer")
     private val processes: MutableList<ServerProcess> = mutableListOf()
     private val logger = LogManager.logger(ServerFactory::class)
+    private val idLock = databaseConnection.getClient().getLock("server-factory:id-lock")
+    var shutdown = false
 
     init {
         CommandArgumentParser.PARSERS[ServerScreen::class] = ServerScreenParser(console)
@@ -96,7 +98,7 @@ class ServerFactory(
             val nodes = nodeRepository.getRegisteredNodes()
             info.calculateStartOrder(nodes, serverRepository)
             for (i in 1..count) {
-                val clone = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, null, info.failedStarts, info.nodeStartOrder, System.currentTimeMillis())
+                val clone = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, null, info.failedStarts, info.nodeStartOrder, null, System.currentTimeMillis())
                 startQueue.add(clone)
             }
         }
@@ -108,6 +110,12 @@ class ServerFactory(
             info.calculateStartOrder(nodes, serverRepository)
             startQueue.add(info)
         }
+
+    fun queueStart(queueInformation: ServerQueueInformation) {
+        ioScope.launch {
+            startQueue.add(queueInformation)
+        }
+    }
 
     fun queueStop(serviceId: ServiceId, force: Boolean = false) =
         ioScope.launch {
@@ -201,13 +209,12 @@ class ServerFactory(
             }
 
             // get the next id for the server and create it
-            val id = getIdForServer(configurationTemplate)
             cloudServer = if (snapshotData.versionType.proxy) {
                 serverRepository.createServer(
                     CloudProxyServer(
                         serviceId,
                         configurationTemplate,
-                        id,
+                        getIdForServer(configurationTemplate),
                         thisNode.serviceId,
                         mutableListOf(),
                         false,
@@ -221,7 +228,7 @@ class ServerFactory(
                     CloudMinecraftServer(
                         serviceId,
                         configurationTemplate,
-                        id,
+                        getIdForServer(configurationTemplate),
                         thisNode.serviceId,
                         mutableListOf(),
                         false,
@@ -331,8 +338,6 @@ class ServerFactory(
                     if (startedAmountOfTemplateOnNode >= newConfigurationTemplate.maxStartedServicesPerNode && newConfigurationTemplate.maxStartedServicesPerNode != -1) return TooMuchServicesOfTemplateOnNodeStartResult()
                 }
 
-                // get the next id for the server and create it
-                val id = getIdForServer(newConfigurationTemplate)
                 server.configurationTemplate = newConfigurationTemplate
                 server.hostNodeId = thisNode.serviceId
                 server.state = CloudServerState.PREPARING
@@ -463,33 +468,44 @@ class ServerFactory(
     /**
      * Shuts down the server factory and all running processes
      */
-    suspend fun shutdown() {
+    suspend fun shutdown(force: Boolean = false) {
+        if (!force && shutdown) return
+        shutdown = true
+        val actions = MultiAsyncAction()
         processes.toList().forEach {
-            try {
-                stopServer(it.cloudServer!!.serviceId)
-            } catch (e: Exception) {
+            actions.add {
                 try {
-                    stopServer(it.cloudServer!!.serviceId, true)
-                } catch (e1: Exception) {
-                    if (e1 is NullPointerException) return@forEach
-                    logger.severe("Error while stopping server ${it.cloudServer!!.serviceId.toName()}", e1)
+                    stopServer(it.cloudServer!!.serviceId, force)
+                } catch (e: Exception) {
+                    try {
+                        stopServer(it.cloudServer!!.serviceId, true)
+                    } catch (e1: Exception) {
+                        if (e1 is NullPointerException) return@add
+                        logger.severe("Error while stopping server ${it.cloudServer!!.serviceId.toName()}", e1)
+                    }
                 }
             }
         }
+        actions.joinAll()
     }
 
     /**
      * Gets the next id for a server with the given configuration template
      */
     private suspend fun getIdForServer(configuration: ConfigurationTemplate): Int {
-        val usedIds = serverRepository.getRegisteredServers()
-            .filter { it.configurationTemplate.name == configuration.name }
-            .map { it.id }
-        var i = 1
-        while (usedIds.contains(i)) {
-            i++
+        idLock.lock()
+        try {
+            val usedIds = serverRepository.getRegisteredServers()
+                .filter { it.configurationTemplate.name == configuration.name }
+                .map { it.id }
+            var i = 1
+            while (usedIds.contains(i)) {
+                i++
+            }
+            return i
+        }finally {
+            idLock.unlock()
         }
-        return i
     }
 
 }
