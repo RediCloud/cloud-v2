@@ -62,7 +62,7 @@ class CloudServerStopTask(
                 val stopAble = servers.filter { it.connectedPlayers.isEmpty() }
                     .filter { it.configurationTemplate.timeAfterStopUselessServer > System.currentTimeMillis() - it.currentSession()!!.startTime }
                 val global = nodeBasedServers.values.sum()
-                if (template.minStartedServices > 0 && global < template.minStartedServices) {
+                if (template.minStartedServices > 0 && global > template.minStartedServices) {
                     val countToStop = global - template.minStartedServices
                     stopAble.take(countToStop).forEach {
                         actions.add {
@@ -72,7 +72,7 @@ class CloudServerStopTask(
                     return@forEach
                 }
                 nodeBasedServers.forEach { (nodeId, count) ->
-                    if (template.minStartedServicesPerNode > 0 && count < template.minStartedServicesPerNode) {
+                    if (template.minStartedServicesPerNode > 0 && count > template.minStartedServicesPerNode) {
                         val countToStop = count - template.minStartedServicesPerNode
                         stopAble.filter { it.hostNodeId == nodeId }.take(countToStop).forEach {
                             actions.add {
