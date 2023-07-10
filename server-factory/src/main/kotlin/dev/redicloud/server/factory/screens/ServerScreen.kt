@@ -1,6 +1,6 @@
 package dev.redicloud.server.factory.screens
 
-import dev.redicloud.api.server.events.server.CloudServerDisconnectEvent
+import dev.redicloud.api.server.events.server.CloudServerDisconnectedEvent
 import dev.redicloud.console.Console
 import dev.redicloud.console.utils.Screen
 import dev.redicloud.utils.service.ServiceId
@@ -11,7 +11,7 @@ class ServerScreen(
     console: Console
 ) : Screen(console, name, mutableListOf("*"), true, 100, 100) {
 
-    private val listener = console.eventManager?.listen<CloudServerDisconnectEvent> {
+    private val listener = console.eventManager?.listen<CloudServerDisconnectedEvent> {
         if (it.serviceId == serviceId) {
             destroy()
         }

@@ -1,7 +1,7 @@
 package dev.redicloud.service.minecraft.listener
 
 import dev.redicloud.api.server.events.server.CloudServerConnectedEvent
-import dev.redicloud.api.server.events.server.CloudServerDisconnectEvent
+import dev.redicloud.api.server.events.server.CloudServerDisconnectedEvent
 import dev.redicloud.service.minecraft.ProxyServerService
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.service.ServiceType
@@ -20,7 +20,7 @@ class CloudServerListener(
         }
     }
 
-    private val onServerDisconnectEvent = proxyServerService.eventManager.listen<CloudServerDisconnectEvent> {
+    private val onServerDisconnectEvent = proxyServerService.eventManager.listen<CloudServerDisconnectedEvent> {
         defaultScope.launch {
             if (it.serviceId.type != ServiceType.MINECRAFT_SERVER) return@launch
             val server = proxyServerService.serverRepository.getMinecraftServer(it.serviceId)

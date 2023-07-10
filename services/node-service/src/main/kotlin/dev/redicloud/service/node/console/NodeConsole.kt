@@ -3,6 +3,7 @@ package dev.redicloud.service.node.console
 import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.api.server.events.server.CloudServerConnectedEvent
 import dev.redicloud.api.server.events.server.CloudServerDeleteEvent
+import dev.redicloud.api.server.events.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.server.events.server.CloudServerTransferredEvent
 import dev.redicloud.commands.api.CommandArgumentParser
 import dev.redicloud.console.Console
@@ -18,7 +19,6 @@ import dev.redicloud.service.base.events.node.NodeConnectEvent
 import dev.redicloud.service.base.events.node.NodeDisconnectEvent
 import dev.redicloud.service.base.events.node.NodeMasterChangedEvent
 import dev.redicloud.service.base.events.node.NodeSuspendedEvent
-import dev.redicloud.service.base.events.server.CloudServerDisconnectedEvent
 import dev.redicloud.service.base.events.server.CloudServerStateChangeEvent
 import kotlinx.coroutines.runBlocking
 
