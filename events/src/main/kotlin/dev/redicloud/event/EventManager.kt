@@ -86,9 +86,14 @@ class EventManager(val identifier: String, val packetManager: PacketManager?) {
     }
 
     fun unregister(listener: Any) {
-        val objClass = listener::class
-        handlers.values.forEach { list ->
-            list.removeIf { it.listener == listener }
+        lock.lock()
+        try {
+            val objClass = listener::class
+            handlers.values.forEach { list ->
+                list.removeIf { it.listener == listener }
+            }
+        }finally {
+            lock.unlock()
         }
     }
 
