@@ -118,7 +118,7 @@ class NodeService(
             .period(5.seconds)
             .register()
         taskManager.builder()
-            .task(CloudServerStopTask(this.serviceId, this.serverRepository, this.serverFactory))
+            .task(CloudServerStopTask(this.serviceId, this.serverRepository, this.serverFactory, this.configurationTemplateRepository, this.nodeRepository))
             .period(2.seconds)
             .register()
         taskManager.builder()
