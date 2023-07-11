@@ -1,20 +1,13 @@
 package dev.redicloud.utils.gson
 
-import com.google.gson.GsonBuilder
+import com.google.gson.Gson
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 
 class InterfaceTypeAdapter<T : Any>(
-    private val implClazz: Class<*>
+    private val implClazz: Class<*>, private val gson: Gson
 ) : TypeAdapter<T>() {
-
-    companion object {
-        private val gson = GsonBuilder()
-            .fixKotlinAnnotations()
-            .serializeNulls()
-            .create()
-    }
 
     override fun write(out: JsonWriter, value: T) {
         out.beginObject()

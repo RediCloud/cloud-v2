@@ -11,37 +11,38 @@ import org.redisson.client.codec.BaseCodec
 import org.redisson.client.handler.State
 import org.redisson.client.protocol.Decoder
 import org.redisson.client.protocol.Encoder
+import java.nio.charset.Charset
 
 class GsonCodec : BaseCodec() {
 
     private var gson: Gson = GsonBuilder()
-        .fixKotlinAnnotations()
         .addInterfaceImpl()
+        .fixKotlinAnnotations()
         .serializeNulls()
         .setPrettyPrinting()
         .create()
 
+    private val charset: Charset = Charsets.UTF_8
+
     private val encoder: Encoder = Encoder { `in`: Any ->
         val out = ByteBufAllocator.DEFAULT.buffer()
         try {
-            val os = ByteBufOutputStream(out)
-            val p = GsonPackage(`in`.javaClass.name, gson.toJson(`in`))
-            os.writeUTF(gson.toJson(p))
-            return@Encoder os.buffer()
+            val p = GsonPackage(`in`.javaClass.name, JsonParser.parseString(gson.toJson(`in`)))
+            out.writeCharSequence(gson.toJson(p), charset)
+            return@Encoder out
         } catch (e: Exception) {
             out.release()
             throw e
         }
     }
-    private val decoder: Decoder<Any> = Decoder { buf: ByteBuf?, _: State? ->
-        ByteBufInputStream(buf).use { stream ->
-            try {
-                val data = stream.readUTF()
-                val p = gson.fromJson(data, GsonPackage::class.java)
-                return@Decoder gson.fromJson(p.json, Class.forName(p.clazz))
-            }catch (e: ClassNotFoundException) {
-                return@Decoder null
-            }
+
+    private val decoder: Decoder<Any> = Decoder { buf: ByteBuf, _: State ->
+        try {
+            val str = buf.toString(charset)
+            val p = gson.fromJson(str, GsonPackage::class.java)
+            return@Decoder gson.fromJson(p.json, Class.forName(p.clazz))
+        }catch (e: ClassNotFoundException) {
+            return@Decoder null
         }
     }
 
@@ -53,5 +54,5 @@ class GsonCodec : BaseCodec() {
 
 data class GsonPackage(
     val clazz: String,
-    val json: String
+    val json: JsonElement
 )

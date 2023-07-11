@@ -25,7 +25,8 @@ class InterfaceTypeAdapterFactory : TypeAdapterFactory {
         if (routes.containsKey(type.rawType)) {
             return adapter.getOrPut(type.rawType) {
                 InterfaceTypeAdapter<T>(
-                    routes[type.rawType]!!
+                    routes[type.rawType]!!,
+                    gson
                 )
             } as TypeAdapter<T>
         }
