@@ -70,6 +70,7 @@ open class Console(
     @OptIn(DelicateCoroutinesApi::class)
     private val scope = CoroutineScope(newSingleThreadContext("console-scope"))
     private val animationScope = CoroutineScope(Dispatchers.Default)
+    private var logRecordDispatcher: ThreadRecordDispatcher? = null
 
     init {
         ansiSupported = AnsiInstaller().install()
@@ -112,7 +113,8 @@ open class Console(
         LOG_FOLDER.createIfNotExists()
         clearHandlers(rootLogger)
         rootLogger.level = logLevel
-        rootLogger.logRecordDispatcher = ThreadRecordDispatcher(rootLogger)
+        logRecordDispatcher = ThreadRecordDispatcher(rootLogger)
+        rootLogger.logRecordDispatcher = logRecordDispatcher
         rootLogger.addHandler(AcceptingLogHandler
             {  logRecord, s -> writeLog(logRecord, s) }
             .withFormatter(consoleFormatter))
@@ -466,6 +468,7 @@ open class Console(
         cancelAnimations()
         this.scope.cancel()
         this.animationScope.cancel()
+        runBlocking { logRecordDispatcher?.shutdown() }
         terminal.flush()
         terminal.close()
         if (uninstallAnsiOnClose) AnsiConsole.systemUninstall()
