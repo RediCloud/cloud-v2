@@ -139,12 +139,12 @@ class FileTemplateCommand(
         actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} no longer inherits from ${toConsoleValue(inherit.getDisplayName())}!")
     }
 
-    @CommandSubPath("edit <name> name <newName>")
+    @CommandSubPath("edit <name> name <new-name>")
     @CommandDescription("Change the name of a file template")
     fun editName(
         actor: ConsoleActor,
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate,
-        @CommandParameter("newName") newName: String
+        @CommandParameter("new-name") newName: String
     ) = defaultScope.launch {
         if (fileTemplateRepository.existsTemplate(newName, template.prefix)) {
             actor.sendMessage("§cA file template with the name ${toConsoleValue(newName)} and prefix ${toConsoleValue(template.prefix)} already exists!")
