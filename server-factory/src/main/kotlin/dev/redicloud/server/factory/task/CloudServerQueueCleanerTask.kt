@@ -85,7 +85,6 @@ class CloudServerQueueCleanerTask(
         serverFactory.stopQueue.forEach {
             val server = serverRepository.getServer<CloudServer>(it)
             if (server == null) {
-                logger.warning("§cServer ${toConsoleValue(it.toName(), false)} does not exist, cancelling server stop!")
                 serverFactory.stopQueue.remove(it)
                 return@forEach
             }

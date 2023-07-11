@@ -48,21 +48,24 @@ class CloudServerStopTask(
             val servers = serverRepository.getConnectedServers()
                 .filter { it.state == CloudServerState.RUNNING }
                 .filter { !it.hidden }
+                .filter { it.currentSession() != null }
                 .filter { it.connected }
 
             configurationTemplateRepository.getTemplates().forEach { template ->
+                val templateBasedServers = servers.filter { it.configurationTemplate.uniqueId == template.uniqueId }
                 val nodeBasedServers = mutableMapOf<ServiceId, Int>()
-                servers.filter { it.configurationTemplate.uniqueId == template.uniqueId }.forEach {
+                templateBasedServers.forEach {
                     if (nodeBasedServers.containsKey(it.hostNodeId)) {
                         nodeBasedServers[it.hostNodeId] = nodeBasedServers[it.hostNodeId]!! + 1
                     } else {
                         nodeBasedServers[it.hostNodeId] = 1
                     }
                 }
-                val stopAble = servers.filter { it.connectedPlayers.isEmpty() }
-                    .filter { it.configurationTemplate.timeAfterStopUselessServer > System.currentTimeMillis() - it.currentSession()!!.startTime }
+                val stopAble = templateBasedServers.filter { it.connectedPlayers.isEmpty() }
+                    .filter { template.timeAfterStopUselessServer < System.currentTimeMillis() - it.currentSession()!!.startTime }
                 val global = nodeBasedServers.values.sum()
-                if (template.minStartedServices > 0 && global > template.minStartedServices) {
+
+                if (template.minStartedServices in 1 until global) {
                     val countToStop = global - template.minStartedServices
                     stopAble.take(countToStop).forEach {
                         actions.add {
@@ -72,7 +75,7 @@ class CloudServerStopTask(
                     return@forEach
                 }
                 nodeBasedServers.forEach { (nodeId, count) ->
-                    if (template.minStartedServicesPerNode > 0 && count > template.minStartedServicesPerNode) {
+                    if (template.minStartedServicesPerNode in 1 until count) {
                         val countToStop = count - template.minStartedServicesPerNode
                         stopAble.filter { it.hostNodeId == nodeId }.take(countToStop).forEach {
                             actions.add {
