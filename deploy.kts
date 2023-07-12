@@ -29,6 +29,7 @@ outPutDirs.forEach {
 
 fun createVersionProps(): File {
     val props = File("src/main/resources/redicloud-version.properties")
+    if (!props.parentFile.exists()) props.parentFile.mkdirs()
     if (props.exists()) props.delete()
     props.createNewFile()
     val writer = FileWriter(props)
