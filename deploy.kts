@@ -35,7 +35,7 @@ fun createVersionProps(): File {
     val writer = FileWriter(props)
     writer.write(
         "version=2.0.0-SNAPSHOT\n" +
-        "buildId=${if(System.getenv("BUILD_NUMBER") == null) "local" else System.getenv("BUILD_ID")}"
+        "buildId=${System.getenv("BUILD_NUMBER") ?: "local"}"
     )
     writer.close()
     return props
