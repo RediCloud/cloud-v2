@@ -3,7 +3,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-!**/resources/redicloud-version.properties
+redicloud-version.properties
 
 ### IntelliJ IDEA ###
 .idea/
