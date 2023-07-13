@@ -2,10 +2,12 @@ package dev.redicloud.repository.server.version
 
 import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.logging.LogManager
+import dev.redicloud.utils.BUILD_NUMBER
 import dev.redicloud.utils.CLOUD_VERSION
 import dev.redicloud.utils.ConfigurationFileEditor
 import dev.redicloud.utils.ProcessConfiguration
 import java.io.File
+import java.net.URL
 import java.util.*
 
 
@@ -37,7 +39,18 @@ class CloudServerVersionType(
     }
 
     fun getConnectorFile(): File {
-        return File(connectorFolder, connectorPluginName.replace("%cloud_version%", CLOUD_VERSION))
+        return File(connectorFolder, connectorPluginName
+            .replace("%cloud_version%", CLOUD_VERSION)
+            .replace("%build_number%", BUILD_NUMBER)
+        )
+    }
+
+    fun getConnectorURL(): URL {
+        return URL(connectorDownloadUrl
+            ?.replace("%cloud_version%", CLOUD_VERSION)
+            ?.replace("%build_number%", BUILD_NUMBER)
+            ?: throw IllegalStateException("Connector download url is null!")
+        )
     }
 
     fun isUnknown(): Boolean = name.lowercase() == "unknown"

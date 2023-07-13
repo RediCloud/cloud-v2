@@ -11,6 +11,7 @@ import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.gson
 import java.util.*
+import java.util.concurrent.locks.Lock
 import java.util.logging.Level
 import kotlin.time.Duration.Companion.minutes
 
@@ -19,11 +20,13 @@ class CloudServerVersionTypeRepository(
     private val console: Console?
 ) : DatabaseBucketRepository<CloudServerVersionType>(databaseConnection, "server-version-types") {
 
+    private val locks = mutableMapOf<UUID, Lock>()
+
     companion object {
         val LOGGER = LogManager.logger(CloudServerVersionTypeRepository::class)
         val DEFAULT_TYPES_CACHE = EasyCache<List<CloudServerVersionType>, Unit>(1.minutes) {
             val json =
-                khttp.get("${getRawUserContentUrl()}/api-files/server-version-types.json").text
+                khttp.get("${getAPIUrl()}/api-files/server-version-types.json").text
             val type = object : TypeToken<ArrayList<CloudServerVersionType>>() {}.type
             val list: MutableList<CloudServerVersionType> = gson.fromJson(json, type)
             if (list.none { it.isUnknown() }) {
@@ -42,6 +45,10 @@ class CloudServerVersionTypeRepository(
             }
             list.toList()
         }
+    }
+
+    internal fun getLock(type: CloudServerVersionType): Lock {
+        return locks.getOrPut(type.uniqueId) { java.util.concurrent.locks.ReentrantLock() }
     }
 
     suspend fun getType(name: String) = getTypes().firstOrNull { it.name.lowercase() == name.lowercase() }
@@ -90,10 +97,11 @@ class CloudServerVersionTypeRepository(
             if (console == null) Level.FINE else Level.INFO,
             "Downloading connector for ${serverVersionType.connectorPluginName}..."
         )
+        getLock(serverVersionType).lock()
         try {
-            if (!isValidUrl(serverVersionType.connectorDownloadUrl)) throw IllegalStateException("Connector download url of ${serverVersionType.connectorPluginName} is null!")
-            if (connectorFile.exists()) connectorFile.delete()
-            khttp.get(serverVersionType.connectorDownloadUrl!!).content.let {
+            if (!serverVersionType.getConnectorURL().isValid()) throw IllegalStateException("Connector download url of ${serverVersionType.connectorPluginName} is null!")
+            khttp.get(serverVersionType.getConnectorURL().toExternalForm()).content.let {
+                if (connectorFile.exists()) connectorFile.delete()
                 connectorFile.createNewFile()
                 connectorFile.writeBytes(it)
             }
@@ -106,6 +114,7 @@ class CloudServerVersionTypeRepository(
             error = true
         } finally {
             downloaded = true
+            getLock(serverVersionType).unlock()
         }
     }
 

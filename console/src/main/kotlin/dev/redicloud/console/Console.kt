@@ -1,6 +1,5 @@
 package dev.redicloud.console
 
-import dev.redicloud.commands.api.CommandArgumentParser
 import dev.redicloud.commands.api.CommandResponseType
 import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.commands.ConsoleCommandManager
@@ -139,7 +138,7 @@ open class Console(
         writeLine("§fA redis based cluster cloud system for Minecraft")
         writeLine("")
         writeLine("")
-        writeLine("§8» §fVersion§8: %hc%$CLOUD_VERSION §8| §fBuild§8: %hc%${BUILD_ID}")
+        writeLine("§8» §fVersion§8: %hc%$CLOUD_VERSION §8| §fBuild§8: %hc%${BUILD_NUMBER}")
         writeLine("§8» §fDiscord§8: %hc%https://discord.gg/g2HV52VV4G")
         writeLine("")
         writeLine("")

@@ -19,6 +19,7 @@ fun main(args: Array<String>) {
         }catch (e: Exception) {
             println("Failed to start node service!")
             e.printStackTrace()
+            Thread.sleep(1000)
             exitProcess(1)
         }
     }

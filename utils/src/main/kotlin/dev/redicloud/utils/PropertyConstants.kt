@@ -3,7 +3,7 @@ package dev.redicloud.utils
 import java.util.*
 
 val CLOUD_VERSION: String = properties().getProperty("version", "unknown")
-val BUILD_ID: String = properties().getProperty("buildId", "unknown")
+val BUILD_NUMBER: String = properties().getProperty("build_number", "unknown")
 val GIT: String = properties().getProperty("git", "unknown")
 
 val USER_NAME: String = System.getProperty("user.name")
