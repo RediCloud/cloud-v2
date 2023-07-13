@@ -179,7 +179,7 @@ class CloudServerVersionTypeCommand(
                 "urldownloader",
                 false,
                 false,
-                "redicloud-$name-%cloud_version%.jar",
+                "redicloud-$name-%cloud_version%-%build_number%.jar",
                 null,
                 "plugins"
             )

@@ -26,7 +26,7 @@ class CloudServerVersionUpdateTask(
             val handle = IServerVersionHandler.getHandler(type)
             if (handle.isUpdateAvailable(it)) {
                 logger.info("Updating server version ${toConsoleValue(it.getDisplayName())}...")
-                handle.update(it)
+                handle.update(it, type)
             }
         }
 

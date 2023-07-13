@@ -44,32 +44,37 @@ class FileCopier(
 
     suspend fun copyConnector() {
         logger.fine("Copying connector for $serviceId")
-        CONNECTORS_FOLDER.createIfNotExists()
-        val connectorFile = File(CONNECTORS_FOLDER.getFile(), snapshot.versionType.connectorPluginName.replace("%cloud_version%", CLOUD_VERSION))
-        if (!connectorFile.exists()) {
-            connectorFile.createNewFile()
-            if (snapshot.versionType.connectorDownloadUrl == null) {
-                logger.warning("Connector download url for ${snapshot.versionType.name} is not set! The server will not connect to the cloud cluster!")
-                logger.warning("You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'")
-                return
-            }
-            try {
-                serverVersionTypeRepository.downloadConnector(snapshot.versionType)
-                if (!connectorFile.exists()) {
-                    logger.warning("Connector file for ${snapshot.versionType.name} does not exist! The server will not connect to the cloud cluster!")
-                    logger.warning("You can set the connector file in the server version type settings with: 'svt edit <name> connector jar <connector>'")
+        val lock = serverVersionTypeRepository.getLock(snapshot.versionType)
+        lock.lock()
+        try {
+            CONNECTORS_FOLDER.createIfNotExists()
+            val connectorFile = snapshot.versionType.getConnectorFile(true)
+            if (!connectorFile.exists()) {
+                if (snapshot.versionType.connectorDownloadUrl == null) {
+                    logger.warning("Connector download url for ${snapshot.versionType.name} is not set! The server will not connect to the cloud cluster!")
+                    logger.warning("You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'")
                     return
                 }
-            }catch (e: Exception) {
-                logger.warning("Failed to download connector for ${snapshot.versionType.name} from ${snapshot.versionType.connectorDownloadUrl}", e)
-                logger.warning("The server will not connect to the cloud cluster!")
-                logger.warning("You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'")
-                return
+                try {
+                    serverVersionTypeRepository.downloadConnector(snapshot.versionType, lock = false)
+                    if (!connectorFile.exists()) {
+                        logger.warning("Connector file for ${snapshot.versionType.name} does not exist! The server will not connect to the cloud cluster!")
+                        logger.warning("You can set the connector file in the server version type settings with: 'svt edit <name> connector jar <connector>'")
+                        return
+                    }
+                }catch (e: Exception) {
+                    logger.warning("Failed to download connector for ${snapshot.versionType.name} from ${snapshot.versionType.getConnectorURL().toExternalForm()}", e)
+                    logger.warning("The server will not connect to the cloud cluster!")
+                    logger.warning("You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'")
+                    return
+                }
             }
+            val pluginFolder = File(workDirectory, snapshot.versionType.connectorFolder)
+            if (!pluginFolder.exists()) pluginFolder.mkdirs()
+            connectorFile.copyTo(File(pluginFolder, connectorFile.name), overwrite = true)
+        }finally {
+            lock.unlock()
         }
-        val pluginFolder = File(workDirectory, snapshot.versionType.connectorFolder)
-        if (!pluginFolder.exists()) pluginFolder.mkdirs()
-        connectorFile.copyTo(File(pluginFolder, connectorFile.name), overwrite = true)
     }
 
     /**

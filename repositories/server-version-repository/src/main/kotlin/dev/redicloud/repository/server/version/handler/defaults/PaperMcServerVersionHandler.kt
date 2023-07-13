@@ -8,6 +8,7 @@ import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
+import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.requester.PaperMcApiRequester
 import dev.redicloud.repository.server.version.utils.ServerVersion
@@ -181,12 +182,4 @@ class PaperMcServerVersionHandler(
             ?: throw NullPointerException("Cant find server version type ${version.typeId}")
         return requester.getBuilds(type, mcVersion).map { it.toString() }
     }
-
-
-    override suspend fun update(version: CloudServerVersion): File {
-        download(version, true)
-        if (isPatchVersion(version)) patch(version)
-        return getFolder(version)
-    }
-
 }

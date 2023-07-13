@@ -9,6 +9,7 @@ import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
+import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
@@ -110,9 +111,10 @@ open class URLServerVersionHandler(
 
     override suspend fun getBuilds(version: CloudServerVersion, mcVersion: ServerVersion): List<String> = emptyList()
 
-    override suspend fun update(version: CloudServerVersion): File {
+    override suspend fun update(version: CloudServerVersion, versionType: CloudServerVersionType): File {
         download(version, true)
         if (isPatchVersion(version)) patch(version)
+        serverVersionTypeRepository.downloadConnector(versionType)
         return getFolder(version)
     }
 

@@ -12,6 +12,7 @@ import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.gson
 import java.util.*
 import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
 import kotlin.time.Duration.Companion.minutes
 
@@ -20,7 +21,7 @@ class CloudServerVersionTypeRepository(
     private val console: Console?
 ) : DatabaseBucketRepository<CloudServerVersionType>(databaseConnection, "server-version-types") {
 
-    private val locks = mutableMapOf<UUID, Lock>()
+    private val locks = mutableMapOf<UUID, ReentrantLock>()
 
     companion object {
         val LOGGER = LogManager.logger(CloudServerVersionTypeRepository::class)
@@ -47,7 +48,7 @@ class CloudServerVersionTypeRepository(
         }
     }
 
-    internal fun getLock(type: CloudServerVersionType): Lock {
+    fun getLock(type: CloudServerVersionType): ReentrantLock {
         return locks.getOrPut(type.uniqueId) { java.util.concurrent.locks.ReentrantLock() }
     }
 
@@ -69,8 +70,8 @@ class CloudServerVersionTypeRepository(
 
     suspend fun getDefaultTypes(): List<CloudServerVersionType> = DEFAULT_TYPES_CACHE.get() ?: emptyList()
 
-    suspend fun downloadConnector(serverVersionType: CloudServerVersionType, force: Boolean = false) {
-        val connectorFile = serverVersionType.getConnectorFile()
+    suspend fun downloadConnector(serverVersionType: CloudServerVersionType, force: Boolean = false, lock: Boolean = true) {
+        val connectorFile = serverVersionType.getConnectorFile(true)
         if (connectorFile.exists() && !force) return
         var canceled = false
         var downloaded = false
@@ -84,9 +85,9 @@ class CloudServerVersionTypeRepository(
                     null
                 } else if (downloaded) {
                     canceled = true
-                    "Downloading connector %tc%${toConsoleValue(connectorFile.name)}§8: ${if (error) "§4✘" else "§2✓"}"
+                    "Downloading connector ${toConsoleValue(connectorFile.name)}§8: ${if (error) "§4✘" else "§2✓"}"
                 } else {
-                    "Downloading connector %tc%${toConsoleValue(connectorFile.name)}§8: %tc%%loading%"
+                    "Downloading connector ${toConsoleValue(connectorFile.name)}§8: %tc%%loading%"
                 }
             }
         } else {
@@ -94,10 +95,10 @@ class CloudServerVersionTypeRepository(
         }
         console?.startAnimation(animation!!)
         LOGGER.log(
-            if (console == null) Level.FINE else Level.INFO,
-            "Downloading connector for ${serverVersionType.connectorPluginName}..."
+            if (console == null) Level.INFO else Level.FINE,
+            "Downloading connector for ${toConsoleValue(connectorFile.name)}..."
         )
-        getLock(serverVersionType).lock()
+        if (lock) getLock(serverVersionType).lock()
         try {
             if (!serverVersionType.getConnectorURL().isValid()) throw IllegalStateException("Connector download url of ${serverVersionType.connectorPluginName} is null!")
             khttp.get(serverVersionType.getConnectorURL().toExternalForm()).content.let {
@@ -107,14 +108,14 @@ class CloudServerVersionTypeRepository(
             }
             LOGGER.log(
                 if (console == null) Level.FINE else Level.INFO,
-                "Successfully downloaded connector for ${serverVersionType.connectorPluginName}!"
+                "Successfully downloaded connector for ${toConsoleValue(connectorFile.name)}!"
             )
         } catch (e: Exception) {
-            LOGGER.severe("Failed to download connector for ${serverVersionType.connectorPluginName}!", e)
+            LOGGER.severe("§cFailed to download connector for ${toConsoleValue(connectorFile.name, false)}!", e)
             error = true
         } finally {
             downloaded = true
-            getLock(serverVersionType).unlock()
+            if (lock) getLock(serverVersionType).unlock()
         }
     }
 
@@ -130,7 +131,7 @@ class CloudServerVersionTypeRepository(
                     if (it.typeId == current.uniqueId) {
                         if (current.defaultFiles != it.defaultFiles) {
                             val handler = IServerVersionHandler.getHandler(current)
-                            handler.update(it)
+                            handler.update(it, onlineType)
                         }
                     }
                 }

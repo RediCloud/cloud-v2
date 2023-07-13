@@ -40,7 +40,7 @@ interface IServerVersionHandler {
 
     suspend fun getBuilds(version: CloudServerVersion, mcVersion: ServerVersion): List<String>
 
-    suspend fun update(version: CloudServerVersion): File
+    suspend fun update(version: CloudServerVersion, versionType: CloudServerVersionType): File
 
     suspend fun patch(version: CloudServerVersion)
 

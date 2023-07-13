@@ -2,10 +2,7 @@ package dev.redicloud.repository.server.version
 
 import dev.redicloud.console.commands.toConsoleValue
 import dev.redicloud.logging.LogManager
-import dev.redicloud.utils.BUILD_NUMBER
-import dev.redicloud.utils.CLOUD_VERSION
-import dev.redicloud.utils.ConfigurationFileEditor
-import dev.redicloud.utils.ProcessConfiguration
+import dev.redicloud.utils.*
 import java.io.File
 import java.net.URL
 import java.util.*
@@ -38,11 +35,18 @@ class CloudServerVersionType(
         private val logger = LogManager.Companion.logger(CloudServerVersionType::class)
     }
 
-    fun getConnectorFile(): File {
-        return File(connectorFolder, connectorPluginName
-            .replace("%cloud_version%", CLOUD_VERSION)
-            .replace("%build_number%", BUILD_NUMBER)
-        )
+    fun getConnectorFile(nodeFolder: Boolean): File {
+        return if (nodeFolder) {
+            File(CONNECTORS_FOLDER.getFile(), connectorPluginName
+                .replace("%cloud_version%", CLOUD_VERSION)
+                .replace("%build_number%", BUILD_NUMBER)
+            )
+        }else {
+            File(connectorFolder, connectorPluginName
+                .replace("%cloud_version%", CLOUD_VERSION)
+                .replace("%build_number%", BUILD_NUMBER)
+            )
+        }
     }
 
     fun getConnectorURL(): URL {
