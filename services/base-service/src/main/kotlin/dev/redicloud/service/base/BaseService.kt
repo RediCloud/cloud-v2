@@ -34,6 +34,7 @@ import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.tasks.CloudTaskManager
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.ioScope
+import dev.redicloud.utils.loadProperties
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.cancel
@@ -71,6 +72,7 @@ abstract class BaseService(
 
     init {
         runBlocking {
+            loadProperties(Thread.currentThread().contextClassLoader)
             ServerVersion.loadIfNotLoaded()
         }
         databaseConnection = if (_databaseConnection != null && _databaseConnection.isConnected()) {

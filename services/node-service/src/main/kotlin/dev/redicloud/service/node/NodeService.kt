@@ -26,6 +26,7 @@ import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
 import dev.redicloud.service.node.tasks.metrics.MetricsTask
 import dev.redicloud.utils.TEMP_FOLDER
+import dev.redicloud.utils.loadProperties
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
