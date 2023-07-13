@@ -1,0 +1,1 @@
+java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED -Dredicloud.task.node-ping.disable=true -Dredicloud.skip.animation=true -Dredicloud.logging.level=INFO -jar redicloud-node-service-2.0.0-SNAPSHOT.jar
