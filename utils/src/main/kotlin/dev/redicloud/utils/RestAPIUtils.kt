@@ -1,7 +1,7 @@
 package dev.redicloud.utils
 
 fun getAPIUrl(): String {
-    return "https://api.redicloud.dev/build/CloudV2_Build/$BUILD_NUMBER"
+    return "https://api.redicloud.dev/build/$PROJECT_INFO/$BUILD_NUMBER"
 }
 
 suspend fun getAPIUrlOrFallback(): String {

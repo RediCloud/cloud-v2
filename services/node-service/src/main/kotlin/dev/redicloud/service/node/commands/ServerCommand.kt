@@ -133,7 +133,7 @@ class ServerCommand(
         val servers = mutableListOf<CloudServer>()
         if (server == "*") {
             serverRepository.getRegisteredServers().forEach {
-                if (it.state == CloudServerState.STOPPING || it.state == CloudServerState.STOPPED) return@forEach
+                if (it.state == CloudServerState.STOPPING && force != true || it.state == CloudServerState.STOPPED) return@forEach
                 servers.add(it)
             }
             if (servers.isEmpty()) {
@@ -148,7 +148,7 @@ class ServerCommand(
         } else if (server.endsWith("*")) {
             val name = server.substring(0, server.length - 1)
             serverRepository.getRegisteredServers().forEach {
-                if (it.state == CloudServerState.STOPPING || it.state == CloudServerState.STOPPED) return@forEach
+                if (it.state == CloudServerState.STOPPING && force != true || it.state == CloudServerState.STOPPED) return@forEach
                 if (it.name.lowercase().startsWith(name.lowercase())) {
                     servers.add(it)
                 }
@@ -167,7 +167,7 @@ class ServerCommand(
             names.forEach {
                 val name = it.trim()
                 serverRepository.getRegisteredServers().forEach server@{ server ->
-                    if (server.state == CloudServerState.STOPPING || server.state == CloudServerState.STOPPED) return@server
+                    if (server.state == CloudServerState.STOPPING && force != true || server.state == CloudServerState.STOPPED) return@server
                     if (server.name.lowercase() == name.lowercase()) {
                         servers.add(server)
                     }
@@ -180,7 +180,7 @@ class ServerCommand(
             return@launch
         } else {
             serverRepository.getRegisteredServers().forEach {
-                if (it.state == CloudServerState.STOPPING || it.state == CloudServerState.STOPPED) return@forEach
+                if (it.state == CloudServerState.STOPPING && force != true || it.state == CloudServerState.STOPPED) return@forEach
                 if (it.name.lowercase() == server.lowercase()) {
                     servers.add(it)
                 }

@@ -15,7 +15,7 @@ import java.nio.charset.Charset
 
 class GsonCodec : BaseCodec() {
 
-    private var gson: Gson = GsonBuilder()
+    private val gson: Gson = GsonBuilder()
         .addInterfaceImpl()
         .fixKotlinAnnotations()
         .serializeNulls()

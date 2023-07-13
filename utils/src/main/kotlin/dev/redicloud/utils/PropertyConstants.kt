@@ -5,6 +5,7 @@ import java.util.*
 val CLOUD_VERSION: String = properties().getProperty("version", "unknown")
 val BUILD_NUMBER: String = properties().getProperty("build_number", "unknown")
 val GIT: String = properties().getProperty("git", "unknown")
+val PROJECT_INFO: String = properties().getProperty("project_info", "CloudV2_Build")
 
 val USER_NAME: String = System.getProperty("user.name")
 

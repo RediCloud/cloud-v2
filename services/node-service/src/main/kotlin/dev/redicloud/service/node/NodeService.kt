@@ -24,6 +24,7 @@ import dev.redicloud.service.node.repository.template.file.NodeFileTemplateRepos
 import dev.redicloud.service.node.tasks.node.NodeChooseMasterTask
 import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
+import dev.redicloud.service.node.tasks.metrics.MetricsTask
 import dev.redicloud.utils.TEMP_FOLDER
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.minutes
@@ -140,6 +141,11 @@ class NodeService(
             .task(CloudServerVersionUpdateTask(this.serverVersionRepository, this.serverVersionTypeRepository))
             .period(5.minutes)
             .instant()
+            .register()
+        taskManager.builder()
+            .task(MetricsTask(this.clusterConfiguration, this.serviceId, this.playerRepository, this.serverRepository))
+            .delay(55.seconds)
+            .period(5.minutes)
             .register()
     }
 

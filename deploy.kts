@@ -24,6 +24,7 @@ val props = createVersionProps()
 outPutDirs.forEach {
     val targetFile = File(it, "redicloud-version.properties")
     if (targetFile.exists()) targetFile.delete()
+    targetFile.createNewFile()
     targetFile.writeBytes(props.readBytes())
 }
 
@@ -36,7 +37,8 @@ fun createVersionProps(): File {
     writer.write(
         "version=2.0.0-SNAPSHOT\n" +
         "build_number=${System.getenv("BUILD_NUMBER") ?: "local"}\n" +
-        "git=${System.getenv("BUILD_VCS_NUMBER") ?: "local"}"
+        "git=${System.getenv("BUILD_VCS_NUMBER") ?: "local"}\n" +
+        "project_info=${System.getenv("PROJECT_INFO") ?: "CloudV2_Build"}"
     )
     writer.close()
     return props
