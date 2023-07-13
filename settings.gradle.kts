@@ -55,6 +55,9 @@ findProject(":connectors:bukkit-connector")?.name = "bukkit-connector"
 include("connectors:velocity-connector")
 findProject(":connectors:velocity-connector")?.name = "velocity-connector"
 
+include("connectors:bungeecord-connector")
+findProject(":connectors:bungeecord-connector")?.name = "bungeecord-connector"
+
 include("services:minecraft-server-service")
 findProject(":services:minecraft-server-service")?.name = "minecraft-server-service"
 
