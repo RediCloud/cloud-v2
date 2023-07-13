@@ -145,6 +145,7 @@ class NodeService(
             .register()
         taskManager.builder()
             .task(MetricsTask(this.clusterConfiguration, this.serviceId, this.playerRepository, this.serverRepository))
+            .instant()
             .delay(55.seconds)
             .period(5.minutes)
             .register()
