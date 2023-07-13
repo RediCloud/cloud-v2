@@ -35,7 +35,6 @@ class VelocityConnector(
     }
 
     override fun registerServer(server: CloudMinecraftServer) {
-        if (server.serviceId.type != ServiceType.MINECRAFT_SERVER) return
         val session = server.currentSession()
             ?: throw IllegalStateException("Server ${serviceId.toName()} is connected but has no active session?")
         val serverInfo = ServerInfo(
@@ -43,14 +42,13 @@ class VelocityConnector(
             InetSocketAddress(
                 session.ipAddress,
                 server.port
-            )
+            ),
         )
         registered[server.serviceId] = serverInfo
         proxyServer.registerServer(serverInfo)
     }
 
     override fun unregisterServer(server: CloudMinecraftServer) {
-        if (server.serviceId.type != ServiceType.MINECRAFT_SERVER) return
         val serverInfo = registered.remove(server.serviceId) ?: return
         proxyServer.unregisterServer(serverInfo)
     }
