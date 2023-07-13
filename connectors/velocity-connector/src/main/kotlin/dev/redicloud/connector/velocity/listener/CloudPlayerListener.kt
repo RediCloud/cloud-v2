@@ -71,7 +71,7 @@ class CloudPlayerListener(
     @Subscribe
     fun onServerPreConnect(event: ServerPreConnectEvent) = runBlocking {
         if (!event.result.isAllowed) return@runBlocking
-        val player = event.player
+        event.player
         val targetServer = if (event.originalServer.serverInfo.name == "rcfallback") {
             serverRepository.getFallback(serverRepository.serviceId)
         }else serverRepository.getServer(event.originalServer.serverInfo.name, ServiceType.MINECRAFT_SERVER)
@@ -107,8 +107,8 @@ class CloudPlayerListener(
             cloudPlayer.serverId = serverRepository.getServer<CloudMinecraftServer>(event.server.serverInfo.name, ServiceType.MINECRAFT_SERVER)?.serviceId
             playerRepository.updatePlayer(cloudPlayer)
         }
-
-        val fallback = runBlocking { serverRepository.getFallback(serverRepository.serviceId) }
+        val kickedFromServer = serverRepository.getServer<CloudMinecraftServer>(event.server.serverInfo.name, ServiceType.MINECRAFT_SERVER)
+        val fallback = runBlocking { serverRepository.getFallback(cloudPlayer?.serverId, kickedFromServer?.serviceId) }
         if (fallback == null) {
             event.result = KickedFromServerEvent.DisconnectPlayer.create(event.serverKickReason.getOrElse { Component.text("You were kicked from the server and no fallback was found!") })
             return@runBlocking
