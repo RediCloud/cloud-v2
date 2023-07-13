@@ -18,7 +18,7 @@ class JavaVersionRepository(
     companion object {
         val ONLINE_VERSION_CACHE = EasyCache<List<JavaVersion>, Unit> (1.minutes) {
             val json =
-                khttp.get("${getAPIUrl()}/api-files/java-versions.json").text
+                khttp.get("${getAPIUrlOrFallback()}/api-files/java-versions.json").text
             val type = object : TypeToken<ArrayList<JavaVersion>>() {}.type
             gson.fromJson<List<JavaVersion>?>(json, type)
         }

@@ -27,7 +27,7 @@ class CloudServerVersionTypeRepository(
         val LOGGER = LogManager.logger(CloudServerVersionTypeRepository::class)
         val DEFAULT_TYPES_CACHE = EasyCache<List<CloudServerVersionType>, Unit>(1.minutes) {
             val json =
-                khttp.get("${getAPIUrl()}/api-files/server-version-types.json").text
+                khttp.get("${getAPIUrlOrFallback()}/api-files/server-version-types.json").text
             val type = object : TypeToken<ArrayList<CloudServerVersionType>>() {}.type
             val list: MutableList<CloudServerVersionType> = gson.fromJson(json, type)
             if (list.none { it.isUnknown() }) {
