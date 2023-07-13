@@ -33,6 +33,7 @@ class VelocityConnectorBootstrap @Inject constructor(val proxyServer: ProxyServe
             connector = VelocityConnector(this, proxyServer)
         }catch (e: Exception) {
             e.printStackTrace()
+            proxyServer.shutdown()
         }
     }
 
