@@ -66,3 +66,5 @@ findProject(":services:proxy-server-service")?.name = "proxy-server-service"
 
 include("repositories:player-repository")
 findProject(":repositories:player-repository")?.name = "player-repository"
+include("connectors:bukkit-legacy")
+findProject(":connectors:bukkit-legacy")?.name = "bukkit-legacy"

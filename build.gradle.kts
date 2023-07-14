@@ -1,6 +1,3 @@
-import dev.redicloud.libloader.plugin.LibraryLoader
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("jvm")
     id("dev.redicloud.libloader") version Versions.libloader apply false
@@ -16,8 +13,8 @@ allprojects {
     fun DependencyHandlerScope.dependency(dependencyNotation: Any): Dependency? =
         add("dependency", dependencyNotation)
 
-    the(LibraryLoader.LibraryLoaderConfig::class).configurationName.set("dependency")
-    the(LibraryLoader.LibraryLoaderConfig::class).doBootstrapShade.set(false)
+    the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).configurationName.set("dependency")
+    the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).doBootstrapShade.set(false)
 
     version = Versions.cloud
 
@@ -29,16 +26,16 @@ allprojects {
     }
 
     dependencies {
-        dependency("com.google.code.gson:gson:${Versions.gson}")
+        compileOnly("com.google.code.gson:gson:${Versions.gson}")
         dependency("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
         dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinxCoroutines}")
-        dependency("org.redisson:redisson:${Versions.redisson}")
+        compileOnly("org.redisson:redisson:${Versions.redisson}")
         dependency("com.github.jkcclemens:khttp:${Versions.khttp}")
         dependency("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
     }
 
     tasks {
-        withType<KotlinCompile> {
+        withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
             kotlinOptions.jvmTarget = "1.8"
         }
 
@@ -57,7 +54,7 @@ allprojects {
             attributes["Agent-Class"] = "dev.redicloud.libloader.boot.Agent"
             attributes["Launcher-Agent-Class"] = "dev.redicloud.libloader.boot.Agent"
         }
-        archiveFileName.set(Builds.getOutputFileName(this@allprojects))
+        archiveFileName.set(Builds.getOutputFileName(this@allprojects) + ".jar")
     }
 
 }

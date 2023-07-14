@@ -34,7 +34,7 @@ dependencies {
 
 tasks.register("buildAndCopy") {
     dependsOn(tasks.named("build"))
-    val outputJar = Builds.getOutputFileName(project)
+    val outputJar = Builds.getOutputFileName(project) + ".jar"
     val original = File(project.buildDir.resolve("libs"), outputJar)
     val outputJarFile = File(project.buildDir.resolve("libs"), "${original.nameWithoutExtension}-local.jar")
     original.renameTo(outputJarFile)

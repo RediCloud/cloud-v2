@@ -3,7 +3,7 @@ import java.io.File
 
 object Builds {
     fun getOutputFileName(project: Project): String {
-        return "redicloud-${project.name}-${if (project.version == "unspecified") project.parent?.version ?: "unknown" else project.version}.jar"
+        return "redicloud-${project.name}-${if (project.version == "unspecified") project.parent?.version ?: "unknown" else project.version}"
     }
     fun getTestDirPath(project: Project, nodeName: String): File {
         return File("${project.rootDir}/test/", nodeName)

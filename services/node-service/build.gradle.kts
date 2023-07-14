@@ -39,7 +39,7 @@ dependencies {
 
 tasks.register("buildAndCopy") {
     dependsOn(tasks.named("build"))
-    val outputJar = Builds.getOutputFileName(project)
+    val outputJar = Builds.getOutputFileName(project) + ".jar"
     doLast {
         for (i in 1..Builds.testNodes) {
             val id = if (i in 1..9) "0$i" else i.toString()
