@@ -20,9 +20,9 @@ online_mode: true
 disabled_commands:
 - disabledcommandhere
 servers:
-  lobby:
+  rcfallback:
     motd: '&1Just another BungeeCord - Forced Host'
-    address: localhost:25565
+    address: localhost:0
     restricted: false
 listeners:
 - query_port: 25577
