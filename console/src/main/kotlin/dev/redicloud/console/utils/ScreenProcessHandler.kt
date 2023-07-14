@@ -7,7 +7,8 @@ import java.io.InputStreamReader
 
 class ScreenProcessHandler(
     private val process: Process,
-    private val screen: Screen
+    private val screen: Screen,
+    val filterSpam: Boolean = true
 ) : Thread(screen.name) {
 
     companion object {
@@ -22,6 +23,7 @@ class ScreenProcessHandler(
     private val errorStream = process.errorStream
     private val exits = mutableListOf<(Int) -> Unit>()
     private val lines = mutableListOf<(String) -> Unit>()
+    private val logged = mutableListOf<String>()
 
     override fun run() {
         var stopped = false
@@ -43,11 +45,20 @@ class ScreenProcessHandler(
                 while (errorStream.isOpen() && errorReader.ready()) {
                     val line = errorBufferedReader.readLine()
                     if (line == null || line.isEmpty()) continue
-                    if (!screen.isActive()) {
-                        LOGGER.warning("[${screen.name}]: §c$line")
-                    }
+
                     screen.println(line)
                     lines.forEach { it(line) }
+
+                    if (filterSpam) {
+                        if (!screen.isActive()) {
+                            val identifier = line
+                                .replace(Regex("\\[.*?\\]"), "")
+                                .trim()
+                            if (logged.contains(identifier)) return
+                            logged.add(identifier)
+                        }
+                        LOGGER.warning("[${screen.name}]: §c$line")
+                    }
                 }
                 errorBufferedReader.close()
                 errorReader.close()
