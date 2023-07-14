@@ -88,16 +88,12 @@ interface IServerVersionHandler {
                 }
             }
         }
-        runCatching { VERSION_SCOPE.cancel() }
     }
 
     companion object {
         val LOGGER = LogManager.logger(IServerVersionHandler::class)
 
         val CACHE_HANDLERS = mutableListOf<IServerVersionHandler>()
-
-        @OptIn(DelicateCoroutinesApi::class)
-        val VERSION_SCOPE = CoroutineScope(newSingleThreadContext("VersionScope"))
 
         fun getHandler(type: CloudServerVersionType): IServerVersionHandler =
             CACHE_HANDLERS.firstOrNull { it.name.lowercase() == type.versionHandlerName.lowercase() }
