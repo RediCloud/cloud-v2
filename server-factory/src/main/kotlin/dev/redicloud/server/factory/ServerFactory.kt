@@ -22,6 +22,7 @@ import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
+import dev.redicloud.repository.service.ServiceSessions
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
@@ -216,7 +217,7 @@ class ServerFactory(
                         configurationTemplate,
                         getIdForServer(configurationTemplate),
                         thisNode.serviceId,
-                        mutableListOf(),
+                        ServiceSessions(),
                         false,
                         CloudServerState.PREPARING,
                         -1,
@@ -230,7 +231,7 @@ class ServerFactory(
                         configurationTemplate,
                         getIdForServer(configurationTemplate),
                         thisNode.serviceId,
-                        mutableListOf(),
+                        ServiceSessions(),
                         false,
                         CloudServerState.PREPARING,
                         -1,

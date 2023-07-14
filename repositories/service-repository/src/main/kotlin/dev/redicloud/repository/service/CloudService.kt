@@ -6,22 +6,18 @@ import dev.redicloud.utils.service.ServiceType
 abstract class CloudService(
     val serviceId: ServiceId,
     val name: String,
-    private val sessions: MutableList<ServiceSession>,
+    private val serviceSessions: ServiceSessions,
     var connected: Boolean = false
 ){
 
     fun getIdentifyingName(colored: Boolean = true): String = if (colored) "%hc%$name§8#%tc%${serviceId.id}" else "$name#${serviceId.id}"
 
     fun currentSession(): ServiceSession? {
-        if (sessions.isEmpty()) return null
-        val last = sessions.last()
-        if (last.endTime != -1L) return null
-        return last
+        return serviceSessions.currentSession
     }
 
     fun currentOrLastsession(): ServiceSession? {
-        if (sessions.isEmpty()) return null
-        return sessions.last()
+        return currentSession() ?: serviceSessions.sessionHistory.lastOrNull()
     }
 
     fun isSuspended(): Boolean {
@@ -29,18 +25,26 @@ abstract class CloudService(
         return current.suspended
     }
 
-    fun getSessions(): List<ServiceSession> = sessions.toList()
+    fun getSessions(): List<ServiceSession> = serviceSessions.sessionHistory.toMutableList().apply {
+        add(currentSession() ?: return@apply)
+    }
 
     fun isConnected(): Boolean = connected && !isSuspended()
 
-    fun firstSession(): ServiceSession? {
-        if (sessions.isEmpty()) return null
-        return sessions.first()
+    fun registrationSession(): ServiceSession? {
+        return serviceSessions.registrationSession
     }
 
     private fun addSession(session: ServiceSession) {
-        sessions.add(session)
-        sessions.sortBy { it.startTime }
+        serviceSessions.currentSession = session
+        if (registrationSession() == null) {
+            serviceSessions.registrationSession = session
+        }else {
+            serviceSessions.sessionHistory.add(session)
+            while (serviceSessions.sessionHistory.size > 5) {
+                serviceSessions.sessionHistory.removeAt(0)
+            }
+        }
     }
 
     fun startSession(ipAddress: String): ServiceSession {
@@ -52,6 +56,7 @@ abstract class CloudService(
     fun endSession(session: ServiceSession? = null): ServiceSession {
         val current = session ?: currentSession() ?: throw IllegalStateException("No session is currently active")
         current.endTime = System.currentTimeMillis()
+        serviceSessions.currentSession = null
         return current
     }
 

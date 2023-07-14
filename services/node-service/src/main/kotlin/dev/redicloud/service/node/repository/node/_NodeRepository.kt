@@ -3,6 +3,7 @@ package dev.redicloud.service.node.repository.node
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
+import dev.redicloud.repository.service.ServiceSessions
 import dev.redicloud.service.base.events.node.NodeConnectEvent
 import dev.redicloud.service.base.events.node.NodeSuspendedEvent
 import dev.redicloud.service.node.NodeService
@@ -24,7 +25,7 @@ suspend fun NodeRepository.connect(nodeService: NodeService) {
         val memory = toMb((actualFree * 0.9).toLong())
         if (memory < 1024) throw IllegalStateException("There must be at least 1GB of free memory to start a node!")
         //TODO: Update current memory by task
-        createNode(CloudNode(serviceId, nodeService.configuration.nodeName, mutableListOf(), mutableListOf(), false, toMb(allocated), memory))
+        createNode(CloudNode(serviceId, nodeService.configuration.nodeName, ServiceSessions(), mutableListOf(), false, toMb(allocated), memory))
     }
     node.currentMemoryUsage = 0
     node.hostedServers.clear()
