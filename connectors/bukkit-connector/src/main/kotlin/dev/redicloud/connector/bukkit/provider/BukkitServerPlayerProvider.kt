@@ -1,4 +1,4 @@
-package dev.redicloud.connectors.bukkit.provider
+package dev.redicloud.connector.bukkit.provider
 
 import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
 import org.bukkit.Bukkit

@@ -1,6 +1,6 @@
-package dev.redicloud.connectors.bukkit.bootstrap
+package dev.redicloud.connector.bukkit.bootstrap
 
-import dev.redicloud.connectors.bukkit.BukkitConnector
+import dev.redicloud.connector.bukkit.BukkitConnector
 import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.loaders.URLClassLoaderJarLoader
 import dev.redicloud.utils.loadProperties

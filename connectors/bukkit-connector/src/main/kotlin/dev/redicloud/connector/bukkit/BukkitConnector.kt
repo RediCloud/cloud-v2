@@ -1,6 +1,6 @@
-package dev.redicloud.connectors.bukkit
+package dev.redicloud.connector.bukkit
 
-import dev.redicloud.connectors.bukkit.provider.BukkitServerPlayerProvider
+import dev.redicloud.connector.bukkit.provider.BukkitServerPlayerProvider
 import dev.redicloud.service.minecraft.MinecraftServerService
 import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
 import org.bukkit.Bukkit
