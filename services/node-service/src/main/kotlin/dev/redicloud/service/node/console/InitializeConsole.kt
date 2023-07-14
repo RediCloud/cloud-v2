@@ -167,12 +167,7 @@ class InitializeConsole() : Console(
         writeLine("§8• §fLog-Level §8» %hc%${logger.level.name}")
         writeLine("")
         writeLine("")
-        if (System.getProperty("redicloud.skip.animation") == null) {
-            writeLine("§8» §fStarting in 5 seconds...")
-            writeLine("")
-            writeLine("")
-            Thread.sleep(5000)
-        }
+        writeLine("§8» §fStarting ...")
     }
 
     private fun checkLibs(): String {
