@@ -51,7 +51,7 @@ class ServerCommand(
     fun start(
         actor: ConsoleActor,
         @CommandParameter("template", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
-        @CommandParameter("count", false) count: Int?
+        @CommandParameter("count", false, IntegerSuggester::class) count: Int?
     ) = defaultScope.launch {
         actor.sendMessage("Queued ${toConsoleValue(count ?: 1)} server with template ${toConsoleValue(template.name)}...")
         serverFactory.queueStart(template, count ?: 1)

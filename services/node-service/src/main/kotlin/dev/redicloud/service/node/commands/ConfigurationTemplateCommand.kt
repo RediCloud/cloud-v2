@@ -433,7 +433,7 @@ class ConfigurationTemplateCommand(
     fun editMinStartedServices(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
-        @CommandParameter("count", true) count: Int
+        @CommandParameter("count", true, IntegerSuggester::class) count: Int
     ) = runBlocking {
         if (count != -1) {
             if (template.maxStartedServices in 1 until count) {
@@ -455,7 +455,7 @@ class ConfigurationTemplateCommand(
     fun editMaxStartedServices(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
-        @CommandParameter("count", true) count: Int
+        @CommandParameter("count", true, IntegerSuggester::class) count: Int
     ) = runBlocking {
         if (count != -1) {
             if (count < template.minStartedServices && template.minStartedServices > 0) {
@@ -477,7 +477,7 @@ class ConfigurationTemplateCommand(
     fun editMinStartedServicesPerNode(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
-        @CommandParameter("count", true) count: Int
+        @CommandParameter("count", true, IntegerSuggester::class) count: Int
     ) = runBlocking {
         if (count != -1) {
             if (template.minStartedServices in 1 until count) {
@@ -503,7 +503,7 @@ class ConfigurationTemplateCommand(
     fun editMaxStartedServicesPerNode(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
-        @CommandParameter("count", true) count: Int
+        @CommandParameter("count", true, IntegerSuggester::class) count: Int
     ) = runBlocking {
         if (count != -1) {
             if (count < template.minStartedServicesPerNode && template.minStartedServicesPerNode > 0) {
