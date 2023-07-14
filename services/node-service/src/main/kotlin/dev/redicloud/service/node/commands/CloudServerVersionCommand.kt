@@ -64,7 +64,7 @@ class CloudServerVersionCommand(
         @CommandParameter("url", true) url: String
     ) {
         defaultScope.launch {
-            if (url != "null" && isValidUrl(url)) {
+            if (url != "null" && !isValidUrl(url)) {
                 actor.sendMessage("§cThe url '$url' is not valid!")
                 return@launch
             }
