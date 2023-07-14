@@ -66,7 +66,7 @@ tasks.register("buildAndCopy") {
 }
 
 val shadowModJar by tasks.creating(ShadowJar::class) {
-    archiveFileName.set(Builds.getOutputFileName(project) + "-final.jar")
+    archiveFileName.set(Builds.getOutputFileName(project) + "-shadow.jar")
 
     relocate("io.netty", "dev.redicloud.netty")
     relocate("com.google.gson", "dev.redicloud.gson")
