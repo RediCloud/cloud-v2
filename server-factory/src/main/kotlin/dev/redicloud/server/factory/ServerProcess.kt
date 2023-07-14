@@ -20,6 +20,7 @@ import dev.redicloud.utils.LIB_FOLDER
 import dev.redicloud.utils.ProcessConfiguration
 import dev.redicloud.utils.findFreePort
 import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.seconds
 
@@ -204,6 +205,7 @@ class ServerProcess(
             .replace("%SERVICE_ID%", cloudServer?.serviceId?.toName() ?: "unknown")
             .replace("%SERVICE_NAME%", cloudServer?.serviceId?.toName() ?: "unknown")
             .replace("%HOSTNAME%", cloudServer?.currentOrLastsession()?.ipAddress ?: "127.0.0.1")
-            .replace("%PROXY_SECRET%", clusterConfiguration.get("proxy-secret")!!)
+            .replace("%PROXY_SECRET%", clusterConfiguration.get("proxy-secret") ?: "redicloud_secret")
+            .replace("%MAX_PLAYERS%", (cloudServer?.maxPlayers ?: if (serverId.type == ServiceType.PROXY_SERVER) 100 else 20).toString())
 
 }

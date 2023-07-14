@@ -23,7 +23,8 @@
       "server.properties": {
         "server-ip": "%HOSTNAME%",
         "server-port": "%PORT%",
-        "online-mode": "false"
+        "online-mode": "false",
+        "max-players": "%max_players%"
       },
       "bukkit.yml": {
         "connection-throttle": "0"
@@ -64,7 +65,8 @@
       "server.properties": {
         "server-ip": "%HOSTNAME%",
         "server-port": "%PORT%",
-        "online-mode": "false"
+        "online-mode": "false",
+        "max-players": "%max_players%"
       },
       "bukkit.yml": {
         "connection-throttle": "0"
@@ -101,7 +103,8 @@
       "server.properties": {
         "server-ip": "%HOSTNAME%",
         "server-port": "%PORT%",
-        "online-mode": "false"
+        "online-mode": "false",
+        "max-players": "%max_players%"
       },
       "bukkit.yml": {
         "connection-throttle": "0"
@@ -130,7 +133,8 @@
     },
     "fileEdits": {
       "velocity.toml": {
-        "bind": "\"%HOSTNAME%:%PORT%\""
+        "bind": "\"%HOSTNAME%:%PORT%\"",
+        "show-max-players": "%max_players%"
       },
       "forwarding.secret": {
         "": "%PROXY_SECRET%"
@@ -156,7 +160,8 @@
     "fileEdits": {
       "config.yml": {
         "host": "%HOSTNAME%",
-        "ip_forward": "true"
+        "ip_forward": "true",
+        "player_limit": "%max_players%"
       }
     },
     "connectorPluginName": "redicloud-bungeecord-connector-%cloud_version%-%build_number%.jar",
@@ -178,7 +183,8 @@
     "fileEdits": {
       "config.yml": {
         "host": "%HOSTNAME%",
-        "ip_forward": "true"
+        "ip_forward": "true",
+        "player_limit": "%max_players%"
       }
     },
     "connectorPluginName": "redicloud-connector-waterfall-%cloud_version%-%build_number%.jar",
@@ -206,7 +212,8 @@
     "fileEdits": {
       "server.properties": {
         "server-ip": "%HOSTNAME%",
-        "server-port": "%PORT%"
+        "server-port": "%PORT%",
+        "max-players": "%max_players%"
       }
     },
     "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%-%build_number%.jar",
