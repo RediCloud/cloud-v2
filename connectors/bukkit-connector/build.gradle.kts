@@ -17,6 +17,7 @@ dependencies {
     shade(project(":repositories:java-version-repository"))
     shade(project(":repositories:player-repository"))
     shade(project(":database"))
+
     shade(project(":utils"))
     shade(project(":events"))
     shade(project(":packets"))
@@ -39,6 +40,10 @@ tasks.register("buildAndCopy") {
         for (i in 1..Builds.testNodes) {
             val id = if (i in 1..9) "0$i" else i.toString()
             val path = File(Builds.getTestDirPath(project, "node$id"), "storage/connectors")
+            val targetJar = File(path, outputJarFile.name)
+            if (targetJar.exists()) {
+                targetJar.delete()
+            }
             project.copy {
                 from(outputJarFile)
                 into(path)
