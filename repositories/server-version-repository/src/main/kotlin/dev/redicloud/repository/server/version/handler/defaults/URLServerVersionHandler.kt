@@ -43,6 +43,23 @@ open class URLServerVersionHandler(
     }
 
     override suspend fun download(version: CloudServerVersion, force: Boolean): File {
+        var canceled = false
+        var downloaded = false
+        var error = false
+        val animation = AnimatedLineAnimation(
+            console,
+            200
+        ) {
+            if (canceled) {
+                null
+            } else if (downloaded) {
+                canceled = true
+                "Downloading version %hc%${version.getDisplayName()}§8: ${if (error) "§4✘" else "§2✓"}"
+            } else {
+                "Downloading version %hc%${version.getDisplayName()}§8: %tc%%loading%"
+            }
+        }
+        console.startAnimation(animation)
         getLock(version).lock()
         val jar = getJar(version)
         try {
@@ -71,8 +88,8 @@ open class URLServerVersionHandler(
             defaultFiles.putAll(type.defaultFiles)
             defaultFiles.forEach {
                 downloader.add {
-                    val url1 = it.key.replace("%build_number%", BUILD_NUMBER).replace("%cloud_version%", CLOUD_VERSION)
-                    val path = it.value
+                    val url1 = it.value.replace("%build_number%", BUILD_NUMBER).replace("%cloud_version%", CLOUD_VERSION)
+                    val path = it.key
                     try {
                         if (!isValidUrl(url1)) {
                             logger.warning("§cInvalid default file with url ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)}")
@@ -94,7 +111,11 @@ open class URLServerVersionHandler(
             }
 
             downloader.joinAll()
+        }catch (e: Exception) {
+            error = true
+            throw e
         }finally {
+            downloaded = true
             getLock(version).unlock()
         }
         return jar
