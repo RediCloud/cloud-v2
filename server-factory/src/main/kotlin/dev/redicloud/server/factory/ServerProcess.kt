@@ -32,7 +32,7 @@ class ServerProcess(
     val serverId: ServiceId
 ) {
 
-    val port = findFreePort(configurationTemplate.startPort, !configurationTemplate.static)
+    val port: Int
     var process: Process? = null
     var handler: ScreenProcessHandler? = null
     var processConfiguration: ProcessConfiguration? = null
@@ -43,6 +43,14 @@ class ServerProcess(
 
     companion object {
         val SERVER_STOP_TIMEOUT = System.getProperty("redicloud.server.stop.timeout", "20").toInt()
+    }
+
+    init {
+        port = if (configurationTemplate.startPort == -1) {
+            findFreePort(40000, true)
+        }else {
+            findFreePort(configurationTemplate.startPort, false)
+        }
     }
 
     /**

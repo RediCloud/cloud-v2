@@ -21,7 +21,7 @@ class ConfigurationTemplate(
     var startPriority: Int = if (fallbackServer) 0 else 50,
     var serverVersionId: UUID?,
     var static: Boolean = false,
-    var startPort: Int = 40000,
+    var startPort: Int = -1,
     var joinPermission: String? = null,
     var maxPlayers: Int = 50,
     var timeAfterStopUselessServer: Long = 120.seconds.inWholeMilliseconds,
