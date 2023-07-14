@@ -75,8 +75,8 @@ class CommandSuggester(val command: CommandBase) : AbstractCommandSuggester() {
 class CommandArgumentSuggester(val commandArgument: CommandArgument) : AbstractCommandSuggester() {
 
     override fun suggest(context: CommandContext): Array<String> {
-        if (!commandArgument.isThis(context.input, true)) return arrayOf()
-        val nextArgument = !commandArgument.isThis(context.input, false)
+        if (!commandArgument.subCommand.isThis(context.input, true)) return arrayOf()
+        val nextArgument = commandArgument.isThis(context.input, true)
         if (nextArgument) {
             context.input.removeLastSpaces().removeFirstSpaces()
             return commandArgument.annotatedSuggester.preSuggest(context).map { it }.toTypedArray()
@@ -85,7 +85,7 @@ class CommandArgumentSuggester(val commandArgument: CommandArgument) : AbstractC
         val lastArgument = input.split(" ").last()
         input.split(" ").dropLast(1).joinToString(" ")
         return commandArgument.annotatedSuggester.preSuggest(context)
-            .filter { lastArgument.lowercase().startsWith(it.lowercase()) }
+            .filter { it.lowercase().startsWith(lastArgument.lowercase()) }
             .toTypedArray()
     }
 

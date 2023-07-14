@@ -62,8 +62,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
             val possibleSubCommands = command.getSubCommands()
                 .filter { it.isThis(input, true) }
                 .filter { actor.hasPermission(it.permission) }
-
-            if (possibleSubCommands.size == 1) {
+                if (possibleSubCommands.size == 1) {
                 list.addAll(possibleSubCommands.first().suggester.preSuggest(CommandContext(input, emptyArray())))
                 possibleSubCommands.first().arguments
                     .filter { it.isThis(input, true) }
@@ -116,15 +115,15 @@ abstract class CommandManager<K : ICommandActor<*>> {
                 && !result.isArgument()
                 && result.isNotBlank()) {
                 results.add(result)
-            }else if (input.endsWith(" ")) {
+            }else {
                 if (split1.size >= currentIndex + 2 && inputR != "") return@forEach
                 val nextResult = if (inputR == "") result else split1[currentIndex + 1]
                 if (nextResult.isArgument()) {
-                    val subCommand = commandBase
-                        ?.getSubCommands()?.firstOrNull { it.isThis(input, true) }
-                        ?: return@forEach
-                    val argument = subCommand.arguments.firstOrNull { it.isThis(input, true) } ?: return@forEach
-                    results.addAll(argument.suggester.preSuggest(CommandContext(input, argument.suggesterParameter)))
+                    commandBase?.getSubCommands()?.filter { it.isThis(input, true) }?.forEach { subCommand ->
+                        subCommand.arguments.filter { it.isThis(input, true) }.forEach { argument ->
+                            results.addAll(argument.suggester.preSuggest(CommandContext(input, argument.suggesterParameter)))
+                        }
+                    }
                 }
             }
         }

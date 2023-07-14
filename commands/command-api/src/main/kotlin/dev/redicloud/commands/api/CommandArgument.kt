@@ -46,9 +46,15 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
     fun isActorArgument(): Boolean = name == "_actor"
 
     fun isThis(input: String, predict: Boolean): Boolean {
-        if (!subCommand.isThis(input, predict)) return false
-        if (isActorArgument()) return false
-        if (input.isEmpty()) return false
+        if (!subCommand.isThis(input, predict)) {
+            return false
+        }
+        if (isActorArgument()) {
+            return false
+        }
+        if (input.isEmpty()) {
+            return false
+        }
 
         val optimalCurrentPaths = listOf(subCommand.path, *subCommand.aliasePaths)
             .flatMap { subCommandPaths ->
@@ -57,18 +63,21 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
             }.toSet()
 
         optimalCurrentPaths.forEach optimalPathForEach@ { optimalPath ->
-            if (optimalPath.startsWith(input) && predict) return true
             var index = -1
+            var argumentIndex = -1
             var currentBuild = ""
             var lastWasThis = false
             var alreadyIndexed = false
             optimalPath.split(" ").forEach optimalParameterForEach@ {
-                lastWasThis = false
                 index++
-                if (input.split(" ").size < index + 1) return@optimalParameterForEach
+                if (input.split(" ").size < index + 1) {
+                    return@optimalParameterForEach
+                }
+                lastWasThis = false
                 val inputCurrent = input.split(" ")[index]
                 if (it.isArgument()) {
-                    if (getPathFormat() == it) {
+                    argumentIndex++
+                    if (getPathFormat() == it || it.isEmpty() && predict) {
                         lastWasThis = true
                         alreadyIndexed = true
                     }
@@ -83,12 +92,23 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
                 }
             }
             if (!alreadyIndexed) {
-                val argumentIndex = optimalPath.split(" ").indexOf(getPathFormat()) // 4
-                if (argumentIndex != -1) {
-                    if (input.endsWith(" ") && predict && argumentIndex == index) return true
+                val aIndex = optimalPath.split(" ").indexOf(getPathFormat())
+                if (aIndex != -1) {
+                    if (input.removeLastSpaces().endsWith(" ") && predict && aIndex == index) {
+                        return true
+                    }
                 }
             }
-            if (currentBuild.lowercase().removeLastSpaces() == input.lowercase().removeLastSpaces() && lastWasThis) return true
+            if (predict
+                && currentBuild.endsWith(" ")
+                && optimalPath.lowercase().startsWith(currentBuild.lowercase())
+                && currentBuild.split(" ").size == input.split(" ").size
+                && argumentIndex+1 == this.index) {
+                return true
+            }
+            if (currentBuild.lowercase() == input.lowercase() && lastWasThis) {
+                return true
+            }
         }
 
         return false
