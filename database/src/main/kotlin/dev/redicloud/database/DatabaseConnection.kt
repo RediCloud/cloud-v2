@@ -60,12 +60,12 @@ class DatabaseConnection(
 
     suspend fun connect() {
         client = Redisson.create(redissonConfig)
-        LOGGER.info("Successfully connected to redis")
+        LOGGER.fine("Successfully connected to redis")
     }
 
     fun disconnect() {
         if (isConnected()) client!!.shutdown()
-        LOGGER.info("Successfully disconnected from redis")
+        LOGGER.fine("Successfully disconnected from redis")
     }
 
     fun isConnected(): Boolean {
