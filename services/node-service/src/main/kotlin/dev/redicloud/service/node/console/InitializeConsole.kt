@@ -149,11 +149,12 @@ class InitializeConsole() : Console(
         updatePrompt()
         sendHeader()
         LogManager.rootLogger().filter = Filter { record
-            -> record.level != Level.INFO && !record.message.contains("org.redisson") }
+            -> record.level != Level.INFO && !record.message.contains("org.redisson") && !record.message.contains("SLF4J:") }
         runBlocking {
             nodeConfiguration = checkNode()
             serviceId = nodeConfiguration!!.toServiceId()
             databaseConnection = checkDatabase(serviceId!!)
+            writeLine("§8» §fStarting ...")
         }
     }
 
@@ -167,7 +168,6 @@ class InitializeConsole() : Console(
         writeLine("§8• §fLog-Level §8» %hc%${logger.level.name}")
         writeLine("")
         writeLine("")
-        writeLine("§8» §fStarting ...")
     }
 
     private fun checkLibs(): String {
@@ -280,7 +280,6 @@ class InitializeConsole() : Console(
                 Thread.sleep(10000)
                 return checkDatabase(serviceId)
             }
-            writeLine("Database connection successful!")
             return p.first
         } catch (e: Exception) {
             writeLine("§cError while reading database file! Starting database setup in 5 seconds...")
