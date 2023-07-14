@@ -48,7 +48,7 @@ A redis based cluster cloud system for minecraft.
 - server version support (auto update, pre versions...) ✅
 - static server transfer to other nodes ✅
 - smart server start (retry other nodes on failed start) ✅
-- print server error directly to node console (loop, spam protection) 
+- print server error directly to node console (loop, spam protection) ✅ 
 - clean console design ✅
 - Small further details (designs, small functions) can be changed per property, no code editing needed! 
 - ...
