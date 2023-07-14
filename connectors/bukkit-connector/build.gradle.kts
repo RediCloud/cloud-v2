@@ -92,10 +92,4 @@ val copyShadowedJar by tasks.creating {
     }
 }
 
-tasks {
-    withType<ShadowJar> {
-        duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    }
-}
-
 tasks.build.get().dependsOn(copyShadowedJar)

@@ -47,7 +47,7 @@ allprojects {
     }
 
     tasks.withType<Jar>() {
-        duplicatesStrategy = DuplicatesStrategy.WARN
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
         manifest {
             attributes["Main-Class"] = "dev.redicloud.libloader.boot.Bootstrap"
             attributes["Premain-Class"] = "dev.redicloud.libloader.boot.Agent"
