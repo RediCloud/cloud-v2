@@ -7,6 +7,7 @@ repositories {
 dependencies {
     compileOnly(project(":api"))
     compileOnly(project(":database"))
+    compileOnly(project(":logging"))
     compileOnly(project(":utils"))
     compileOnly(project(":services:minecraft-server-service"))
     compileOnly(project(":services:base-service"))
