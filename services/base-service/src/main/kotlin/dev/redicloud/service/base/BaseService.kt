@@ -95,7 +95,13 @@ abstract class BaseService(
 
         packetManager = PacketManager(databaseConnection, serviceId)
         eventManager = EventManager("base-event-manager", packetManager)
-        taskManager = CloudTaskManager(eventManager, packetManager, if (serviceId.type.isServer()) 2 else 4)
+        val taskThreads = when(serviceId.type) {
+            ServiceType.NODE -> 4
+            ServiceType.MINECRAFT_SERVER -> 1
+            ServiceType.PROXY_SERVER -> 2
+            else -> 2
+        }
+        taskManager = CloudTaskManager(eventManager, packetManager, taskThreads)
 
         playerRepository = PlayerRepository(databaseConnection, eventManager)
         javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection)
