@@ -27,11 +27,11 @@ class BungeeCordConnector(
         registered = mutableMapOf()
         runBlocking {
             registerTasks()
-            registerStartedServers()
         }
     }
 
     override fun registerServer(server: CloudMinecraftServer) {
+        if (ProxyServer.getInstance().servers == null) return
         val session = server.currentSession()
             ?: throw IllegalStateException("Server ${serviceId.toName()} is connected but has no active session?")
         val serverInfo = ProxyServer.getInstance().constructServerInfo(
@@ -41,18 +41,20 @@ class BungeeCordConnector(
                 server.port
             ),
             "RediCloud Server",
-            true
+            false
         )
         registered[server.serviceId] = serverInfo
         ProxyServer.getInstance().servers[server.name] = serverInfo
     }
 
     override fun unregisterServer(server: CloudMinecraftServer) {
+        if (ProxyServer.getInstance().servers == null) return
         val serverInfo = registered.remove(server.serviceId) ?: return
-        ProxyServer.getInstance().servers.remove(server.name)
+        ProxyServer.getInstance().servers.remove(server.name, serverInfo)
     }
 
     override fun onEnable() {
+        runBlocking { registerStartedServers() }
         registerListeners()
         super.onEnable()
     }
