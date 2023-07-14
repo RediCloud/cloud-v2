@@ -29,3 +29,21 @@ dependencies {
 
     compileOnly("net.md-5:bungeecord-api:1.19-R0.1-SNAPSHOT")
 }
+
+tasks.register("buildAndCopy") {
+    dependsOn(tasks.named("build"))
+    val outputJar = Builds.getOutputFileName(project)
+    val original = File(project.buildDir.resolve("libs"), outputJar)
+    val outputJarFile = File(project.buildDir.resolve("libs"), "${original.nameWithoutExtension}-local.jar")
+    original.renameTo(outputJarFile)
+    doLast {
+        for (i in 1..Builds.testNodes) {
+            val id = if (i in 1..9) "0$i" else i.toString()
+            val path = File(Builds.getTestDirPath(project, "node$id"), "storage/connectors")
+            project.copy {
+                from(outputJarFile)
+                into(path)
+            }
+        }
+    }
+}

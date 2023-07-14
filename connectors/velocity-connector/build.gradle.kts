@@ -35,12 +35,15 @@ dependencies {
 tasks.register("buildAndCopy") {
     dependsOn(tasks.named("build"))
     val outputJar = Builds.getOutputFileName(project)
+    val original = File(project.buildDir.resolve("libs"), outputJar)
+    val outputJarFile = File(project.buildDir.resolve("libs"), "${original.nameWithoutExtension}-local.jar")
+    original.renameTo(outputJarFile)
     doLast {
         for (i in 1..Builds.testNodes) {
             val id = if (i in 1..9) "0$i" else i.toString()
             val path = File(Builds.getTestDirPath(project, "node$id"), "storage/connectors")
             project.copy {
-                from(project.buildDir.resolve("libs").resolve(outputJar))
+                from(outputJarFile)
                 into(path)
             }
         }
