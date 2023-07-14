@@ -12,10 +12,6 @@ data class CloudPlayer(
     var lastDisconnect: Long?,
     var lastConnect: Long?,
     var firstConnect: Long?,
-    var version: ServerVersion
-) {
-
-    val connected: Boolean
-        get() = serverId != null
-
-}
+    var version: ServerVersion,
+    var connected: Boolean = false
+)

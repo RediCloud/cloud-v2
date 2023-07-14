@@ -41,6 +41,12 @@ class CloudPlayerListener(
                 }
                 if (playerRepository.existsPlayer(event.connection.uniqueId)) {
                     val cloudPlayer = playerRepository.getPlayer(event.connection.uniqueId)!!
+                    if (cloudPlayer.connected) {
+                        event.setCancelled(true)
+                        event.setCancelReason(*ComponentBuilder().append("You are already connected!").create())
+                        return@launch
+                    }
+                    cloudPlayer.connected = true
                     cloudPlayer.lastConnect = System.currentTimeMillis()
                     cloudPlayer.version = ServerVersion.versions().firstOrNull { it.protocolId == event.connection.version }
                         ?: ServerVersion.versions().first { it.isUnknown() }
@@ -75,6 +81,7 @@ class CloudPlayerListener(
         cloudPlayer.lastDisconnect = System.currentTimeMillis()
         cloudPlayer.proxyId = null
         cloudPlayer.serverId = null
+        cloudPlayer.connected = false
         playerRepository.updatePlayer(cloudPlayer)
     }
 

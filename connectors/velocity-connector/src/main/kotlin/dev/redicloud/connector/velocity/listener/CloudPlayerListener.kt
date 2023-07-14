@@ -35,6 +35,11 @@ class CloudPlayerListener(
         val player = event.player
         if (playerRepository.existsPlayer(player.uniqueId)) {
             val cloudPlayer = playerRepository.getPlayer(player.uniqueId)!!
+            if (cloudPlayer.connected) {
+                event.player.disconnect(Component.text("You are already connected to the network!"))
+                return@runBlocking
+            }
+            cloudPlayer.connected = true
             cloudPlayer.lastConnect = System.currentTimeMillis()
             cloudPlayer.version = ServerVersion.versions().firstOrNull { it.protocolId == player.protocolVersion.protocol }
                 ?: ServerVersion.versions().first { it.isUnknown() }
@@ -65,6 +70,7 @@ class CloudPlayerListener(
         cloudPlayer.lastDisconnect = System.currentTimeMillis()
         cloudPlayer.proxyId = null
         cloudPlayer.serverId = null
+        cloudPlayer.connected = false
         playerRepository.updatePlayer(cloudPlayer)
     }
 
