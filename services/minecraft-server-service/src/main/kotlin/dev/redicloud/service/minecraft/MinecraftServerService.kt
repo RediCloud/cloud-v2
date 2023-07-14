@@ -26,12 +26,10 @@ abstract class MinecraftServerService<T> : BaseService(
 
     final override val fileTemplateRepository: AbstractFileTemplateRepository
     final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
-    final override val serverRepository: ServerRepository
     abstract val serverPlayerProvider: IServerPlayerProvider
     val logger = LogManager.Companion.logger(MinecraftServerService::class)
 
     init {
-        serverRepository = ServerRepository(this.databaseConnection, this.serviceId, this.packetManager, this.eventManager)
         fileTemplateRepository = BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(this.databaseConnection, null)
 

@@ -4,20 +4,25 @@ import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.api.server.events.server.CloudServerConnectedEvent
 import dev.redicloud.api.server.events.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.server.events.server.CloudServerUnregisteredEvent
+import dev.redicloud.api.template.configuration.event.ConfigurationTemplateUpdateEvent
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.ServiceRepository
+import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.service.base.events.server.CloudServerRegisteredEvent
 import dev.redicloud.service.base.events.server.CloudServerStateChangeEvent
+import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
+import kotlinx.coroutines.launch
 
 class ServerRepository(
     databaseConnection: DatabaseConnection,
     serviceId: ServiceId,
     packetManager: PacketManager,
-    private val eventManager: EventManager
+    private val eventManager: EventManager,
+    configurationTemplateRepository: ConfigurationTemplateRepository
 ) : ServiceRepository<CloudServer>(databaseConnection, serviceId, if (serviceId.type.isServer()) serviceId.type else ServiceType.MINECRAFT_SERVER, packetManager) {
 
     suspend fun <T : CloudServer> existsServer(serviceId: ServiceId): Boolean {
@@ -95,6 +100,25 @@ class ServerRepository(
             .filter { it.state == CloudServerState.RUNNING }
             .filter { it.connectedPlayers.size < it.maxPlayers || it.maxPlayers == -1 }
             .minByOrNull { it.connectedPlayers.size }
+    }
+
+    private val onConfigurationTemplateUpdateEvent = eventManager.listen<ConfigurationTemplateUpdateEvent> {
+        defaultScope.launch {
+            val configurationTemplate = configurationTemplateRepository.getTemplate(it.configurationTemplateId) ?: return@launch
+            getRegisteredServers()
+                .filter { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }.forEach {
+                    if (it.state == CloudServerState.STOPPED) {
+                        it.configurationTemplate = configurationTemplate
+                    }else {
+                        it.configurationTemplate.fallbackServer = configurationTemplate.fallbackServer
+                        it.configurationTemplate.joinPermission = configurationTemplate.joinPermission
+                        it.configurationTemplate.maxPlayers = configurationTemplate.maxPlayers
+                        it.configurationTemplate.percentToStartNewService = configurationTemplate.percentToStartNewService
+                        it.configurationTemplate.startPriority = configurationTemplate.startPriority
+                    }
+                    updateServer(it)
+                }
+        }
     }
 
 }

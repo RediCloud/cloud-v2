@@ -40,14 +40,12 @@ class NodeService(
 
     override val fileTemplateRepository: NodeFileTemplateRepository
     override val serverVersionTypeRepository: CloudServerVersionTypeRepository
-    override val serverRepository: ServerRepository
     val console: NodeConsole
     val fileNodeRepository: FileNodeRepository
     val fileCluster: FileCluster
     val serverFactory: ServerFactory
 
     init {
-        serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager)
         console = NodeConsole(configuration, eventManager, nodeRepository, serverRepository)
         fileNodeRepository = FileNodeRepository(databaseConnection, packetManager)
         fileCluster = FileCluster(configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)

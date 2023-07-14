@@ -1,11 +1,15 @@
 package dev.redicloud.repository.template.configuration
 
+import dev.redicloud.api.template.configuration.event.ConfigurationTemplateUpdateEvent
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
+import dev.redicloud.event.EventManager
 import java.util.UUID
 
-class ConfigurationTemplateRepository(databaseConnection: DatabaseConnection) :
-    DatabaseBucketRepository<ConfigurationTemplate>(databaseConnection, "configuration-template") {
+class ConfigurationTemplateRepository(
+    databaseConnection: DatabaseConnection,
+    private val eventManager: EventManager
+) : DatabaseBucketRepository<ConfigurationTemplate>(databaseConnection, "configuration-template") {
 
     suspend fun getTemplate(uniqueId: UUID): ConfigurationTemplate? {
         return get("$uniqueId")
@@ -28,6 +32,7 @@ class ConfigurationTemplateRepository(databaseConnection: DatabaseConnection) :
     }
 
     suspend fun updateTemplate(configurationTemplate: ConfigurationTemplate) {
+        eventManager.fireEvent(ConfigurationTemplateUpdateEvent(configurationTemplate.uniqueId))
         return set(configurationTemplate.uniqueId.toString(), configurationTemplate)
     }
 

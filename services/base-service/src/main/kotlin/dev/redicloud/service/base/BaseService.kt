@@ -60,7 +60,7 @@ abstract class BaseService(
     val serverVersionRepository: CloudServerVersionRepository
     abstract val fileTemplateRepository: AbstractFileTemplateRepository
     abstract val serverVersionTypeRepository: CloudServerVersionTypeRepository
-    abstract val serverRepository: ServerRepository
+    val serverRepository: ServerRepository
     val configurationTemplateRepository: ConfigurationTemplateRepository
     val javaVersionRepository: JavaVersionRepository
     val playerRepository: PlayerRepository
@@ -101,7 +101,8 @@ abstract class BaseService(
         javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection)
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager, eventManager)
         serverVersionRepository = CloudServerVersionRepository(databaseConnection)
-        configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection)
+        configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager)
+        serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager, configurationTemplateRepository)
         this.registerPackets()
         this.registerPacketListeners()
     }
