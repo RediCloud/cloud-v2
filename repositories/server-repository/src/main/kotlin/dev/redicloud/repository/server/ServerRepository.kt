@@ -89,11 +89,11 @@ class ServerRepository(
 
     suspend fun getFallback(vararg currentServerIds: ServiceId?): CloudMinecraftServer? {
         return getConnectedServers<CloudMinecraftServer>(ServiceType.MINECRAFT_SERVER)
-            .filter { currentServerIds.toList().contains(it.serviceId) }
+            .filter { !currentServerIds.toList().contains(it.serviceId) }
             //TODO check permissions
             .filter { it.configurationTemplate.fallbackServer }
             .filter { it.state == CloudServerState.RUNNING }
-            .filter { it.connectedPlayers.size < it.maxPlayers }
+            .filter { it.connectedPlayers.size < it.maxPlayers || it.maxPlayers == -1 }
             .minByOrNull { it.connectedPlayers.size }
     }
 
