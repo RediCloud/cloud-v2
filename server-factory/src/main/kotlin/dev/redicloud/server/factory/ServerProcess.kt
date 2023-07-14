@@ -107,13 +107,16 @@ class ServerProcess(
     suspend fun stop(force: Boolean = false, internalCall: Boolean = false) {
         if (stopped) return
         stopped = true
+        var unexpectedlyStop = false
         if (!serverRepository.existsServer<CloudServer>(serverId)) return
         cloudServer = serverRepository.getServer(serverId) ?: return
         val identifier = cloudServer?.serviceId?.toName() ?: configurationTemplate.uniqueId
         if (internalCall) {
             logger.fine("Detected process exit of $identifier")
             if (cloudServer?.connected == true) {
+                unexpectedlyStop = true
                 logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stopped unexpectedly!")
+                logger.warning("§cCheck the server logs for more information! The server directory will not be deleted!")
             }
         }else {
             logger.fine("Stopped server process $identifier")
@@ -147,7 +150,7 @@ class ServerProcess(
             }
         }
 
-        if (!configurationTemplate.static) {
+        if (!configurationTemplate.static && !unexpectedlyStop) {
             fileCopier.workDirectory.deleteRecursively()
         }
 
