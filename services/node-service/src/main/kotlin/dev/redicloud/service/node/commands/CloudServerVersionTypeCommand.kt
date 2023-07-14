@@ -3,14 +3,12 @@ package dev.redicloud.service.node.commands
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.commands.toConsoleValue
-import dev.redicloud.repository.server.version.CloudServerVersion
+import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.service.base.suggester.CloudConnectorFileNameSelector
-import dev.redicloud.service.base.suggester.CloudServerVersionSuggester
 import dev.redicloud.service.base.suggester.CloudServerVersionTypeSuggester
 import dev.redicloud.service.base.suggester.ServerVersionHandlerSuggester
 import dev.redicloud.utils.*
@@ -80,8 +78,22 @@ class CloudServerVersionTypeCommand(
         actor.sendMessage("Handler§8: %hc%${type.versionHandlerName}")
         actor.sendMessage("Default§8: %hc%${type.defaultType.toSymbol()}")
         actor.sendMessage("Proxy§8: %hc%${type.proxy.toSymbol()}")
-        actor.sendMessage("Connector plugin§8: %hc%${type.connectorPluginName.replace("%cloud_version%", CLOUD_VERSION)}")
-        actor.sendMessage("Connector download url§8: %hc%${type.connectorDownloadUrl?.replace("%cloud_version%", CLOUD_VERSION) ?: "Not set"}")
+        actor.sendMessage(
+            "Connector plugin§8: %hc%${
+                type.connectorPluginName.replace(
+                    "%cloud_version%",
+                    CLOUD_VERSION
+                )
+            }"
+        )
+        actor.sendMessage(
+            "Connector download url§8: %hc%${
+                type.connectorDownloadUrl?.replace(
+                    "%cloud_version%",
+                    CLOUD_VERSION
+                ) ?: "Not set"
+            }"
+        )
         actor.sendMessage("Connector folder§8: %hc%${type.connectorFolder}")
         actor.sendMessage("JVM arguments§8:${if (type.jvmArguments.isEmpty()) " %hc%None" else ""}")
         type.jvmArguments.forEach {
@@ -121,7 +133,14 @@ class CloudServerVersionTypeCommand(
             }
             val file = path ?: URL(url).fileName
             if (type.defaultFiles.any { it.value.lowercase() == file.lowercase() }) {
-                actor.sendMessage("§cThe file with the url ${toConsoleValue(url, false)} was already added to the version ${toConsoleValue(type.name, false)}!")
+                actor.sendMessage(
+                    "§cThe file with the url ${
+                        toConsoleValue(
+                            url,
+                            false
+                        )
+                    } was already added to the version ${toConsoleValue(type.name, false)}!"
+                )
                 return@runBlocking
             }
             type.defaultFiles[url] = file
@@ -202,7 +221,8 @@ class CloudServerVersionTypeCommand(
             if (versions.any { it.typeId == type.uniqueId }) {
                 actor.sendMessage("§cYou can't delete a server version type which is used by a server version:")
                 actor.sendMessage("§c${
-                    versions.filter { it.typeId == type.uniqueId }.joinToString(", ") { it.getDisplayName() }}"
+                    versions.filter { it.typeId == type.uniqueId }.joinToString(", ") { it.getDisplayName() }
+                }"
                 )
                 return@runBlocking
             }
@@ -311,7 +331,13 @@ class CloudServerVersionTypeCommand(
             type.connectorDownloadUrl = url
             serverVersionTypeRepository.downloadConnector(type, true)
             serverVersionTypeRepository.updateType(type)
-            actor.sendMessage("Successfully edited connector download url of server version type to ${toConsoleValue(type.connectorDownloadUrl!!)}")
+            actor.sendMessage(
+                "Successfully edited connector download url of server version type to ${
+                    toConsoleValue(
+                        type.connectorDownloadUrl!!
+                    )
+                }"
+            )
         }
     }
 
