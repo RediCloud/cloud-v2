@@ -3,7 +3,7 @@ package dev.redicloud.service.node.commands
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.commands.ConsoleActor
-import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.console.utils.Screen
 import dev.redicloud.server.factory.screens.ServerScreen
 import dev.redicloud.server.factory.screens.ServerScreenSuggester

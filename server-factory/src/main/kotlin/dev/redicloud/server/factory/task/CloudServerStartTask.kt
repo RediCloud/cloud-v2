@@ -1,6 +1,6 @@
 package dev.redicloud.server.factory.task
 
-import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.NodeRepository

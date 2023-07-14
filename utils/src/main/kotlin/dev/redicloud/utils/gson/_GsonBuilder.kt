@@ -4,8 +4,6 @@ import com.google.gson.ExclusionStrategy
 import com.google.gson.FieldAttributes
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.Expose
-import dev.redicloud.utils.getClassesWithPrefix
-import kotlin.reflect.KClass
 
 fun GsonBuilder.addInterfaceImpl(): GsonBuilder {
     val factory = InterfaceTypeAdapterFactory()

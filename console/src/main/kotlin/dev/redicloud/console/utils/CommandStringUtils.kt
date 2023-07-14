@@ -1,4 +1,4 @@
-package dev.redicloud.console.commands
+package dev.redicloud.console.utils
 
 fun toConsoleValue(value: Any, colored: Boolean = true): String {
     return if (colored) {

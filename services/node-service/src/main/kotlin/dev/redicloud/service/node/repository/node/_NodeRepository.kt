@@ -4,7 +4,6 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.service.base.events.node.NodeConnectEvent
-import dev.redicloud.service.base.events.node.NodeDisconnectEvent
 import dev.redicloud.service.base.events.node.NodeSuspendedEvent
 import dev.redicloud.service.node.NodeService
 import dev.redicloud.utils.service.ServiceId

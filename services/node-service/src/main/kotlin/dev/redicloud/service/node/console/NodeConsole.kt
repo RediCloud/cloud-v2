@@ -7,7 +7,7 @@ import dev.redicloud.api.server.events.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.server.events.server.CloudServerTransferredEvent
 import dev.redicloud.commands.api.CommandArgumentParser
 import dev.redicloud.console.Console
-import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.console.utils.Screen
 import dev.redicloud.console.utils.ScreenParser
 import dev.redicloud.event.EventManager

@@ -2,7 +2,7 @@ package dev.redicloud.repository.server.version.handler.defaults
 
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
-import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.NodeRepository

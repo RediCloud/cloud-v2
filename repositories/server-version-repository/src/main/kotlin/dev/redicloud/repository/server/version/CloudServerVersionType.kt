@@ -1,6 +1,6 @@
 package dev.redicloud.repository.server.version
 
-import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.*
 import java.io.File

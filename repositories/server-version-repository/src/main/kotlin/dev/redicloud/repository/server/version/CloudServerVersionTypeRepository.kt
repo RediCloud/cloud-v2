@@ -3,7 +3,7 @@ package dev.redicloud.repository.server.version
 import com.google.gson.reflect.TypeToken
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
-import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.logging.LogManager

@@ -2,7 +2,7 @@ package dev.redicloud.service.node.commands
 
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
-import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.CloudNode

@@ -1,6 +1,6 @@
 package dev.redicloud.repository.server.version.task
 
-import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository

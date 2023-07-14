@@ -2,7 +2,7 @@ package dev.redicloud.server.factory
 
 import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.service.base.packets.CloudServiceShutdownPacket
-import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.console.utils.ScreenProcessHandler
 import dev.redicloud.logging.LogManager
 import dev.redicloud.logging.getDefaultLogLevel

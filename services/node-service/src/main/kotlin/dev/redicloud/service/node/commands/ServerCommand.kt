@@ -3,7 +3,7 @@ package dev.redicloud.service.node.commands
 import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
-import dev.redicloud.console.commands.toConsoleValue
+import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
