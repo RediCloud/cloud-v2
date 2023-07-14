@@ -71,7 +71,7 @@ open class URLServerVersionHandler(
             defaultFiles.putAll(type.defaultFiles)
             defaultFiles.forEach {
                 downloader.add {
-                    val url1 = it.key
+                    val url1 = it.key.replace("%build_number%", BUILD_NUMBER).replace("%cloud_version%", CLOUD_VERSION)
                     val path = it.value
                     try {
                         if (!isValidUrl(url1)) {
@@ -85,6 +85,7 @@ open class URLServerVersionHandler(
                             logger.warning("§cDownload of default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)} is not available (${response.statusCode}):\n${response.text}")
                             return@add
                         }
+                        file.createNewFile()
                         file.writeBytes(response1.content)
                     }catch (e: Exception) {
                         logger.warning("§cFailed to download default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)}", e)

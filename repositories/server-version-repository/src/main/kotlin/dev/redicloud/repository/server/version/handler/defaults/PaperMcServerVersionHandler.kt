@@ -93,7 +93,7 @@ class PaperMcServerVersionHandler(
             defaultFiles.putAll(type.defaultFiles)
             defaultFiles.forEach {
                 downloader.add {
-                    val url1 = it.value
+                    val url1 = it.value.replace("%build_number%", BUILD_NUMBER).replace("%cloud_version%", CLOUD_VERSION)
                     val path = it.key
                     try {
                         if (!isValidUrl(url1)) {
@@ -126,6 +126,7 @@ class PaperMcServerVersionHandler(
                             )
                             return@add
                         }
+                        file.createNewFile()
                         file.writeBytes(response1.content)
                     }catch (e: Exception) {
                         logger.warning("§cFailed to download default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)}", e)
