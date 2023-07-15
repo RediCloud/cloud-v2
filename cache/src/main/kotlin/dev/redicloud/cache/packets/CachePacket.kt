@@ -13,9 +13,7 @@ abstract class CachePacket(
     var cache: ClusterCache<out IClusterCacheObject>? = null
 
     override fun received() {
-        if (cache != null) {
-            cache = ClusterCache.CACHES[cacheName]
-        }
+        cache = ClusterCache.CACHES[cacheName]
     }
 
 }
