@@ -10,4 +10,8 @@ dependencies {
     compileOnly(project(":repositories:node-repository"))
     compileOnly(project(":repositories:service-repository"))
     compileOnly(project(":console"))
+    testImplementation("com.github.jkcclemens:khttp:${Versions.khttp}")
+    implementation("com.github.jkcclemens:khttp:${Versions.khttp}")
+    runtimeOnly("com.github.jkcclemens:khttp:${Versions.khttp}")
+    testRuntimeOnly("com.github.jkcclemens:khttp:${Versions.khttp}")
 }

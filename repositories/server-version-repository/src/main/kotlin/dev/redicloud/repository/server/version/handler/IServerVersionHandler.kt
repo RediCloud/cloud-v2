@@ -97,7 +97,7 @@ interface IServerVersionHandler {
 
         fun getHandler(type: CloudServerVersionType): IServerVersionHandler =
             CACHE_HANDLERS.firstOrNull { it.name.lowercase() == type.versionHandlerName.lowercase() }
-                ?: throw IllegalStateException("No handler for type $type")
+                ?: CACHE_HANDLERS.first { it.name.lowercase() == "urldownloader" }
 
         fun registerHandler(serverVersionHandler: IServerVersionHandler): IServerVersionHandler {
             if (CACHE_HANDLERS.any { it.name.lowercase() == serverVersionHandler.name.lowercase() })

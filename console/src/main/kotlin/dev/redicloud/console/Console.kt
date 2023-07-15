@@ -363,7 +363,7 @@ open class Console(
         try {
             s.split("\n").forEach {
                 val text = formatText(it, "\n", true, getLevelColor(logRecord.level).ansiCode + getNormedLevelName(logRecord.level))
-                defaultScreen.history.add(text)
+                defaultScreen.addToHistory(text)
                 this.print(text)
                 runningAnimations.values.forEach { it.second.addToCursorUp(1) }
             }

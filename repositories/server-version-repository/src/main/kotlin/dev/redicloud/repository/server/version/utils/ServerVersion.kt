@@ -14,10 +14,36 @@ class ServerVersion(
 
     fun isUnknown(): Boolean = name.lowercase() == "unknown"
 
-    companion object {
-        private val CACHED_MINECRAFT_VERSIONS = mutableListOf<ServerVersion>()
+    fun isLatest(): Boolean = name.lowercase() == "latest"
 
-        fun versions(): List<ServerVersion> = CACHED_MINECRAFT_VERSIONS
+    fun isLatestMcVersion(): Boolean {
+        return versions().first { it.isLatest() }.dynamicVersion()?.name == this.name
+    }
+
+    fun isMcVersion(): Boolean = mcVersionRegex.matches(name)
+
+    fun dynamicVersion(): ServerVersion? {
+        return if (name.lowercase() == "latest") {
+            val versionComparator = compareBy<ServerVersion> { it.protocolId }
+                .thenByDescending { it.name.substringBefore('.') }
+                .thenByDescending { it.name.substringAfter('.').substringBefore('.') }
+                .thenByDescending { it.name.substringAfterLast('.') }
+
+            val versions = versions().toMutableList()
+            versions.removeIf { !it.isMcVersion() }
+            val sortedVersions = versions.sortedWith(versionComparator)
+
+            return sortedVersions.lastOrNull()
+        }else {
+            null
+        }
+    }
+
+    companion object {
+        private val mcVersionRegex = Regex("(\\d+(\\.\\d+)+)")
+        val CACHED_MINECRAFT_VERSIONS = mutableListOf<ServerVersion>() //TODO private add
+
+        fun versions(): MutableList<ServerVersion> = CACHED_MINECRAFT_VERSIONS
 
         suspend fun loadOnlineVersions() {
             CACHED_MINECRAFT_VERSIONS.clear()
@@ -25,7 +51,10 @@ class ServerVersion(
             val type = object : TypeToken<ArrayList<ServerVersion>>() {}.type
             val list = gson.fromJson<List<ServerVersion>?>(json, type).toMutableList()
             if (list.none { it.isUnknown() }) {
-                list.add(ServerVersion("unknown", -1))
+                list.add(ServerVersion("unknown", -1, emptyArray()))
+            }
+            if (list.none { it.isLatest() }) {
+                list.add(ServerVersion("latest", -1, emptyArray()))
             }
             CACHED_MINECRAFT_VERSIONS.addAll(list)
         }

@@ -48,7 +48,7 @@ class CloudPlayerListener(
                     }
                     cloudPlayer.connected = true
                     cloudPlayer.lastConnect = System.currentTimeMillis()
-                    cloudPlayer.version = ServerVersion.versions().firstOrNull { it.protocolId == event.connection.version }
+                    cloudPlayer.version = ServerVersion.versions().filter { !it.isLatest() }.firstOrNull { it.protocolId == event.connection.version }
                         ?: ServerVersion.versions().first { it.isUnknown() }
                     cloudPlayer.proxyId = serverRepository.serviceId
                     cloudPlayer.name = event.connection.name
@@ -63,7 +63,7 @@ class CloudPlayerListener(
                             null,
                             System.currentTimeMillis(),
                             System.currentTimeMillis(),
-                            ServerVersion.versions().firstOrNull { it.protocolId == event.connection.version }
+                            ServerVersion.versions().filter { !it.isLatest() }.firstOrNull { it.protocolId == event.connection.version }
                                 ?: ServerVersion.versions().first { it.isUnknown() }
                         )
                     )

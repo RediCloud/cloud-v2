@@ -45,6 +45,10 @@ class CloudServerVersionCommand(
         @CommandParameter("name", true) name: String
     ) {
         runBlocking {
+            if (version.online) {
+                actor.sendMessage("§cThe version ${toConsoleValue(version.getDisplayName(), false)} is online and can't be edited!")
+                return@runBlocking
+            }
             if (serverVersionRepository.existsVersion(name)) {
                 actor.sendMessage("§cA version with the name '$name' already exists!")
                 return@runBlocking
@@ -64,6 +68,10 @@ class CloudServerVersionCommand(
         @CommandParameter("url", true) url: String
     ) {
         defaultScope.launch {
+            if (version.online) {
+                actor.sendMessage("§cThe version ${toConsoleValue(version.getDisplayName(), false)} is online and can't be edited!")
+                return@launch
+            }
             if (url != "null" && !isValidUrl(url)) {
                 actor.sendMessage("§cThe url '$url' is not valid!")
                 return@launch
@@ -82,8 +90,13 @@ class CloudServerVersionCommand(
         @CommandParameter("type", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType
     ) {
         runBlocking {
+            if (version.online) {
+                actor.sendMessage("§cThe version ${toConsoleValue(version.getDisplayName(), false)} is online and can't be edited!")
+                return@runBlocking
+            }
             if (version.version.versionTypes.isNotEmpty()
-                && version.version.versionTypes.none { it.lowercase() == type.name.lowercase() }) {
+                && version.version.versionTypes.none { it.lowercase() == type.name.lowercase() }
+                && version.version.versionTypes.filter { it.startsWith("!") }.any { it.replaceFirst("!", "").lowercase() == type.name.lowercase() }) {
                 actor.sendMessage("§cThe type ${toConsoleValue(type.name, false)} is not supported by the version ${toConsoleValue(version.version.name, false)}")
                 return@runBlocking
             }
@@ -101,6 +114,10 @@ class CloudServerVersionCommand(
         @CommandParameter("pattern", true) pattern: String
     ) {
         runBlocking {
+            if (version.online) {
+                actor.sendMessage("§cThe version ${toConsoleValue(version.getDisplayName(), false)} is online and can't be edited!")
+                return@runBlocking
+            }
             version.libPattern = if (pattern != "null") pattern else null
             serverVersionRepository.updateVersion(version)
             actor.sendMessage("Updated lib pattern of ${toConsoleValue(version.getDisplayName())} to §8'%tc%${version.libPattern}§8'")
@@ -115,6 +132,10 @@ class CloudServerVersionCommand(
         @CommandParameter("state", true, BooleanSuggester::class) state: Boolean
     ) {
         runBlocking {
+            if (version.online) {
+                actor.sendMessage("§cThe version ${toConsoleValue(version.getDisplayName(), false)} is online and can't be edited!")
+                return@runBlocking
+            }
             version.patch = state
             serverVersionRepository.updateVersion(version)
             actor.sendMessage("Updated patching of ${toConsoleValue(version.getDisplayName())} to ${toConsoleValue(state)}")
@@ -142,6 +163,10 @@ class CloudServerVersionCommand(
         @CommandParameter("mcversion", true, ServerVersionSuggester::class) minecraftVersion: ServerVersion
     ) {
         runBlocking {
+            if (version.online) {
+                actor.sendMessage("§cThe version ${toConsoleValue(version.getDisplayName(), false)} is online and can't be edited!")
+                return@runBlocking
+            }
             version.version = minecraftVersion
             serverVersionRepository.updateVersion(version)
             actor.sendMessage("Updated minecraft version of ${toConsoleValue(version.getDisplayName())} to ${toConsoleValue(minecraftVersion.name)}")
@@ -183,16 +208,20 @@ class CloudServerVersionCommand(
     @CommandDescription("Add a file edit that should be applied before the server is starts")
     fun addFileEdit(
         actor: ConsoleActor,
-        @CommandParameter("name", true, CloudServerVersionSuggester::class) type: CloudServerVersion,
+        @CommandParameter("name", true, CloudServerVersionSuggester::class) version: CloudServerVersion,
         @CommandParameter("file") file: String,
         @CommandParameter("key") key: String,
         @CommandParameter("value") value: String
     ) {
         runBlocking {
-            val subMap = type.fileEdits.getOrDefault(file, mutableMapOf())
+            if (version.online) {
+                actor.sendMessage("§cThe version ${toConsoleValue(version.getDisplayName(), false)} is online and can't be edited!")
+                return@runBlocking
+            }
+            val subMap = version.fileEdits.getOrDefault(file, mutableMapOf())
             subMap[key] = value
-            type.fileEdits[file] = subMap
-            serverVersionRepository.updateVersion(type)
+            version.fileEdits[file] = subMap
+            serverVersionRepository.updateVersion(version)
             actor.sendMessage("Successfully added file edit to server version type!")
         }
     }
@@ -207,6 +236,10 @@ class CloudServerVersionCommand(
         @CommandParameter("key") key: String
     ) {
         runBlocking {
+            if (version.online) {
+                actor.sendMessage("§cThe version ${toConsoleValue(version.getDisplayName(), false)} is online and can't be edited!")
+                return@runBlocking
+            }
             val subMap = version.fileEdits.getOrDefault(file, mutableMapOf())
             subMap.remove(key)
             if (subMap.isEmpty()) {
@@ -228,6 +261,10 @@ class CloudServerVersionCommand(
         @CommandParameter("path", false) path: String?
     ) {
         runBlocking {
+            if (version.online) {
+                actor.sendMessage("§cThe version ${toConsoleValue(version.getDisplayName(), false)} is online and can't be edited!")
+                return@runBlocking
+            }
             if (!isValidUrl(url)) {
                 actor.sendMessage("§cThe url '$url' is not valid!")
                 return@runBlocking
@@ -251,6 +288,10 @@ class CloudServerVersionCommand(
         @CommandParameter("url") url: String
     ) {
         runBlocking {
+            if (version.online) {
+                actor.sendMessage("§cThe version ${toConsoleValue(version.getDisplayName(), false)} is online and can't be edited!")
+                return@runBlocking
+            }
             if (version.defaultFiles.none { it.value.lowercase() == url.lowercase() }) {
                 actor.sendMessage("§cThe file with the url '$url' is not added to the version ${toConsoleValue(version.getDisplayName())}!")
                 return@runBlocking
@@ -269,6 +310,10 @@ class CloudServerVersionCommand(
         @CommandParameter("parameter") parameter: String
     ) {
         runBlocking {
+            if (version.online) {
+                actor.sendMessage("§cThe version ${toConsoleValue(version.getDisplayName(), false)} is online and can't be edited!")
+                return@runBlocking
+            }
             if (version.programmParameters.contains(parameter)) {
                 actor.sendMessage("§cThe programm parameter '$parameter' is already added to the version ${toConsoleValue(version.getDisplayName())}!")
                 return@runBlocking
@@ -332,6 +377,10 @@ class CloudServerVersionCommand(
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion
     ) {
         runBlocking {
+            if (version.online) {
+                actor.sendMessage("§cThe version ${toConsoleValue(version.getDisplayName(), false)} is online and can't be edited!")
+                return@runBlocking
+            }
             val servers = serverRepository.getConnectedServers()
                 .filter { it.configurationTemplate.serverVersionId == version.uniqueId }
             if (servers.isNotEmpty()) {
@@ -392,6 +441,8 @@ class CloudServerVersionCommand(
             actor.sendMessage("§8- %tc%Project§8: %hc%${version.projectName}")
             actor.sendMessage("§8- %tc%Type§8: %hc%${type?.name ?: "unknown"}")
             actor.sendMessage("§8- %tc%Lib-Pattern§8: %hc%${version.libPattern ?: "not set"}")
+            actor.sendMessage("§8- %tc%Online§8: %hc%${version.online.toSymbol()}")
+            actor.sendMessage("§8- %tc%Used§8: %hc%${version.used.toSymbol()}")
             actor.sendMessage("§8- %tc%Version§8: %hc%${version.version.name}")
             actor.sendMessage("§8- %tc%Patch-Version§8: ${version.patch.toSymbol()}")
             actor.sendMessage("§8- %tc%Version-Handler§8: %hc%${type?.versionHandlerName ?: "unknown"}")

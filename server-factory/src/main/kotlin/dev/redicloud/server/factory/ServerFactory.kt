@@ -167,6 +167,10 @@ class ServerFactory(
             javaVersionRepository
         )
         if (dataResult != null) return dataResult
+        if (!snapshotData.version.used) {
+            snapshotData.version.used = true
+            serverVersionRepository.updateVersion(snapshotData.version)
+        }
 
         val serviceId = ServiceId(
             UUID.randomUUID(),
@@ -304,6 +308,10 @@ class ServerFactory(
                 javaVersionRepository
             )
             if (dataResult != null) return dataResult
+            if (!snapshotData.version.used) {
+                snapshotData.version.used = true
+                serverVersionRepository.updateVersion(snapshotData.version)
+            }
 
             // create the server process
             val serverProcess = ServerProcess(

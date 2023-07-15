@@ -14,12 +14,16 @@ open class Screen(
     historySize: Int = 100
 ) {
 
-    val history = History<String>(historySize)
+    private val history = History<String>(historySize)
     protected val queuedMessage = mutableListOf<String>()
 
     fun clear() {
         history.clear()
         queuedMessage.clear()
+    }
+
+    fun addToHistory(line: String) {
+        history.add(line)
     }
 
     fun display() {

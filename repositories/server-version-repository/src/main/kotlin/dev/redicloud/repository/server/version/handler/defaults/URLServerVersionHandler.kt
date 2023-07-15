@@ -70,9 +70,13 @@ open class URLServerVersionHandler(
                 ?: throw NullPointerException("Cant find server version type ${version.typeId}")
             if (version.customDownloadUrl == null) throw NullPointerException("Download url of ${version.getDisplayName()} is null")
 
-            val response = get(version.customDownloadUrl!!)
+            val downloadUrl = version.customDownloadUrl!!
+                .replace("%build_id%", version.buildId ?: "-1")
+                .replace("%version_name%", version.version.name)
+
+            val response = get(downloadUrl)
             if (response.statusCode != 200) throw IllegalStateException(
-                "Download of ${version.getDisplayName()} is not available (${response.statusCode}):\n" +
+                "Download of ${version.getDisplayName()} is not available ($downloadUrl -> ${response.statusCode}):\n" +
                         response.text
             )
 

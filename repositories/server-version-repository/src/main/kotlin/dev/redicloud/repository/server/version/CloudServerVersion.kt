@@ -18,6 +18,8 @@ class CloudServerVersion(
     var javaVersionId: UUID?,
     var libPattern: String? = null,
     var patch: Boolean = false,
+    val online: Boolean = false,
+    var used: Boolean = false,
     jvmArguments: MutableList<String> = mutableListOf(),
     environmentVariables: MutableMap<String, String> = mutableMapOf(),
     programmParameters: MutableList<String> = mutableListOf(),

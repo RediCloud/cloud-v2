@@ -9,7 +9,12 @@ class PaperMcApiRequester {
 
     companion object {
         private val cache = mutableMapOf<String, Any>()
-        private val baseUrl = "https://api.papermc.io/v2"
+        val BASE_URL = "https://api.papermc.io/v2"
+        suspend inline fun <reified T> request(apiUrl: String): Response<T> {
+            val response = get(BASE_URL + apiUrl)
+            val json = response.jsonObject.toString()
+            return Response(json, gson.fromJson(json, T::class.java), response.statusCode)
+        }
     }
 
     suspend fun getBuilds(type: CloudServerVersionType, minecraftVersion: ServerVersion): List<Int> {
@@ -31,18 +36,12 @@ class PaperMcApiRequester {
     }
 
     fun getDownloadUrl(type: CloudServerVersionType, minecraftVersion: ServerVersion, build: Int): String {
-        return "$baseUrl/projects/${type.name.lowercase()}/versions/${minecraftVersion.name}/builds/$build/downloads/" +
+        return "$BASE_URL/projects/${type.name.lowercase()}/versions/${minecraftVersion.name}/builds/$build/downloads/" +
                 "${type.name.lowercase()}-${minecraftVersion.name}-$build.jar"
     }
 
     suspend fun getLatestBuild(type: CloudServerVersionType, minecraftVersion: ServerVersion): Int {
         return getBuilds(type, minecraftVersion).maxByOrNull { it } ?: -1
-    }
-
-    private suspend inline fun <reified T> request(apiUrl: String): Response<T> {
-        val response = get(baseUrl + apiUrl)
-        val json = response.jsonObject.toString()
-        return Response(json, gson.fromJson(json, T::class.java), response.statusCode)
     }
 
 }

@@ -78,45 +78,7 @@
     "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%-%build_number.jar",
     "connectorDownloadUrl": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/connectors/redicloud-bukkit-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
-    "libPattern": "(cache|versions|libraries)"
-  },
-  {
-    "uniqueId": "22fdc789-f155-41fc-8bcd-974994410079",
-    "name": "bukkit",
-    "defaultType": true,
-    "versionHandlerName": "urldownloader",
-    "proxy": false,
-    "jvmArguments": [
-      "-Dcom.mojang.eula.agree=true",
-      "-Djline.terminal=jline.UnsupportedTerminal"
-    ],
-    "programmParameters": [
-      "nogui"
-    ],
-    "environmentVariables": {},
-    "defaultFiles": {
-      "server.properties": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/server.properties",
-      "bukkit.yml": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/bukkit.yml",
-      "spigot.yml": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/spigot.yml"
-    },
-    "fileEdits": {
-      "server.properties": {
-        "server-ip": "%HOSTNAME%",
-        "server-port": "%PORT%",
-        "online-mode": "false",
-        "max-players": "%MAX_PLAYERS%"
-      },
-      "bukkit.yml": {
-        "connection-throttle": "0"
-      },
-      "spigot.yml": {
-        "bungeecord": "true"
-      }
-    },
-    "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%-%build_number%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/connectors/redicloud-bukkit-connector-%cloud_version%.jar",
-    "connectorFolder": "plugins",
-    "libPattern": "(cache|versions|libraries)"
+    "libPattern": "(bundler)"
   },
   {
     "uniqueId": "e0982b0f-f27f-4206-a373-ce12ad8ea333",

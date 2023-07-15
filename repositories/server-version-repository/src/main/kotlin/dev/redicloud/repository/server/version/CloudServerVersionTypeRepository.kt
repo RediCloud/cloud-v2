@@ -25,7 +25,7 @@ class CloudServerVersionTypeRepository(
 
     companion object {
         val LOGGER = LogManager.logger(CloudServerVersionTypeRepository::class)
-        val DEFAULT_TYPES_CACHE = EasyCache<List<CloudServerVersionType>, Unit>(1.minutes) {
+        val DEFAULT_TYPES_CACHE = SingleCache(1.minutes) {
             val json = getTextOfAPIWithFallback("api-files/server-version-types.json")
             val type = object : TypeToken<ArrayList<CloudServerVersionType>>() {}.type
             val list: MutableList<CloudServerVersionType> = gson.fromJson(json, type)
@@ -124,11 +124,11 @@ class CloudServerVersionTypeRepository(
             if (existsType(onlineType.uniqueId)) {
                 val current = getType(onlineType.uniqueId)!!
                 if (current == onlineType) return@forEach
-                LOGGER.info("Updating default server version type ${toConsoleValue(onlineType.name)}...")
+                LOGGER.info("Pulled server version type ${toConsoleValue(onlineType.name)} from web...")
                 updateType(onlineType)
                 serverVersionRepository.getVersions().forEach {
                     if (it.typeId == current.uniqueId) {
-                        if (current.defaultFiles != it.defaultFiles) {
+                        if (current.defaultFiles != it.defaultFiles && it.used) {
                             val handler = IServerVersionHandler.getHandler(current)
                             handler.update(it, onlineType)
                         }
@@ -137,6 +137,7 @@ class CloudServerVersionTypeRepository(
                 return@forEach
             }
             createType(onlineType)
+            LOGGER.info("Pulled server version type ${toConsoleValue(onlineType.name)} from web...")
         }
     }
 
