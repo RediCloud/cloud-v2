@@ -49,7 +49,7 @@ class NodeService(
         console = NodeConsole(configuration, eventManager, nodeRepository, serverRepository)
         fileNodeRepository = FileNodeRepository(databaseConnection, packetManager)
         fileCluster = FileCluster(configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
-        fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster)
+        fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster, packetManager)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console)
         serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress, console, clusterConfiguration, configurationTemplateRepository, eventManager, fileCluster)
 
@@ -137,7 +137,7 @@ class NodeService(
             .period(5.seconds)
             .register()
         taskManager.builder()
-            .task(CloudServerVersionUpdateTask(this.serverVersionRepository, this.serverVersionTypeRepository))
+            .task(CloudServerVersionUpdateTask(firstStart, this.serverVersionRepository, this.serverVersionTypeRepository))
             .period(5.minutes)
             .instant()
             .register()
@@ -173,7 +173,6 @@ class NodeService(
             val located = version.autoLocate()
             if (located != null) {
                 if (located.absolutePath == version.located[configuration.toServiceId().id]) return@forEach
-                LOGGER.info("Auto located java version §8'%tc%${version.name}§8'%tc% at §8'%hc%${located.absolutePath}§8'")
                 version.located[configuration.toServiceId().id] = located.absolutePath
                 javaVersionRepository.updateVersion(version)
                 return@forEach
