@@ -239,6 +239,7 @@ class ServerFactory(
                     )
                 )
             }
+            serverProcess.cloudServer = cloudServer
 
             // Create server screen
             val serverScreen = ServerScreen(cloudServer.serviceId, cloudServer.name, this.console)
