@@ -5,9 +5,11 @@ import com.velocitypowered.api.proxy.ProxyServer
 import com.velocitypowered.api.proxy.server.ServerInfo
 import dev.redicloud.connector.velocity.bootstrap.VelocityConnectorBootstrap
 import dev.redicloud.connector.velocity.listener.CloudPlayerListener
+import dev.redicloud.connector.velocity.provider.VelocityScreenProvider
 import dev.redicloud.connector.velocity.provider.VelocityServerPlayerProvider
 import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.service.minecraft.ProxyServerService
+import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
 import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
@@ -23,11 +25,12 @@ class VelocityConnector(
     private var velocityShuttingDown: Boolean
     private val registered: MutableMap<ServiceId, ServerInfo>
     override val serverPlayerProvider: IServerPlayerProvider
+    override val screenProvider: AbstractScreenProvider = VelocityScreenProvider(this.packetManager, this.proxyServer)
 
     init {
-        velocityShuttingDown = false
-        registered = mutableMapOf()
-        serverPlayerProvider = VelocityServerPlayerProvider(proxyServer)
+        this.velocityShuttingDown = false
+        this.registered = mutableMapOf()
+        this.serverPlayerProvider = VelocityServerPlayerProvider(proxyServer)
         runBlocking {
             registerTasks()
             registerStartedServers()
@@ -44,13 +47,13 @@ class VelocityConnector(
                 server.port
             ),
         )
-        registered[server.serviceId] = serverInfo
-        proxyServer.registerServer(serverInfo)
+        this.registered[server.serviceId] = serverInfo
+        this.proxyServer.registerServer(serverInfo)
     }
 
     override fun unregisterServer(server: CloudMinecraftServer) {
         val serverInfo = registered.remove(server.serviceId) ?: return
-        proxyServer.unregisterServer(serverInfo)
+        this.proxyServer.unregisterServer(serverInfo)
     }
 
     override fun onEnable() {
@@ -59,16 +62,16 @@ class VelocityConnector(
     }
 
     override fun onDisable() {
-        if (!velocityShuttingDown) {
-            proxyServer.shutdown()
+        if (!this.velocityShuttingDown) {
+            this.proxyServer.shutdown()
             return
         }
         super.onDisable()
     }
 
     private fun registerListeners() {
-        proxyServer.eventManager.register(getConnectorPlugin(), CloudPlayerListener(this.playerRepository, this.serverRepository, this.proxyServer))
+        this.proxyServer.eventManager.register(getConnectorPlugin(), CloudPlayerListener(this.playerRepository, this.serverRepository, this.proxyServer))
     }
 
-    override fun getConnectorPlugin(): PluginContainer = proxyServer.pluginManager.getPlugin("redicloud-connector-velocity").get()
+    override fun getConnectorPlugin(): PluginContainer = this.proxyServer.pluginManager.getPlugin("redicloud-connector-velocity").get()
 }

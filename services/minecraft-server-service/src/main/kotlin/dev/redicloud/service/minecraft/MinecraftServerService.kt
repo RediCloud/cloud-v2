@@ -4,11 +4,11 @@ import dev.redicloud.api.server.CloudServerState
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.CloudServer
-import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.service.base.BaseService
 import dev.redicloud.service.base.repository.BaseFileTemplateRepository
+import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
 import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
 import dev.redicloud.service.minecraft.repositories.connect
 import dev.redicloud.service.minecraft.tasks.CloudServerInfoTask
@@ -27,6 +27,7 @@ abstract class MinecraftServerService<T> : BaseService(
     final override val fileTemplateRepository: AbstractFileTemplateRepository
     final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
     abstract val serverPlayerProvider: IServerPlayerProvider
+    abstract val screenProvider: AbstractScreenProvider
     val logger = LogManager.Companion.logger(MinecraftServerService::class)
 
     init {

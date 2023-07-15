@@ -83,4 +83,19 @@ class ScreenCommand(
         console.switchScreen(screen, true)
     }
 
+    @CommandSubPath("execute <command>")
+    @CommandAlias(["exec", "write"])
+    @CommandDescription("Execute a command in the current screen session")
+    fun execute(
+        actor: ConsoleActor,
+        @CommandParameter("command", true) vararg command: String
+    ) {
+        val currentScreen = console.getCurrentScreen()
+        if (currentScreen.isDefault() || currentScreen !is ServerScreen) {
+            actor.sendMessage("§cYou are not in a server screen session!")
+            return
+        }
+        currentScreen.executeCommand(command.joinToString(" "))
+    }
+
 }

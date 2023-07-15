@@ -182,6 +182,7 @@ abstract class BaseService(
         packetManager.registerPacket(CloudServiceShutdownPacket::class)
         packetManager.registerPacket(CloudServiceShutdownResponse::class)
         packetManager.registerPacket(ClusterMessagePacket::class)
+        packetManager.registerPacket(ScreenCommandPacket::class)
     }
 
     private fun registerPacketListeners() {
