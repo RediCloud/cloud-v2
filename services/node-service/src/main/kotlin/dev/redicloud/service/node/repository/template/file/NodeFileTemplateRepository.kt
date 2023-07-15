@@ -4,6 +4,7 @@ import com.jcraft.jsch.ChannelSftp
 import com.jcraft.jsch.Session
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.database.DatabaseConnection
+import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplate
@@ -14,9 +15,10 @@ import java.util.*
 
 class NodeFileTemplateRepository(
     databaseConnection: DatabaseConnection,
-    nodeRepository: NodeRepository,
-    private val fileCluster: FileCluster
-) : AbstractFileTemplateRepository(databaseConnection, nodeRepository) {
+    private val nodeRepository: NodeRepository,
+    private val fileCluster: FileCluster,
+    packetManager: PacketManager
+) : AbstractFileTemplateRepository(databaseConnection, nodeRepository, packetManager) {
 
     override suspend fun pushTemplates(serviceId: ServiceId) {
         val node = nodeRepository.getNode(serviceId) ?: return
@@ -58,7 +60,7 @@ class NodeFileTemplateRepository(
 
     override suspend fun updateTemplate(template: FileTemplate): FileTemplate {
         val storedTemplate = getTemplate(template.uniqueId) ?: throw Exception("Template ${template.uniqueId} not found!")
-        getHandle(template.uniqueId.toString()).set(template)
+        set(template.uniqueId.toString(), template)
         if (storedTemplate.getDisplayName() != template.getDisplayName()) {
             val folder = storedTemplate.getFolder()
             if (template.getFolder().exists() && template.getFolder().isDirectory && folder.exists() && folder.isDirectory) {

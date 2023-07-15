@@ -4,9 +4,11 @@ import dev.redicloud.repository.service.ServiceRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
+import dev.redicloud.repository.service.CachedServiceRepository
 import dev.redicloud.service.base.events.node.NodeDisconnectEvent
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class NodeRepository(
@@ -14,7 +16,15 @@ class NodeRepository(
     serviceId: ServiceId,
     packetManager: PacketManager,
     private val eventManager: EventManager
-) : ServiceRepository<CloudNode>(databaseConnection, serviceId, ServiceType.NODE, packetManager) {
+) : CachedServiceRepository<CloudNode>(
+    databaseConnection,
+    serviceId,
+    ServiceType.NODE,
+    packetManager,
+    arrayOf(CloudNode::class),
+    5.minutes,
+    ServiceType.NODE
+) {
 
     override suspend fun transformShutdownable(service: CloudNode): CloudNode {
         service.currentMemoryUsage = 0

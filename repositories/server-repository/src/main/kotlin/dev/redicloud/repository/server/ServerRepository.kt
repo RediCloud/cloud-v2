@@ -8,6 +8,7 @@ import dev.redicloud.api.template.configuration.event.ConfigurationTemplateUpdat
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
+import dev.redicloud.repository.service.CachedServiceRepository
 import dev.redicloud.repository.service.ServiceRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.service.base.events.server.CloudServerRegisteredEvent
@@ -16,6 +17,7 @@ import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.minutes
 
 class ServerRepository(
     databaseConnection: DatabaseConnection,
@@ -23,7 +25,17 @@ class ServerRepository(
     packetManager: PacketManager,
     private val eventManager: EventManager,
     configurationTemplateRepository: ConfigurationTemplateRepository
-) : ServiceRepository<CloudServer>(databaseConnection, serviceId, if (serviceId.type.isServer()) serviceId.type else ServiceType.MINECRAFT_SERVER, packetManager) {
+) : CachedServiceRepository<CloudServer>(
+    databaseConnection,
+    serviceId,
+    if (serviceId.type.isServer()) serviceId.type else ServiceType.MINECRAFT_SERVER,
+    packetManager,
+    arrayOf(CloudMinecraftServer::class, CloudProxyServer::class),
+    5.minutes,
+    ServiceType.NODE,
+    ServiceType.MINECRAFT_SERVER,
+    ServiceType.PROXY_SERVER
+) {
 
     suspend fun <T : CloudServer> existsServer(serviceId: ServiceId): Boolean {
         return existsService<T>(serviceId)

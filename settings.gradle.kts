@@ -69,3 +69,6 @@ findProject(":repositories:player-repository")?.name = "player-repository"
 
 include("connectors:bukkit-legacy")
 findProject(":connectors:bukkit-legacy")?.name = "bukkit-legacy"
+include("cache")
+include("repositories:cache-repository")
+findProject(":repositories:cache-repository")?.name = "cache-repository"

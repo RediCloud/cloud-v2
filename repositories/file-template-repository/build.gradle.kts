@@ -7,4 +7,6 @@ dependencies {
     compileOnly(project(":packets"))
     compileOnly(project(":repositories:node-repository"))
     compileOnly(project(":repositories:service-repository"))
+    compileOnly(project(":repositories:cache-repository"))
+    compileOnly(project(":cache"))
 }

@@ -13,4 +13,6 @@ dependencies {
 
     dependency("org.redisson:redisson:3.21.3")
     dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    compileOnly(project(":repositories:cache-repository"))
+    compileOnly(project(":cache"))
 }

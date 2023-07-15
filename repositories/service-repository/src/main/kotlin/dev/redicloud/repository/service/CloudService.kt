@@ -1,5 +1,6 @@
 package dev.redicloud.repository.service
 
+import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 
@@ -8,7 +9,7 @@ abstract class CloudService(
     val name: String,
     private val serviceSessions: ServiceSessions = ServiceSessions(),
     var connected: Boolean = false
-){
+) : IClusterCacheObject {
 
     fun getIdentifyingName(colored: Boolean = true): String = if (colored) "%hc%$name§8#%tc%${serviceId.id}" else "$name#${serviceId.id}"
 

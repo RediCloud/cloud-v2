@@ -1,5 +1,6 @@
 package dev.redicloud.repository.server.version
 
+import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.*
@@ -29,7 +30,7 @@ class CloudServerVersionType(
     programmParameters,
     defaultFiles,
     fileEdits
-) {
+), IClusterCacheObject {
 
     companion object {
         private val logger = LogManager.Companion.logger(CloudServerVersionType::class)
@@ -94,6 +95,19 @@ class CloudServerVersionType(
         if (connectorDownloadUrl != other.connectorDownloadUrl) return false
         if (connectorFolder != other.connectorFolder) return false
         return libPattern == other.libPattern
+    }
+
+    override fun hashCode(): Int {
+        var result = uniqueId.hashCode()
+        result = 31 * result + name.hashCode()
+        result = 31 * result + versionHandlerName.hashCode()
+        result = 31 * result + proxy.hashCode()
+        result = 31 * result + defaultType.hashCode()
+        result = 31 * result + connectorPluginName.hashCode()
+        result = 31 * result + (connectorDownloadUrl?.hashCode() ?: 0)
+        result = 31 * result + connectorFolder.hashCode()
+        result = 31 * result + (libPattern?.hashCode() ?: 0)
+        return result
     }
 
 }

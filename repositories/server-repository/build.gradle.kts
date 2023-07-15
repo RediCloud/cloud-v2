@@ -13,4 +13,6 @@ dependencies {
     compileOnly(project(":repositories:configuration-template-repository"))
     compileOnly(project(":database"))
     compileOnly(project(":packets"))
+    compileOnly(project(":repositories:cache-repository"))
+    compileOnly(project(":cache"))
 }

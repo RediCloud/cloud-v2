@@ -8,8 +8,10 @@ dependencies {
     compileOnly(project(":services:base-service"))
     compileOnly(project(":database"))
     compileOnly(project(":packets"))
+    compileOnly(project(":cache"))
     compileOnly(project(":repositories:node-repository"))
     compileOnly(project(":repositories:service-repository"))
+    compileOnly(project(":repositories:cache-repository"))
 
     dependency("org.apache.sshd:sshd-sftp:2.10.0")
     dependency("com.jcraft:jsch:0.1.55")

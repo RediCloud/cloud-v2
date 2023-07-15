@@ -1,5 +1,6 @@
 package dev.redicloud.repository.java.version
 
+import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.utils.OSType
 import dev.redicloud.utils.getOperatingSystemType
 import dev.redicloud.utils.service.ServiceId
@@ -13,7 +14,7 @@ data class JavaVersion(
     val onlineVersion: Boolean = false,
     val located: MutableMap<UUID, String> = mutableMapOf(),
     val info: JavaVersionInfo? = null
-) {
+) : IClusterCacheObject {
 
     fun isUnknown() = id == -1
 
