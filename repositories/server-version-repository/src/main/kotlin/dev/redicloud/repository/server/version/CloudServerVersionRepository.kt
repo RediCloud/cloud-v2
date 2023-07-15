@@ -11,6 +11,7 @@ import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.utils.SingleCache
 import dev.redicloud.utils.getTextOfAPIWithFallback
 import dev.redicloud.utils.gson.gson
+import dev.redicloud.utils.service.ServiceType
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
 
@@ -23,7 +24,8 @@ class CloudServerVersionRepository(
     null,
     CloudServerVersion::class,
     5.minutes,
-    packetManager
+    packetManager,
+    ServiceType.NODE
 ) {
 
     companion object {

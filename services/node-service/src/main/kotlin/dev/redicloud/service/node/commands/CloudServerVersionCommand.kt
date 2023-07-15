@@ -442,7 +442,7 @@ class CloudServerVersionCommand(
                         line.append("§8, ")
                     }
                     val displayName = "%tc%${version.projectName}§8_%hc%${version.version.name}"
-                    line.append("${displayName}${if(version.version.isLatest()) " §8(%tc%${version.version.dynamicVersion()!!.name}§8)" else ""}")
+                    line.append("${displayName}${if(version.version.isLatest()) " §8(%tc%${version.version.dynamicVersion().name}§8)" else ""}")
                 }
                 if (line.isNotEmpty()) {
                     actor.sendMessage(line.toString())
@@ -470,7 +470,7 @@ class CloudServerVersionCommand(
             actor.sendMessage("§8- %tc%Online§8: %hc%${version.online.toSymbol()}")
             actor.sendMessage("§8- %tc%Used§8: %hc%${version.used.toSymbol()}")
             actor.sendMessage("§8- %tc%Version§8: %hc%${version.version.name}")
-            actor.sendMessage("§8- %tc%Version-Id§8: %hc%${if (version.version.isLatest()) "latest (${version.version.dynamicVersion()!!.name})" else version.version.name}")
+            actor.sendMessage("§8- %tc%Version-Id§8: %hc%${if (version.version.isLatest()) "latest (${version.version.dynamicVersion().name})" else version.version.name}")
             actor.sendMessage("§8- %tc%Patch-Version§8: ${version.patch.toSymbol()}")
             actor.sendMessage("§8- %tc%Version-Handler§8: %hc%${type?.versionHandlerName ?: "unknown"}")
             actor.sendMessage("§8- %tc%Download-Url§8: %hc%${version.customDownloadUrl ?: "not set"}")

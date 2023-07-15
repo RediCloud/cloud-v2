@@ -106,7 +106,7 @@ abstract class BaseService(
         playerRepository = PlayerRepository(databaseConnection, eventManager, packetManager)
         javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection, packetManager)
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager, eventManager)
-        serverVersionRepository = CloudServerVersionRepository(databaseConnection)
+        serverVersionRepository = CloudServerVersionRepository(databaseConnection, packetManager)
         configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager, packetManager)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager, configurationTemplateRepository)
         this.registerPackets()

@@ -30,8 +30,8 @@ abstract class MinecraftServerService<T> : BaseService(
     val logger = LogManager.Companion.logger(MinecraftServerService::class)
 
     init {
-        fileTemplateRepository = BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository)
-        serverVersionTypeRepository = CloudServerVersionTypeRepository(this.databaseConnection, null)
+        fileTemplateRepository = BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository, packetManager)
+        serverVersionTypeRepository = CloudServerVersionTypeRepository(this.databaseConnection, null, packetManager)
 
         runBlocking {
             registerDefaults()
