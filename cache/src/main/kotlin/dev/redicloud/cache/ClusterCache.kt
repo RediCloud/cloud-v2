@@ -48,7 +48,7 @@ class ClusterCache<V: IClusterCacheObject>(
 
     fun get(key: String, block: () -> V?): V? {
         if (serviceTypes.none { it == serviceId.type }) return null
-        if (!isCacheValid(key)) {
+        if (!isCached(key)) {
             setCached(key, block())
         }
         return get(key)

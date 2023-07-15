@@ -7,4 +7,5 @@ dependencies {
     compileOnly(project(":database"))
     compileOnly(project(":packets"))
     compileOnly(project(":utils"))
+    compileOnly(project(":tasks"))
 }

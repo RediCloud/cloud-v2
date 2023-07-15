@@ -1,5 +1,6 @@
 package dev.redicloud.service.base
 
+import dev.redicloud.cache.tasks.InvalidCacheTask
 import dev.redicloud.commands.api.CommandArgumentParser
 import dev.redicloud.commands.api.AbstractCommandSuggester
 import dev.redicloud.repository.node.NodeRepository
@@ -42,6 +43,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.logging.Level
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 abstract class BaseService(
     databaseConfiguration: DatabaseConfiguration,
@@ -102,6 +105,10 @@ abstract class BaseService(
             else -> 2
         }
         taskManager = CloudTaskManager(eventManager, packetManager, taskThreads)
+        taskManager.builder()
+            .task(InvalidCacheTask())
+            .period(30.seconds)
+            .register()
 
         playerRepository = PlayerRepository(databaseConnection, eventManager, packetManager)
         javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection, packetManager)
