@@ -10,7 +10,7 @@ abstract class CommandManager<K : ICommandActor<*>> {
     abstract fun getActor(identifier: K): K
 
     fun register(command: CommandBase) {
-        command.load()
+        command.load(this)
         commands.add(command)
     }
 
@@ -155,12 +155,22 @@ abstract class CommandManager<K : ICommandActor<*>> {
 
         val optimalPath = subCommand.parseToOptimalPath(input)!!
         val argumentIndexes = mutableListOf<Int>()
+        var varargStart = -1
         var index = -1
         optimalPath.split(" ").forEach {
             index++
+            if (it.isVarArgument()) {
+                varargStart = index
+                return@forEach
+            }
             if (it.isOptionalArgument() || it.isRequiredArgument()) argumentIndexes.add(index)
         }
-        val arguments = parameters.filterIndexed { i, _ -> argumentIndexes.contains(i) }
+        val vararg = subCommand.arguments.lastOrNull { !it.isActorArgument() }?.vararg == true
+        val arguments = parameters.filterIndexed { i, _ -> argumentIndexes.contains(i) }.toMutableList()
+        if (vararg) {
+            val varargArguments = parameters.filterIndexed { i, _ -> i >= varargStart }
+            arguments.addAll(varargArguments)
+        }
         return subCommand.execute(actor, arguments)
     }
 

@@ -32,11 +32,17 @@ class CommandSubBase(
             CommandArgument(this, it, index)
         }
         var optionalArguments = false
+        var vararg = false
         arguments.forEach {
             if (!it.required && !it.isActorArgument()) {
                 optionalArguments = true
                 return@forEach
             }
+            if (it.vararg && !it.isActorArgument()) {
+                vararg = true
+                return@forEach
+            }
+            if (it.vararg && !it.isActorArgument()) throw IllegalStateException("Vararg argument of ${command.getName()}.${path} can be only the last argument")
             if (optionalArguments && !it.isActorArgument()) throw IllegalStateException("Argument of ${command.getName()}.${path} is required after optional argument")
         }
         aliasePaths = function.findAnnotation<CommandAlias>()?.aliases ?: arrayOf()
@@ -47,10 +53,16 @@ class CommandSubBase(
         val parsedArguments = mutableListOf<Any?>()
         val max = this.arguments.count { !it.isActorArgument() }
         val min = this.arguments.count { it.required && !it.isActorArgument() }
-        if (arguments.size < min) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT,
-            "Not enough arguments (min: $min, max: $max)", usage = getUsage())
-        if (arguments.size > max) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT,
-            "Too many arguments (min: $min, max: $max)", usage = getUsage())
+        val lastArgument = this.arguments.lastOrNull { !it.isActorArgument() }
+        if (arguments.size < min) {
+            return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT,
+                "Not enough arguments (min: $min, max: $max)", usage = getUsage())
+        }
+        if (arguments.size > max
+            && lastArgument?.vararg == false) {
+            return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT,
+                "Too many arguments (min: $min, max: $max)", usage = getUsage())
+        }
         var index = -1
         this.arguments.forEach {
             if (it.isActorArgument()) {
@@ -68,11 +80,27 @@ class CommandSubBase(
                 ?: return CommandResponse(CommandResponseType.INVALID_ARGUMENT_TYPE, "Invalid argument '$argument' or invalid type")
             parsedArguments.add(parsedArgument)
         }
+        if (lastArgument != null && lastArgument.vararg) {
+            val varargArguments = arguments.drop(lastArgument.index)
+            val parsedVarargArguments = mutableListOf(parsedArguments.last())
+            parsedArguments.removeIf { parsedVarargArguments.contains(it) }
+            varargArguments.forEach {
+                val parsedArgument = lastArgument.parse(it)
+                    ?: return CommandResponse(CommandResponseType.INVALID_ARGUMENT_TYPE, "Invalid argument '$it' or invalid type")
+                parsedVarargArguments.add(parsedArgument)
+            }
+            val array = java.lang.reflect.Array.newInstance(lastArgument.clazz.java, parsedVarargArguments.size)
+            parsedVarargArguments.forEachIndexed { i, any ->
+                java.lang.reflect.Array.set(array, i, any)
+            }
+            parsedArguments.add(array)
+        }
+        val final = parsedArguments.toTypedArray()
         return try {
             if (suspend) {
-                runBlocking { function.callSuspend(*parsedArguments.toTypedArray()) } //TODO fix this
+                runBlocking { function.callSuspend(*final) } //TODO fix this
             }else {
-                function.javaMethod!!.invoke(command, *parsedArguments.toTypedArray())
+                function.javaMethod!!.invoke(command, *final)
             }
             CommandResponse(CommandResponseType.SUCCESS, null)
         }catch (e: Exception) {
@@ -94,7 +122,9 @@ class CommandSubBase(
             index++
             val possible = matched.filter { path ->
                 val parameterSplit = path.split(" ")
-                if (parameterSplit.size <= index) return@filter false
+                if (parameterSplit.size <= index) {
+                    return@filter arguments.isNotEmpty() && arguments.last().vararg
+                }
                 val parameter = parameterSplit[index].lowercase()
                 if (parameter.isOptionalArgument() || parameter.isRequiredArgument()) return@filter true
                 parameter.lowercase().startsWith(it.lowercase())
@@ -116,19 +146,21 @@ class CommandSubBase(
         val matched = possibleFullPaths.toMutableList()
         var index = -1
         val counts = mutableListOf<Int>()
+        val vararg = arguments.firstOrNull { it.vararg }
         mutableListOf(path, *aliasePaths).forEach {
             val maxLength = it.split(" ").size
             val minLength = it.split(" ").count { !it.isOptionalArgument() }
             for (i in minLength..maxLength) {
                 counts.add(i)
             }
+            if (vararg != null && parameters.size >= minLength) counts.add(parameters.size)
         }
         if (counts.none { it == parameters.size } && !predicate) return false
         parameters.forEach {
             index++
             val possible = matched.filter { path ->
                 val parameterSplit = path.split(" ")
-                if (parameterSplit.size <= index) return@filter false
+                if (parameterSplit.size <= index) return@filter arguments.isNotEmpty() && arguments.last().vararg
                 val parameter = parameterSplit[index].lowercase()
                 if (parameter.isOptionalArgument() || parameter.isRequiredArgument()) return@filter true
                 if (predicate) parameter.lowercase().startsWith(it.lowercase()) else parameter.lowercase() == it.lowercase()

@@ -1,6 +1,7 @@
 package dev.redicloud.commands.api
 
 import java.lang.reflect.Parameter
+import java.util.logging.LogManager
 import kotlin.reflect.KClass
 import kotlin.reflect.full.superclasses
 
@@ -13,6 +14,7 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
     val annotatedSuggester: AbstractCommandSuggester
     val suggester: CommandArgumentSuggester
     val suggesterParameter: Array<String>
+    val vararg: Boolean
 
     init {
         if (parameter.type.kotlin.superclasses.any { it == ICommandActor::class }) {
@@ -22,6 +24,7 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
             parser = null
             annotatedSuggester = EmptySuggester()
             suggesterParameter = arrayOf()
+            vararg = false
         }else {
             if (!parameter.isAnnotationPresent(CommandParameter::class.java)) {
                 name = parameter.name
@@ -35,12 +38,14 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
                 annotatedSuggester = AbstractCommandSuggester.SUGGESTERS.firstOrNull { it::class == annotation.suggester } ?: EmptySuggester()
                 suggesterParameter = annotation.suggesterArguments
             }
-            clazz = parameter.type.kotlin
+            vararg = parameter.isVarArgs
+            clazz = if (vararg) parameter.type.componentType.kotlin else parameter.type.kotlin
             parser = CommandArgumentParser.PARSERS.filter {
                 it.key.qualifiedName!!.replace("?", "") == clazz.qualifiedName!!.replace("?", "")
             }.values.firstOrNull() ?: throw IllegalStateException("No parser found for ${clazz.qualifiedName} in arguments of '${subCommand.command.getName()} ${subCommand.path}'")
         }
         suggester = CommandArgumentSuggester(this)
+        if (vararg && !required) throw IllegalStateException("Vararg arguments can't be optional! (Argument: $name in '${subCommand.command.getName()} ${subCommand.path}')")
     }
 
     fun isActorArgument(): Boolean = name == "_actor"
@@ -116,6 +121,10 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
 
     fun parse(input: String): Any? = parser?.parse(input)
 
-    fun getPathFormat(): String = if (required) "<$name>" else "[$name]"
+    fun getPathFormat(): String {
+        return if (vararg) {
+            "<$name...>"
+        }else if (required) "<$name>" else "[$name]"
+    }
 
 }

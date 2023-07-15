@@ -11,8 +11,10 @@ abstract class CommandBase {
     private var aliases: Array<String> = arrayOf()
     private var permission: String? = null
     val suggester: AbstractCommandSuggester = CommandSuggester(this)
+    internal lateinit var commandManager: CommandManager<*>
 
-    internal fun load() {
+    internal fun load(commandManager: CommandManager<*>) {
+        this.commandManager = commandManager
         name = this::class.findAnnotation<Command>()?.name
             ?: throw IllegalStateException("Command annotation not found on ${this::class.qualifiedName}")
         description = this::class.findAnnotation<CommandDescription>()?.description ?: ""
