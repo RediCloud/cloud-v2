@@ -213,6 +213,7 @@ class NodeService(
             console.commandManager.register(command)
         }
         register(ExitCommand(this))
+        register(VersionCommand())
         register(ClusterCommand(this))
         register(CloudServerVersionCommand(this.serverVersionRepository, this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverRepository, this.javaVersionRepository, this.console))
         register(CloudServerVersionTypeCommand(this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverVersionRepository))
