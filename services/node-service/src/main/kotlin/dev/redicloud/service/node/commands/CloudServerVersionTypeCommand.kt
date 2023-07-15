@@ -312,7 +312,7 @@ class CloudServerVersionTypeCommand(
         }
     }
 
-    @CommandSubPath("edit <name> connector <url>")
+    @CommandSubPath("edit <name> connectorurl <url>")
     @CommandDescription("Edit the connector download url of a server version type")
     fun editConnectorUrl(
         actor: ConsoleActor,
