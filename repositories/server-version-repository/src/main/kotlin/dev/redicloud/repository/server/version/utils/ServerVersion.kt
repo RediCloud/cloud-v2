@@ -21,13 +21,13 @@ class ServerVersion(
 
     fun isMcVersion(): Boolean = mcVersionRegex.matches(name)
 
-    fun dynamicVersion(): ServerVersion? {
+    fun dynamicVersion(): ServerVersion {
         return if (name.lowercase() == "latest") {
             val versions = versions().toMutableList()
             versions.removeIf { !it.isMcVersion() }
-            return versions.sortedWith(VERSION_COMPARATOR).lastOrNull()
+            return versions.sortedWith(VERSION_COMPARATOR).lastOrNull() ?: this
         }else {
-            null
+            this
         }
     }
 

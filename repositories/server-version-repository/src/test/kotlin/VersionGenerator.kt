@@ -48,7 +48,7 @@ suspend fun generatePaperMCVersions(typeName: String, typeId: UUID, patch: Boole
     ServerVersion.loadIfNotLoaded()
     val onlineVersions = mutableListOf<CloudServerVersion>()
     ServerVersion.versions().filter { !it.isUnknown() }.forEach { version ->
-        val versionName = if (version.isLatest()) version.dynamicVersion()!!.name else version.name
+        val versionName = if (version.isLatest()) version.dynamicVersion().name else version.name
         val url = "/projects/${typeName.lowercase()}/versions/${versionName.lowercase()}"
         val builds = PaperMcApiRequester.request<BuildsResponse>(url)
             .responseObject?.builds?.toList() ?: emptyList()
@@ -82,7 +82,7 @@ suspend fun generateSpigotVersions(): List<CloudServerVersion> {
     val onlineVersions = mutableListOf<CloudServerVersion>()
 
     ServerVersion.versions().forEach { version ->
-        val versionName = if (version.isLatest()) version.dynamicVersion()!!.name else version.name
+        val versionName = if (version.isLatest()) version.dynamicVersion().name else version.name
         val url = "https://download.getbukkit.org/spigot/spigot-${versionName.lowercase()}.jar"
         if (!isValidUrl(url)) return@forEach
         val cloudVersion = CloudServerVersion(

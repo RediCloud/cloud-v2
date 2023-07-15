@@ -30,7 +30,13 @@ class PaperMcServerVersionHandler(
     override val console: Console,
     override val name: String = "papermc",
     override var lastUpdateCheck: Long = -1
-) : URLServerVersionHandler(serverVersionRepository, nodeRepository, console, serverVersionTypeRepository, javaVersionRepository) {
+) : URLServerVersionHandler(
+    serverVersionRepository,
+    nodeRepository,
+    console,
+    serverVersionTypeRepository,
+    javaVersionRepository
+) {
 
     companion object {
         private val logger = LogManager.logger(PaperMcServerVersionHandler::class)
@@ -70,12 +76,13 @@ class PaperMcServerVersionHandler(
             val type = serverVersionTypeRepository.getType(version.typeId!!)
                 ?: throw NullPointerException("Cant find server version type ${version.typeId}")
 
-            val buildId = requester.getLatestBuild(type, version.version)
+            val targetVersion = if (version.version.isLatest()) version.version.dynamicVersion() else version.version
+            val buildId = requester.getLatestBuild(type, targetVersion)
             if (buildId == -1) throw NullPointerException("Cant find build for ${version.getDisplayName()}")
 
-            val url = requester.getDownloadUrl(type, version.version, buildId)
+            val url = requester.getDownloadUrl(type, targetVersion, buildId)
             val response = get(url)
-            if (response.statusCode != 200) throw IllegalStateException("Download of ${version.version} is not available (${response.statusCode}):\n${response.text}")
+            if (response.statusCode != 200) throw IllegalStateException("Download of ${targetVersion.name} is not available (${response.statusCode}):\n${response.text}")
 
             val folder = getFolder(version)
             if (folder.exists()) folder.deleteRecursively()
@@ -152,9 +159,10 @@ class PaperMcServerVersionHandler(
         if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
         val type = serverVersionTypeRepository.getType(version.typeId!!)
             ?: throw NullPointerException("Cant find server version type ${version.typeId}")
-        val buildId = requester.getLatestBuild(type, version.version)
+        val targetVersion = if (version.version.isLatest()) version.version.dynamicVersion() else version.version
+        val buildId = requester.getLatestBuild(type, targetVersion)
         if (buildId == -1) return false
-        val url = requester.getDownloadUrl(type, version.version, buildId)
+        val url = requester.getDownloadUrl(type, targetVersion, buildId)
         return isValidUrl(url)
     }
 
@@ -164,7 +172,8 @@ class PaperMcServerVersionHandler(
         val currentId = version.buildId ?: return true
         val type = serverVersionTypeRepository.getType(version.typeId!!)
             ?: throw NullPointerException("Cant find server version type ${version.typeId}")
-        val latest = requester.getLatestBuild(type, version.version)
+        val targetVersion = if (version.version.isLatest()) version.version.dynamicVersion() else version.version
+        val latest = requester.getLatestBuild(type, targetVersion)
         if (latest == -1) throw NullPointerException("Cant find build for ${version.getDisplayName()}")
         lastUpdateCheck = System.currentTimeMillis()
         return latest > currentId.toInt()
