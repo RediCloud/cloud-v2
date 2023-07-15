@@ -182,6 +182,18 @@ class ConfigurationTemplateCommand(
         actor.sendMessage("Successfully set the time after a server should be stopped if it is useless was set to ${toConsoleValue(time)} minutes!")
     }
 
+    @CommandSubPath("edit <name> maxplayers <count>")
+    @CommandDescription("Set the max players of a configuration template")
+    fun editMaxPlayers(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
+        @CommandParameter("count", true, IntegerSuggester::class, ["10", "100", "10"]) count: Int
+    ) = runBlocking {
+        template.maxPlayers = count
+        configurationTemplateRepository.updateTemplate(template)
+        actor.sendMessage("Successfully set the max players of the configuration template to ${toConsoleValue(count)}!")
+    }
+
     @CommandSubPath("edit <name> fileedits add <file> <key> <value>")
     @CommandDescription("Add a file edit to a configuration template")
     fun editFileEditsAdd(
