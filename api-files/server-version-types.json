@@ -24,7 +24,7 @@
         "server-ip": "%HOSTNAME%",
         "server-port": "%PORT%",
         "online-mode": "false",
-        "max-players": "%max_players%"
+        "max-players": "%MAX_PLAYERS%"
       },
       "bukkit.yml": {
         "connection-throttle": "0"
@@ -66,7 +66,7 @@
         "server-ip": "%HOSTNAME%",
         "server-port": "%PORT%",
         "online-mode": "false",
-        "max-players": "%max_players%"
+        "max-players": "%MAX_PLAYERS%"
       },
       "bukkit.yml": {
         "connection-throttle": "0"
@@ -104,7 +104,7 @@
         "server-ip": "%HOSTNAME%",
         "server-port": "%PORT%",
         "online-mode": "false",
-        "max-players": "%max_players%"
+        "max-players": "%MAX_PLAYERS%"
       },
       "bukkit.yml": {
         "connection-throttle": "0"
@@ -134,7 +134,7 @@
     "fileEdits": {
       "velocity.toml": {
         "bind": "\"%HOSTNAME%:%PORT%\"",
-        "show-max-players": "%max_players%"
+        "show-max-players": "%MAX_PLAYERS%"
       },
       "forwarding.secret": {
         "": "%PROXY_SECRET%"
@@ -161,7 +161,7 @@
       "config.yml": {
         "host": "%HOSTNAME%",
         "ip_forward": "true",
-        "player_limit": "%max_players%"
+        "player_limit": "%MAX_PLAYERS%"
       }
     },
     "connectorPluginName": "redicloud-bungeecord-connector-%cloud_version%-%build_number%.jar",
@@ -184,7 +184,7 @@
       "config.yml": {
         "host": "%HOSTNAME%",
         "ip_forward": "true",
-        "player_limit": "%max_players%"
+        "player_limit": "%MAX_PLAYERS%"
       }
     },
     "connectorPluginName": "redicloud-connector-waterfall-%cloud_version%-%build_number%.jar",
@@ -213,7 +213,7 @@
       "server.properties": {
         "server-ip": "%HOSTNAME%",
         "server-port": "%PORT%",
-        "max-players": "%max_players%"
+        "max-players": "%MAX_PLAYERS%"
       }
     },
     "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%-%build_number%.jar",

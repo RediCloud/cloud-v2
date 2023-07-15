@@ -15,6 +15,7 @@ import dev.redicloud.service.base.suggester.CloudServerSuggester
 import dev.redicloud.service.base.suggester.ConfigurationTemplateSuggester
 import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
 import dev.redicloud.utils.defaultScope
+import dev.redicloud.utils.toSymbol
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -212,6 +213,8 @@ class ServerCommand(
         val node = nodeRepository.getNode(server.hostNodeId)
         actor.sendMessage("§8- %tc%Node§8: %hc%${node?.name ?: "unknown"}")
         actor.sendMessage("§8- %tc%Port§8: %hc%${server.port}")
+        actor.sendMessage("§8- %tc%Player§8: %hc%${server.connectedPlayers.size}§8/%hc%${server.maxPlayers}")
+        actor.sendMessage("§8- %tc%Hidden§8: %hc%${server.hidden.toSymbol()}")
         actor.sendMessage("")
         actor.sendHeader("Server information")
     }
