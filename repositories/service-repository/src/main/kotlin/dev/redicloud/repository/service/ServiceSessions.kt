@@ -12,8 +12,8 @@ data class ServiceSessions(
 data class ServiceSession(
     val serviceId: ServiceId,
     val startTime: Long,
+    val ipAddress: String,
     var endTime: Long = -1L,
     val sessionId: UUID = UUID.randomUUID(),
-    val ipAddress: String,
     var suspended: Boolean = false
 )

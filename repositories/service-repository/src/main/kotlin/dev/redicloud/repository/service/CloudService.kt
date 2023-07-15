@@ -6,7 +6,7 @@ import dev.redicloud.utils.service.ServiceType
 abstract class CloudService(
     val serviceId: ServiceId,
     val name: String,
-    private val serviceSessions: ServiceSessions,
+    private val serviceSessions: ServiceSessions = ServiceSessions(),
     var connected: Boolean = false
 ){
 
@@ -48,7 +48,7 @@ abstract class CloudService(
     }
 
     fun startSession(ipAddress: String): ServiceSession {
-        val session = ServiceSession(this.serviceId, System.currentTimeMillis(), ipAddress = ipAddress)
+        val session = ServiceSession(this.serviceId, System.currentTimeMillis(), ipAddress)
         addSession(session)
         return session
     }
