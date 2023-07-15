@@ -131,6 +131,7 @@ class CloudServerVersionTypeRepository(
     suspend fun updateDefaultTypes(serverVersionRepository: CloudServerVersionRepository, silent: Boolean = false) {
         val defaultTypes = getDefaultTypes()
         defaultTypes.forEach { onlineType ->
+            if (onlineType.isUnknown()) return@forEach
             if (existsType(onlineType.uniqueId)) {
                 val current = getType(onlineType.uniqueId)!!
                 if (current == onlineType) return@forEach
