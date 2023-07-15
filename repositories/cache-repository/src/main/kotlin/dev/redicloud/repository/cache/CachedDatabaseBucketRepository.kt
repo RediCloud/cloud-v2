@@ -53,8 +53,8 @@ open class CachedDatabaseBucketRepository<T : IClusterCacheObject>(
         val keys = connection.getClient().keys.getKeysByPattern(keyPattern)
         val new = mutableListOf<String>()
         keys.forEach {
-            if (cache.isCached(it)) return@forEach
             val identifier = it.substringAfter("$name:")
+            if (cache.isCached(identifier)) return@forEach
             new.add(identifier)
         }
         val toUpdate = mutableMapOf<String, T>()

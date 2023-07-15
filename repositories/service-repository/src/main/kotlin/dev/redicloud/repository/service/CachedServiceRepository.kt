@@ -61,8 +61,8 @@ abstract class CachedServiceRepository<T : CloudService>(
         val keys = connection.getClient().getKeys().getKeysByPattern(keyPattern)
         val new = mutableListOf<String>()
         keys.forEach {
-            if (caches.values.any { cache -> cache.isCached(it) }) return@forEach
             val identifier = it.substringAfter("$name:")
+            if (caches.values.any { cache -> cache.isCached(identifier) }) return@forEach
             new.add(identifier)
         }
         val toUpdate = mutableMapOf<String, T>()
