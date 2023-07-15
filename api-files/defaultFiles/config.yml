@@ -34,7 +34,7 @@ listeners:
     pvp.md-5.net: pvp
   ping_passthrough: false
   priorities:
-  - lobby
+  - rcfallback
   bind_local_address: true
   host: 0.0.0.0:25577
   max_players: 1
