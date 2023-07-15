@@ -107,7 +107,7 @@ class CloudServerVersionTypeCommand(
         type.fileEdits.keys.forEach {
             actor.sendMessage("\t§8- %hc%$it")
             type.fileEdits[it]?.forEach { edit ->
-                actor.sendMessage("\t    §8➥ %tc%${edit.key} §8➜ %tc%${edit.value}")
+                actor.sendMessage("\t   §8➥ %tc%${edit.key} §8➜ %tc%${edit.value}")
             }
         }
         actor.sendMessage("Default files§8:${if (type.defaultFiles.isEmpty()) " %hc%not set" else ""}")
