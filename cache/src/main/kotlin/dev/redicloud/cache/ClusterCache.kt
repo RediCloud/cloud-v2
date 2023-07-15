@@ -42,12 +42,12 @@ class ClusterCache<V: IClusterCacheObject>(
     private val cache = ConcurrentHashMap<String, Pair<Long, V>>()
 
     fun get(key: String): V? {
-        if (serviceTypes.any { it == serviceId.type }) return null
+        if (serviceTypes.none { it == serviceId.type }) return null
         return cache[key]?.second
     }
 
     fun get(key: String, block: () -> V?): V? {
-        if (serviceTypes.any { it == serviceId.type }) return null
+        if (serviceTypes.none { it == serviceId.type }) return null
         if (!isCacheValid(key)) {
             setCached(key, block())
         }
@@ -74,6 +74,7 @@ class ClusterCache<V: IClusterCacheObject>(
     }
 
     fun updateCache(toUpdate: Map<String, Any?>) {
+        if (toUpdate.isEmpty()) return
         toUpdate.forEach {
             setCached(it.key, it.value)
         }
@@ -99,7 +100,7 @@ class ClusterCache<V: IClusterCacheObject>(
     }
 
     fun isCached(key: String, validCheck: Boolean = true): Boolean {
-        if (serviceTypes.any { it == serviceId.type }) return false
+        if (serviceTypes.none { it == serviceId.type }) return false
         return if (validCheck) isCacheValid(key) else isCached(key)
     }
 
@@ -122,7 +123,7 @@ class ClusterCache<V: IClusterCacheObject>(
 
     internal fun isCacheValid(key: String): Boolean {
         return isCached(key) &&
-                System.currentTimeMillis() - cache[key]!!.first< cacheDuration.inWholeMilliseconds
+                System.currentTimeMillis() - cache[key]!!.first < cacheDuration.inWholeMilliseconds
     }
 
 }
