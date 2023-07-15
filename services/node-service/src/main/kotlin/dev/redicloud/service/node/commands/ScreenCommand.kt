@@ -83,8 +83,8 @@ class ScreenCommand(
         console.switchScreen(screen, true)
     }
 
-    @CommandSubPath("execute <command>")
-    @CommandAlias(["exec", "write"])
+    @CommandSubPath("execute <command...>")
+    @CommandAlias(["exec <command...>", "write <command...>"])
     @CommandDescription("Execute a command in the current screen session")
     fun execute(
         actor: ConsoleActor,
