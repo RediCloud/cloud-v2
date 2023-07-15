@@ -22,8 +22,8 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
     private val serviceTopic: RTopic
     private val broadcastTopic: RTopic
     private val typedTopics: MutableMap<ServiceType, RTopic> = mutableMapOf()
-    val gson = GsonBuilder().fixKotlinAnnotations().create()
-    val listeners = mutableListOf<PacketListener<out AbstractPacket>>()
+    private val gson = GsonBuilder().fixKotlinAnnotations().create()
+    private val listeners = mutableListOf<PacketListener<out AbstractPacket>>()
     internal val packetResponses = mutableListOf<PacketResponse>()
     internal val packetsOfLast3Seconds = mutableListOf<AbstractPacket>()
     internal val packetScope = CoroutineScope(Dispatchers.IO)
@@ -103,13 +103,13 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
 
     inline fun <reified T : AbstractPacket> listen(noinline handler: (T) -> Unit): PacketListener<T> {
         val listener = PacketListener(T::class, handler)
-        listeners.add(listener)
+        registerListener(listener)
         return listener
     }
 
     fun <T : AbstractPacket> listen(clazz: KClass<T>, handler: (T) -> Unit): PacketListener<T> {
         val listener = PacketListener(clazz, handler)
-        listeners.add(listener)
+        registerListener(listener)
         return listener
     }
 
