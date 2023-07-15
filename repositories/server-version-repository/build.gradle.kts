@@ -14,4 +14,7 @@ dependencies {
     implementation("com.github.jkcclemens:khttp:${Versions.khttp}")
     runtimeOnly("com.github.jkcclemens:khttp:${Versions.khttp}")
     testRuntimeOnly("com.github.jkcclemens:khttp:${Versions.khttp}")
+    compileOnly(project(":repositories:cache-repository"))
+    compileOnly(project(":cache"))
+    compileOnly(project(":packets"))
 }

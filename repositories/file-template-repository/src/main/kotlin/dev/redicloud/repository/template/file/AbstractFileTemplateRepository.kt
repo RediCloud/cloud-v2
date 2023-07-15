@@ -2,15 +2,27 @@ package dev.redicloud.repository.template.file
 
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
+import dev.redicloud.packets.PacketManager
+import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.utils.service.ServiceType
 import java.util.*
+import kotlin.time.Duration.Companion.minutes
 
 abstract class AbstractFileTemplateRepository(
     databaseConnection: DatabaseConnection,
-    val nodeRepository: NodeRepository
-) :
-    DatabaseBucketRepository<FileTemplate>(databaseConnection, "file-template") {
+    private val nodeRepository: NodeRepository,
+    packetManager: PacketManager
+) : CachedDatabaseBucketRepository<FileTemplate>(
+    databaseConnection,
+    "file-template",
+    null,
+    FileTemplate::class,
+    5.minutes,
+    packetManager,
+    ServiceType.NODE
+) {
 
     suspend fun getTemplate(uniqueId: UUID): FileTemplate? {
         return getHandle(uniqueId.toString()).get()

@@ -4,13 +4,26 @@ import dev.redicloud.api.template.configuration.event.ConfigurationTemplateUpdat
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.event.EventManager
+import dev.redicloud.packets.PacketManager
+import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
+import dev.redicloud.utils.service.ServiceType
 import java.util.UUID
+import kotlin.time.Duration.Companion.minutes
 
 class ConfigurationTemplateRepository(
     databaseConnection: DatabaseConnection,
-    private val eventManager: EventManager
-) : DatabaseBucketRepository<ConfigurationTemplate>(databaseConnection, "configuration-template") {
-
+    private val eventManager: EventManager,
+    packetManager: PacketManager
+) : CachedDatabaseBucketRepository<ConfigurationTemplate>(
+    databaseConnection,
+    "configuration-template",
+    null,
+    ConfigurationTemplate::class,
+    5.minutes,
+    packetManager,
+    ServiceType.NODE
+) {
+    
     suspend fun getTemplate(uniqueId: UUID): ConfigurationTemplate? {
         return get("$uniqueId")
     }

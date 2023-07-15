@@ -6,12 +6,27 @@ import dev.redicloud.api.player.events.CloudPlayerSwitchServerEvent
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.event.EventManager
+import dev.redicloud.packets.PacketManager
+import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
+import dev.redicloud.utils.service.ServiceType
 import java.util.UUID
+import kotlin.time.Duration.Companion.minutes
 
 class PlayerRepository(
     databaseConnection: DatabaseConnection,
-    private val eventManager: EventManager
-) : DatabaseBucketRepository<CloudPlayer>(databaseConnection, "player") {
+    private val eventManager: EventManager,
+    packetManager: PacketManager
+) : CachedDatabaseBucketRepository<CloudPlayer>(
+    databaseConnection,
+    "player",
+    null,
+    CloudPlayer::class,
+    5.minutes,
+    packetManager,
+    ServiceType.NODE,
+    ServiceType.PROXY_SERVER,
+    ServiceType.MINECRAFT_SERVER
+) {
 
     suspend fun getPlayer(uniqueId: UUID): CloudPlayer? {
         return get(uniqueId.toString())

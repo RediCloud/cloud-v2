@@ -14,6 +14,7 @@ repositories {
 }
 
 dependencies {
+    shade(project(":cache"))
     shade(project(":api"))
     shade(project(":services:base-service"))
     shade(project(":services:minecraft-server-service"))
@@ -25,6 +26,7 @@ dependencies {
     shade(project(":repositories:server-version-repository"))
     shade(project(":repositories:java-version-repository"))
     shade(project(":repositories:player-repository"))
+    shade(project(":repositories:cache-repository"))
     shade(project(":database"))
     shade(project(":utils"))
     shade(project(":events"))

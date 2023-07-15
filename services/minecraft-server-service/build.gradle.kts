@@ -3,6 +3,7 @@ group = "dev.redicloud.service.minecraft"
 dependencies {
     compileOnly(project(":api"))
     compileOnly(project(":database"))
+    compileOnly(project(":cache"))
     compileOnly(project(":packets"))
     compileOnly(project(":utils"))
     compileOnly(project(":repositories:service-repository"))

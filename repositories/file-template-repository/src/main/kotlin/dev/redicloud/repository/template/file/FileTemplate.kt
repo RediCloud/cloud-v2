@@ -1,5 +1,6 @@
 package dev.redicloud.repository.template.file
 
+import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.utils.TEMPLATE_FOLDER
 import java.io.File
 import java.util.*
@@ -9,7 +10,7 @@ data class FileTemplate(
     var prefix: String,
     var name: String,
     val inherited: MutableList<UUID> = mutableListOf()
-) {
+) : IClusterCacheObject {
 
     fun getDisplayName(): String {
         return "$prefix/$name"

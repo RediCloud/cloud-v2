@@ -3,9 +3,12 @@ package dev.redicloud.repository.java.version
 import com.google.gson.reflect.TypeToken
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
+import dev.redicloud.packets.PacketManager
+import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.utils.service.ServiceType
 import java.io.File
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
@@ -13,7 +16,16 @@ import kotlin.time.Duration.Companion.minutes
 class JavaVersionRepository(
     val serviceId: ServiceId,
     databaseConnection: DatabaseConnection,
-) : DatabaseBucketRepository<JavaVersion>(databaseConnection, "java-version") {
+    packetManager: PacketManager
+) : CachedDatabaseBucketRepository<JavaVersion>(
+    databaseConnection,
+    "java-version",
+    null,
+    JavaVersion::class,
+    5.minutes,
+    packetManager,
+    ServiceType.NODE
+) {
 
     companion object {
         val ONLINE_VERSION_CACHE = EasyCache<List<JavaVersion>, Unit> (1.minutes) {

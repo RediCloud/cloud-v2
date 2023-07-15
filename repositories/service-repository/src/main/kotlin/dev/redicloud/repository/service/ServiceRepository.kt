@@ -3,20 +3,27 @@ package dev.redicloud.repository.service
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.packets.PacketManager
+import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import org.redisson.api.RList
+import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.minutes
 
 abstract class ServiceRepository<T : CloudService>(
     databaseConnection: DatabaseConnection,
     val serviceId: ServiceId,
     serviceType: ServiceType,
     val packetManager: PacketManager
-) : DatabaseBucketRepository<T>(databaseConnection, "service:${serviceType.name.lowercase()}") {
+) : DatabaseBucketRepository<T>(
+    databaseConnection,
+    "service:${serviceType.name.lowercase()}",
+    null
+) {
 
-    protected val connectedServices: RList<ServiceId>
-    protected val registeredServices: RList<ServiceId>
+    private val connectedServices: RList<ServiceId>
+    private val registeredServices: RList<ServiceId>
     val shutdownAction: Runnable
     private var shutdownCalled = false
 

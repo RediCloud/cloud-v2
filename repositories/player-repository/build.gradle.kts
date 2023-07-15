@@ -8,4 +8,7 @@ dependencies {
     compileOnly(project(":events"))
     compileOnly(project(":database"))
     compileOnly(project(":repositories:server-version-repository"))
+    compileOnly(project(":repositories:cache-repository"))
+    compileOnly(project(":cache"))
+    compileOnly(project(":packets"))
 }

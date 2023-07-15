@@ -103,11 +103,11 @@ abstract class BaseService(
         }
         taskManager = CloudTaskManager(eventManager, packetManager, taskThreads)
 
-        playerRepository = PlayerRepository(databaseConnection, eventManager)
-        javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection)
+        playerRepository = PlayerRepository(databaseConnection, eventManager, packetManager)
+        javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection, packetManager)
         nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager, eventManager)
         serverVersionRepository = CloudServerVersionRepository(databaseConnection)
-        configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager)
+        configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager, packetManager)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager, configurationTemplateRepository)
         this.registerPackets()
         this.registerPacketListeners()

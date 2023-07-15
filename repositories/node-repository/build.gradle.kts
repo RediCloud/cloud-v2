@@ -11,4 +11,6 @@ dependencies {
     compileOnly(project(":database"))
     compileOnly(project(":packets"))
     compileOnly(project(":events"))
+    compileOnly(project(":repositories:cache-repository"))
+    compileOnly(project(":cache"))
 }

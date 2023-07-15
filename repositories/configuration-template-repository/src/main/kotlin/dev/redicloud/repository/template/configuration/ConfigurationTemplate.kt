@@ -1,5 +1,6 @@
 package dev.redicloud.repository.template.configuration
 
+import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.utils.ProcessConfiguration
 import dev.redicloud.utils.service.ServiceId
 import java.util.*
@@ -36,7 +37,7 @@ class ConfigurationTemplate(
     processArguments,
     defaultFiles,
     fileEdits
-), Comparable<ConfigurationTemplate> {
+), Comparable<ConfigurationTemplate>, IClusterCacheObject {
 
     override fun compareTo(other: ConfigurationTemplate): Int = startPriority.compareTo(other.startPriority)
 
