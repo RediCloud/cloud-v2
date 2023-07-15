@@ -8,6 +8,7 @@ import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.tasks.CloudTask
 
 class CloudServerVersionUpdateTask(
+    private val silent: Boolean,
     private val serverVersionRepository: CloudServerVersionRepository,
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository
 ) : CloudTask() {
@@ -18,15 +19,15 @@ class CloudServerVersionUpdateTask(
 
     override suspend fun execute(): Boolean {
 
-        serverVersionTypeRepository.updateDefaultTypes(this.serverVersionRepository)
-        serverVersionRepository.updateDefaultVersions(this.serverVersionTypeRepository)
+        serverVersionTypeRepository.updateDefaultTypes(this.serverVersionRepository, silent)
+        serverVersionRepository.updateDefaultVersions(this.serverVersionTypeRepository, silent)
 
         serverVersionRepository.getVersions().forEach {
             if (it.typeId == null) return@forEach
             val type = serverVersionTypeRepository.getType(it.typeId!!) ?: return@forEach
             val handle = IServerVersionHandler.getHandler(type)
             if (handle.isUpdateAvailable(it) && !handle.getLock(it).isLocked && it.used) {
-                logger.info("Updating server version ${toConsoleValue(it.getDisplayName())}...")
+                if (!silent) logger.info("Updating server version ${toConsoleValue(it.getDisplayName())}...")
                 handle.update(it, type)
             }
         }

@@ -7,9 +7,12 @@ import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.logging.LogManager
+import dev.redicloud.packets.PacketManager
+import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.gson
+import dev.redicloud.utils.service.ServiceType
 import java.util.*
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
@@ -18,8 +21,17 @@ import kotlin.time.Duration.Companion.minutes
 
 class CloudServerVersionTypeRepository(
     databaseConnection: DatabaseConnection,
-    private val console: Console?
-) : DatabaseBucketRepository<CloudServerVersionType>(databaseConnection, "server-version-types") {
+    private val console: Console?,
+    packetManager: PacketManager
+) : CachedDatabaseBucketRepository<CloudServerVersionType>(
+    databaseConnection,
+    "server-version-types",
+    null,
+    CloudServerVersionType::class,
+    5.minutes,
+    packetManager,
+    ServiceType.NODE
+) {
 
     private val locks = mutableMapOf<UUID, ReentrantLock>()
 
@@ -29,20 +41,18 @@ class CloudServerVersionTypeRepository(
             val json = getTextOfAPIWithFallback("api-files/server-version-types.json")
             val type = object : TypeToken<ArrayList<CloudServerVersionType>>() {}.type
             val list: MutableList<CloudServerVersionType> = gson.fromJson(json, type)
-            if (list.none { it.isUnknown() }) {
-                list.add(
-                    CloudServerVersionType(
-                        UUID.randomUUID(),
-                        "unknown",
-                        "urldownloader",
-                        false,
-                        true,
-                        "redicloud-unknown-${CLOUD_VERSION}.jar",
-                        null,
-                        "plugins"
-                    )
+            list.add(
+                CloudServerVersionType(
+                    UUID.fromString("188507b4-37b9-45b5-b977-73ed6f6192a9"),
+                    "unknown",
+                    "urldownloader",
+                    false,
+                    true,
+                    "redicloud-unknown-${CLOUD_VERSION}.jar",
+                    null,
+                    "plugins"
                 )
-            }
+            )
             list.toList()
         }
     }
@@ -118,13 +128,13 @@ class CloudServerVersionTypeRepository(
         }
     }
 
-    suspend fun updateDefaultTypes(serverVersionRepository: CloudServerVersionRepository) {
+    suspend fun updateDefaultTypes(serverVersionRepository: CloudServerVersionRepository, silent: Boolean = false) {
         val defaultTypes = getDefaultTypes()
         defaultTypes.forEach { onlineType ->
             if (existsType(onlineType.uniqueId)) {
                 val current = getType(onlineType.uniqueId)!!
                 if (current == onlineType) return@forEach
-                LOGGER.info("Pulled server version type ${toConsoleValue(onlineType.name)} from web...")
+                if (!silent) LOGGER.info("Pulled server version type ${toConsoleValue(onlineType.name)} from web!")
                 updateType(onlineType)
                 serverVersionRepository.getVersions().forEach {
                     if (it.typeId == current.uniqueId) {
@@ -137,7 +147,7 @@ class CloudServerVersionTypeRepository(
                 return@forEach
             }
             createType(onlineType)
-            LOGGER.info("Pulled server version type ${toConsoleValue(onlineType.name)} from web...")
+            if (!silent) LOGGER.info("Pulled server version type ${toConsoleValue(onlineType.name)} from web!")
         }
     }
 

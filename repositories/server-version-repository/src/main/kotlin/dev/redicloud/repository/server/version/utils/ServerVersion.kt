@@ -1,16 +1,15 @@
 package dev.redicloud.repository.server.version.utils
 
 import com.google.gson.reflect.TypeToken
-import dev.redicloud.utils.getAPIUrlOrFallback
 import dev.redicloud.utils.getTextOfAPIWithFallback
 import dev.redicloud.utils.gson.gson
-import khttp.get
 
 class ServerVersion(
     val name: String,
     val protocolId: Int,
     val versionTypes: Array<String> = arrayOf()
-) {
+) : Comparable<ServerVersion> {
+
 
     fun isUnknown(): Boolean = name.lowercase() == "unknown"
 
@@ -24,16 +23,9 @@ class ServerVersion(
 
     fun dynamicVersion(): ServerVersion? {
         return if (name.lowercase() == "latest") {
-            val versionComparator = compareBy<ServerVersion> { it.protocolId }
-                .thenByDescending { it.name.substringBefore('.') }
-                .thenByDescending { it.name.substringAfter('.').substringBefore('.') }
-                .thenByDescending { it.name.substringAfterLast('.') }
-
             val versions = versions().toMutableList()
             versions.removeIf { !it.isMcVersion() }
-            val sortedVersions = versions.sortedWith(versionComparator)
-
-            return sortedVersions.lastOrNull()
+            return versions.sortedWith(VERSION_COMPARATOR).lastOrNull()
         }else {
             null
         }
@@ -43,6 +35,10 @@ class ServerVersion(
         private val mcVersionRegex = Regex("(\\d+(\\.\\d+)+)")
         val CACHED_MINECRAFT_VERSIONS = mutableListOf<ServerVersion>() //TODO private add
 
+        val VERSION_COMPARATOR = compareBy<ServerVersion> { if (it.isLatest()) 1000 else it.protocolId }
+            .thenByDescending { it.name.substringBefore('.') }
+            .thenByDescending { it.name.substringAfter('.').substringBefore('.') }
+            .thenByDescending { it.name.substringAfterLast('.') }
         fun versions(): MutableList<ServerVersion> = CACHED_MINECRAFT_VERSIONS
 
         suspend fun loadOnlineVersions() {
@@ -68,6 +64,10 @@ class ServerVersion(
             val t = if (strict) s else s.lowercase().split("-")[0]
             return versions().firstOrNull { it.name.lowercase() == t }
         }
+    }
+
+    override fun compareTo(other: ServerVersion): Int {
+        return VERSION_COMPARATOR.compare(this, other)
     }
 
 }

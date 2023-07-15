@@ -214,21 +214,5 @@
     "connectorDownloadUrl": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/connectors/redicloud-limbo-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
     "libPattern": null
-  },
-  {
-    "uniqueId": "188507b4-37b9-45b5-b977-73ed6f6192a9",
-    "name": "unknown",
-    "defaultType": true,
-    "versionHandlerName": "urldownloader",
-    "proxy": false,
-    "jvmArguments": [],
-    "programmParameters": [],
-    "environmentVariables": {},
-    "defaultFiles": [],
-    "fileEdits": {},
-    "connectorPluginName": null,
-    "connectorDownloadUrl": null,
-    "connectorFolder": "plugins",
-    "libPattern": null
   }
 ]

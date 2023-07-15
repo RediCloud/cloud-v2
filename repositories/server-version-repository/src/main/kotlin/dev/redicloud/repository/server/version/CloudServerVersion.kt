@@ -1,5 +1,6 @@
 package dev.redicloud.repository.server.version
 
+import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.version.utils.ServerVersion
@@ -31,7 +32,7 @@ class CloudServerVersion(
     programmParameters,
     defaultFiles,
     fileEdits
-){
+), Comparable<CloudServerVersion>, IClusterCacheObject {
 
     companion object {
         private val logger = LogManager.Companion.logger(CloudServerVersion::class)
@@ -62,6 +63,22 @@ class CloudServerVersion(
             }
             editor.saveToFile(fileToEdit)
         }
+    }
+
+    fun isSimilar(other: CloudServerVersion): Boolean {
+        return typeId == other.typeId &&
+                projectName == other.projectName &&
+                customDownloadUrl == other.customDownloadUrl &&
+                version.name == other.version.name &&
+                libPattern == other.libPattern &&
+                patch == other.patch &&
+                online == other.online &&
+                defaultFiles == other.defaultFiles &&
+                fileEdits == other.fileEdits
+    }
+
+    override fun compareTo(other: CloudServerVersion): Int {
+        return version.compareTo(other.version)
     }
 
 }
