@@ -246,7 +246,7 @@ class ServerFactory(
             serverProcess.cloudServer = cloudServer
 
             // Create server screen
-            val serverScreen = ServerScreen(cloudServer.serviceId, cloudServer.name, this.console)
+            val serverScreen = ServerScreen(cloudServer.serviceId, cloudServer.name, this.console, this.packetManager)
             console.createScreen(serverScreen)
 
             if (!snapshotData.versionHandler.isPatched(snapshotData.version)
@@ -361,7 +361,7 @@ class ServerFactory(
                 }
 
                 // Create server screen
-                val serverScreen = ServerScreen(server.serviceId, server.name, this.console)
+                val serverScreen = ServerScreen(server.serviceId, server.name, this.console, this.packetManager)
                 console.createScreen(serverScreen)
 
                 // Change memory usage on node
