@@ -119,6 +119,15 @@ class ServerProcess(
                 logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stopped unexpectedly!")
                 logger.warning("§cCheck the server logs for more information! The server directory will not be deleted!")
             }
+            cloudServer!!.state = CloudServerState.STOPPED
+            cloudServer!!.port = -1
+            cloudServer!!.connected = false
+            cloudServer!!.connectedPlayers.clear()
+            serverRepository.updateServer(cloudServer!!)
+
+            if (cloudServer!!.unregisterAfterDisconnect()) {
+                serverRepository.deleteServer(cloudServer!!)
+            }
         }else {
             logger.fine("Stopped server process $identifier")
         }
@@ -153,6 +162,8 @@ class ServerProcess(
 
         if (!configurationTemplate.static && !unexpectedlyStop) {
             fileCopier.workDirectory.deleteRecursively()
+        }else if (unexpectedlyStop && !configurationTemplate.static) {
+            fileCopier.workDirectory.deleteOnExit()
         }
 
 

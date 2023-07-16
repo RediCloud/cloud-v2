@@ -420,14 +420,16 @@ class ServerFactory(
             process.stop(force, internalCall)
             processes.remove(process)
         }
-        server.state = CloudServerState.STOPPED
-        server.port = -1
-        server.connected = false
-        server.connectedPlayers.clear()
-        serverRepository.updateServer(server)
+        if (!internalCall) {
+            server.state = CloudServerState.STOPPED
+            server.port = -1
+            server.connected = false
+            server.connectedPlayers.clear()
+            serverRepository.updateServer(server)
 
-        if (server.unregisterAfterDisconnect()) {
-            serverRepository.deleteServer(server)
+            if (server.unregisterAfterDisconnect()) {
+                serverRepository.deleteServer(server)
+            }
         }
     }
 
