@@ -1,4 +1,4 @@
-package dev.redicloud.packets
+package dev.redicloud.api.packets
 
 import kotlin.reflect.KClass
 

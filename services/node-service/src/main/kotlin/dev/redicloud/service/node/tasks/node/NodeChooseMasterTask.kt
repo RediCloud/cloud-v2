@@ -2,9 +2,13 @@ package dev.redicloud.service.node.tasks.node
 
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.api.events.impl.node.NodeMasterChangedEvent
+import dev.redicloud.event.EventManager
 import dev.redicloud.tasks.CloudTask
 
-class NodeChooseMasterTask(private val nodeRepository: NodeRepository) : CloudTask() {
+class NodeChooseMasterTask(
+    private val nodeRepository: NodeRepository,
+    private val eventManager: EventManager
+) : CloudTask() {
 
     override suspend fun execute(): Boolean {
         val nodes = nodeRepository.getConnectedNodes()
@@ -16,7 +20,7 @@ class NodeChooseMasterTask(private val nodeRepository: NodeRepository) : CloudTa
         if (node.serviceId != nodeRepository.serviceId) return false
         node.master = true
         nodeRepository.updateNode(node)
-        getEventManager().fireEvent(NodeMasterChangedEvent(node.serviceId, null))
+        eventManager.fireEvent(NodeMasterChangedEvent(node.serviceId, null))
         return false
     }
 

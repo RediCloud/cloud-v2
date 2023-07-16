@@ -1,5 +1,6 @@
 package dev.redicloud.console.utils
 
+import dev.redicloud.api.commands.IRegisteredCommand
 import dev.redicloud.commands.api.CommandBase
 import dev.redicloud.console.Console
 import dev.redicloud.console.events.screen.ScreenChangedEvent
@@ -74,8 +75,8 @@ open class Screen(
         history.add(text)
     }
 
-    fun isCommandAllowed(command: CommandBase): Boolean = allowedCommands.contains("*")
-            || allowedCommands.any { it.lowercase() == command.getName().lowercase()
-                ||  command.getAliases().any { alias -> alias.lowercase() == it.lowercase() }}
+    fun isCommandAllowed(command: IRegisteredCommand): Boolean = allowedCommands.contains("*")
+            || allowedCommands.any { it.lowercase() == command.name.lowercase()
+                ||  command.aliases.any { alias -> alias.lowercase() == it.lowercase() }}
 
 }

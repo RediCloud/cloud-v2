@@ -2,15 +2,15 @@ package dev.redicloud.cluster.file
 
 import com.jcraft.jsch.*
 import com.jcraft.jsch.ChannelSftp.LsEntry
-import dev.redicloud.cluster.file.event.FileNodeConnectedEvent
-import dev.redicloud.cluster.file.event.FileNodeDisconnectedEvent
+import dev.redicloud.api.events.impl.node.file.FileNodeConnectedEvent
+import dev.redicloud.api.events.impl.node.file.FileNodeDisconnectedEvent
 import dev.redicloud.cluster.file.filter.IPFilter
 import dev.redicloud.cluster.file.packet.UnzipPacket
 import dev.redicloud.cluster.file.packet.UnzipResponse
 import dev.redicloud.cluster.file.utils.generatePassword
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
-import dev.redicloud.packets.AbstractPacket
+import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.utils.*

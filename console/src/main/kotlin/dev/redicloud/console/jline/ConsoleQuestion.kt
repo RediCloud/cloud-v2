@@ -1,6 +1,7 @@
 package dev.redicloud.console.jline
 
 import dev.redicloud.api.commands.ICommandArgumentParser
+import dev.redicloud.commands.api.PARSERS
 import dev.redicloud.console.Console
 import org.jline.reader.Candidate
 import org.jline.reader.Completer
@@ -32,7 +33,7 @@ class ConsoleQuestion(
             }
             val fail = condition?.fail(input) ?: false
             if (fail) continue
-            val parser = CommandArgumentParser.PARSERS[T::class]
+            val parser = PARSERS[T::class]
                 ?: throw IllegalArgumentException("No parser found for class ${T::class.simpleName}")
             try {
                 result = parser.parse(input) as T?

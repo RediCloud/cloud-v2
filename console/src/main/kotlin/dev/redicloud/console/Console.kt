@@ -1,12 +1,12 @@
 package dev.redicloud.console
 
-import dev.redicloud.commands.api.CommandResponseType
+import dev.redicloud.api.commands.CommandResponseType
+import dev.redicloud.api.events.IEventManager
 import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.commands.ConsoleCommandManager
 import dev.redicloud.console.events.ConsoleRunEvent
 import dev.redicloud.console.jline.*
 import dev.redicloud.console.utils.*
-import dev.redicloud.event.EventManager
 import dev.redicloud.logging.*
 import dev.redicloud.logging.handler.AcceptingLogHandler
 import dev.redicloud.logging.handler.LogFileHandler
@@ -35,7 +35,7 @@ import kotlin.system.exitProcess
 
 open class Console(
     val host: String,
-    val eventManager: EventManager?,
+    val eventManager: IEventManager?,
     override val saveLogToFile: Boolean = false,
     val logLevel: Level = getDefaultLogLevel(),
     override val uninstallAnsiOnClose: Boolean = true

@@ -1,4 +1,4 @@
-package dev.redicloud.cluster.file.event
+package dev.redicloud.api.events.impl.node.file
 
 import dev.redicloud.utils.service.ServiceId
 

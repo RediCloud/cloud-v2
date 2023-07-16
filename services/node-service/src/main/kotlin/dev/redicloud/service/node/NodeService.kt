@@ -1,5 +1,6 @@
 package dev.redicloud.service.node
 
+import dev.redicloud.api.commands.ICommand
 import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.cluster.file.FileNodeRepository
@@ -149,7 +150,7 @@ class NodeService(
 
     private fun registerPreTasks() {
         taskManager.builder()
-            .task(NodeChooseMasterTask(nodeRepository))
+            .task(NodeChooseMasterTask(nodeRepository, eventManager))
             .instant()
             .event(NodeDisconnectEvent::class)
             .event(NodeSuspendedEvent::class)
@@ -206,8 +207,8 @@ class NodeService(
     }
 
     private fun registerCommands() {
-        fun register(command: CommandBase) {
-            console.commandManager.register(command)
+        fun register(command: ICommand) {
+            console.commandManager.registerCommand(command)
         }
         register(ExitCommand(this))
         register(VersionCommand())

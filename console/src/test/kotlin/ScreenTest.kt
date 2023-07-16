@@ -1,3 +1,4 @@
+import dev.redicloud.api.commands.*
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.commands.ConsoleActor
@@ -5,8 +6,8 @@ import dev.redicloud.console.utils.Screen
 
 fun main() {
     val console = Console("testNode", null)
-    CommandArgumentParser.PARSERS[Screen::class] = ScreenArgumentParser(console)
-    console.commandManager.register(ScreenCommand(console))
+    PARSERS[Screen::class] = ScreenArgumentParser(console)
+    console.commandManager.registerParser(Screen::class, ScreenArgumentParser(console))
 }
 
 class ScreenArgumentParser(val console: Console) : ICommandArgumentParser<Screen> {
@@ -15,7 +16,7 @@ class ScreenArgumentParser(val console: Console) : ICommandArgumentParser<Screen
 
 @Command("screen")
 @CommandAlias(["scr"])
-class ScreenCommand(val console: Console) : CommandBase() {
+class ScreenCommand(val console: Console) : ICommand{
 
     @CommandSubPath("join")
     fun join(

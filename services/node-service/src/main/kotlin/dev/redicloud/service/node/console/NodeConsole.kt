@@ -19,6 +19,8 @@ import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
 import dev.redicloud.api.events.impl.node.NodeMasterChangedEvent
 import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
 import dev.redicloud.api.events.impl.server.CloudServerStateChangeEvent
+import dev.redicloud.api.events.listen
+import dev.redicloud.commands.api.PARSERS
 import kotlinx.coroutines.runBlocking
 
 class NodeConsole(
@@ -96,7 +98,7 @@ class NodeConsole(
 
     init {
         this.sendHeader()
-        CommandArgumentParser.PARSERS[Screen::class] = ScreenParser(this)
+        PARSERS[Screen::class] = ScreenParser(this)
     }
 
     override fun handleUserInterrupt(e: Exception) {

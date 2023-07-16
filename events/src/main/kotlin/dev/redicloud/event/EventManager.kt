@@ -86,7 +86,7 @@ class EventManager(
             EventFireType.GLOBAL -> {
                 runBlocking {
                     try {
-                        packetManager?.publishAll(
+                        packetManager?.publishBroadcast(
                             CloudEventPacket(
                                 gson.toJson(event),
                                 event::class.qualifiedName!!,

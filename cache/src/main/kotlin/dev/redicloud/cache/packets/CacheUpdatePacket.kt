@@ -1,5 +1,6 @@
 package dev.redicloud.cache.packets
 
+import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.utils.gson.gson
 
 class CacheUpdatePacket(
@@ -8,8 +9,8 @@ class CacheUpdatePacket(
     val valueJson: String?
 ) : CachePacket(name) {
 
-    override fun received() {
-        super.received()
+    override fun received(manager: IPacketManager) {
+        super.received(manager)
         if (cache == null) return
         if (valueJson == null) {
             cache!!.setCached(key, null)

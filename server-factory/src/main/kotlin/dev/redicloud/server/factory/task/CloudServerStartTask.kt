@@ -10,6 +10,7 @@ import dev.redicloud.server.factory.utils.*
 import dev.redicloud.api.events.impl.node.NodeConnectEvent
 import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
 import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
+import dev.redicloud.api.events.listen
 import dev.redicloud.tasks.CloudTask
 import dev.redicloud.utils.MultiAsyncAction
 import kotlinx.coroutines.CoroutineScope

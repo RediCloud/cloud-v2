@@ -1,7 +1,6 @@
 package dev.redicloud.console.commands
 
 import dev.redicloud.api.commands.ICommandActor
-import dev.redicloud.commands.api.ICommandActor
 import dev.redicloud.console.Console
 import java.util.UUID
 

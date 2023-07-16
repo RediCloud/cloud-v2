@@ -1,6 +1,5 @@
-package dev.redicloud.packets
+package dev.redicloud.api.packets
 
-import com.google.gson.annotations.Expose
 import dev.redicloud.utils.service.ServiceId
 import java.util.*
 
@@ -9,13 +8,18 @@ abstract class AbstractPacket {
     val packetId: UUID = UUID.randomUUID()
     var sender: ServiceId? = null
     var allowLocalReceiver: Boolean = false
-    @Expose(deserialize = false, serialize = false) internal var manager: PacketManager? = null
-    internal var referenceId: UUID? = null
+    internal var _referenceId: UUID? = null
+    internal var manager: IPacketManager? = null
 
-    open fun received() {}
+    val referenceId: UUID?
+        get() = _referenceId
+
+    open fun received(manager: IPacketManager) {
+        this.manager = manager
+    }
 
     fun asAnswerOf(packet: AbstractPacket): AbstractPacket {
-        referenceId = packet.packetId
+        _referenceId = packet.packetId
         return this
     }
 
@@ -24,9 +28,5 @@ abstract class AbstractPacket {
         if (manager == null) throw IllegalStateException("PacketManager is null!")
         manager!!.publish(packet.asAnswerOf(this), sender!!)
     }
-
-    fun getReferenceId(): UUID? = referenceId
-
-    fun getManager(): PacketManager? = manager
 
 }

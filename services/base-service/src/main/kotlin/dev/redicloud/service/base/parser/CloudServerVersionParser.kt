@@ -7,7 +7,7 @@ import kotlinx.coroutines.runBlocking
 import java.util.*
 
 class CloudServerVersionParser(private val serverVersionRepository: CloudServerVersionRepository) :
-    CommandArgumentParser<CloudServerVersion> {
+    ICommandArgumentParser<CloudServerVersion> {
 
     override fun parse(parameter: String): CloudServerVersion? {
         return runBlocking {

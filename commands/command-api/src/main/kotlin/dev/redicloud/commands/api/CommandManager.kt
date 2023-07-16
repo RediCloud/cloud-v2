@@ -50,8 +50,8 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
         return getInternal(command) != null
     }
 
-    override fun <T : Any> registerParser(clazz: Class<T>, parser: ICommandArgumentParser<T>) {
-        PARSERS[clazz.kotlin] = parser
+    override fun <T : Any> registerParser(clazz: KClass<T>, parser: ICommandArgumentParser<T>) {
+        PARSERS[clazz] = parser
     }
 
     override fun registerSuggesters(vararg suggesters: AbstractCommandSuggester) {

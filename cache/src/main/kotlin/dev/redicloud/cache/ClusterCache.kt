@@ -1,9 +1,9 @@
 package dev.redicloud.cache
 
+import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.cache.packets.CacheMultiUpdatePacket
 import dev.redicloud.cache.packets.CacheResetPacket
 import dev.redicloud.cache.packets.CacheUpdatePacket
-import dev.redicloud.packets.PacketManager
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.service.ServiceId
@@ -18,7 +18,7 @@ class ClusterCache<V: IClusterCacheObject>(
     val serviceId: ServiceId,
     val cacheClass: KClass<V>,
     val cacheDuration: Duration,
-    private val packetManager: PacketManager,
+    private val packetManager: IPacketManager,
     vararg val serviceTypes: ServiceType,
 ) {
 

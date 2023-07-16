@@ -12,6 +12,7 @@ import dev.redicloud.repository.service.CachedServiceRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.api.events.impl.server.CloudServerRegisteredEvent
 import dev.redicloud.api.events.impl.server.CloudServerStateChangeEvent
+import dev.redicloud.api.events.listen
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
