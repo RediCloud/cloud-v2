@@ -1,6 +1,6 @@
 package dev.redicloud.service.base.parser
 
-import dev.redicloud.commands.api.CommandArgumentParser
+import dev.redicloud.api.commands.ICommandArgumentParser
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import kotlinx.coroutines.runBlocking

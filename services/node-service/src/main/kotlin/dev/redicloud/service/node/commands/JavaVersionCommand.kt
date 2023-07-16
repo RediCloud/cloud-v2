@@ -1,5 +1,6 @@
 package dev.redicloud.service.node.commands
 
+import dev.redicloud.api.commands.*
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.repository.java.version.JavaVersion
@@ -16,7 +17,7 @@ import kotlinx.coroutines.runBlocking
 class JavaVersionCommand(
     private val javaVersionRepository: JavaVersionRepository,
     private val serverVersionRepository: CloudServerVersionRepository
-) : CommandBase() {
+) : ICommand {
 
     @CommandSubPath("list")
     @CommandDescription("List all java versions")

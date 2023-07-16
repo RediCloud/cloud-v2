@@ -32,6 +32,7 @@ allprojects {
         compileOnly("org.redisson:redisson:${Versions.redisson}")
         dependency("com.github.jkcclemens:khttp:${Versions.khttp}")
         dependency("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
+        dependency("com.google.inject:guice:7.0.0")
     }
 
     tasks {

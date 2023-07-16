@@ -1,8 +1,8 @@
 package dev.redicloud.service.base
 
 import dev.redicloud.cache.tasks.InvalidCacheTask
-import dev.redicloud.commands.api.CommandArgumentParser
-import dev.redicloud.commands.api.AbstractCommandSuggester
+import dev.redicloud.api.commands.ICommandArgumentParser
+import dev.redicloud.api.commands.AbstractCommandSuggester
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.codec.GsonCodec

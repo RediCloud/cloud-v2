@@ -2,14 +2,11 @@ package dev.redicloud.server.factory
 
 import com.jcraft.jsch.ChannelSftp
 import com.jcraft.jsch.Session
-import dev.redicloud.api.server.CloudServerState
-import dev.redicloud.api.server.events.server.CloudServerDeleteEvent
-import dev.redicloud.api.server.events.server.CloudServerTransferredEvent
+import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.events.impl.server.CloudServerDeleteEvent
+import dev.redicloud.api.events.impl.server.CloudServerTransferredEvent
 import dev.redicloud.cluster.file.FileCluster
-import dev.redicloud.commands.api.CommandArgumentParser
-import dev.redicloud.commands.api.AbstractCommandSuggester
 import dev.redicloud.console.Console
-import dev.redicloud.console.utils.ScreenProcessHandler
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
@@ -34,7 +31,6 @@ import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.*
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.redisson.api.RList
@@ -72,8 +68,8 @@ class ServerFactory(
     var shutdown = false
 
     init {
-        CommandArgumentParser.PARSERS[ServerScreen::class] = ServerScreenParser(console)
-        AbstractCommandSuggester.SUGGESTERS.add(ServerScreenSuggester(console))
+        console.commandManager.registerParser(ServerScreen::class.java, ServerScreenParser(console))
+        console.commandManager.registerSuggesters(ServerScreenSuggester(console))
     }
 
     suspend fun getStartList(): List<ServerQueueInformation> {

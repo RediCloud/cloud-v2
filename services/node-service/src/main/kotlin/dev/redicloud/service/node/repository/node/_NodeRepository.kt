@@ -4,8 +4,8 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.service.ServiceSessions
-import dev.redicloud.service.base.events.node.NodeConnectEvent
-import dev.redicloud.service.base.events.node.NodeSuspendedEvent
+import dev.redicloud.api.events.impl.node.NodeConnectEvent
+import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
 import dev.redicloud.service.node.NodeService
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.toMb

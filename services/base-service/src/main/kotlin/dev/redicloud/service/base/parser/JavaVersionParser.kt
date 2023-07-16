@@ -1,6 +1,6 @@
 package dev.redicloud.service.base.parser
 
-import dev.redicloud.commands.api.CommandArgumentParser
+import dev.redicloud.api.commands.ICommandArgumentParser
 import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
@@ -9,7 +9,7 @@ import kotlinx.coroutines.runBlocking
 
 class JavaVersionParser(
     private val javaVersionRepository: JavaVersionRepository
-) : CommandArgumentParser<JavaVersion> {
+) : ICommandArgumentParser<JavaVersion> {
 
     override fun parse(parameter: String): JavaVersion? {
         return runBlocking {

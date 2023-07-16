@@ -1,6 +1,6 @@
 package dev.redicloud.service.minecraft
 
-import dev.redicloud.api.server.CloudServerState
+import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.CloudServer

@@ -1,10 +1,9 @@
 package dev.redicloud.repository.player
 
-import dev.redicloud.api.player.events.CloudPlayerConnectedEvent
-import dev.redicloud.api.player.events.CloudPlayerDisconnectEvent
-import dev.redicloud.api.player.events.CloudPlayerSwitchServerEvent
+import dev.redicloud.api.events.impl.player.CloudPlayerConnectedEvent
+import dev.redicloud.api.events.impl.player.CloudPlayerDisconnectEvent
+import dev.redicloud.api.events.impl.player.CloudPlayerSwitchServerEvent
 import dev.redicloud.database.DatabaseConnection
-import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository

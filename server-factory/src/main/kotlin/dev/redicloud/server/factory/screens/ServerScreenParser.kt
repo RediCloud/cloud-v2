@@ -1,11 +1,11 @@
 package dev.redicloud.server.factory.screens
 
-import dev.redicloud.commands.api.CommandArgumentParser
+import dev.redicloud.api.commands.ICommandArgumentParser
 import dev.redicloud.console.Console
 
 class ServerScreenParser(
     private val console: Console
-) : CommandArgumentParser<ServerScreen> {
+) : ICommandArgumentParser<ServerScreen> {
 
     override fun parse(parameter: String): ServerScreen? {
         val screen = console.getScreen(parameter) ?: return null

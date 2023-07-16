@@ -1,7 +1,8 @@
 package dev.redicloud.service.node.commands
 
-import dev.redicloud.api.server.CloudServerState
-import dev.redicloud.commands.api.*
+import dev.redicloud.api.commands.*
+import dev.redicloud.api.commands.BooleanSuggester
+import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.node.CloudNode
@@ -9,7 +10,6 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
-import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.service.base.suggester.CloudServerSuggester
 import dev.redicloud.service.base.suggester.ConfigurationTemplateSuggester
@@ -26,7 +26,7 @@ class ServerCommand(
     private val serverFactory: ServerFactory,
     private val serverRepository: ServerRepository,
     private val nodeRepository: NodeRepository
-) : CommandBase() {
+) : ICommand {
 
     @CommandSubPath("list")
     @CommandDescription("List all registered servers")

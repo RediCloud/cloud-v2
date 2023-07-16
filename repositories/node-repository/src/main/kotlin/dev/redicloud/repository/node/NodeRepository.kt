@@ -1,15 +1,13 @@
 package dev.redicloud.repository.node
 
-import dev.redicloud.repository.service.ServiceRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.CachedServiceRepository
-import dev.redicloud.service.base.events.node.NodeDisconnectEvent
+import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 class NodeRepository(
     databaseConnection: DatabaseConnection,

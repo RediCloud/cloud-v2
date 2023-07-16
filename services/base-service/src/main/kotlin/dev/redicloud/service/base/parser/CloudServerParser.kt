@@ -1,6 +1,6 @@
 package dev.redicloud.service.base.parser
 
-import dev.redicloud.commands.api.CommandArgumentParser
+import dev.redicloud.api.commands.ICommandArgumentParser
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
@@ -9,7 +9,7 @@ import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.isServiceId
 import kotlinx.coroutines.runBlocking
 
-class CloudServerParser(private val serverRepository: ServerRepository) : CommandArgumentParser<CloudServer> {
+class CloudServerParser(private val serverRepository: ServerRepository) : ICommandArgumentParser<CloudServer> {
 
     override fun parse(parameter: String): CloudServer? {
         return runBlocking {

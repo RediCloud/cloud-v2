@@ -1,6 +1,6 @@
 package dev.redicloud.service.node.commands
 
-import dev.redicloud.commands.api.*
+import dev.redicloud.api.commands.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
@@ -21,7 +21,6 @@ import dev.redicloud.utils.fileName
 import dev.redicloud.utils.isValidUrl
 import dev.redicloud.utils.toSymbol
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.net.URL
 import java.util.*
 
@@ -35,7 +34,7 @@ class CloudServerVersionCommand(
     private val serverRepository: ServerRepository,
     private val javaVersionRepository: JavaVersionRepository,
     private val console: Console
-) : CommandBase() {
+) : ICommand {
 
     @CommandSubPath("edit <version> project <name>")
     @CommandDescription("Set the project name of the server version")

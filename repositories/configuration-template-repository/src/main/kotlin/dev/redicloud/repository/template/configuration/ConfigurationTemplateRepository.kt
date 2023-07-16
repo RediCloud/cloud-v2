@@ -1,8 +1,7 @@
 package dev.redicloud.repository.template.configuration
 
-import dev.redicloud.api.template.configuration.event.ConfigurationTemplateUpdateEvent
+import dev.redicloud.api.events.impl.template.configuration.ConfigurationTemplateUpdateEvent
 import dev.redicloud.database.DatabaseConnection
-import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository

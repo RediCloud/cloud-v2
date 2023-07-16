@@ -160,11 +160,11 @@ open class Console(
 
                 if (!commandManager.areCommandsDisabled()) {
                     try {
-                        val response = commandManager.handleInput(commandManager.actor, line)
+                        val response = commandManager.handleInput(commandManager.defaultActor, line)
                         if (response.type == CommandResponseType.HELP_SENT) continue
                         if (response.message != null && response.type != CommandResponseType.BLANK_INPUT
                             && response.type != CommandResponseType.ERROR) {
-                            commandManager.actor.sendMessage(response.message!!)
+                            commandManager.defaultActor.sendMessage(response.message!!)
                         }
                         if (response.throwable != null && response.type == CommandResponseType.ERROR) {
                             LOGGER.severe(response.message!!, response.throwable!!)

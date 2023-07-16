@@ -1,5 +1,6 @@
 package dev.redicloud.service.node.commands
 
+import dev.redicloud.api.commands.*
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
@@ -24,7 +25,7 @@ class CloudServerVersionTypeCommand(
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
     private val serverVersionRepository: CloudServerVersionRepository
-) : CommandBase() {
+) : ICommand {
 
     @CommandSubPath("list")
     @CommandDescription("List all server version types")

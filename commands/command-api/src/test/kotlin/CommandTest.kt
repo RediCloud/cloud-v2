@@ -1,3 +1,4 @@
+import dev.redicloud.api.commands.*
 import dev.redicloud.commands.api.*
 import java.util.UUID
 
@@ -5,9 +6,11 @@ fun main() {
 
     val actor = ConsoleActor()
     val commandManager = object : CommandManager<ConsoleActor>() {
-        override fun getActor(identifier: ConsoleActor): ConsoleActor = actor
+        override fun getActor(identifier: Any): ConsoleActor {
+            return actor
+        }
     }
-    commandManager.register(TestCommand())
+    commandManager.registerCommand(TestCommand())
 
     while (true) {
         val input = readLine() ?: continue
@@ -28,7 +31,7 @@ class ConsoleActor() : ICommandActor<UUID> {
 
 @Command("test")
 @CommandAlias(["test2", "test3"])
-class TestCommand() : CommandBase() {
+class TestCommand() : ICommand {
 
     @CommandSubPath("sub1 secondsub1")
     @CommandAlias(["sub1 ss1"])

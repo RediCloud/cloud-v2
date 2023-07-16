@@ -1,6 +1,6 @@
 package dev.redicloud.console.jline
 
-import dev.redicloud.commands.api.CommandArgumentParser
+import dev.redicloud.api.commands.ICommandArgumentParser
 import dev.redicloud.console.Console
 import org.jline.reader.Candidate
 import org.jline.reader.Completer

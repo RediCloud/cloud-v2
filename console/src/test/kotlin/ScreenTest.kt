@@ -9,7 +9,7 @@ fun main() {
     console.commandManager.register(ScreenCommand(console))
 }
 
-class ScreenArgumentParser(val console: Console) : CommandArgumentParser<Screen> {
+class ScreenArgumentParser(val console: Console) : ICommandArgumentParser<Screen> {
     override fun parse(parameter: String): Screen? = console.getScreens().firstOrNull { it.name == parameter.lowercase() }
 }
 

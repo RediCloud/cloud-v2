@@ -1,28 +1,34 @@
 package dev.redicloud.commands.api
 
+import dev.redicloud.api.commands.*
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.functions
 
-abstract class CommandBase {
+class CommandBase(
+    val commandImpl: ICommand,
+    val commandManager: CommandManager<*>
+) : IRegisteredCommand {
 
-    private var subCommands: List<CommandSubBase> = mutableListOf()
-    private var name: String = ""
-    private var description: String = ""
-    private var aliases: Array<String> = arrayOf()
-    private var permission: String? = null
+    override val subCommands: List<CommandSubBase>
+    override val aliases: Array<String>
+    override val description: String
+    override val name: String
+    override val permission: String?
+    override val usage: String
+    override val paths: Array<String>
     val suggester: AbstractCommandSuggester = CommandSuggester(this)
-    internal lateinit var commandManager: CommandManager<*>
 
-    internal fun load(commandManager: CommandManager<*>) {
-        this.commandManager = commandManager
-        name = this::class.findAnnotation<Command>()?.name
+    init {
+        name = commandImpl::class.findAnnotation<Command>()?.name
             ?: throw IllegalStateException("Command annotation not found on ${this::class.qualifiedName}")
-        description = this::class.findAnnotation<CommandDescription>()?.description ?: ""
-        subCommands = this::class.functions.filter { it.findAnnotation<CommandSubPath>() != null }.map {
+        description = commandImpl::class.findAnnotation<CommandDescription>()?.description ?: ""
+        subCommands = commandImpl::class.functions.filter { it.findAnnotation<CommandSubPath>() != null }.map {
             CommandSubBase(this, it)
         }
-        aliases = this::class.findAnnotation<CommandAlias>()?.aliases ?: arrayOf()
-        permission = this::class.findAnnotation<CommandPermission>()?.permission
+        aliases = commandImpl::class.findAnnotation<CommandAlias>()?.aliases ?: arrayOf()
+        permission = commandImpl::class.findAnnotation<CommandPermission>()?.permission
+        usage = "TODO"
+        paths = subCommands.flatMap { it.getSubPaths() }.toTypedArray()
     }
 
     fun isThis(input: String, predicate: Boolean): Boolean {
@@ -35,20 +41,8 @@ abstract class CommandBase {
         }
     }
 
-    fun getName(): String = name
-
-    fun getDescription(): String = description
-
-    fun getAliases(): Array<String> = aliases
-
-    fun getSubCommands(): List<CommandSubBase> = subCommands.toList()
-
     fun getSubCommand(subPath: String): CommandSubBase? = subCommands.firstOrNull {
         it.isThis("$name $subPath", false)
     }
-
-    fun getPaths(): List<String> = subCommands.flatMap { it.getSubPaths() }
-
-    fun getPermission(): String? = permission
 
 }

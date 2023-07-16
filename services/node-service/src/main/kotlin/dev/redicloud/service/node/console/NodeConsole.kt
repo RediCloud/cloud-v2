@@ -1,11 +1,10 @@
 package dev.redicloud.service.node.console
 
-import dev.redicloud.api.server.CloudServerState
-import dev.redicloud.api.server.events.server.CloudServerConnectedEvent
-import dev.redicloud.api.server.events.server.CloudServerDeleteEvent
-import dev.redicloud.api.server.events.server.CloudServerDisconnectedEvent
-import dev.redicloud.api.server.events.server.CloudServerTransferredEvent
-import dev.redicloud.commands.api.CommandArgumentParser
+import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.events.impl.server.CloudServerConnectedEvent
+import dev.redicloud.api.events.impl.server.CloudServerDeleteEvent
+import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
+import dev.redicloud.api.events.impl.server.CloudServerTransferredEvent
 import dev.redicloud.console.Console
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.console.utils.Screen
@@ -15,11 +14,11 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.service.node.NodeConfiguration
-import dev.redicloud.service.base.events.node.NodeConnectEvent
-import dev.redicloud.service.base.events.node.NodeDisconnectEvent
-import dev.redicloud.service.base.events.node.NodeMasterChangedEvent
-import dev.redicloud.service.base.events.node.NodeSuspendedEvent
-import dev.redicloud.service.base.events.server.CloudServerStateChangeEvent
+import dev.redicloud.api.events.impl.node.NodeConnectEvent
+import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
+import dev.redicloud.api.events.impl.node.NodeMasterChangedEvent
+import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
+import dev.redicloud.api.events.impl.server.CloudServerStateChangeEvent
 import kotlinx.coroutines.runBlocking
 
 class NodeConsole(
@@ -101,7 +100,7 @@ class NodeConsole(
     }
 
     override fun handleUserInterrupt(e: Exception) {
-        commandManager.getCommand("exit")!!.getSubCommand("")!!.execute(commandManager.actor, emptyList())
+        commandManager.getCommand("exit")!!.getSubCommand("")!!.execute(commandManager.defaultActor, emptyList())
     }
 
 }

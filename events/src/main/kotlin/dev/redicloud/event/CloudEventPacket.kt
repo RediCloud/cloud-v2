@@ -1,5 +1,6 @@
 package dev.redicloud.event
 
+import dev.redicloud.api.events.CloudEvent
 import dev.redicloud.packets.AbstractPacket
 import dev.redicloud.utils.gson.gson
 

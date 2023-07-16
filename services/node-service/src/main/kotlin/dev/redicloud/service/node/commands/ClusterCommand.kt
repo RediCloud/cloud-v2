@@ -1,6 +1,6 @@
 package dev.redicloud.service.node.commands
 
-import dev.redicloud.commands.api.*
+import dev.redicloud.api.commands.*
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.repository.node.CloudNode
@@ -17,7 +17,7 @@ import kotlinx.coroutines.runBlocking
 
 @Command("cluster")
 @CommandDescription("All commands for the cluster")
-class ClusterCommand(private val nodeService: NodeService) : CommandBase() {
+class ClusterCommand(private val nodeService: NodeService) : ICommand {
 
     @CommandSubPath("nodes")
     @CommandAlias(["list", "info"])

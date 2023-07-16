@@ -1,6 +1,6 @@
 package dev.redicloud.server.factory.task
 
-import dev.redicloud.api.server.CloudServerState
+import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.NodeRepository

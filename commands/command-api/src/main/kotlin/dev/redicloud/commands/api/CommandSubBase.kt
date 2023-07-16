@@ -1,5 +1,6 @@
 package dev.redicloud.commands.api
 
+import dev.redicloud.api.commands.*
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.callSuspend
@@ -7,17 +8,18 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.javaMethod
 
 class CommandSubBase(
-    val command: CommandBase,
+    override val command: CommandBase,
     val function: KFunction<*>
-) {
+) : ISubCommand {
 
     val suspend: Boolean
-    val path: String
-    val description: String
-    val arguments: List<CommandArgument>
-    val aliasePaths: Array<String>
-    val permission: String?
     val suggester: AbstractCommandSuggester
+
+    override val path: String
+    override val description: String
+    override val arguments: List<CommandArgument>
+    override val aliasPaths: Array<String>
+    override  val permission: String?
 
     init {
         suspend = function.isSuspend
@@ -34,26 +36,26 @@ class CommandSubBase(
         var optionalArguments = false
         var vararg = false
         arguments.forEach {
-            if (!it.required && !it.isActorArgument()) {
+            if (!it.required && !it.actorArgument) {
                 optionalArguments = true
                 return@forEach
             }
-            if (it.vararg && !it.isActorArgument()) {
+            if (it.vararg && !it.actorArgument) {
                 vararg = true
                 return@forEach
             }
-            if (it.vararg && !it.isActorArgument()) throw IllegalStateException("Vararg argument of ${command.getName()}.${path} can be only the last argument")
-            if (optionalArguments && !it.isActorArgument()) throw IllegalStateException("Argument of ${command.getName()}.${path} is required after optional argument")
+            if (it.vararg && !it.actorArgument) throw IllegalStateException("Vararg argument of ${command.name}.${path} can be only the last argument")
+            if (optionalArguments && !it.actorArgument) throw IllegalStateException("Argument of ${command.name}.${path} is required after optional argument")
         }
-        aliasePaths = function.findAnnotation<CommandAlias>()?.aliases ?: arrayOf()
+        aliasPaths = function.findAnnotation<CommandAlias>()?.aliases ?: arrayOf()
         permission = function.findAnnotation<CommandPermission>()?.permission
     }
 
     fun execute(actor: ICommandActor<*>, arguments: List<String>): CommandResponse {
         val parsedArguments = mutableListOf<Any?>()
-        val max = this.arguments.count { !it.isActorArgument() }
-        val min = this.arguments.count { it.required && !it.isActorArgument() }
-        val lastArgument = this.arguments.lastOrNull { !it.isActorArgument() }
+        val max = this.arguments.count { !it.actorArgument }
+        val min = this.arguments.count { it.required && !it.actorArgument }
+        val lastArgument = this.arguments.lastOrNull { !it.actorArgument }
         if (arguments.size < min) {
             return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT,
                 "Not enough arguments (min: $min, max: $max)", usage = getUsage())
@@ -65,7 +67,7 @@ class CommandSubBase(
         }
         var index = -1
         this.arguments.forEach {
-            if (it.isActorArgument()) {
+            if (it.actorArgument) {
                 parsedArguments.add(actor)
                 return@forEach
             }
@@ -105,7 +107,7 @@ class CommandSubBase(
             CommandResponse(CommandResponseType.SUCCESS, null)
         }catch (e: Exception) {
             CommandResponse(CommandResponseType.ERROR,
-                "Error while executing command: ${command.getName()} $path", e)
+                "Error while executing command: ${command.name} $path", e)
         }
     }
 
@@ -114,8 +116,8 @@ class CommandSubBase(
         val split = input.removeLastSpaces().split(" ")
         if (split.size < 2) return input
         val parameters = split.drop(1)
-        val arguments = arguments.filter { !it.isActorArgument() }
-        val possibleFullPaths = command.getPaths()
+        val arguments = arguments.filter { !it.actorArgument }
+        val possibleFullPaths = command.paths
         val matched = possibleFullPaths.toMutableList()
         var index = -1
         parameters.forEach {
@@ -147,7 +149,7 @@ class CommandSubBase(
         var index = -1
         val counts = mutableListOf<Int>()
         val vararg = arguments.firstOrNull { it.vararg }
-        mutableListOf(path, *aliasePaths).forEach {
+        mutableListOf(path, *aliasPaths).forEach {
             val maxLength = it.split(" ").size
             val minLength = it.split(" ").count { !it.isOptionalArgument() }
             for (i in minLength..maxLength) {
@@ -172,10 +174,10 @@ class CommandSubBase(
         return matched.isNotEmpty()
     }
 
-    fun getUsage(): String = "${command.getName()} ${getSubPaths().first()}"
+    fun getUsage(): String = "${command.name} ${getSubPaths().first()}"
 
     fun getSubPaths(): List<String> {
-        return listOf(*aliasePaths, path).map { it.removeLastSpaces() }
+        return listOf(*aliasPaths, path).map { it.removeLastSpaces() }
     }
 
 }

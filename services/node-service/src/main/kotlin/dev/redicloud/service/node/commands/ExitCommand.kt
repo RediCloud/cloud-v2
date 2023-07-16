@@ -1,6 +1,6 @@
 package dev.redicloud.service.node.commands
 
-import dev.redicloud.commands.api.*
+import dev.redicloud.api.commands.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.service.node.NodeService
 import dev.redicloud.utils.defaultScope
@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 @Command("exit")
 @CommandAlias(["stop", "quit"])
 @CommandDescription("Stops the node service")
-class ExitCommand(private val nodeService: NodeService) : CommandBase() {
+class ExitCommand(private val nodeService: NodeService) : ICommand {
 
     private var confirmed = System.getProperty("redicloud.exit.confirm", "false").toBoolean()
 

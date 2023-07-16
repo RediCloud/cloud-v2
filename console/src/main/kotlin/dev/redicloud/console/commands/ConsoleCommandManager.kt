@@ -6,9 +6,8 @@ import java.util.*
 
 class ConsoleCommandManager(val console: Console) : CommandManager<ConsoleActor>() {
 
-    val actor = ConsoleActor(console, UUID.randomUUID())
+    val defaultActor = ConsoleActor(console, UUID.randomUUID())
 
-    override fun getActor(identifier: ConsoleActor): ConsoleActor = actor
-
+    override fun getActor(identifier: Any): ConsoleActor = defaultActor
 
 }

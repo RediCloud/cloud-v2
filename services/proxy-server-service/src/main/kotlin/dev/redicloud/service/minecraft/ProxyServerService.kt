@@ -18,7 +18,7 @@ abstract class ProxyServerService<T> : MinecraftServerService<T>() {
     abstract fun unregisterServer(server: CloudMinecraftServer)
 
     private fun registerListeners() {
-        this.eventManager.register(CloudServerListener(this))
+        this.eventManager.registerListener(CloudServerListener(this))
     }
 
     protected suspend fun registerStartedServers() {

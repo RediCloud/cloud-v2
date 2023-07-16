@@ -19,7 +19,7 @@ class EventBasedCloudExecutor(
         events.forEach { listener(it) }
         cloudTask.onFinished {
             listeners.forEach {
-                eventManager.unregister(it)
+                eventManager.unregisterListener(it)
             }
         }
     }

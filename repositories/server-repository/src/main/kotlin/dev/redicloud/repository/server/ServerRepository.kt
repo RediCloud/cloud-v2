@@ -1,18 +1,17 @@
 package dev.redicloud.repository.server
 
-import dev.redicloud.api.server.CloudServerState
-import dev.redicloud.api.server.events.server.CloudServerConnectedEvent
-import dev.redicloud.api.server.events.server.CloudServerDisconnectedEvent
-import dev.redicloud.api.server.events.server.CloudServerUnregisteredEvent
-import dev.redicloud.api.template.configuration.event.ConfigurationTemplateUpdateEvent
+import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.events.impl.server.CloudServerConnectedEvent
+import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
+import dev.redicloud.api.events.impl.server.CloudServerUnregisteredEvent
+import dev.redicloud.api.events.impl.template.configuration.ConfigurationTemplateUpdateEvent
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.CachedServiceRepository
-import dev.redicloud.repository.service.ServiceRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
-import dev.redicloud.service.base.events.server.CloudServerRegisteredEvent
-import dev.redicloud.service.base.events.server.CloudServerStateChangeEvent
+import dev.redicloud.api.events.impl.server.CloudServerRegisteredEvent
+import dev.redicloud.api.events.impl.server.CloudServerStateChangeEvent
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType

@@ -4,7 +4,7 @@ import dev.redicloud.cluster.file.FileNodeRepository
 import dev.redicloud.cluster.file.event.FileNodeConnectedEvent
 import dev.redicloud.cluster.file.event.FileNodeDisconnectedEvent
 import dev.redicloud.event.EventManager
-import dev.redicloud.service.base.events.node.NodeSuspendedEvent
+import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
 import kotlinx.coroutines.runBlocking
 
 class IPFilter(

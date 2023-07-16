@@ -1,9 +1,9 @@
 package dev.redicloud.service.node.commands
 
+import dev.redicloud.api.commands.*
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
-import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
@@ -16,7 +16,6 @@ import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.service.base.suggester.CloudServerVersionSuggester
 import dev.redicloud.service.base.suggester.ConfigurationTemplateSuggester
-import dev.redicloud.service.base.suggester.JavaVersionSuggester
 import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
 import dev.redicloud.utils.fileName
 import dev.redicloud.utils.isValidUrl
@@ -37,7 +36,7 @@ class ConfigurationTemplateCommand(
     private val serverVersionRepository: CloudServerVersionRepository,
     private val nodeRepository: NodeRepository,
     private val fileTemplateRepository: AbstractFileTemplateRepository
-) : CommandBase() {
+) : ICommand {
 
     companion object {
         val invalidChars = Regex("[/\\\\?%*:|\"<>]")
