@@ -19,7 +19,7 @@ class BungeeCordConnector(
     private val plugin: Plugin
 ) : ProxyServerService<Plugin>() {
 
-    private var bungeecordShuttingDown: Boolean
+    internal var bungeecordShuttingDown: Boolean
     override val serverPlayerProvider: IServerPlayerProvider
     override val screenProvider: AbstractScreenProvider = BungeeCordScreenProvider(this.packetManager)
     private val registered: MutableMap<ServiceId, ServerInfo>

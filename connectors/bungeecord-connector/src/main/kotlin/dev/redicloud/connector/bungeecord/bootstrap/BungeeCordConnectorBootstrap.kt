@@ -19,7 +19,6 @@ class BungeeCordConnectorBootstrap : Plugin() {
             connector = BungeeCordConnector(this)
         }catch (e: Exception) {
             e.printStackTrace()
-            onDisable()
         }
     }
 
@@ -30,6 +29,7 @@ class BungeeCordConnectorBootstrap : Plugin() {
     override fun onDisable() {
         if (connector == null) exitProcess(0)
         connector?.logger?.info("Disabling cloud connector...")
+        connector?.bungeecordShuttingDown = true
         connector?.onDisable()
     }
 

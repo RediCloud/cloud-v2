@@ -19,7 +19,6 @@ class BukkitConnectorBootstrap : JavaPlugin() {
             connector = BukkitConnector(this)
         }catch (e: Exception) {
             e.printStackTrace()
-            onDisable()
         }
     }
 
@@ -30,6 +29,7 @@ class BukkitConnectorBootstrap : JavaPlugin() {
     override fun onDisable() {
         if (connector == null) exitProcess(0)
         connector?.logger?.info("Disabling cloud connector...")
+        connector?.bukkitShuttingDown = true
         connector?.onDisable()
     }
 
