@@ -74,10 +74,10 @@ class ConfigurationFileEditor private constructor(
     }
 
     private fun getAmountOfStartSpacesInLine(line: String): Int {
-        var line = line
+        var s = line
         var amountOfSPaces = 0
-        while (line.startsWith(" ")) {
-            line = line.drop(1)
+        while (s.startsWith(" ")) {
+            s = s.drop(1)
             amountOfSPaces++
         }
         return amountOfSPaces
