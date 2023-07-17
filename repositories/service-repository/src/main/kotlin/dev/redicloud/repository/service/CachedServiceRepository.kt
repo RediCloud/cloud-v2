@@ -119,19 +119,19 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
     }
 
     suspend fun getRegisteredServices(): List<K> {
-        return registeredServices.mapNotNull { getService(it) }
+        return registeredServices.filter { it.type == targetServiceType }.mapNotNull { getService(it) }
     }
 
     suspend fun getConnectedServices(): List<K> {
-        return connectedServices.mapNotNull { getService(it) }
+        return connectedServices.filter { it.type == targetServiceType }.mapNotNull { getService(it) }
     }
 
     suspend fun getRegisteredServiceIds(): List<ServiceId> {
-        return registeredServices.toList()
+        return registeredServices.filter { it.type == targetServiceType }.toList()
     }
 
     suspend fun getConnectedServiceIds(): List<ServiceId> {
-        return connectedServices.toList()
+        return connectedServices.filter { it.type == targetServiceType }.toList()
     }
 
     abstract suspend fun transformShutdownable(service: K): K
