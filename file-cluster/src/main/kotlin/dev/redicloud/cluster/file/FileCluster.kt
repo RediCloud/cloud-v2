@@ -51,6 +51,7 @@ import kotlin.time.Duration.Companion.seconds
 
 
 class FileCluster(
+    val serviceId: ServiceId,
     val hostname: String,
     val fileNodeRepository: FileNodeRepository,
     val packetManager: PacketManager,
@@ -75,12 +76,12 @@ class FileCluster(
     }
 
     suspend fun connect() {
-        val thisNode = if (this.fileNodeRepository.existsFileNode(this.fileNodeRepository.serviceId)) {
-            fileNodeRepository.getFileNode(this.fileNodeRepository.serviceId)!!
+        val thisNode = if (this.fileNodeRepository.existsFileNode(serviceId)) {
+            fileNodeRepository.getFileNode(serviceId)!!
         } else {
-            val nodeInternal = this.nodeRepository.getNode(this.nodeRepository.serviceId) != null
+            val nodeInternal = this.nodeRepository.getNode(serviceId) != null
             val newFileNode = FileNode(
-                this.fileNodeRepository.migrateId(this.nodeRepository.serviceId),
+                this.fileNodeRepository.migrateId(serviceId),
                 -1, hostname,
                 "redicloud", generatePassword(32),
                 nodeInternal,
@@ -101,7 +102,7 @@ class FileCluster(
 
         sshd!!.passwordAuthenticator = PasswordAuthenticator { username, password, session ->
             runBlocking {
-                val node = fileNodeRepository.getFileNode(fileNodeRepository.serviceId) ?: return@runBlocking false
+                val node = fileNodeRepository.getFileNode(serviceId) ?: return@runBlocking false
                 val clientAddress = session.clientAddress
                 val hostname = when (clientAddress) {
                     is SshdSocketAddress -> {
@@ -117,7 +118,7 @@ class FileCluster(
                         return@runBlocking false
                     }
                 }
-                return@runBlocking node.isConnected()
+                return@runBlocking node.connected
                         && ipFilter.canConnect(hostname)
                         && username == node.username
                         && password == node.password
@@ -198,7 +199,7 @@ class FileCluster(
 
     suspend fun disconnect(immediately: Boolean) {
         if (sshd == null || !sshd!!.isStarted) return
-        val thisNode = fileNodeRepository.getFileNode(this.fileNodeRepository.serviceId) ?: throw IllegalStateException(
+        val thisNode = fileNodeRepository.getFileNode(serviceId) ?: throw IllegalStateException(
             "This file node is not registered in the file cluster!"
         )
         sshd!!.stop(immediately)

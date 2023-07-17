@@ -1,6 +1,7 @@
 package dev.redicloud.repository.server.version.requester
 
-import dev.redicloud.repository.server.version.CloudServerVersionType
+import dev.redicloud.api.repositories.version.ICloudServerVersionType
+import dev.redicloud.api.repositories.version.IServerVersion
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.gson.gson
 import khttp.get
@@ -17,7 +18,7 @@ class PaperMcApiRequester {
         }
     }
 
-    suspend fun getBuilds(type: CloudServerVersionType, minecraftVersion: ServerVersion): List<Int> {
+    suspend fun getBuilds(type: ICloudServerVersionType, minecraftVersion: IServerVersion): List<Int> {
         val url = "/projects/${type.name.lowercase()}/versions/${minecraftVersion.name}"
         if (cache.contains(url)) return cache[url] as List<Int>
         val builds = request<BuildsResponse>(url)
@@ -26,21 +27,21 @@ class PaperMcApiRequester {
         return builds
     }
 
-    suspend fun getVersions(type: CloudServerVersionType): List<ServerVersion> {
+    suspend fun getVersions(type: ICloudServerVersionType): List<IServerVersion> {
         val url = "/projects/${type.name.lowercase()}"
-        if (cache.contains(url)) return cache[url] as List<ServerVersion>
+        if (cache.contains(url)) return cache[url] as List<IServerVersion>
         val versions = request<VersionsResponse>(url).responseObject
-            ?.versions?.mapNotNull { ServerVersion.parse(it) }?.toList() ?: emptyList()
+            ?.versions?.mapNotNull { ServerVersion.parse(it) }?.toList() ?: emptyList() //TODO only paper able versions
         cache[url] = versions
         return versions
     }
 
-    fun getDownloadUrl(type: CloudServerVersionType, minecraftVersion: ServerVersion, build: Int): String {
+    fun getDownloadUrl(type: ICloudServerVersionType, minecraftVersion: IServerVersion, build: Int): String {
         return "$BASE_URL/projects/${type.name.lowercase()}/versions/${minecraftVersion.name}/builds/$build/downloads/" +
                 "${type.name.lowercase()}-${minecraftVersion.name}-$build.jar"
     }
 
-    suspend fun getLatestBuild(type: CloudServerVersionType, minecraftVersion: ServerVersion): Int {
+    suspend fun getLatestBuild(type: ICloudServerVersionType, minecraftVersion: IServerVersion): Int {
         return getBuilds(type, minecraftVersion).maxByOrNull { it } ?: -1
     }
 

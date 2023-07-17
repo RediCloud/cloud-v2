@@ -29,15 +29,15 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
                 actor.sendHeader("Nodes")
                 nodes.forEach { node ->
                     actor.sendMessage("")
-                    actor.sendMessage("§8> §a${if (node.master) node.getIdentifyingName() + " §8(§6master§8)" else node.getIdentifyingName()}")
+                    actor.sendMessage("§8> §a${if (node.master) node.identifyName() + " §8(§6master§8)" else node.identifyName()}")
                     actor.sendMessage("   - Status§8: %hc%${
-                        if (node.isSuspended()) "§4● §8(§fsuspended§8)"
-                        else if (node.isConnected()) "§2● §8(§fconnected§8)"
+                        if (node.suspended) "§4● §8(§fsuspended§8)"
+                        else if (node.suspended) "§2● §8(§fconnected§8)"
                         else "§c● §8(§fdisconnected§8)"
                     }")
                     actor.sendMessage("   - Memory§8: %hc%${node.currentMemoryUsage} §8/ %hc%${node.maxMemory}")
-                    actor.sendMessage("   - IP§8: %hc%${node.currentOrLastsession()?.ipAddress ?: "Unknown"}")
-                    if (node.isConnected()) {
+                    actor.sendMessage("   - IP§8: %hc%${node.currentOrLastSession()?.ipAddress ?: "Unknown"}")
+                    if (node.connected) {
                         sendPingMessage(node, actor, "   - Ping§8: ")
                         val server = node.hostedServers.mapNotNull { nodeService.serverRepository.getServer<CloudServer>(it)?.name }
                         actor.sendMessage("   - Server§8: %hc%${if (server.isEmpty()) "None" else server.joinToString(", ")}")
@@ -57,11 +57,11 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
         actor: ConsoleActor,
         @CommandParameter("node", true, ConnectedCloudNodeSuggester::class) node: CloudNode
     ) {
-        if (!node.isConnected()) {
-            actor.sendMessage("${node.getIdentifyingName()} is not connected to the cluster!")
+        if (!node.connected) {
+            actor.sendMessage("${node.identifyName()} is not connected to the cluster!")
             return
         }
-        sendPingMessage(node, actor, "${node.getIdentifyingName()} §8> §7")
+        sendPingMessage(node, actor, "${node.identifyName()} §8> §7")
     }
 
     @CommandSubPath("templates push <node>")
@@ -70,8 +70,8 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
         actor: ConsoleActor,
         @CommandParameter("node", true, ConnectedCloudNodeSuggester::class) node: CloudNode
     ) {
-        if (!node.isConnected()) {
-            actor.sendMessage("${node.getIdentifyingName()} is not connected to the cluster!")
+        if (!node.connected) {
+            actor.sendMessage("${node.identifyName()} is not connected to the cluster!")
             return
         }
         runBlocking { nodeService.fileTemplateRepository.pushTemplates(node.serviceId) }
@@ -86,13 +86,13 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
     ) {
         runBlocking {
             if (suspendConfirm.contains(node.serviceId)) {
-                actor.sendMessage("Suspending node ${node.getIdentifyingName()}...")
+                actor.sendMessage("Suspending node ${node.identifyName()}...")
                 nodeService.nodeRepository.suspendNode(nodeService, node.serviceId)
                 return@runBlocking
             }
             actor.sendHeader("Suspend")
             actor.sendMessage("")
-            actor.sendMessage("Node§8: %hc%${node.getIdentifyingName()}")
+            actor.sendMessage("Node§8: %hc%${node.identifyName()}")
             actor.sendMessage("Servers§8: %hc%${node.hostedServers.mapNotNull { nodeService.serverRepository.getServer<CloudServer>(it)?.name }.joinToString(", ")}")
             sendPingMessage(node, actor, "Ping§8: %hc%")
             actor.sendMessage("")
@@ -106,7 +106,7 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
 
     private fun sendPingMessage(node: CloudNode, actor: ConsoleActor, prefix: String, block: (Long) -> Unit = {}) {
         var ping = -2L
-        val local = node.serviceId == nodeService.nodeRepository.serviceId
+        val local = node.serviceId == nodeService.serviceId
         var cancel = false
         val pingAnimation = AnimatedLineAnimation(actor.console, 200) {
             if (cancel) {

@@ -29,7 +29,7 @@ class CloudServerStartTask(
         scope.launch {
             val nodes = nodeRepository.getConnectedNodes()
             val master = nodes.firstOrNull { it.master }
-            if (master?.serviceId != nodeRepository.serviceId) return@launch
+            if (master?.serviceId != serverFactory.hostingId) return@launch
             serverFactory.startQueue.forEach queue@{ info ->
                 info.failedStarts.removeFails(it.serviceId)
                 info.calculateStartOrder(nodes, serverRepository)
@@ -41,7 +41,7 @@ class CloudServerStartTask(
         scope.launch {
             val nodes = nodeRepository.getConnectedNodes()
             val master = nodes.firstOrNull { it.master }
-            if (master?.serviceId != nodeRepository.serviceId) return@launch
+            if (master?.serviceId != serverFactory.hostingId) return@launch
             serverFactory.startQueue.forEach queue@{ info ->
                 info.failedStarts.addFailedStart(it.serviceId, StartResultType.NODE_NOT_CONNECTED)
                 info.calculateStartOrder(nodes, serverRepository)
@@ -53,7 +53,7 @@ class CloudServerStartTask(
         scope.launch {
             val nodes = nodeRepository.getConnectedNodes()
             val master = nodes.firstOrNull { it.master }
-            if (master?.serviceId != nodeRepository.serviceId) return@launch
+            if (master?.serviceId != serverFactory.hostingId) return@launch
             serverFactory.startQueue.forEach queue@{ info ->
                 info.failedStarts.addFailedStart(it.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
                 info.calculateStartOrder(nodes, serverRepository)
@@ -71,7 +71,7 @@ class CloudServerStartTask(
     override suspend fun execute(): Boolean {
         val actions = MultiAsyncAction()
         serverFactory.getStartList().forEach { info ->
-            if (!info.isNextNode(nodeRepository.serviceId)) return@forEach
+            if (!info.isNextNode(serverFactory.hostingId)) return@forEach
 
             val name = if (info.configurationTemplate != null) info.configurationTemplate.name else info.serviceId?.toName() ?: "unknown"
 
@@ -90,26 +90,26 @@ class CloudServerStartTask(
 
                         StartResultType.ALREADY_RUNNING -> {
                             serverFactory.startQueue.remove(info)
-                            info.addFailedStart(nodeRepository.serviceId, StartResultType.ALREADY_RUNNING)
-                            info.addFailedNode(nodeRepository.serviceId)
+                            info.addFailedStart(serverFactory.hostingId, StartResultType.ALREADY_RUNNING)
+                            info.addFailedNode(serverFactory.hostingId)
                             serverFactory.startQueue.remove(info)
                             result as AlreadyRunningStartResult
-                            logger.severe("§cServer ${result.server.getIdentifyingName(false)} was removed from the start queue because it is already running!")
+                            logger.severe("§cServer ${result.server.identifyName(false)} was removed from the start queue because it is already running!")
                         }
 
                         StartResultType.RAM_USAGE_TOO_HIGH -> {
                             serverFactory.startQueue.remove(info)
-                            info.addFailedStart(nodeRepository.serviceId, StartResultType.RAM_USAGE_TOO_HIGH)
-                            info.addFailedNode(nodeRepository.serviceId)
+                            info.addFailedStart(serverFactory.hostingId, StartResultType.RAM_USAGE_TOO_HIGH)
+                            info.addFailedNode(serverFactory.hostingId)
                             serverFactory.startQueue.add(info)
                             logger.warning("§cCan´t start server ${toConsoleValue(name, false)} because the ram usage is too high!")
                         }
 
                         StartResultType.TOO_MUCH_SERVICES_OF_TEMPLATE -> {
                             serverFactory.startQueue.remove(info)
-                            info.addFailedStart(nodeRepository.serviceId, StartResultType.TOO_MUCH_SERVICES_OF_TEMPLATE)
+                            info.addFailedStart(serverFactory.hostingId, StartResultType.TOO_MUCH_SERVICES_OF_TEMPLATE)
                             if (result is TooMuchServicesOfTemplateOnNodeStartResult) {
-                                info.addFailedNode(nodeRepository.serviceId)
+                                info.addFailedNode(serverFactory.hostingId)
                                 serverFactory.startQueue.add(info)
                                 logger.warning("§cCan´t start server ${toConsoleValue(name, false)} on this node because there are too much services of this template!")
                             }
@@ -118,56 +118,56 @@ class CloudServerStartTask(
 
                         StartResultType.UNKNOWN_SERVER_VERSION -> {
                             serverFactory.startQueue.remove(info)
-                            info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_SERVER_VERSION)
-                            info.addFailedNode(nodeRepository.serviceId)
+                            info.addFailedStart(serverFactory.hostingId, StartResultType.UNKNOWN_SERVER_VERSION)
+                            info.addFailedNode(serverFactory.hostingId)
                             logger.warning("§cCan´t start server ${toConsoleValue(name, false)} because the server version is not set!")
                         }
 
                         StartResultType.NODE_IS_NOT_ALLOWED -> {
                             serverFactory.startQueue.remove(info)
-                            info.addFailedStart(nodeRepository.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
-                            info.addFailedNode(nodeRepository.serviceId)
+                            info.addFailedStart(serverFactory.hostingId, StartResultType.NODE_IS_NOT_ALLOWED)
+                            info.addFailedNode(serverFactory.hostingId)
                             serverFactory.startQueue.add(info)
                         }
 
                         StartResultType.NODE_NOT_CONNECTED -> {
-                            info.addFailedStart(nodeRepository.serviceId, StartResultType.NODE_NOT_CONNECTED)
-                            info.addFailedNode(nodeRepository.serviceId)
+                            info.addFailedStart(serverFactory.hostingId, StartResultType.NODE_NOT_CONNECTED)
+                            info.addFailedNode(serverFactory.hostingId)
                             serverFactory.startQueue.remove(info)
                             serverFactory.startQueue.add(info)
                         }
 
                         StartResultType.UNKNOWN_JAVA_VERSION -> {
-                            info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_JAVA_VERSION)
-                            info.addFailedNode(nodeRepository.serviceId)
+                            info.addFailedStart(serverFactory.hostingId, StartResultType.UNKNOWN_JAVA_VERSION)
+                            info.addFailedNode(serverFactory.hostingId)
                             serverFactory.startQueue.remove(info)
                             logger.severe("§cCan´t start server ${toConsoleValue(name, false)} because the java version is not set!")
                         }
 
                         StartResultType.JAVA_VERSION_NOT_INSTALLED -> {
-                            info.addFailedStart(nodeRepository.serviceId, StartResultType.JAVA_VERSION_NOT_INSTALLED)
-                            info.addFailedNode(nodeRepository.serviceId)
+                            info.addFailedStart(serverFactory.hostingId, StartResultType.JAVA_VERSION_NOT_INSTALLED)
+                            info.addFailedNode(serverFactory.hostingId)
                             serverFactory.startQueue.remove(info)
                             result as JavaVersionNotInstalledStartResult
                             logger.severe("§cCan´t start server ${toConsoleValue(name, false)} because the java version '${result.javaVersion.name} is not installed!")
                         }
 
                         StartResultType.UNKNOWN_SERVER_TYPE_VERSION -> {
-                            info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_SERVER_TYPE_VERSION)
-                            info.addFailedNode(nodeRepository.serviceId)
+                            info.addFailedStart(serverFactory.hostingId, StartResultType.UNKNOWN_SERVER_TYPE_VERSION)
+                            info.addFailedNode(serverFactory.hostingId)
                             serverFactory.startQueue.remove(info)
                             logger.severe("§cCan´t start server ${toConsoleValue(name, false)} because the server type version is not set!")
                         }
 
                         StartResultType.UNKNOWN_CONFIGURATION_TEMPLATE -> {
-                            info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_CONFIGURATION_TEMPLATE)
+                            info.addFailedStart(serverFactory.hostingId, StartResultType.UNKNOWN_CONFIGURATION_TEMPLATE)
                             serverFactory.startQueue.remove(info)
                             logger.severe("§cCan´t start static server ${toConsoleValue(name, false)} because the configuration template is unknown?!")
                         }
 
                         StartResultType.UNKNOWN_ERROR -> {
-                            info.addFailedStart(nodeRepository.serviceId, StartResultType.UNKNOWN_ERROR)
-                            info.addFailedNode(nodeRepository.serviceId)
+                            info.addFailedStart(serverFactory.hostingId, StartResultType.UNKNOWN_ERROR)
+                            info.addFailedNode(serverFactory.hostingId)
                             serverFactory.startQueue.remove(info)
                             serverFactory.startQueue.add(info)
                             val errorResult = result as UnknownErrorStartResult

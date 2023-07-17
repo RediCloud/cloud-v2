@@ -1,6 +1,6 @@
 package dev.redicloud.service.minecraft
 
-import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.repositories.service.server.CloudServerState
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.CloudServer
@@ -45,7 +45,7 @@ abstract class MinecraftServerService<T> : BaseService(
             val server = serverRepository.getServer<CloudServer>(serviceId) ?: throw IllegalStateException("Server not found!")
             server.state = CloudServerState.RUNNING
             serverRepository.updateServer(server)
-            logger.info("Enabled cloud connector for server ${server.getIdentifyingName(false)}!")
+            logger.info("Enabled cloud connector for server ${server.identifyName(false)}!")
         } catch (e: Exception) {
             logger.severe("Failed to enable cloud connector! Stopping server...", e)
             shutdown()
@@ -68,7 +68,7 @@ abstract class MinecraftServerService<T> : BaseService(
 
     protected fun registerTasks() {
         taskManager.builder()
-            .task(CloudServerInfoTask(serverRepository, serverPlayerProvider))
+            .task(CloudServerInfoTask(this.serviceId, this.serverRepository, this.serverPlayerProvider))
             .instant()
             .period(1500.milliseconds)
             .register()

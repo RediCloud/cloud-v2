@@ -10,5 +10,5 @@ class FileTemplateSuggester(
 ) : AbstractCommandSuggester() {
 
     override fun suggest(context: CommandContext): Array<String> =
-        runBlocking { fileTemplateRepository.getTemplates().map { it.getDisplayName() }.toTypedArray() }
+        runBlocking { fileTemplateRepository.getTemplates().map { it.displayName }.toTypedArray() }
 }

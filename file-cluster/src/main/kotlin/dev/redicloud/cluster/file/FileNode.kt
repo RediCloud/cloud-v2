@@ -1,5 +1,7 @@
 package dev.redicloud.cluster.file
 
+import dev.redicloud.api.repositories.service.file.IFileNode
+import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.repository.service.CloudService
 import dev.redicloud.repository.service.ServiceSessions
 import dev.redicloud.utils.service.ServiceId
@@ -8,10 +10,10 @@ import java.security.PublicKey
 
 class FileNode(
     serviceId: ServiceId,
-    var port: Int = -1,
-    var hostname: String,
+    override var port: Int = -1,
+    override var hostname: String,
     var username: String,
     internal var password: String,
-    val nodeInternal: Boolean,
-    val cloudPath: String
-) : CloudService(serviceId, serviceId.toName(), ServiceSessions())
+    override val nodeInternal: Boolean,
+    override val cloudPath: String
+) : CloudService(serviceId, serviceId.toName(), ServiceSessions()), IFileNode, IClusterCacheObject

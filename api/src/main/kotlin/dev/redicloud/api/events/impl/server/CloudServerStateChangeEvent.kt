@@ -1,6 +1,6 @@
 package dev.redicloud.api.events.impl.server
 
-import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.repositories.service.server.CloudServerState
 import dev.redicloud.api.events.EventFireType
 import dev.redicloud.utils.service.ServiceId
 

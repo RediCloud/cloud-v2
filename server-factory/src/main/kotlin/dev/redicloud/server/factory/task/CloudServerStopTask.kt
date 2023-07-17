@@ -1,6 +1,6 @@
 package dev.redicloud.server.factory.task
 
-import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.repositories.service.server.CloudServerState
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
@@ -48,7 +48,7 @@ class CloudServerStopTask(
             val servers = serverRepository.getConnectedServers()
                 .filter { it.state == CloudServerState.RUNNING }
                 .filter { !it.hidden }
-                .filter { it.currentSession() != null }
+                .filter { it.currentSession != null }
                 .filter { it.connected }
 
             configurationTemplateRepository.getTemplates().forEach { template ->
@@ -62,7 +62,7 @@ class CloudServerStopTask(
                     }
                 }
                 val stopAble = templateBasedServers.filter { it.connectedPlayers.isEmpty() }
-                    .filter { template.timeAfterStopUselessServer < System.currentTimeMillis() - it.currentSession()!!.startTime }
+                    .filter { template.timeAfterStopUselessServer < System.currentTimeMillis() - it.currentSession!!.startTime }
                 val global = nodeBasedServers.values.sum()
 
                 if (template.minStartedServices in 1 until global) {

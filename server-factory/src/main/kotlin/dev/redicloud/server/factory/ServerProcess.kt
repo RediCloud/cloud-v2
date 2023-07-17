@@ -1,6 +1,6 @@
 package dev.redicloud.server.factory
 
-import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.repositories.service.server.CloudServerState
 import dev.redicloud.service.base.packets.CloudServiceShutdownPacket
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.console.utils.ScreenProcessHandler
@@ -10,7 +10,7 @@ import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
-import dev.redicloud.repository.server.version.handler.IServerVersionHandler
+import dev.redicloud.api.repositories.version.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.server.factory.screens.ServerScreen
 import dev.redicloud.server.factory.utils.*
@@ -30,9 +30,9 @@ class ServerProcess(
     private val packetManager: PacketManager,
     private val bindHost: String,
     private val clusterConfiguration: ClusterConfiguration,
-    val serverId: ServiceId
+    val serverId: ServiceId,
+    val hostServiceId: ServiceId
 ) {
-
     val port: Int
     var process: Process? = null
     var handler: ScreenProcessHandler? = null
@@ -77,7 +77,7 @@ class ServerProcess(
         processBuilder.environment()["LIBRARY_FOLDER"] = LIB_FOLDER.getFile().absolutePath
         processBuilder.environment().putAll(processConfiguration!!.environmentVariables)
 
-        val javaPath = snapshotData.javaVersion.located[serverRepository.serviceId.id]
+        val javaPath = snapshotData.javaVersion.located[hostServiceId.id]
         if (javaPath.isNullOrEmpty()) return JavaVersionNotInstalledStartResult(snapshotData.javaVersion)
 
         // set command
@@ -176,8 +176,8 @@ class ServerProcess(
      * provide also placeholders like %PORT% or %SERVICE_ID%
      */
     private fun startCommand(type: CloudServerVersionType, javaPath: String, snapshotData: StartDataSnapshot): List<String> {
-        if (!snapshotData.javaVersion.isLocated(serverRepository.serviceId)) {
-            snapshotData.javaVersion.located[serverRepository.serviceId.id] = snapshotData.javaVersion.autoLocate()?.absolutePath
+        if (!snapshotData.javaVersion.isLocated(hostServiceId)) {
+            snapshotData.javaVersion.located[hostServiceId.id] = snapshotData.javaVersion.autoLocate()?.absolutePath
                 ?: throw IllegalStateException("Java version ${snapshotData.javaVersion.id} not found")
         }
 
@@ -215,7 +215,7 @@ class ServerProcess(
         text.replace("%PORT%", port.toString())
             .replace("%SERVICE_ID%", cloudServer?.serviceId?.toName() ?: "unknown")
             .replace("%SERVICE_NAME%", cloudServer?.serviceId?.toName() ?: "unknown")
-            .replace("%HOSTNAME%", cloudServer?.currentOrLastsession()?.ipAddress ?: "127.0.0.1")
+            .replace("%HOSTNAME%", cloudServer?.currentOrLastSession()?.ipAddress ?: "127.0.0.1")
             .replace("%PROXY_SECRET%", clusterConfiguration.get("proxy-secret") ?: "redicloud_secret")
             .replace("%MAX_PLAYERS%", (cloudServer?.maxPlayers ?: if (serverId.type == ServiceType.PROXY_SERVER) 100 else 20).toString())
 

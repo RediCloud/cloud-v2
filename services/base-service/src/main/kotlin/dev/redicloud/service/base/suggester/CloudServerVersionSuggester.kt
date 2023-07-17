@@ -10,5 +10,5 @@ class CloudServerVersionSuggester(
 ) : AbstractCommandSuggester() {
 
     override fun suggest(context: CommandContext): Array<String> =
-        runBlocking { cloudServerVersionRepository.getVersions().map { it.getDisplayName() }.toTypedArray() }
+        runBlocking { cloudServerVersionRepository.getVersions().map { it.displayName }.toTypedArray() }
 }

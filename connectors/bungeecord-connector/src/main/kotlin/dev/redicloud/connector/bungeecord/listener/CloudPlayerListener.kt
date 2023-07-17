@@ -5,6 +5,7 @@ import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.defaultScope
+import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -24,6 +25,7 @@ import net.md_5.bungee.event.EventPriority
 import java.security.Provider.Service
 
 class CloudPlayerListener(
+    private val serviceId: ServiceId,
     private val playerRepository: PlayerRepository,
     private val serverRepository: ServerRepository,
     private val plugin: Plugin
@@ -34,7 +36,7 @@ class CloudPlayerListener(
         event.registerIntent(plugin)
         defaultScope.launch {
             try {
-                val fallback = serverRepository.getFallback(serverRepository.serviceId)
+                val fallback = serverRepository.getFallback()
                 if (fallback == null) {
                     event.connection.disconnect(*ComponentBuilder().append("No fallback server found!").create())
                     return@launch
@@ -48,9 +50,8 @@ class CloudPlayerListener(
                     }
                     cloudPlayer.connected = true
                     cloudPlayer.lastConnect = System.currentTimeMillis()
-                    cloudPlayer.version = ServerVersion.versions().filter { !it.isLatest() }.firstOrNull { it.protocolId == event.connection.version }
-                        ?: ServerVersion.versions().first { it.isUnknown() }
-                    cloudPlayer.proxyId = serverRepository.serviceId
+                    cloudPlayer.protocolId = event.connection.version
+                    cloudPlayer.proxyId = serviceId
                     cloudPlayer.name = event.connection.name
                     playerRepository.updatePlayer(cloudPlayer)
                 } else {
@@ -59,12 +60,11 @@ class CloudPlayerListener(
                             event.connection.uniqueId,
                             event.connection.name,
                             null,
-                            serverRepository.serviceId,
+                            serviceId,
                             null,
                             System.currentTimeMillis(),
                             System.currentTimeMillis(),
-                            ServerVersion.versions().filter { !it.isLatest() }.firstOrNull { it.protocolId == event.connection.version }
-                                ?: ServerVersion.versions().first { it.isUnknown() }
+                            event.connection.version
                         )
                     )
                 }
@@ -91,10 +91,10 @@ class CloudPlayerListener(
         val player = event.player
         val targetServer = if (event.reason == ServerConnectEvent.Reason.JOIN_PROXY ||
             player.server?.info?.name == "rcfallback") {
-            serverRepository.getFallback(serverRepository.serviceId)
+            serverRepository.getFallback()
         } else if (player.server != null) {
             serverRepository.getServer(player.server.info.name, ServiceType.MINECRAFT_SERVER)
-        }else serverRepository.getFallback(serverRepository.serviceId)
+        }else serverRepository.getFallback()
         if (targetServer == null) {
             event.isCancelled = true
             player.disconnect(*ComponentBuilder().append("No fallback server found!").create())

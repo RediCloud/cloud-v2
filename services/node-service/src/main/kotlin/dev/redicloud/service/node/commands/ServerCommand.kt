@@ -2,7 +2,7 @@ package dev.redicloud.service.node.commands
 
 import dev.redicloud.api.commands.*
 import dev.redicloud.api.commands.BooleanSuggester
-import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.repositories.service.server.CloudServerState
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.node.CloudNode
@@ -74,18 +74,18 @@ class ServerCommand(
             return@launch
         }
         if (!server.configurationTemplate.static) {
-            actor.sendMessage("§cThe server ${toConsoleValue(server.getIdentifyingName(), false)} is not a static server!")
+            actor.sendMessage("§cThe server ${toConsoleValue(server.identifyName(false), false)} is not a static server!")
             return@launch
         }
         if (server.state == CloudServerState.STARTING || server.state == CloudServerState.PREPARING) {
-            actor.sendMessage("§cThe server ${toConsoleValue(server.getIdentifyingName(), false)} is already starting!")
+            actor.sendMessage("§cThe server ${toConsoleValue(server.identifyName(false), false)} is already starting!")
             return@launch
         }
         if (server.state == CloudServerState.RUNNING || server.state == CloudServerState.STOPPING) {
-            actor.sendMessage("§cThe server ${toConsoleValue(server.getIdentifyingName(), false)} is already running!")
+            actor.sendMessage("§cThe server ${toConsoleValue(server.identifyName(false), false)} is already running!")
             return@launch
         }
-        actor.sendMessage("Queued static server ${server.getIdentifyingName()}...")
+        actor.sendMessage("Queued static server ${server.identifyName()}...")
         serverFactory.queueStart(server.serviceId)
     }
 
@@ -99,7 +99,7 @@ class ServerCommand(
             actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is not stopped!")
             return
         }
-        actor.sendMessage("Queued deletion of static server ${server.getIdentifyingName()}...")
+        actor.sendMessage("Queued deletion of static server ${server.identifyName()}...")
         actor.sendMessage("Note: If the hosted node is not connected to the cluster, the server will be deleted when the node connects to the cluster!")
         serverFactory.queueDelete(server.serviceId)
     }
@@ -119,7 +119,7 @@ class ServerCommand(
             actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is already hosted on node ${toConsoleValue(node.name, false)}!")
             return
         }
-        actor.sendMessage("Queued transfer of static server ${server.getIdentifyingName()} to node ${toConsoleValue(node.name, false)}...")
+        actor.sendMessage("Queued transfer of static server ${server.identifyName()} to node ${toConsoleValue(node.name, false)}...")
         actor.sendMessage("Note: If the hosted node is not connected to the cluster, the server will be transferred when the node connects to the cluster!")
         serverFactory.queueTransfer(server.serviceId, node.serviceId)
     }

@@ -13,7 +13,7 @@ class NodeSelfSuspendTask(val nodeService: NodeService) : CloudTask() {
 
     override suspend fun execute(): Boolean {
         val node = nodeService.nodeRepository.getNode(nodeService.serviceId) ?: return false
-        if (!node.isSuspended()) return false
+        if (!node.suspended) return false
         LOGGER.log(Level.WARNING, "Node is suspended, suspending service...")
         nodeService.shutdown()
         return false

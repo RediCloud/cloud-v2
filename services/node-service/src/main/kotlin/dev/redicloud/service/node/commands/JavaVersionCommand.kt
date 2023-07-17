@@ -1,12 +1,10 @@
 package dev.redicloud.service.node.commands
 
 import dev.redicloud.api.commands.*
-import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
-import dev.redicloud.repository.java.version.JavaVersion
+import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
-import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.service.base.suggester.JavaVersionSuggester
 import dev.redicloud.utils.toSymbol
 import kotlinx.coroutines.runBlocking
@@ -48,7 +46,7 @@ class JavaVersionCommand(
                 actor.sendMessage("§cNo java versions found")
                 return@runBlocking
             }
-            val created = mutableListOf<JavaVersion>()
+            val created = mutableListOf<CloudJavaVersion>()
             versions.forEach {
                 if (javaVersionRepository.existsVersion(it.name)) return@forEach
                 javaVersionRepository.createVersion(it)
@@ -66,13 +64,13 @@ class JavaVersionCommand(
     @CommandDescription("Delete a java version")
     fun delete(
         actor: ConsoleActor,
-        @CommandParameter("version", true, JavaVersionSuggester::class) version: JavaVersion
+        @CommandParameter("version", true, JavaVersionSuggester::class) version: CloudJavaVersion
     ) {
         runBlocking {
             val versions = serverVersionRepository.getVersions()
             if (versions.any { it.uniqueId == version.uniqueId }) {
                 actor.sendMessage("§cThere are still server versions using this version:")
-                actor.sendMessage("§c${versions.filter { it.javaVersionId == version.uniqueId }.joinToString(", ") { it.getDisplayName() }}")
+                actor.sendMessage("§c${versions.filter { it.javaVersionId == version.uniqueId }.joinToString(", ") { it.displayName }}")
                 return@runBlocking
             }
             javaVersionRepository.deleteVersion(version)

@@ -36,7 +36,7 @@ class CommandSubBase(
         var optionalArguments = false
         var vararg = false
         arguments.forEach {
-            if (!it.required && !it.actorArgument) {
+            if (it.required && !it.actorArgument) {
                 optionalArguments = true
                 return@forEach
             }
@@ -44,8 +44,8 @@ class CommandSubBase(
                 vararg = true
                 return@forEach
             }
-            if (it.vararg && !it.actorArgument) throw IllegalStateException("Vararg argument of ${command.name}.${path} can be only the last argument")
-            if (optionalArguments && !it.actorArgument) throw IllegalStateException("Argument of ${command.name}.${path} is required after optional argument")
+            if (it.vararg && !it.actorArgument) throw IllegalStateException("Vararg argument of ${command.name} ${path} can be only the last argument")
+            if (optionalArguments && !it.actorArgument) throw IllegalStateException("Argument of ${command.name} ${path} is required after optional argument")
         }
         aliasPaths = function.findAnnotation<CommandAlias>()?.aliases ?: arrayOf()
         permission = function.findAnnotation<CommandPermission>()?.permission
@@ -102,6 +102,7 @@ class CommandSubBase(
             if (suspend) {
                 runBlocking { function.callSuspend(*final) } //TODO fix this
             }else {
+                // function.call(*final) //TODO fix this
                 function.javaMethod!!.invoke(command, *final)
             }
             CommandResponse(CommandResponseType.SUCCESS, null)

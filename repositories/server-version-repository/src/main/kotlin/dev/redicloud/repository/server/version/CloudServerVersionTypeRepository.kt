@@ -1,20 +1,20 @@
 package dev.redicloud.repository.server.version
 
 import com.google.gson.reflect.TypeToken
+import dev.redicloud.api.repositories.version.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.database.DatabaseConnection
-import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
-import dev.redicloud.repository.server.version.handler.IServerVersionHandler
+import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.gson
+import dev.redicloud.utils.gson.gsonInterfaceFactory
 import dev.redicloud.utils.service.ServiceType
 import java.util.*
-import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
 import kotlin.time.Duration.Companion.minutes
@@ -23,15 +23,20 @@ class CloudServerVersionTypeRepository(
     databaseConnection: DatabaseConnection,
     private val console: Console?,
     packetManager: PacketManager
-) : CachedDatabaseBucketRepository<CloudServerVersionType>(
+) : CachedDatabaseBucketRepository<ICloudServerVersionType, CloudServerVersionType>(
     databaseConnection,
     "server-version-types",
     null,
+    ICloudServerVersionType::class,
     CloudServerVersionType::class,
     5.minutes,
     packetManager,
     ServiceType.NODE
-) {
+), ICloudServerVersionTypeRepository {
+
+    init {
+        gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
+    }
 
     private val locks = mutableMapOf<UUID, ReentrantLock>()
 
@@ -57,30 +62,42 @@ class CloudServerVersionTypeRepository(
         }
     }
 
-    fun getLock(type: CloudServerVersionType): ReentrantLock {
+    fun getLock(type: ICloudServerVersionType): ReentrantLock {
         return locks.getOrPut(type.uniqueId) { java.util.concurrent.locks.ReentrantLock() }
     }
 
-    suspend fun getType(name: String) = getTypes().firstOrNull { it.name.lowercase() == name.lowercase() }
+    override suspend fun getType(name: String) = getTypes().firstOrNull { it.name.lowercase() == name.lowercase() }
 
-    suspend fun getType(uniqueId: UUID) = get(uniqueId.toString())
+    override suspend fun getType(uniqueId: UUID) = get(uniqueId.toString())
 
-    suspend fun existsType(name: String) = getTypes().any { it.name.lowercase() == name.lowercase() }
+    override suspend fun getType(version: ICloudServerVersion): ICloudServerVersionType? {
+        if (version.typeId == null) return null
+        return getType(version.typeId!!)
+    }
 
-    suspend fun existsType(uniqueId: UUID) = exists(uniqueId.toString())
+    override suspend fun existsType(name: String) = getTypes().any { it.name.lowercase() == name.lowercase() }
 
-    suspend fun updateType(type: CloudServerVersionType) = set(type.uniqueId.toString(), type)
+    override suspend fun existsType(uniqueId: UUID) = exists(uniqueId.toString())
 
-    suspend fun deleteType(type: CloudServerVersionType) = delete(type.uniqueId.toString())
+    override suspend fun updateType(type: ICloudServerVersionType) = set(type.uniqueId.toString(), type)
 
-    suspend fun createType(type: CloudServerVersionType) = set(type.uniqueId.toString(), type)
+    override suspend fun deleteType(type: ICloudServerVersionType): Boolean {
+        return deleteType(type.uniqueId)
+    }
 
-    suspend fun getTypes(): List<CloudServerVersionType> = getAll()
+    override suspend fun deleteType(uniqueId: UUID): Boolean {
+        return delete(uniqueId.toString())
+    }
 
-    suspend fun getDefaultTypes(): List<CloudServerVersionType> = DEFAULT_TYPES_CACHE.get() ?: emptyList()
+    override suspend fun createType(type: ICloudServerVersionType) = set(type.uniqueId.toString(), type)
 
-    suspend fun downloadConnector(serverVersionType: CloudServerVersionType, force: Boolean = false, lock: Boolean = true) {
-        val connectorFile = serverVersionType.getConnectorFile(true)
+    override suspend fun getTypes(): List<CloudServerVersionType> = getAll()
+
+    override suspend fun getOnlineTypes(): List<CloudServerVersionType> = DEFAULT_TYPES_CACHE.get() ?: emptyList()
+
+    override suspend fun downloadConnector(serverVersionType: ICloudServerVersionType, force: Boolean, lock: Boolean) {
+
+        val connectorFile = serverVersionType.getParsedConnectorFile(true)
         if (connectorFile.exists() && !force) return
         var canceled = false
         var downloaded = false
@@ -109,8 +126,8 @@ class CloudServerVersionTypeRepository(
         )
         if (lock) getLock(serverVersionType).lock()
         try {
-            if (!serverVersionType.getConnectorURL().isValid()) throw IllegalStateException("Connector download url of ${serverVersionType.connectorPluginName} is null!")
-            khttp.get(serverVersionType.getConnectorURL().toExternalForm()).content.let {
+            if (!serverVersionType.getParsedConnectorURL().isValid()) throw IllegalStateException("Connector download url of ${serverVersionType.connectorPluginName} is null!")
+            khttp.get(serverVersionType.getParsedConnectorURL().toExternalForm()).content.let {
                 if (connectorFile.exists()) connectorFile.delete()
                 connectorFile.createNewFile()
                 connectorFile.writeBytes(it)
@@ -128,8 +145,9 @@ class CloudServerVersionTypeRepository(
         }
     }
 
-    suspend fun updateDefaultTypes(serverVersionRepository: CloudServerVersionRepository, silent: Boolean = false) {
-        val defaultTypes = getDefaultTypes()
+    override suspend fun pullOnlineTypes(serverVersionRepository: ICloudServerVersionRepository, silent: Boolean) {
+
+        val defaultTypes = getOnlineTypes()
         defaultTypes.forEach { onlineType ->
             if (onlineType.isUnknown()) return@forEach
             if (existsType(onlineType.uniqueId)) {

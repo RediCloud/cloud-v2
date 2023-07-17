@@ -1,6 +1,5 @@
 package dev.redicloud.repository.server
 
-import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.api.events.impl.server.CloudServerConnectedEvent
 import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.events.impl.server.CloudServerUnregisteredEvent
@@ -13,6 +12,8 @@ import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepo
 import dev.redicloud.api.events.impl.server.CloudServerRegisteredEvent
 import dev.redicloud.api.events.impl.server.CloudServerStateChangeEvent
 import dev.redicloud.api.events.listen
+import dev.redicloud.api.repositories.service.server.*
+import dev.redicloud.repository.service.ServiceRepository
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
@@ -21,42 +22,71 @@ import kotlin.time.Duration.Companion.minutes
 
 class ServerRepository(
     databaseConnection: DatabaseConnection,
-    serviceId: ServiceId,
+    private val serviceId: ServiceId,
     packetManager: PacketManager,
     private val eventManager: EventManager,
     configurationTemplateRepository: ConfigurationTemplateRepository
-) : CachedServiceRepository<CloudServer>(
+) : ServiceRepository (
     databaseConnection,
-    serviceId,
-    if (serviceId.type.isServer()) serviceId.type else ServiceType.MINECRAFT_SERVER,
-    packetManager,
-    arrayOf(CloudMinecraftServer::class, CloudProxyServer::class),
-    5.minutes,
-    ServiceType.NODE,
-    ServiceType.MINECRAFT_SERVER,
-    ServiceType.PROXY_SERVER
-) {
+    packetManager
+) , ICloudServerRepository {
 
-    suspend fun <T : CloudServer> existsServer(serviceId: ServiceId): Boolean {
-        return existsService<T>(serviceId)
+    val internalMinecraftServerRepository = InternalServerRepository(
+        databaseConnection,
+        packetManager,
+        ICloudMinecraftServer::class,
+        CloudMinecraftServer::class,
+        ServiceType.MINECRAFT_SERVER,
+        this
+    ).apply { internalRepositories.add(this) }
+    val internalProxyServerRepository = InternalServerRepository(
+        databaseConnection,
+        packetManager,
+        ICloudProxyServer::class,
+        CloudProxyServer::class,
+        ServiceType.PROXY_SERVER,
+        this
+    ).apply { internalRepositories.add(this) }
+
+    override suspend fun <T : ICloudServer> existsServer(serviceId: ServiceId): Boolean {
+        return when (serviceId.type) {
+            ServiceType.MINECRAFT_SERVER -> internalMinecraftServerRepository.existsService(serviceId)
+            ServiceType.PROXY_SERVER -> internalProxyServerRepository.existsService(serviceId)
+            else -> throw IllegalArgumentException("Unknown service type ${serviceId.type} (${serviceId.type})")
+        }
     }
 
-    suspend fun <T : CloudServer> getServer(serviceId: ServiceId): T? =
-        getService(serviceId)
+    override suspend fun <T : ICloudServer> getServer(serviceId: ServiceId): T? {
+        return when (serviceId.type) {
+            ServiceType.MINECRAFT_SERVER -> internalMinecraftServerRepository.getService(serviceId) as T?
+            ServiceType.PROXY_SERVER -> internalProxyServerRepository.getService(serviceId) as T?
+            else -> throw IllegalArgumentException("Unknown service type ${serviceId.type} (${serviceId.type})")
+        }
+    }
 
-    suspend fun <T : CloudServer> getServer(name: String, type: ServiceType): T? =
-        getRegisteredServices().filter { it.serviceId.type == type }
-            .firstOrNull { it.name.lowercase() == name.lowercase() } as? T
+    override suspend fun <T : ICloudServer> getServer(name: String, type: ServiceType): T? {
+        return when (type) {
+            ServiceType.MINECRAFT_SERVER -> internalMinecraftServerRepository.getService(name) as T?
+            ServiceType.PROXY_SERVER -> internalProxyServerRepository.getService(name) as T?
+            else -> throw IllegalArgumentException("Unknown service type $type ($type)")
+        }
+    }
 
-    suspend fun getMinecraftServer(serviceId: ServiceId): CloudMinecraftServer? =
-        getServer(serviceId)
+    override suspend fun getMinecraftServer(serviceId: ServiceId): CloudMinecraftServer? {
+        return internalMinecraftServerRepository.getService(serviceId)
+    }
 
-    suspend fun getProxyServer(serviceId: ServiceId): CloudProxyServer? =
-        getServer(serviceId)
+    override suspend fun getProxyServer(serviceId: ServiceId): CloudProxyServer? {
+        return internalProxyServerRepository.getService(serviceId)
+    }
 
-    suspend fun <T : CloudServer> updateServer(cloudServer: T): T {
+    override suspend fun <T : ICloudServer> updateServer(cloudServer: T): T {
         val oldServer = getServer<T>(cloudServer.serviceId)
-        updateService(cloudServer)
+        when (cloudServer) {
+            is CloudMinecraftServer -> internalMinecraftServerRepository.updateService(cloudServer as CloudMinecraftServer)
+            is CloudProxyServer -> internalProxyServerRepository.updateService(cloudServer as CloudProxyServer)
+            else -> throw IllegalArgumentException("Unknown service type ${cloudServer.serviceId.type} (${cloudServer.serviceId.type})")
+        }
         if (oldServer?.state != cloudServer.state) {
             eventManager.fireEvent(CloudServerStateChangeEvent(cloudServer.serviceId, cloudServer.state))
         }
@@ -71,8 +101,12 @@ class ServerRepository(
         return cloudServer
     }
 
-    suspend fun <T : CloudServer> createServer(cloudServer: T): T {
-        createService(cloudServer)
+    suspend fun <T : ICloudServer> createServer(cloudServer: T): T {
+        when (cloudServer) {
+            is CloudMinecraftServer -> internalMinecraftServerRepository.createService(cloudServer as CloudMinecraftServer)
+            is CloudProxyServer -> internalProxyServerRepository.createService(cloudServer as CloudProxyServer)
+            else -> throw IllegalArgumentException("Unknown service type ${cloudServer.serviceId.type} (${cloudServer.serviceId.type})")
+        }
         eventManager.fireEvent(CloudServerRegisteredEvent(cloudServer.serviceId))
         if (cloudServer.state != CloudServerState.UNKNOWN) {
             eventManager.fireEvent(CloudServerStateChangeEvent(cloudServer.serviceId, cloudServer.state))
@@ -81,31 +115,32 @@ class ServerRepository(
     }
 
 
-    suspend fun <T : CloudServer> deleteServer(cloudServer: T) {
-        val unregister = getRegisteredIds().contains(cloudServer.serviceId)
-        deleteService(cloudServer)
+    suspend fun <T : ICloudServer> deleteServer(cloudServer: T) {
+        val unregister = registeredServices.contains(cloudServer.serviceId)
+        when (cloudServer) {
+            is CloudMinecraftServer -> internalMinecraftServerRepository.deleteService(cloudServer as CloudMinecraftServer)
+            is CloudProxyServer -> internalProxyServerRepository.deleteService(cloudServer as CloudProxyServer)
+            else -> throw IllegalArgumentException("Unknown service type ${cloudServer.serviceId.type} (${cloudServer.serviceId.type})")
+        }
         if (unregister) eventManager.fireEvent(CloudServerUnregisteredEvent(cloudServer.serviceId))
     }
 
-    suspend fun getConnectedServers(): List<CloudServer> =
-        getConnectedServices().filter { it.serviceId.type.isServer() }.toList() as List<CloudServer>
+    override suspend fun getConnectedServers(): List<CloudServer> =
+        connectedServices.filter { it.type.isServer() }.mapNotNull { getServer(it) }
 
-    suspend fun <T : CloudServer> getConnectedServers(type: ServiceType): List<T> =
-        getConnectedIds().filter { it.type == type }.mapNotNull { getServer(it) }
+    override suspend fun <T : ICloudServer> getConnectedServers(type: ServiceType): List<T> =
+        connectedServices.filter { it.type == type }.mapNotNull { getServer(it) }
 
-    suspend fun getRegisteredServers(): List<CloudServer> =
-        getRegisteredServices().filter { it.serviceId.type.isServer() }.toList() as List<CloudServer>
+    override suspend fun getRegisteredServers(): List<CloudServer> =
+        registeredServices.filter { it.type.isServer() }.mapNotNull { getServer(it) }
 
-    suspend fun <T : CloudServer> getRegisteredServers(type: ServiceType): List<T> =
-        getRegisteredIds().filter { it.type == type }.mapNotNull { getServer(it) }
+    override suspend fun <T : ICloudServer> getRegisteredServers(type: ServiceType): List<T> =
+        registeredServices.filter { it.type == type }.mapNotNull { getServer(it) }
 
-    override suspend fun transformShutdownable(service: CloudServer): CloudServer {
-        service.state = CloudServerState.STOPPING
-        return service
-    }
-
-    suspend fun getFallback(vararg currentServerIds: ServiceId?): CloudMinecraftServer? {
+    override suspend fun getFallback(vararg currentServerIds: ServiceId?): CloudMinecraftServer? {
         return getConnectedServers<CloudMinecraftServer>(ServiceType.MINECRAFT_SERVER)
+            .asSequence()
+            .filter { it.serviceId != serviceId }
             .filter { !currentServerIds.toList().contains(it.serviceId) }
             //TODO check permissions
             .filter { it.configurationTemplate.fallbackServer }

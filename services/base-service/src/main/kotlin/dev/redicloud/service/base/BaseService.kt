@@ -1,8 +1,6 @@
 package dev.redicloud.service.base
 
 import dev.redicloud.cache.tasks.InvalidCacheTask
-import dev.redicloud.api.commands.ICommandArgumentParser
-import dev.redicloud.api.commands.AbstractCommandSuggester
 import dev.redicloud.api.packets.PacketListener
 import dev.redicloud.commands.api.PARSERS
 import dev.redicloud.commands.api.SUGGESTERS
@@ -13,7 +11,7 @@ import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
-import dev.redicloud.repository.java.version.JavaVersion
+import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.player.PlayerRepository
@@ -23,7 +21,7 @@ import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.repository.server.version.handler.IServerVersionHandler
+import dev.redicloud.api.repositories.version.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
@@ -44,9 +42,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.logging.Level
-import kotlin.reflect.KClass
 import kotlin.system.exitProcess
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 abstract class BaseService(
@@ -115,7 +111,7 @@ abstract class BaseService(
 
         playerRepository = PlayerRepository(databaseConnection, eventManager, packetManager)
         javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection, packetManager)
-        nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager, eventManager)
+        nodeRepository = NodeRepository(databaseConnection, packetManager, eventManager)
         serverVersionRepository = CloudServerVersionRepository(databaseConnection, packetManager)
         configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager, packetManager)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager, configurationTemplateRepository)
@@ -158,7 +154,7 @@ abstract class BaseService(
         PARSERS[CloudServer::class] = CloudServerParser(this.serverRepository)
         PARSERS[CloudServerVersion::class] = CloudServerVersionParser(this.serverVersionRepository)
         PARSERS[CloudServerVersionType::class] = CloudServerVersionTypeParser(this.serverVersionTypeRepository)
-        PARSERS[JavaVersion::class] = JavaVersionParser(this.javaVersionRepository)
+        PARSERS[CloudJavaVersion::class] = JavaVersionParser(this.javaVersionRepository)
         PARSERS[ServerVersion::class] = ServerVersionParser()
         PARSERS[ConfigurationTemplate::class] = ConfigurationTemplateParser(this.configurationTemplateRepository)
         PARSERS[IServerVersionHandler::class] = ServerVersionHandlerParser()

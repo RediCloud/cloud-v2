@@ -38,9 +38,9 @@ suspend fun NodeRepository.connect(nodeService: NodeService) {
 //TODO: unregister services etc...
 suspend fun NodeRepository.suspendNode(nodeService: NodeService, serviceId: ServiceId) {
     val node = getNode(serviceId) ?: return
-    val currentSession = node.currentSession() ?: return
+    val currentSession = node.currentSession ?: return
     currentSession.suspended = true
     node.connected = false
     updateNode(node)
-    nodeService.eventManager.fireEvent(NodeSuspendedEvent(node.serviceId, this.serviceId))
+    nodeService.eventManager.fireEvent(NodeSuspendedEvent(node.serviceId, nodeService.serviceId))
 }

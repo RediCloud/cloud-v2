@@ -1,7 +1,7 @@
 package dev.redicloud.service.base.parser
 
 import dev.redicloud.api.commands.ICommandArgumentParser
-import dev.redicloud.repository.server.version.handler.IServerVersionHandler
+import dev.redicloud.api.repositories.version.IServerVersionHandler
 
 class ServerVersionHandlerParser : ICommandArgumentParser<IServerVersionHandler> {
 

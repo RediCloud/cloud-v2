@@ -75,14 +75,4 @@ class DatabaseConnection(
 
     fun getClient(): RedissonClient = client!!
 
-    fun <T> createBucketRepository(name: String): DatabaseBucketRepository<T> {
-        val repository = DatabaseBucketRepository<T>(this, name)
-        repositories.add(repository)
-        return repository
-    }
-
-    fun <T> getBucketRepository(name: String): DatabaseBucketRepository<T>? {
-        return repositories.firstOrNull { it.name == name } as DatabaseBucketRepository<T>?
-    }
-
 }

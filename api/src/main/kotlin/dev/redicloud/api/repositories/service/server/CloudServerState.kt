@@ -1,4 +1,4 @@
-package dev.redicloud.api.service.server
+package dev.redicloud.api.repositories.service.server
 
 enum class CloudServerState(
     val displayName: String,

@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.TypeAdapter
 import com.google.gson.TypeAdapterFactory
 import com.google.gson.reflect.TypeToken
+import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.isAccessible
 
@@ -14,8 +15,13 @@ class InterfaceTypeAdapterFactory : TypeAdapterFactory {
     private val adapter = mutableMapOf<Class<*>, InterfaceTypeAdapter<*>>()
 
     fun register(interfaceClass: Class<*>, implClass: Class<*>) {
+        if (interfaceClass == implClass) return
         if (routes.containsKey(interfaceClass)) return
         routes[interfaceClass] = implClass
+    }
+
+    fun register(interfaceClass: KClass<*>, implClass: KClass<*>) {
+        register(interfaceClass.java, implClass.java)
     }
 
     override fun <T : Any> create(

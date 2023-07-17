@@ -5,8 +5,7 @@ import com.google.gson.FieldAttributes
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.Expose
 
-fun GsonBuilder.addInterfaceImpl(): GsonBuilder {
-    val factory = InterfaceTypeAdapterFactory()
+fun GsonBuilder.addInterfaceImpl(factory: InterfaceTypeAdapterFactory): GsonBuilder {
     addSerializationExclusionStrategy(object : ExclusionStrategy {
 
         override fun shouldSkipClass(clazz: Class<*>?): Boolean {

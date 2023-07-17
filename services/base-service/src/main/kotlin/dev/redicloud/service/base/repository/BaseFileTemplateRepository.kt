@@ -1,5 +1,6 @@
 package dev.redicloud.service.base.repository
 
+import dev.redicloud.api.repositories.template.file.ICloudFileTemplate
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.node.NodeRepository
@@ -13,11 +14,11 @@ class BaseFileTemplateRepository(
     packetManager: PacketManager
 ) : AbstractFileTemplateRepository(databaseConnection, nodeRepository, packetManager) {
 
-    override suspend fun updateTemplate(template: FileTemplate): FileTemplate {
+    override suspend fun pushTemplates(serviceId: ServiceId) {
         TODO("Not yet implemented")
     }
 
-    override suspend fun pushTemplates(serviceId: ServiceId) {
+    override suspend fun updateTemplate(template: ICloudFileTemplate): FileTemplate {
         TODO("Not yet implemented")
     }
 

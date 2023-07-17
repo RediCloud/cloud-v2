@@ -4,12 +4,11 @@ import dev.redicloud.api.commands.ICommand
 import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.cluster.file.FileNodeRepository
-import dev.redicloud.commands.api.CommandBase
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
-import dev.redicloud.repository.java.version.JavaVersion
+import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.repository.server.version.handler.IServerVersionHandler
+import dev.redicloud.api.repositories.version.IServerVersionHandler
 import dev.redicloud.repository.server.version.task.CloudServerVersionUpdateTask
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.server.factory.task.*
@@ -17,6 +16,8 @@ import dev.redicloud.service.base.BaseService
 import dev.redicloud.api.events.impl.node.NodeConnectEvent
 import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
 import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
+import dev.redicloud.repository.server.version.handler.defaults.PaperMcServerVersionHandler
+import dev.redicloud.repository.server.version.handler.defaults.URLServerVersionHandler
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.repository.node.connect
 import dev.redicloud.service.node.commands.*
@@ -47,7 +48,7 @@ class NodeService(
     init {
         console = NodeConsole(configuration, eventManager, nodeRepository, serverRepository)
         fileNodeRepository = FileNodeRepository(databaseConnection, packetManager)
-        fileCluster = FileCluster(configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
+        fileCluster = FileCluster(serviceId, configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
         fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster, packetManager)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console, packetManager)
         serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress, console, clusterConfiguration, configurationTemplateRepository, eventManager, fileCluster)
@@ -67,7 +68,8 @@ class NodeService(
                 LOGGER.warning("Error while checking java versions", e)
             }
 
-            IServerVersionHandler.registerDefaultHandlers(serverVersionRepository, serverVersionTypeRepository, javaVersionRepository, nodeRepository, console)
+            IServerVersionHandler.registerHandler(URLServerVersionHandler(serviceId, serverVersionRepository, serverVersionTypeRepository, nodeRepository, console, javaVersionRepository))
+            IServerVersionHandler.registerHandler(PaperMcServerVersionHandler(serviceId, serverVersionRepository, serverVersionTypeRepository, javaVersionRepository, nodeRepository, console))
 
             this@NodeService.registerPreTasks()
             this@NodeService.connectFileCluster()
@@ -150,7 +152,7 @@ class NodeService(
 
     private fun registerPreTasks() {
         taskManager.builder()
-            .task(NodeChooseMasterTask(nodeRepository, eventManager))
+            .task(NodeChooseMasterTask(serviceId, nodeRepository, eventManager))
             .instant()
             .event(NodeDisconnectEvent::class)
             .event(NodeSuspendedEvent::class)
@@ -158,7 +160,7 @@ class NodeService(
     }
 
     private suspend fun checkJavaVersions() {
-        val detected = mutableListOf<JavaVersion>()
+        val detected = mutableListOf<CloudJavaVersion>()
         javaVersionRepository.detectInstalledVersions().forEach {
             if (javaVersionRepository.existsVersion(it.name)) return@forEach
             javaVersionRepository.createVersion(it)

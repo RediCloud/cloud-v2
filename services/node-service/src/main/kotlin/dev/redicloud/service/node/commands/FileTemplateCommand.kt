@@ -62,7 +62,7 @@ class FileTemplateCommand(
         actor.sendMessage("§8- %tc%Prefix§8: %hc%${template.prefix}")
         actor.sendMessage("§8- %tc%Inherited§8:${if(inherited.isEmpty()) " %hc%None" else ""}")
         inherited.forEach {
-            actor.sendMessage("  §8➥ %tc%${it.getDisplayName()}")
+            actor.sendMessage("  §8➥ %tc%${it.displayName}")
         }
         actor.sendMessage("")
         actor.sendHeader("File template")
@@ -85,9 +85,9 @@ class FileTemplateCommand(
             name,
             mutableListOf()
         )
-        actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} will be created...")
+        actor.sendMessage("File template ${toConsoleValue(template.displayName)} will be created...")
         fileTemplateRepository.createTemplate(template)
-        actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} was created!")
+        actor.sendMessage("File template ${toConsoleValue(template.displayName)} was created!")
     }
 
     @CommandSubPath("delete <name>")
@@ -96,9 +96,9 @@ class FileTemplateCommand(
         actor: ConsoleActor,
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate
     ) = defaultScope.launch {
-        actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} will be deleted...")
+        actor.sendMessage("File template ${toConsoleValue(template.displayName)} will be deleted...")
         fileTemplateRepository.deleteTemplate(template.uniqueId)
-        actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} was deleted!")
+        actor.sendMessage("File template ${toConsoleValue(template.displayName)} was deleted!")
     }
 
     @CommandSubPath("edit <name> inherit add <inherit>")
@@ -109,18 +109,18 @@ class FileTemplateCommand(
         @CommandParameter("inherit", true, FileTemplateSuggester::class) inherit: FileTemplate
     ) = runBlocking {
         if (template.inherited.contains(inherit.uniqueId)) {
-            actor.sendMessage("§cThe file template ${toConsoleValue(template.getDisplayName(), false)} already inherits from ${toConsoleValue(inherit.getDisplayName(), false)}!")
+            actor.sendMessage("§cThe file template ${toConsoleValue(template.displayName, false)} already inherits from ${toConsoleValue(inherit.displayName, false)}!")
             return@runBlocking
         }
         val allTemplates = fileTemplateRepository.collectTemplates(template)
         if (allTemplates.contains(inherit)) {
-            actor.sendMessage("§cThe file template ${toConsoleValue(template.getDisplayName(), false)} already inherits from ${toConsoleValue(inherit.getDisplayName(), false)}!")
+            actor.sendMessage("§cThe file template ${toConsoleValue(template.displayName, false)} already inherits from ${toConsoleValue(inherit.displayName, false)}!")
             return@runBlocking
         }
-        actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} will inherit from ${toConsoleValue(inherit.getDisplayName())}...")
+        actor.sendMessage("File template ${toConsoleValue(template.displayName)} will inherit from ${toConsoleValue(inherit.displayName)}...")
         template.inherited.add(template.uniqueId)
         fileTemplateRepository.updateTemplate(template)
-        actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} now inherits from ${toConsoleValue(inherit.getDisplayName())}!")
+        actor.sendMessage("File template ${toConsoleValue(template.displayName)} now inherits from ${toConsoleValue(inherit.displayName)}!")
     }
 
     @CommandSubPath("edit <name> inherit remove <inherit>")
@@ -131,13 +131,13 @@ class FileTemplateCommand(
         @CommandParameter("inherit", true, FileTemplateSuggester::class) inherit: FileTemplate
     ) = runBlocking {
         if (!template.inherited.contains(inherit.uniqueId)) {
-            actor.sendMessage("§cThe file template ${toConsoleValue(template.getDisplayName(), false)} does not inherit from ${toConsoleValue(inherit.getDisplayName(), false)}!")
+            actor.sendMessage("§cThe file template ${toConsoleValue(template.displayName, false)} does not inherit from ${toConsoleValue(inherit.displayName, false)}!")
             return@runBlocking
         }
-        actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} will no longer inherit from ${toConsoleValue(inherit.getDisplayName())}...")
+        actor.sendMessage("File template ${toConsoleValue(template.displayName)} will no longer inherit from ${toConsoleValue(inherit.displayName)}...")
         template.inherited.remove(template.uniqueId)
         fileTemplateRepository.updateTemplate(template)
-        actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} no longer inherits from ${toConsoleValue(inherit.getDisplayName())}!")
+        actor.sendMessage("File template ${toConsoleValue(template.displayName)} no longer inherits from ${toConsoleValue(inherit.displayName)}!")
     }
 
     @CommandSubPath("edit <name> name <new-name>")
@@ -151,10 +151,10 @@ class FileTemplateCommand(
             actor.sendMessage("§cA file template with the name ${toConsoleValue(newName)} and prefix ${toConsoleValue(template.prefix)} already exists!")
             return@launch
         }
-        actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} will be renamed to ${toConsoleValue(newName)}...")
+        actor.sendMessage("File template ${toConsoleValue(template.displayName)} will be renamed to ${toConsoleValue(newName)}...")
         template.name = newName
         fileTemplateRepository.updateTemplate(template)
-        actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} was renamed to ${toConsoleValue(newName)}!")
+        actor.sendMessage("File template ${toConsoleValue(template.displayName)} was renamed to ${toConsoleValue(newName)}!")
     }
 
     @CommandSubPath("edit <name> prefix <newPrefix>")
@@ -168,10 +168,10 @@ class FileTemplateCommand(
             actor.sendMessage("§cA file template with the name ${toConsoleValue(template.name)} and prefix ${toConsoleValue(newPrefix)} already exists!")
             return@launch
         }
-        actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} will be renamed to ${toConsoleValue(newPrefix)}...")
+        actor.sendMessage("File template ${toConsoleValue(template.displayName)} will be renamed to ${toConsoleValue(newPrefix)}...")
         template.prefix = newPrefix
         fileTemplateRepository.updateTemplate(template)
-        actor.sendMessage("File template ${toConsoleValue(template.getDisplayName())} was renamed to ${toConsoleValue(newPrefix)}!")
+        actor.sendMessage("File template ${toConsoleValue(template.displayName)} was renamed to ${toConsoleValue(newPrefix)}!")
     }
 
     @CommandSubPath("publish <node>")
@@ -180,7 +180,7 @@ class FileTemplateCommand(
         actor: ConsoleActor,
         @CommandParameter("node", true, ConnectedCloudNodeSuggester::class) node: CloudNode,
     ) = defaultScope.launch {
-        if (node.currentSession() == null) {
+        if (node.currentSession == null) {
             actor.sendMessage("§cThe node ${toConsoleValue(node.name)} is not connected!")
             return@launch
         }

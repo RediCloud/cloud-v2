@@ -1,18 +1,20 @@
 package dev.redicloud.repository.server.version.handler.defaults
 
+import dev.redicloud.api.repositories.java.ICloudJavaVersionRepository
+import dev.redicloud.api.repositories.version.ICloudServerVersion
+import dev.redicloud.api.repositories.version.ICloudServerVersionRepository
+import dev.redicloud.api.repositories.version.ICloudServerVersionTypeRepository
+import dev.redicloud.api.repositories.version.IServerVersion
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.NodeRepository
-import dev.redicloud.repository.server.version.CloudServerVersion
-import dev.redicloud.repository.server.version.CloudServerVersionRepository
-import dev.redicloud.repository.server.version.CloudServerVersionType
-import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.requester.PaperMcApiRequester
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.*
+import dev.redicloud.utils.service.ServiceId
 import khttp.get
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,33 +25,31 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.Duration.Companion.minutes
 
 class PaperMcServerVersionHandler(
-    override val serverVersionRepository: CloudServerVersionRepository,
-    val serverVersionTypeRepository: CloudServerVersionTypeRepository,
-    val javaVersionRepository: JavaVersionRepository,
-    override val nodeRepository: NodeRepository,
-    override val console: Console,
-    override val name: String = "papermc",
-    override var lastUpdateCheck: Long = -1
+    serviceId: ServiceId,
+    serverVersionRepository: ICloudServerVersionRepository,
+    serverVersionTypeRepository: ICloudServerVersionTypeRepository,
+    javaVersionRepository: ICloudJavaVersionRepository,
+    nodeRepository: NodeRepository,
+    console: Console,
 ) : URLServerVersionHandler(
+    serviceId,
     serverVersionRepository,
+    serverVersionTypeRepository,
     nodeRepository,
     console,
-    serverVersionTypeRepository,
-    javaVersionRepository
+    javaVersionRepository,
+    false,
+    "papermc"
 ) {
+
 
     companion object {
         private val logger = LogManager.logger(PaperMcServerVersionHandler::class)
     }
 
     private val requester = PaperMcApiRequester()
-    private val locks = mutableMapOf<UUID, ReentrantLock>()
 
-    override fun getLock(version: CloudServerVersion): ReentrantLock {
-        return locks.getOrPut(version.uniqueId) { ReentrantLock() }
-    }
-
-    override suspend fun download(version: CloudServerVersion, force: Boolean): File {
+    override suspend fun download(version: ICloudServerVersion, force: Boolean): File {
         var canceled = false
         var downloaded = false
         var error = false
@@ -61,9 +61,9 @@ class PaperMcServerVersionHandler(
                 null
             } else if (downloaded) {
                 canceled = true
-                "Downloading version %hc%${version.getDisplayName()}§8: ${if (error) "§4✘" else "§2✓"}"
+                "Downloading version %hc%${version.displayName}§8: ${if (error) "§4✘" else "§2✓"}"
             } else {
-                "Downloading version %hc%${version.getDisplayName()}§8: %tc%%loading%"
+                "Downloading version %hc%${version.displayName}§8: %tc%%loading%"
             }
         }
         console.startAnimation(animation)
@@ -71,14 +71,14 @@ class PaperMcServerVersionHandler(
         val jar = getJar(version)
         try {
             if (jar.exists() && !force) return jar
-            if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
+            if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
 
             val type = serverVersionTypeRepository.getType(version.typeId!!)
                 ?: throw NullPointerException("Cant find server version type ${version.typeId}")
 
-            val targetVersion = if (version.version.isLatest()) version.version.dynamicVersion() else version.version
+            val targetVersion = if (version.version.latest) version.version.dynamicVersion() else version.version
             val buildId = requester.getLatestBuild(type, targetVersion)
-            if (buildId == -1) throw NullPointerException("Cant find build for ${version.getDisplayName()}")
+            if (buildId == -1) throw NullPointerException("Cant find build for ${version.displayName}")
 
             val url = requester.getDownloadUrl(type, targetVersion, buildId)
             val response = get(url)
@@ -100,7 +100,8 @@ class PaperMcServerVersionHandler(
             defaultFiles.putAll(type.defaultFiles)
             defaultFiles.forEach {
                 downloader.add {
-                    val url1 = it.value.replace("%build_number%", BUILD_NUMBER).replace("%cloud_version%", CLOUD_VERSION)
+                    val url1 =
+                        it.value.replace("%build_number%", BUILD_NUMBER).replace("%cloud_version%", CLOUD_VERSION)
                     val path = it.key
                     try {
                         if (!isValidUrl(url1)) {
@@ -110,7 +111,7 @@ class PaperMcServerVersionHandler(
                                         url1,
                                         false
                                     )
-                                } for ${toConsoleValue(version.getDisplayName(), false)}"
+                                } for ${toConsoleValue(version.displayName, false)}"
                             )
                             return@add
                         }
@@ -126,7 +127,7 @@ class PaperMcServerVersionHandler(
                                     )
                                 } for ${
                                     toConsoleValue(
-                                        version.getDisplayName(),
+                                        version.displayName,
                                         false
                                     )
                                 } is not available (${response.statusCode}):\n${response.text}"
@@ -135,8 +136,15 @@ class PaperMcServerVersionHandler(
                         }
                         file.createNewFile()
                         file.writeBytes(response1.content)
-                    }catch (e: Exception) {
-                        logger.warning("§cFailed to download default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)}", e)
+                    } catch (e: Exception) {
+                        logger.warning(
+                            "§cFailed to download default file ${
+                                toConsoleValue(
+                                    url1,
+                                    false
+                                )
+                            } for ${toConsoleValue(version.displayName, false)}", e
+                        )
                     }
                 }
             }
@@ -144,7 +152,7 @@ class PaperMcServerVersionHandler(
             downloader.joinAll()
 
             lastUpdateCheck = System.currentTimeMillis()
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             error = true
             throw e
         } finally {
@@ -155,39 +163,39 @@ class PaperMcServerVersionHandler(
         return jar
     }
 
-    override suspend fun canDownload(version: CloudServerVersion): Boolean {
-        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
+    override suspend fun canDownload(version: ICloudServerVersion): Boolean {
+        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
         val type = serverVersionTypeRepository.getType(version.typeId!!)
             ?: throw NullPointerException("Cant find server version type ${version.typeId}")
-        val targetVersion = if (version.version.isLatest()) version.version.dynamicVersion() else version.version
+        val targetVersion = if (version.version.latest) version.version.dynamicVersion() else version.version
         val buildId = requester.getLatestBuild(type, targetVersion)
         if (buildId == -1) return false
         val url = requester.getDownloadUrl(type, targetVersion, buildId)
         return isValidUrl(url)
     }
 
-    override suspend fun isUpdateAvailable(version: CloudServerVersion, force: Boolean): Boolean {
-        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
+    override suspend fun isUpdateAvailable(version: ICloudServerVersion, force: Boolean): Boolean {
+        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
         if (!force && System.currentTimeMillis() - lastUpdateCheck < 5.minutes.inWholeMilliseconds) return false
         val currentId = version.buildId ?: return true
         val type = serverVersionTypeRepository.getType(version.typeId!!)
             ?: throw NullPointerException("Cant find server version type ${version.typeId}")
-        val targetVersion = if (version.version.isLatest()) version.version.dynamicVersion() else version.version
+        val targetVersion = if (version.version.latest) version.version.dynamicVersion() else version.version
         val latest = requester.getLatestBuild(type, targetVersion)
-        if (latest == -1) throw NullPointerException("Cant find build for ${version.getDisplayName()}")
+        if (latest == -1) throw NullPointerException("Cant find build for ${version.displayName}")
         lastUpdateCheck = System.currentTimeMillis()
         return latest > currentId.toInt()
     }
 
-    override suspend fun getVersions(version: CloudServerVersion): List<ServerVersion> {
-        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
+    override suspend fun getVersions(version: ICloudServerVersion): List<IServerVersion> {
+        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
         val type = serverVersionTypeRepository.getType(version.typeId!!)
             ?: throw NullPointerException("Cant find server version type ${version.typeId}")
         return requester.getVersions(type)
     }
 
-    override suspend fun getBuilds(version: CloudServerVersion, mcVersion: ServerVersion): List<String> {
-        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
+    override suspend fun getBuilds(version: ICloudServerVersion, mcVersion: IServerVersion): List<String> {
+        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
         val type = serverVersionTypeRepository.getType(version.typeId!!)
             ?: throw NullPointerException("Cant find server version type ${version.typeId}")
         return requester.getBuilds(type, mcVersion).map { it.toString() }

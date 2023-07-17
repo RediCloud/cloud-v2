@@ -47,8 +47,8 @@ suspend fun generatePaperVersions(): List<CloudServerVersion> {
 suspend fun generatePaperMCVersions(typeName: String, typeId: UUID, patch: Boolean): List<CloudServerVersion> {
     ServerVersion.loadIfNotLoaded()
     val onlineVersions = mutableListOf<CloudServerVersion>()
-    ServerVersion.versions().filter { !it.isUnknown() }.forEach { version ->
-        val versionName = if (version.isLatest()) version.dynamicVersion().name else version.name
+    ServerVersion.versions().filter { !it.unknown }.forEach { version ->
+        val versionName = if (version.latest) version.dynamicVersion().name else version.name
         val url = "/projects/${typeName.lowercase()}/versions/${versionName.lowercase()}"
         val builds = PaperMcApiRequester.request<BuildsResponse>(url)
             .responseObject?.builds?.toList() ?: emptyList()
@@ -82,7 +82,7 @@ suspend fun generateSpigotVersions(): List<CloudServerVersion> {
     val onlineVersions = mutableListOf<CloudServerVersion>()
 
     ServerVersion.versions().forEach { version ->
-        val versionName = if (version.isLatest()) version.dynamicVersion().name else version.name
+        val versionName = if (version.latest) version.dynamicVersion().name else version.name
         val url = "https://download.getbukkit.org/spigot/spigot-${versionName.lowercase()}.jar"
         if (!isValidUrl(url)) return@forEach
         val cloudVersion = CloudServerVersion(
@@ -110,7 +110,7 @@ suspend fun generateSpigotVersions(): List<CloudServerVersion> {
 
 suspend fun generateBungeeCord(): List<CloudServerVersion> {
     ServerVersion.loadIfNotLoaded()
-    val latest = ServerVersion.versions().first { it.isLatest() }
+    val latest = ServerVersion.versions().first { it.latest }
     val url = "https://ci.md-5.net/job/BungeeCord/lastSuccessfulBuild/artifact/bootstrap/target/BungeeCord.jar"
     val cloudVersion = CloudServerVersion(
         UUID.randomUUID(),

@@ -11,9 +11,10 @@ import dev.redicloud.utils.service.ServiceType
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
+import kotlin.reflect.full.isSubclassOf
 import kotlin.time.Duration
 
-class ClusterCache<V: IClusterCacheObject>(
+class ClusterCache<V : Any>(
     val name: String,
     val serviceId: ServiceId,
     val cacheClass: KClass<V>,
@@ -23,6 +24,7 @@ class ClusterCache<V: IClusterCacheObject>(
 ) {
 
     init {
+        if (!cacheClass.isSubclassOf(IClusterCacheObject::class)) throw IllegalArgumentException("Cache class must implement IClusterCacheObject (class: ${cacheClass.qualifiedName})")
         if (!packetManager.isPacketRegistered(CacheUpdatePacket::class)) {
             packetManager.registerPacket(CacheUpdatePacket::class)
         }
@@ -32,7 +34,7 @@ class ClusterCache<V: IClusterCacheObject>(
         if (!packetManager.isPacketRegistered(CacheMultiUpdatePacket::class)) {
             packetManager.registerPacket(CacheMultiUpdatePacket::class)
         }
-        CACHES[name] = this
+        CACHES[name] = this as ClusterCache<out IClusterCacheObject>
     }
 
     companion object {
