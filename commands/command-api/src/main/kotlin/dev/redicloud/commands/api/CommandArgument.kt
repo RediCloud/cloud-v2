@@ -23,7 +23,7 @@ class CommandArgument(
     override val pathFormat: String
         get() = if (vararg) { "<$name...>" }else if (required) "<$name>" else "[$name]"
     override val actorArgument: Boolean
-        get() = clazz == ICommandActor::class
+        get() = name == "_actor"
 
     init {
         if (parameter.type.kotlin.superclasses.any { it == ICommandActor::class }) {
