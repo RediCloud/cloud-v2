@@ -30,13 +30,10 @@ class CloudServerVersionRepository(
     ServiceType.NODE
 ), ICloudServerVersionRepository {
 
-    init {
-        gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
-    }
-
     companion object {
         val LOGGER = LogManager.logger(CloudServerVersionRepository::class)
         val DEFAULT_VERSIONS_CACHE = SingleCache(1.minutes) {
+            gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
             val json = getTextOfAPIWithFallback("api-files/versions.json")
             val type = object : TypeToken<ArrayList<CloudServerVersion>>() {}.type
             val list: MutableList<CloudServerVersion> = gson.fromJson(json, type)
