@@ -101,7 +101,7 @@ suspend fun ServerQueueInformation.calculateStartOrder(nodes: List<CloudNode>, s
 suspend fun ServerQueueInformation.calculateStartPriority(cloudNode: CloudNode, serverRepository: ServerRepository): Int {
     var count = 0
 
-    if (!cloudNode.isConnected()) {
+    if (!cloudNode.connected) {
         addFailedStart(cloudNode.serviceId, StartResultType.NODE_NOT_CONNECTED)
         addFailedNode(cloudNode.serviceId)
         return -1

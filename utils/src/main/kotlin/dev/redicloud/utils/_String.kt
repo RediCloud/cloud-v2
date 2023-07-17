@@ -10,3 +10,11 @@ fun String.isUUID(): Boolean {
         false
     }
 }
+
+fun String.replaceLast(targetChar: String, replacement: String): String {
+    val lastIndexOf = lastIndexOf(targetChar)
+    if (lastIndexOf >= 0) {
+        return replaceRange(lastIndexOf, lastIndexOf + 1, replacement)
+    }
+    return this
+}

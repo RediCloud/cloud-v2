@@ -1,15 +1,16 @@
 package dev.redicloud.tasks.executor
 
-import dev.redicloud.event.CloudEvent
-import dev.redicloud.event.EventManager
-import dev.redicloud.event.InlineEventCaller
+import dev.redicloud.api.events.CloudEvent
+import dev.redicloud.api.events.IEventManager
+import dev.redicloud.api.events.InlineEventCaller
+import dev.redicloud.api.events.listen
 import dev.redicloud.tasks.CloudTask
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
 class EventBasedCloudExecutor(
     task: CloudTask,
-    val eventManager: EventManager,
+    val eventManager: IEventManager,
     val events: List<KClass<out CloudEvent>>
 ) : CloudTaskExecutor(task) {
 
@@ -19,7 +20,7 @@ class EventBasedCloudExecutor(
         events.forEach { listener(it) }
         cloudTask.onFinished {
             listeners.forEach {
-                eventManager.unregister(it)
+                eventManager.unregisterListener(it)
             }
         }
     }

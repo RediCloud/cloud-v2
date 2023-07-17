@@ -4,14 +4,16 @@ import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
 import dev.redicloud.tasks.CloudTask
+import dev.redicloud.utils.service.ServiceId
 
 class CloudServerInfoTask(
+    private val serviceId: ServiceId,
     private val serverRepository: ServerRepository,
     private val playerCountProvider: IServerPlayerProvider
 ) : CloudTask() {
 
     override suspend fun execute(): Boolean {
-        val cloudServer = serverRepository.getServer<CloudServer>(serverRepository.serviceId) ?: return false
+        val cloudServer = serverRepository.getServer<CloudServer>(serviceId) ?: return false
         var update = false
         if (cloudServer.maxPlayers != playerCountProvider.getMaxPlayerCount()) update = true
         cloudServer.maxPlayers = playerCountProvider.getMaxPlayerCount()

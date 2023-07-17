@@ -1,26 +1,33 @@
 
 import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
+import dev.redicloud.api.repositories.version.ICloudServerVersion
+import dev.redicloud.api.repositories.version.IServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.requester.BuildsResponse
 import dev.redicloud.repository.server.version.requester.PaperMcApiRequester
 import dev.redicloud.repository.server.version.utils.ServerVersion
-import dev.redicloud.utils.gson.fixKotlinAnnotations
+import dev.redicloud.utils.gson.*
 import dev.redicloud.utils.isValidUrl
 import java.util.*
 
-val gson = GsonBuilder().serializeNulls().setPrettyPrinting().fixKotlinAnnotations().create()
-
 suspend fun main() {
+    gsonInterfaceFactory.register(ICloudServerVersion::class, CloudServerVersion::class)
+    gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
     ServerVersion.loadOnlineVersions()
-    val list = mutableListOf<CloudServerVersion>()
+    val list = mutableListOf<ICloudServerVersion>()
     list.addAll(generateSpigotVersions())
     list.addAll(generateBungeeCord())
     list.addAll(generatePaperVersions())
-    println(gson.toJson(list))
+    val json = gson.toJson(list)
+    println(json)
+    val type = object : TypeToken<ArrayList<CloudServerVersion>>() {}.type
+    val list1: MutableList<CloudServerVersion> = gson.fromJson(json, type)
+    println(list1)
 }
 
-suspend fun generatePaperVersions(): List<CloudServerVersion> {
-    val list = mutableListOf<CloudServerVersion>()
+suspend fun generatePaperVersions(): List<ICloudServerVersion> {
+    val list = mutableListOf<ICloudServerVersion>()
     list.addAll(generatePaperMCVersions(
         "paper",
         UUID.fromString("b692f35a-42bd-45db-aec1-db1867bc19aa"),
@@ -44,11 +51,11 @@ suspend fun generatePaperVersions(): List<CloudServerVersion> {
     return list
 }
 
-suspend fun generatePaperMCVersions(typeName: String, typeId: UUID, patch: Boolean): List<CloudServerVersion> {
+suspend fun generatePaperMCVersions(typeName: String, typeId: UUID, patch: Boolean): List<ICloudServerVersion> {
     ServerVersion.loadIfNotLoaded()
-    val onlineVersions = mutableListOf<CloudServerVersion>()
-    ServerVersion.versions().filter { !it.isUnknown() }.forEach { version ->
-        val versionName = if (version.isLatest()) version.dynamicVersion().name else version.name
+    val onlineVersions = mutableListOf<ICloudServerVersion>()
+    ServerVersion.versions().filter { !it.unknown }.forEach { version ->
+        val versionName = if (version.latest) version.dynamicVersion().name else version.name
         val url = "/projects/${typeName.lowercase()}/versions/${versionName.lowercase()}"
         val builds = PaperMcApiRequester.request<BuildsResponse>(url)
             .responseObject?.builds?.toList() ?: emptyList()
@@ -77,12 +84,12 @@ suspend fun generatePaperMCVersions(typeName: String, typeId: UUID, patch: Boole
     return onlineVersions
 }
 
-suspend fun generateSpigotVersions(): List<CloudServerVersion> {
+suspend fun generateSpigotVersions(): List<ICloudServerVersion> {
     ServerVersion.loadIfNotLoaded()
-    val onlineVersions = mutableListOf<CloudServerVersion>()
+    val onlineVersions = mutableListOf<ICloudServerVersion>()
 
     ServerVersion.versions().forEach { version ->
-        val versionName = if (version.isLatest()) version.dynamicVersion().name else version.name
+        val versionName = if (version.latest) version.dynamicVersion().name else version.name
         val url = "https://download.getbukkit.org/spigot/spigot-${versionName.lowercase()}.jar"
         if (!isValidUrl(url)) return@forEach
         val cloudVersion = CloudServerVersion(
@@ -108,9 +115,9 @@ suspend fun generateSpigotVersions(): List<CloudServerVersion> {
     return onlineVersions
 }
 
-suspend fun generateBungeeCord(): List<CloudServerVersion> {
+suspend fun generateBungeeCord(): List<ICloudServerVersion> {
     ServerVersion.loadIfNotLoaded()
-    val latest = ServerVersion.versions().first { it.isLatest() }
+    val latest = ServerVersion.versions().first { it.latest }
     val url = "https://ci.md-5.net/job/BungeeCord/lastSuccessfulBuild/artifact/bootstrap/target/BungeeCord.jar"
     val cloudVersion = CloudServerVersion(
         UUID.randomUUID(),

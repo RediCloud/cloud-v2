@@ -2,6 +2,7 @@ package dev.redicloud.service.node.repository.template.file
 
 import com.jcraft.jsch.ChannelSftp
 import com.jcraft.jsch.Session
+import dev.redicloud.api.repositories.template.file.ICloudFileTemplate
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
@@ -14,7 +15,7 @@ import java.io.File
 import java.util.*
 
 class NodeFileTemplateRepository(
-    databaseConnection: DatabaseConnection,
+    private val databaseConnection: DatabaseConnection,
     private val nodeRepository: NodeRepository,
     private val fileCluster: FileCluster,
     packetManager: PacketManager
@@ -22,11 +23,11 @@ class NodeFileTemplateRepository(
 
     override suspend fun pushTemplates(serviceId: ServiceId) {
         val node = nodeRepository.getNode(serviceId) ?: return
-        if (node.serviceId == nodeRepository.serviceId) {
-            FileCluster.LOGGER.info("Skipping pushing templates to ${node.getIdentifyingName()} because it is the current node!")
+        if (node.serviceId == databaseConnection.serviceId) {
+            FileCluster.LOGGER.info("Skipping pushing templates to ${node.identifyName()} because it is the current node!")
             return
         }
-        FileCluster.LOGGER.info("Pushing templates to ${node.getIdentifyingName()}...")
+        FileCluster.LOGGER.info("Pushing templates to ${node.identifyName()}...")
         var session: Session? = null
         var sftpChannel: ChannelSftp? = null
         try {
@@ -51,32 +52,32 @@ class NodeFileTemplateRepository(
 
             workFolder.deleteRecursively()
 
-            FileCluster.LOGGER.info("Successfully pushed templates to ${node.getIdentifyingName()}!")
+            FileCluster.LOGGER.info("Successfully pushed templates to ${node.identifyName()}!")
         }finally {
             sftpChannel?.disconnect()
             session?.disconnect()
         }
     }
 
-    override suspend fun updateTemplate(template: FileTemplate): FileTemplate {
+    override suspend fun updateTemplate(template: ICloudFileTemplate): FileTemplate {
         val storedTemplate = getTemplate(template.uniqueId) ?: throw Exception("Template ${template.uniqueId} not found!")
-        set(template.uniqueId.toString(), template)
-        if (storedTemplate.getDisplayName() != template.getDisplayName()) {
-            val folder = storedTemplate.getFolder()
-            if (template.getFolder().exists() && template.getFolder().isDirectory && folder.exists() && folder.isDirectory) {
-                folder.listFiles()?.forEach {
-                    it.copyRecursively(template.getFolder().resolve(it.name), true)
+        return set(template.uniqueId.toString(), template).apply {
+            if (storedTemplate.displayName != template.displayName) {
+                val folder = storedTemplate.folder
+                if (template.folder.exists() && template.folder.isDirectory && folder.exists() && folder.isDirectory) {
+                    folder.listFiles()?.forEach {
+                        it.copyRecursively(template.folder.resolve(it.name), true)
+                    }
+                    template.folder.deleteRecursively()
+                } else {
+                    template.folder.deleteRecursively()
+                    folder.renameTo(template.folder)
                 }
-                template.getFolder().deleteRecursively()
-            } else {
-                template.getFolder().deleteRecursively()
-                folder.renameTo(template.getFolder())
-            }
-            nodeRepository.getConnectedNodes().forEach {
-                pushTemplates(it.serviceId)
+                nodeRepository.getConnectedNodes().forEach {
+                    pushTemplates(it.serviceId)
+                }
             }
         }
-        return template
     }
 
 }

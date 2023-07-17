@@ -3,6 +3,7 @@ package dev.redicloud.database.codec
 import com.google.gson.*
 import dev.redicloud.utils.gson.addInterfaceImpl
 import dev.redicloud.utils.gson.fixKotlinAnnotations
+import dev.redicloud.utils.gson.gson
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufInputStream
@@ -14,13 +15,6 @@ import org.redisson.client.protocol.Encoder
 import java.nio.charset.Charset
 
 class GsonCodec : BaseCodec() {
-
-    private val gson: Gson = GsonBuilder()
-        .addInterfaceImpl()
-        .fixKotlinAnnotations()
-        .serializeNulls()
-        .setPrettyPrinting()
-        .create()
 
     private val charset: Charset = Charsets.UTF_8
 

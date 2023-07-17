@@ -1,12 +1,12 @@
 package dev.redicloud.service.node.commands
 
-import dev.redicloud.commands.api.*
+import dev.redicloud.api.commands.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.repository.server.version.handler.IServerVersionHandler
+import dev.redicloud.api.repositories.version.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.service.base.suggester.CloudConnectorFileNameSelector
 import dev.redicloud.service.base.suggester.CloudServerVersionTypeSuggester
@@ -24,7 +24,7 @@ class CloudServerVersionTypeCommand(
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
     private val serverVersionRepository: CloudServerVersionRepository
-) : CommandBase() {
+) : ICommand {
 
     @CommandSubPath("list")
     @CommandDescription("List all server version types")
@@ -221,7 +221,7 @@ class CloudServerVersionTypeCommand(
             if (versions.any { it.typeId == type.uniqueId }) {
                 actor.sendMessage("§cYou can't delete a server version type which is used by a server version:")
                 actor.sendMessage("§c${
-                    versions.filter { it.typeId == type.uniqueId }.joinToString(", ") { it.getDisplayName() }
+                    versions.filter { it.typeId == type.uniqueId }.joinToString(", ") { it.displayName }
                 }"
                 )
                 return@runBlocking

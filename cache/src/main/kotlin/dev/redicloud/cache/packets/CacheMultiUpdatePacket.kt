@@ -1,5 +1,6 @@
 package dev.redicloud.cache.packets
 
+import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.utils.gson.gson
 
 class CacheMultiUpdatePacket(
@@ -7,8 +8,8 @@ class CacheMultiUpdatePacket(
     val toUpdate: Map<String, String?>
 ) : CachePacket(name) {
 
-    override fun received() {
-        super.received()
+    override fun received(manager: IPacketManager) {
+        super.received(manager)
         if (cache == null) return
         toUpdate.forEach { (key, valueJson) ->
             if (valueJson == null) {

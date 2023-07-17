@@ -25,12 +25,14 @@ class VelocityConnector(
     private var velocityShuttingDown: Boolean
     private val registered: MutableMap<ServiceId, ServerInfo>
     override val serverPlayerProvider: IServerPlayerProvider
-    override val screenProvider: AbstractScreenProvider = VelocityScreenProvider(this.packetManager, this.proxyServer)
+    override val screenProvider: AbstractScreenProvider
 
     init {
+        initApi()
         this.velocityShuttingDown = false
         this.registered = mutableMapOf()
         this.serverPlayerProvider = VelocityServerPlayerProvider(proxyServer)
+        screenProvider = VelocityScreenProvider(this.packetManager, this.proxyServer)
         runBlocking {
             registerTasks()
             registerStartedServers()
@@ -38,7 +40,7 @@ class VelocityConnector(
     }
 
     override fun registerServer(server: CloudMinecraftServer) {
-        val session = server.currentSession()
+        val session = server.currentSession
             ?: throw IllegalStateException("Server ${serviceId.toName()} is connected but has no active session?")
         val serverInfo = ServerInfo(
             server.name,
@@ -70,7 +72,7 @@ class VelocityConnector(
     }
 
     private fun registerListeners() {
-        this.proxyServer.eventManager.register(getConnectorPlugin(), CloudPlayerListener(this.playerRepository, this.serverRepository, this.proxyServer))
+        this.proxyServer.eventManager.register(getConnectorPlugin(), CloudPlayerListener(this.serviceId, this.playerRepository, this.serverRepository, this.proxyServer))
     }
 
     override fun getConnectorPlugin(): PluginContainer = this.proxyServer.pluginManager.getPlugin("redicloud-connector-velocity").get()

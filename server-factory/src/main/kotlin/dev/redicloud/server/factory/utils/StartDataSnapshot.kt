@@ -1,12 +1,12 @@
 package dev.redicloud.server.factory.utils
 
-import dev.redicloud.repository.java.version.JavaVersion
+import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.repository.server.version.handler.IServerVersionHandler
+import dev.redicloud.api.repositories.version.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.utils.EasyCache
 import kotlin.time.Duration.Companion.seconds
@@ -24,7 +24,7 @@ class StartDataSnapshot private constructor(
 
     lateinit var version: CloudServerVersion
     lateinit var versionType: CloudServerVersionType
-    lateinit var javaVersion: JavaVersion
+    lateinit var javaVersion: CloudJavaVersion
     lateinit var versionHandler: IServerVersionHandler
     var startResult: StartResult? = null
 

@@ -2,14 +2,11 @@ package dev.redicloud.server.factory
 
 import com.jcraft.jsch.ChannelSftp
 import com.jcraft.jsch.Session
-import dev.redicloud.api.server.CloudServerState
-import dev.redicloud.api.server.events.server.CloudServerDeleteEvent
-import dev.redicloud.api.server.events.server.CloudServerTransferredEvent
+import dev.redicloud.api.repositories.service.server.CloudServerState
+import dev.redicloud.api.events.impl.server.CloudServerDeleteEvent
+import dev.redicloud.api.events.impl.server.CloudServerTransferredEvent
 import dev.redicloud.cluster.file.FileCluster
-import dev.redicloud.commands.api.CommandArgumentParser
-import dev.redicloud.commands.api.AbstractCommandSuggester
 import dev.redicloud.console.Console
-import dev.redicloud.console.utils.ScreenProcessHandler
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
@@ -34,7 +31,6 @@ import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.*
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.redisson.api.RList
@@ -58,6 +54,8 @@ class ServerFactory(
     private val fileCluster: FileCluster
 ) {
 
+    internal val hostingId = databaseConnection.serviceId
+
     internal val startQueue: RList<ServerQueueInformation> =
         databaseConnection.getClient().getList("server-factory:queue:start")
     internal val stopQueue: RList<ServiceId> =
@@ -72,8 +70,8 @@ class ServerFactory(
     var shutdown = false
 
     init {
-        CommandArgumentParser.PARSERS[ServerScreen::class] = ServerScreenParser(console)
-        AbstractCommandSuggester.SUGGESTERS.add(ServerScreenSuggester(console))
+        console.commandManager.registerParser(ServerScreen::class.java, ServerScreenParser(console))
+        console.commandManager.registerSuggesters(ServerScreenSuggester(console))
     }
 
     suspend fun getStartList(): List<ServerQueueInformation> {
@@ -138,7 +136,7 @@ class ServerFactory(
     suspend internal fun deleteServer(serviceId: ServiceId): Boolean {
         if (!serviceId.type.isServer()) throw IllegalArgumentException("Service id that was queued for deletion is not a server: ${serviceId.toName()}")
         val server = serverRepository.getServer<CloudServer>(serviceId) ?: return false
-        if (server.hostNodeId != this.serverRepository.serviceId) return false
+        if (server.hostNodeId != serviceId) return false
         if (server.state != CloudServerState.STOPPED) return false
         if (!server.configurationTemplate.static) throw IllegalArgumentException("Service id that was queued for deletion is not static: ${serviceId.toName()}")
         serverRepository.deleteServer(server)
@@ -184,13 +182,15 @@ class ServerFactory(
             packetManager,
             bindHost,
             clusterConfiguration,
-            serviceId
+            serviceId,
+            hostingId
         )
+
         processes.add(serverProcess)
         var cloudServer: CloudServer? = null
         try {
 
-            val thisNode = nodeRepository.getNode(nodeRepository.serviceId)!!
+            val thisNode = nodeRepository.getNode(hostingId)!!
             if (!force) {
                 // check if the node is allowed to start the server
                 if (configurationTemplate.nodeIds.contains(thisNode.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
@@ -320,12 +320,13 @@ class ServerFactory(
                 packetManager,
                 bindHost,
                 clusterConfiguration,
-                serviceId
+                serviceId,
+                hostingId
             )
             processes.add(serverProcess)
             try {
 
-                val thisNode = nodeRepository.getNode(nodeRepository.serviceId)!!
+                val thisNode = nodeRepository.getNode(hostingId)!!
                 if (!force) {
                     // check if the node is allowed to start the server
                     if (newConfigurationTemplate.nodeIds.contains(thisNode.serviceId) && newConfigurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
@@ -406,9 +407,9 @@ class ServerFactory(
         internalCall: Boolean = false
     ) {
         val server = serverRepository.getServer<CloudServer>(serviceId) ?: throw NullPointerException("Server not found")
-        if (server.hostNodeId != nodeRepository.serviceId) throw IllegalArgumentException("Server is not on this node")
+        if (server.hostNodeId != serviceId) throw IllegalArgumentException("Server is not on this node")
         if (server.state == CloudServerState.STOPPED && !force || server.state == CloudServerState.STOPPING && !force) return
-        val thisNode = nodeRepository.getNode(nodeRepository.serviceId)
+        val thisNode = nodeRepository.getNode(serviceId)
         if (thisNode != null) {
             thisNode.currentMemoryUsage = thisNode.currentMemoryUsage - server.configurationTemplate.maxMemory
             if (thisNode.currentMemoryUsage < 0) thisNode.currentMemoryUsage = 0
@@ -440,7 +441,7 @@ class ServerFactory(
         val server = serverRepository.getServer<CloudServer>(serverId) ?: return false
         if (!server.configurationTemplate.static) return false
         if (server.state != CloudServerState.STOPPED) return false
-        if (server.hostNodeId != nodeRepository.serviceId) return false
+        if (server.hostNodeId != hostingId) return false
         if (server.hostNodeId == nodeId) return false
         var session: Session? = null
         var channel: ChannelSftp? = null

@@ -1,5 +1,6 @@
 package dev.redicloud.repository.server.version
 
+import dev.redicloud.api.repositories.version.ICloudServerVersionType
 import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
@@ -10,33 +11,27 @@ import java.util.*
 
 
 class CloudServerVersionType(
-    val uniqueId: UUID = UUID.randomUUID(),
-    var name: String,
-    var versionHandlerName: String,
-    var proxy: Boolean,
-    val defaultType: Boolean = false,
-    var connectorPluginName: String,
-    var connectorDownloadUrl: String?,
-    var connectorFolder: String,
-    var libPattern: String? = null,
-    jvmArguments: MutableList<String> = mutableListOf(),
-    environmentVariables: MutableMap<String, String> = mutableMapOf(),
-    programmParameters: MutableList<String> = mutableListOf(),
-    defaultFiles: MutableMap<String, String> = mutableMapOf(),
-    fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf()
-) : ProcessConfiguration(
-    jvmArguments,
-    environmentVariables,
-    programmParameters,
-    defaultFiles,
-    fileEdits
-), IClusterCacheObject {
+    override val uniqueId: UUID = UUID.randomUUID(),
+    override var name: String,
+    override var versionHandlerName: String,
+    override var proxy: Boolean,
+    override val defaultType: Boolean = false,
+    override var connectorPluginName: String,
+    override var connectorDownloadUrl: String?,
+    override var connectorFolder: String,
+    override var libPattern: String? = null,
+    override val jvmArguments: MutableList<String> = mutableListOf(),
+    override val environmentVariables: MutableMap<String, String> = mutableMapOf(),
+    override val programmParameters: MutableList<String> = mutableListOf(),
+    override val defaultFiles: MutableMap<String, String> = mutableMapOf(),
+    override val fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf()
+) : IClusterCacheObject, ICloudServerVersionType {
 
     companion object {
         private val logger = LogManager.Companion.logger(CloudServerVersionType::class)
     }
 
-    fun getConnectorFile(nodeFolder: Boolean): File {
+    override fun getParsedConnectorFile(nodeFolder: Boolean): File {
         return if (nodeFolder) {
             File(CONNECTORS_FOLDER.getFile(), connectorPluginName
                 .replace("%cloud_version%", CLOUD_VERSION)
@@ -50,7 +45,7 @@ class CloudServerVersionType(
         }
     }
 
-    fun getConnectorURL(): URL {
+    override fun getParsedConnectorURL(): URL {
         return URL(connectorDownloadUrl
             ?.replace("%cloud_version%", CLOUD_VERSION)
             ?.replace("%build_number%", BUILD_NUMBER)
@@ -58,7 +53,7 @@ class CloudServerVersionType(
         )
     }
 
-    fun isUnknown(): Boolean = name.lowercase() == "unknown"
+    override fun isUnknown(): Boolean = name.lowercase() == "unknown"
 
     fun doFileEdits(folder: File, action: (String) -> String = { it }) {
         fileEdits.forEach { (file, editInfo) ->

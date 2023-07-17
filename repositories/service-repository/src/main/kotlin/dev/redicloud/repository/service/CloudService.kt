@@ -1,70 +1,65 @@
 package dev.redicloud.repository.service
 
+import dev.redicloud.api.repositories.service.ICloudService
+import dev.redicloud.api.repositories.service.ICloudServiceSession
 import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
 
 abstract class CloudService(
-    val serviceId: ServiceId,
-    val name: String,
-    private val serviceSessions: ServiceSessions = ServiceSessions(),
-    var connected: Boolean = false
-) : IClusterCacheObject {
+    override val serviceId: ServiceId,
+    override val name: String,
+    val sessions: ServiceSessions = ServiceSessions(),
+    override var connected: Boolean = false
+) : IClusterCacheObject, ICloudService {
 
-    fun getIdentifyingName(colored: Boolean = true): String = if (colored) "%hc%$name§8#%tc%${serviceId.id}" else "$name#${serviceId.id}"
+    override fun identifyName(colored: Boolean): String
+        = if (colored) "%hc%$name§8#%tc%${serviceId.id}" else "$name#${serviceId.id}"
 
-    fun currentSession(): ServiceSession? {
-        return serviceSessions.currentSession
+    override val currentSession: ServiceSession?
+        get() {
+            return sessions.currentSession
+        }
+
+    override val registrationSession: ServiceSession?
+        get() {
+            return sessions.registrationSession
+        }
+
+    override fun currentOrLastSession(): ServiceSession? {
+        return currentSession ?: sessions.sessionHistory.lastOrNull()
     }
 
-    fun currentOrLastsession(): ServiceSession? {
-        return currentSession() ?: serviceSessions.sessionHistory.lastOrNull()
-    }
-
-    fun isSuspended(): Boolean {
-        val current = currentSession() ?: return false
-        return current.suspended
-    }
-
-    fun getSessions(): List<ServiceSession> = serviceSessions.sessionHistory.toMutableList().apply {
-        add(currentSession() ?: return@apply)
-    }
-
-    fun isConnected(): Boolean = connected && !isSuspended()
-
-    fun registrationSession(): ServiceSession? {
-        return serviceSessions.registrationSession
-    }
-
-    private fun addSession(session: ServiceSession) {
-        serviceSessions.currentSession = session
-        if (registrationSession() == null) {
-            serviceSessions.registrationSession = session
-        }else {
-            serviceSessions.sessionHistory.add(session)
-            while (serviceSessions.sessionHistory.size > 5) {
-                serviceSessions.sessionHistory.removeAt(0)
+    override val sessionHistory: List<ServiceSession>
+        get() {
+            return sessions.sessionHistory.toMutableList().apply {
+                currentSession?.let { add(it) }
             }
         }
-    }
 
-    fun startSession(ipAddress: String): ServiceSession {
-        val session = ServiceSession(this.serviceId, System.currentTimeMillis(), ipAddress)
-        addSession(session)
-        return session
-    }
-
-    fun endSession(session: ServiceSession? = null): ServiceSession {
-        val current = session ?: currentSession() ?: throw IllegalStateException("No session is currently active")
+    override fun endSession(session: ICloudServiceSession?): ICloudServiceSession {
+        val current = (session ?: currentSession) as ServiceSession? ?: throw IllegalStateException("No session is currently active")
         current.endTime = System.currentTimeMillis()
-        serviceSessions.currentSession = null
+        sessions.currentSession = null
         return current
     }
 
-    open fun unregisterAfterDisconnect(): Boolean =
-        serviceId.type == ServiceType.MINECRAFT_SERVER || serviceId.type == ServiceType.PROXY_SERVER
+    override val suspended: Boolean
+        get() {
+            return sessions.currentSession?.suspended ?: false
+        }
 
-    open fun canSelfUnregister(): Boolean =
-        serviceId.type == ServiceType.NODE || serviceId.type == ServiceType.FILE_NODE ||serviceId.type == ServiceType.CLIENT
+    override fun startSession(ipAddress: String): ServiceSession {
+        val session = ServiceSession(this.serviceId, System.currentTimeMillis(), ipAddress)
+        sessions.currentSession = session
+        if (registrationSession == null) {
+            sessions.registrationSession = session
+        }else {
+            sessions.sessionHistory.add(session)
+            while (sessions.sessionHistory.size > 5) {
+                sessions.sessionHistory.removeAt(0)
+            }
+        }
+        return session
+    }
 
 }

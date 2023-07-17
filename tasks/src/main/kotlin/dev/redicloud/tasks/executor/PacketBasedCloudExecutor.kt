@@ -1,16 +1,16 @@
 package dev.redicloud.tasks.executor
 
-import dev.redicloud.logging.LogManager
-import dev.redicloud.packets.AbstractPacket
-import dev.redicloud.packets.PacketListener
-import dev.redicloud.packets.PacketManager
+import dev.redicloud.api.packets.AbstractPacket
+import dev.redicloud.api.packets.IPacketManager
+import dev.redicloud.api.packets.PacketListener
+import dev.redicloud.api.packets.listen
 import dev.redicloud.tasks.CloudTask
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
 class PacketBasedCloudExecutor(
     task: CloudTask,
-    val packetManager: PacketManager,
+    val packetManager: IPacketManager,
     val packets: List<KClass<out AbstractPacket>>
 ) : CloudTaskExecutor(task) {
 

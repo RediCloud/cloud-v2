@@ -1,27 +1,31 @@
 package dev.redicloud.repository.template.file
 
+import dev.redicloud.api.repositories.template.file.ICloudFileTemplate
 import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.utils.TEMPLATE_FOLDER
 import java.io.File
 import java.util.*
 
 data class FileTemplate(
-    val uniqueId: UUID = UUID.randomUUID(),
-    var prefix: String,
-    var name: String,
-    val inherited: MutableList<UUID> = mutableListOf()
-) : IClusterCacheObject {
+    override val uniqueId: UUID = UUID.randomUUID(),
+    override var prefix: String,
+    override var name: String,
+    override val inherited: MutableList<UUID> = mutableListOf()
+) : IClusterCacheObject, ICloudFileTemplate {
 
-    fun getDisplayName(): String {
-        return "$prefix/$name"
-    }
+    override val displayName: String
+        get() {
+            return "$prefix-$name"
+        }
 
-    fun getFolder(): File {
-        return File(getPrefixFolder().absolutePath, name)
-    }
+    override val folder: File
+        get() {
+            return File(prefixFolder.absolutePath, name)
+        }
 
-    fun getPrefixFolder(): File {
-        return File(TEMPLATE_FOLDER.getFile().absolutePath, prefix)
-    }
+    override val prefixFolder: File
+        get() {
+            return File(TEMPLATE_FOLDER.getFile().absolutePath, prefix)
+        }
 
 }

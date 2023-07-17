@@ -1,12 +1,15 @@
 package dev.redicloud.repository.java.version
 
 import com.google.gson.reflect.TypeToken
+import dev.redicloud.api.repositories.java.ICloudJavaVersionRepository
+import dev.redicloud.api.repositories.java.ICloudJavaVersion
+import dev.redicloud.api.repositories.java.ICloudJavaVersionInfo
 import dev.redicloud.database.DatabaseConnection
-import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.gson
+import dev.redicloud.utils.gson.gsonInterfaceFactory
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import java.io.File
@@ -17,45 +20,56 @@ class JavaVersionRepository(
     val serviceId: ServiceId,
     databaseConnection: DatabaseConnection,
     packetManager: PacketManager
-) : CachedDatabaseBucketRepository<JavaVersion>(
+) : CachedDatabaseBucketRepository<ICloudJavaVersion, CloudJavaVersion>(
     databaseConnection,
     "java-version",
     null,
-    JavaVersion::class,
+    ICloudJavaVersion::class,
+    CloudJavaVersion::class,
     5.minutes,
     packetManager,
-    ServiceType.NODE
-) {
+    ServiceType.NODE,
+), ICloudJavaVersionRepository {
 
     companion object {
-        val ONLINE_VERSION_CACHE = EasyCache<List<JavaVersion>, Unit> (1.minutes) {
+        val ONLINE_VERSION_CACHE = EasyCache<List<CloudJavaVersion>, Unit> (1.minutes) {
             val json = getTextOfAPIWithFallback("api-files/java-versions.json")
-            val type = object : TypeToken<ArrayList<JavaVersion>>() {}.type
-            gson.fromJson<List<JavaVersion>?>(json, type)
+            val type = object : TypeToken<ArrayList<CloudJavaVersion>>() {}.type
+            gson.fromJson<List<CloudJavaVersion>?>(json, type)
         }
     }
 
-    suspend fun getVersion(uniqueId: UUID): JavaVersion? = get(uniqueId.toString())
+    init {
+        gsonInterfaceFactory.register(ICloudJavaVersionInfo::class, JavaVersionInfo::class)
+    }
 
-    suspend fun existsVersion(name: String): Boolean = getVersion(name) != null
+    override suspend fun getVersion(uniqueId: UUID): CloudJavaVersion? = get(uniqueId.toString())
 
-    suspend fun existsVersion(uniqueId: UUID): Boolean = getHandle(uniqueId.toString()).isExists
+    override suspend fun existsVersion(name: String): Boolean = getVersion(name) != null
 
-    suspend fun getVersions(): List<JavaVersion> = getAll()
+    override suspend fun existsVersion(uniqueId: UUID): Boolean = exists(uniqueId.toString())
 
-    suspend fun updateVersion(javaVersion: JavaVersion) = set(javaVersion.uniqueId.toString(), javaVersion)
+    override suspend fun getVersions(): List<CloudJavaVersion> = getAll()
 
-    suspend fun deleteVersion(uniqueId: UUID) = delete(uniqueId.toString())
+    override suspend fun updateVersion(javaVersion: ICloudJavaVersion) = set(javaVersion.uniqueId.toString(), javaVersion)
 
-    suspend fun deleteVersion(javaVersion: JavaVersion) = deleteVersion(javaVersion.uniqueId)
+    override suspend fun deleteVersion(uniqueId: UUID): Boolean {
+        return delete(uniqueId.toString())
+    }
 
-    suspend fun createVersion(javaVersion: JavaVersion) = set(javaVersion.uniqueId.toString(), javaVersion)
+    override suspend fun deleteVersion(javaVersion: ICloudJavaVersion): Boolean {
+        return deleteVersion(javaVersion.uniqueId)
+    }
 
-    suspend fun getVersion(name: String) = getVersions().firstOrNull { it.name.lowercase() == name.lowercase() }
+    override suspend fun createVersion(javaVersion: ICloudJavaVersion): CloudJavaVersion {
+        return set(javaVersion.uniqueId.toString(), javaVersion)
+    }
 
-    suspend fun getOnlineVersions(): List<JavaVersion> = ONLINE_VERSION_CACHE.get()?.toList() ?: emptyList()
+    override suspend fun getVersion(name: String) = getVersions().firstOrNull { it.name.lowercase() == name.lowercase() }
 
-    suspend fun detectInstalledVersions(): List<JavaVersion> {
+    override suspend fun getOnlineVersions(): List<CloudJavaVersion> = ONLINE_VERSION_CACHE.get()?.toList() ?: emptyList()
+
+    override suspend fun detectInstalledVersions(): List<CloudJavaVersion> {
         val created = getVersions()
         val versions = locateAllJavaVersions().filter {
             when (OSType.WINDOWS) {
@@ -69,7 +83,7 @@ class JavaVersionRepository(
                 val byName = file.name.lowercase() == javaVersion.name.lowercase()
                 if (byId || byName) return@map javaVersion
             }
-            return@map JavaVersion(
+            return@map CloudJavaVersion(
                 name = file.name,
                 id = detectJavaId(file.name),
                 located = mutableMapOf(
@@ -81,6 +95,6 @@ class JavaVersionRepository(
     }
 
     private fun detectJavaId(fileName: String): Int {
-        return parseVersionInfo(fileName)?.toVersionId() ?: -1
+        return parseVersionInfo(fileName)?.versionId ?: -1
     }
 }

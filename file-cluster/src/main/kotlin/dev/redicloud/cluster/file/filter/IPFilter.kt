@@ -1,10 +1,11 @@
 package dev.redicloud.cluster.file.filter
 
 import dev.redicloud.cluster.file.FileNodeRepository
-import dev.redicloud.cluster.file.event.FileNodeConnectedEvent
-import dev.redicloud.cluster.file.event.FileNodeDisconnectedEvent
 import dev.redicloud.event.EventManager
-import dev.redicloud.service.base.events.node.NodeSuspendedEvent
+import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
+import dev.redicloud.api.events.impl.node.file.FileNodeConnectedEvent
+import dev.redicloud.api.events.impl.node.file.FileNodeDisconnectedEvent
+import dev.redicloud.api.events.listen
 import kotlinx.coroutines.runBlocking
 
 class IPFilter(
@@ -40,7 +41,7 @@ class IPFilter(
             System.getProperty("redicloud.filter.ip.bypass", "127.0.0.1;0.0.0.0").split(";").forEach {
                 allowedIpCache.add(it)
             }
-            fileNodeRepository.getFileNodes().forEach { allowedIpCache.add(it.hostname) }
+            fileNodeRepository.getConnectedFileNodes().forEach { allowedIpCache.add(it.hostname) }
         }
     }
 

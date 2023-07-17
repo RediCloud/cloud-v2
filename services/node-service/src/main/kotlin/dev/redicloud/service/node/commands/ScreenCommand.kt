@@ -1,5 +1,6 @@
 package dev.redicloud.service.node.commands
 
+import dev.redicloud.api.commands.*
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.commands.ConsoleActor
@@ -13,7 +14,7 @@ import dev.redicloud.server.factory.screens.ServerScreenSuggester
 @CommandDescription("Manage screen sessions")
 class ScreenCommand(
     private val console: Console
-) : CommandBase() {
+) : ICommand {
 
     @CommandSubPath("list")
     @CommandDescription("List all screen sessions")
@@ -93,6 +94,10 @@ class ScreenCommand(
         val currentScreen = console.getCurrentScreen()
         if (currentScreen.isDefault() || currentScreen !is ServerScreen) {
             actor.sendMessage("§cYou are not in a server screen session!")
+            return
+        }
+        if (command.isEmpty() || command.none { it.isNotBlank() }) {
+            actor.sendMessage("§cYou need to specify a command!")
             return
         }
         currentScreen.executeCommand(command.joinToString(" "))

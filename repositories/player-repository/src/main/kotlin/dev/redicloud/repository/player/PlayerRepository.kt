@@ -1,10 +1,11 @@
 package dev.redicloud.repository.player
 
-import dev.redicloud.api.player.events.CloudPlayerConnectedEvent
-import dev.redicloud.api.player.events.CloudPlayerDisconnectEvent
-import dev.redicloud.api.player.events.CloudPlayerSwitchServerEvent
+import dev.redicloud.api.events.impl.player.CloudPlayerConnectedEvent
+import dev.redicloud.api.events.impl.player.CloudPlayerDisconnectEvent
+import dev.redicloud.api.events.impl.player.CloudPlayerSwitchServerEvent
+import dev.redicloud.api.repositories.player.ICloudPlayer
+import dev.redicloud.api.repositories.player.ICloudPlayerRepository
 import dev.redicloud.database.DatabaseConnection
-import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
@@ -16,63 +17,69 @@ class PlayerRepository(
     databaseConnection: DatabaseConnection,
     private val eventManager: EventManager,
     packetManager: PacketManager
-) : CachedDatabaseBucketRepository<CloudPlayer>(
+) : CachedDatabaseBucketRepository<ICloudPlayer, CloudPlayer>(
     databaseConnection,
     "player",
     null,
+    ICloudPlayer::class,
     CloudPlayer::class,
     5.minutes,
     packetManager,
     ServiceType.NODE,
-    ServiceType.PROXY_SERVER,
-    ServiceType.MINECRAFT_SERVER
-) {
+    ServiceType.MINECRAFT_SERVER,
+    ServiceType.PROXY_SERVER
+), ICloudPlayerRepository {
 
-    suspend fun getPlayer(uniqueId: UUID): CloudPlayer? {
+    override suspend fun getPlayer(uniqueId: UUID): CloudPlayer? {
         return get(uniqueId.toString())
     }
 
-    suspend fun getPlayer(name: String): CloudPlayer? {
+    override suspend fun getPlayer(name: String): CloudPlayer? {
         return getAll().firstOrNull { it.name.lowercase() == name.lowercase() }
     }
 
-    suspend fun createPlayer(cloudPlayer: CloudPlayer): CloudPlayer {
-        set(cloudPlayer.uniqueId.toString(), cloudPlayer)
-        if (cloudPlayer.proxyId != null) {
-            eventManager.fireEvent(CloudPlayerConnectedEvent(cloudPlayer.uniqueId))
+    override suspend fun createPlayer(cloudPlayer: ICloudPlayer): CloudPlayer {
+        return set(cloudPlayer.uniqueId.toString(), cloudPlayer).also {
+            if (it.proxyId != null) {
+                eventManager.fireEvent(CloudPlayerConnectedEvent(it.uniqueId))
+            }
         }
-        return cloudPlayer
     }
 
-    suspend fun updatePlayer(cloudPlayer: CloudPlayer) {
+    override suspend fun updatePlayer(cloudPlayer: ICloudPlayer): CloudPlayer {
         val oldPlayer = getPlayer(cloudPlayer.uniqueId) ?: throw IllegalStateException("Player not found")
-        set(cloudPlayer.uniqueId.toString(), cloudPlayer)
-        if (oldPlayer.serverId != null && cloudPlayer.serverId == null || oldPlayer.proxyId != null && cloudPlayer.proxyId == null) {
-            eventManager.fireEvent(CloudPlayerDisconnectEvent(cloudPlayer.uniqueId))
-        }else if (oldPlayer.proxyId != cloudPlayer.proxyId) {
-            eventManager.fireEvent(CloudPlayerConnectedEvent(cloudPlayer.uniqueId))
-        }else if(oldPlayer.serverId != null && cloudPlayer.serverId != null && oldPlayer.serverId != cloudPlayer.serverId) {
-            eventManager.fireEvent(CloudPlayerSwitchServerEvent(cloudPlayer.uniqueId, oldPlayer.serverId!!, cloudPlayer.serverId!!))
+        return set(cloudPlayer.uniqueId.toString(), cloudPlayer).also {
+            if (oldPlayer.serverId != null && it.serverId == null || oldPlayer.proxyId != null && it.proxyId == null) {
+                eventManager.fireEvent(CloudPlayerDisconnectEvent(it.uniqueId))
+            }else if (oldPlayer.proxyId != it.proxyId) {
+                eventManager.fireEvent(CloudPlayerConnectedEvent(it.uniqueId))
+            }else if(oldPlayer.serverId != null && it.serverId != null && oldPlayer.serverId != it.serverId) {
+                eventManager.fireEvent(CloudPlayerSwitchServerEvent(it.uniqueId, oldPlayer.serverId!!, it.serverId!!))
+            }
         }
     }
 
-    suspend fun deletePlayer(uniqueId: UUID) {
-        delete(uniqueId.toString())
+    override suspend fun deletePlayer(cloudPlayer: ICloudPlayer): Boolean {
+        return deletePlayer(cloudPlayer.uniqueId)
     }
 
-    suspend fun existsPlayer(uniqueId: UUID): Boolean {
+    override suspend fun deletePlayer(uniqueId: UUID): Boolean {
+       return  delete(uniqueId.toString())
+    }
+
+    override suspend fun existsPlayer(uniqueId: UUID): Boolean {
         return exists(uniqueId.toString())
     }
 
-    suspend fun existsPlayer(name: String): Boolean {
+    override suspend fun existsPlayer(name: String): Boolean {
         return getAll().any { it.name.lowercase() == name.lowercase() }
     }
 
-    suspend fun getConnectedPlayers(): List<CloudPlayer> {
+    override suspend fun getConnectedPlayers(): List<CloudPlayer> {
         return getAll().filter { it.proxyId != null && it.serverId != null || it.serverId != null}
     }
 
-    suspend fun getRegisteredPlayers(): List<CloudPlayer> {
+    override suspend fun getRegisteredPlayers(): List<CloudPlayer> {
         return getAll()
     }
 

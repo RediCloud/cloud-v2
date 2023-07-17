@@ -1,5 +1,6 @@
 package dev.redicloud.event
 
+import dev.redicloud.api.events.*
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.utils.gson.gson
@@ -10,7 +11,10 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.findAnnotation
 
-class EventManager(val identifier: String, val packetManager: PacketManager?) {
+class EventManager(
+    override val identifier: String,
+    val packetManager: PacketManager?
+) : IEventManager {
 
     companion object {
         val LOGGER = LogManager.logger(EventManager::class)
@@ -29,7 +33,7 @@ class EventManager(val identifier: String, val packetManager: PacketManager?) {
         }
     }
 
-    fun register(listener: Any) {
+    override fun registerListener(listener: Any) {
         val objClass = listener::class
         objClass.declaredMemberFunctions.forEach { function ->
             val annotation = function.findAnnotation<CloudEventListener>()
@@ -47,12 +51,11 @@ class EventManager(val identifier: String, val packetManager: PacketManager?) {
         }
     }
 
-    inline fun <reified T : CloudEvent> listen(noinline handler: (T) -> Unit): InlineEventCaller<T> {
-        val listener = InlineEventCaller(this, handler)
+    override fun registerInlineListener(listener: InlineEventCaller<*>) {
         InlineEventCaller::class.declaredMemberFunctions.forEach { function ->
             val annotation = function.findAnnotation<CloudEventListener>()
             if (annotation != null) {
-                val eventType = T::class
+                val eventType = listener.eventClass
                 val handlerMethod = EventHandlerMethod(listener, function, annotation.priority)
                 lock.lock()
                 try {
@@ -63,32 +66,11 @@ class EventManager(val identifier: String, val packetManager: PacketManager?) {
                 }
             }
         }
-        return listener
     }
 
-    fun <T : CloudEvent> listen(clazz: KClass<T>, handler: (T) -> Unit): InlineEventCaller<T> {
-        val listener = InlineEventCaller(this, handler)
-        InlineEventCaller::class.declaredMemberFunctions.forEach { function ->
-            val annotation = function.findAnnotation<CloudEventListener>()
-            if (annotation != null) {
-                val eventType = clazz
-                val handlerMethod = EventHandlerMethod(listener, function, annotation.priority)
-                lock.lock()
-                try {
-                    handlers.getOrPut(eventType) { mutableListOf() }.add(handlerMethod)
-                    handlers[eventType]?.sortWith(compareByDescending<EventHandlerMethod> { it.priority })
-                }finally {
-                    lock.unlock()
-                }
-            }
-        }
-        return listener
-    }
-
-    fun unregister(listener: Any) {
+    override fun unregisterListener(listener: Any) {
         lock.lock()
         try {
-            val objClass = listener::class
             handlers.values.forEach { list ->
                 list.removeIf { it.listener == listener }
             }
@@ -97,14 +79,14 @@ class EventManager(val identifier: String, val packetManager: PacketManager?) {
         }
     }
 
-    fun fireEvent(event: CloudEvent) {
+    override fun fireEvent(event: CloudEvent) {
         val fireType = event.fireType
         LOGGER.finest("Firing event ${event::class.simpleName} with fire type $fireType")
         when (event.fireType) {
             EventFireType.GLOBAL -> {
                 runBlocking {
                     try {
-                        packetManager?.publishAll(
+                        packetManager?.publishBroadcast(
                             CloudEventPacket(
                                 gson.toJson(event),
                                 event::class.qualifiedName!!,

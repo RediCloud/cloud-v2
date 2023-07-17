@@ -25,6 +25,7 @@ class BungeeCordConnector(
     private val registered: MutableMap<ServiceId, ServerInfo>
 
     init {
+        initApi()
         this.bungeecordShuttingDown = false
         this.serverPlayerProvider = BungeeCordServerPlayerProvider()
         this.registered = mutableMapOf()
@@ -35,7 +36,7 @@ class BungeeCordConnector(
 
     override fun registerServer(server: CloudMinecraftServer) {
         if (ProxyServer.getInstance().servers == null) return
-        val session = server.currentSession()
+        val session = server.currentSession
             ?: throw IllegalStateException("Server ${serviceId.toName()} is connected but has no active session?")
         val serverInfo = ProxyServer.getInstance().constructServerInfo(
             server.name,
@@ -74,7 +75,7 @@ class BungeeCordConnector(
         fun register(listener: Listener) {
             ProxyServer.getInstance().pluginManager.registerListener(plugin, listener)
         }
-        register(CloudPlayerListener(this.playerRepository, this.serverRepository, this.plugin))
+        register(CloudPlayerListener(this.serviceId, this.playerRepository, this.serverRepository, this.plugin))
     }
 
     override fun getConnectorPlugin(): Plugin {

@@ -1,63 +1,72 @@
 package dev.redicloud.repository.node
 
-import dev.redicloud.repository.service.ServiceRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.CachedServiceRepository
-import dev.redicloud.service.base.events.node.NodeDisconnectEvent
+import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
+import dev.redicloud.api.repositories.service.node.ICloudNode
+import dev.redicloud.api.repositories.service.node.ICloudNodeRepository
+import dev.redicloud.repository.service.ServiceRepository
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 class NodeRepository(
     databaseConnection: DatabaseConnection,
-    serviceId: ServiceId,
     packetManager: PacketManager,
-    private val eventManager: EventManager
-) : CachedServiceRepository<CloudNode>(
+    private val eventManager: EventManager,
+) : ServiceRepository (
     databaseConnection,
-    serviceId,
-    ServiceType.NODE,
-    packetManager,
-    arrayOf(CloudNode::class),
-    5.minutes,
-    ServiceType.NODE
-) {
+    packetManager
+), ICloudNodeRepository {
 
-    override suspend fun transformShutdownable(service: CloudNode): CloudNode {
-        service.currentMemoryUsage = 0
-        service.hostedServers.clear()
-        service.master = false
-        eventManager.fireEvent(NodeDisconnectEvent(service.serviceId))
-        return service
+    val internalRepo = object : CachedServiceRepository<ICloudNode, CloudNode>(
+        databaseConnection,
+        ServiceType.NODE,
+        packetManager,
+        ICloudNode::class,
+        CloudNode::class,
+        5.minutes,
+        this
+    ) {
+        override suspend fun transformShutdownable(service: CloudNode): CloudNode {
+            service.currentMemoryUsage = 0
+            service.hostedServers.clear()
+            service.master = false
+            eventManager.fireEvent(NodeDisconnectEvent(service.serviceId))
+            return service
+        }
+    }.apply {
+        internalRepositories.add(this)
     }
 
-    suspend fun getNode(serviceId: ServiceId): CloudNode? {
-        if (serviceId.type != ServiceType.NODE) return null
-        return getService(serviceId) as CloudNode?
+    override suspend fun getNode(serviceId: ServiceId): CloudNode? {
+        return internalRepo.getService(serviceId)
     }
 
-    suspend fun existsNode(serviceId: ServiceId): Boolean {
-        if (serviceId.type != ServiceType.NODE) return false
-        return existsService<CloudNode>(serviceId)
+    override suspend fun existsNode(serviceId: ServiceId): Boolean {
+        return internalRepo.existsService(serviceId)
     }
 
-    suspend fun updateNode(cloudNode: CloudNode): CloudNode
-        = updateService(cloudNode) as CloudNode
+    override suspend fun updateNode(cloudNode: ICloudNode): CloudNode {
+        return internalRepo.updateService(cloudNode)
+    }
 
-    suspend fun createNode(cloudNode: CloudNode): CloudNode
-        = createService(cloudNode) as CloudNode
+    suspend fun createNode(cloudNode: ICloudNode): CloudNode {
+        return internalRepo.createService(cloudNode)
+    }
 
+    override suspend fun getMasterNode(): CloudNode? {
+        return getConnectedNodes().firstOrNull { it.master }
+    }
 
-    suspend fun getMasterNode(): CloudNode?
-        = getConnectedNodes().firstOrNull { it.master }
+    override suspend fun getConnectedNodes(): List<CloudNode> {
+        return internalRepo.getConnectedServices()
+    }
 
-    suspend fun getConnectedNodes(): List<CloudNode> =
-        getConnectedIds().filter { serviceId.type == ServiceType.NODE }.mapNotNull { getNode(it) }
-
-    suspend fun getRegisteredNodes(): List<CloudNode> =
-        getRegisteredIds().filter { serviceId.type == ServiceType.NODE }.mapNotNull { getNode(it) }
+    override suspend fun getRegisteredNodes(): List<CloudNode> {
+        return internalRepo.getRegisteredServices()
+    }
 
 }

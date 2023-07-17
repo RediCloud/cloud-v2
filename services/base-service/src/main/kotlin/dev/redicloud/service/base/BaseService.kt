@@ -1,17 +1,29 @@
 package dev.redicloud.service.base
 
+import com.google.inject.Guice
+import com.google.inject.name.Named
+import com.google.inject.name.Names
+import dev.redicloud.api.events.IEventManager
+import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.cache.tasks.InvalidCacheTask
-import dev.redicloud.commands.api.CommandArgumentParser
-import dev.redicloud.commands.api.AbstractCommandSuggester
+import dev.redicloud.api.packets.PacketListener
+import dev.redicloud.api.repositories.java.ICloudJavaVersionRepository
+import dev.redicloud.api.repositories.player.ICloudPlayerRepository
+import dev.redicloud.api.repositories.service.node.ICloudNodeRepository
+import dev.redicloud.api.repositories.service.server.ICloudServerRepository
+import dev.redicloud.api.repositories.template.configuration.ICloudConfigurationTemplateRepository
+import dev.redicloud.api.repositories.version.ICloudServerVersionRepository
+import dev.redicloud.api.repositories.version.ICloudServerVersionTypeRepository
+import dev.redicloud.commands.api.PARSERS
+import dev.redicloud.commands.api.SUGGESTERS
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.codec.GsonCodec
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
-import dev.redicloud.packets.PacketListener
 import dev.redicloud.packets.PacketManager
-import dev.redicloud.repository.java.version.JavaVersion
+import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.player.PlayerRepository
@@ -21,7 +33,8 @@ import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.repository.server.version.handler.IServerVersionHandler
+import dev.redicloud.api.repositories.version.IServerVersionHandler
+import dev.redicloud.logging.Logger
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
@@ -33,6 +46,7 @@ import dev.redicloud.service.base.parser.*
 import dev.redicloud.service.base.suggester.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.tasks.CloudTaskManager
+import dev.redicloud.utils.InjectorModule
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.ioScope
 import dev.redicloud.utils.loadProperties
@@ -43,14 +57,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.logging.Level
 import kotlin.system.exitProcess
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 abstract class BaseService(
     databaseConfiguration: DatabaseConfiguration,
     _databaseConnection: DatabaseConnection?,
     val serviceId: ServiceId
-) {
+) : InjectorModule() {
 
     companion object {
         val LOGGER = LogManager.logger(BaseService::class)
@@ -112,12 +125,16 @@ abstract class BaseService(
 
         playerRepository = PlayerRepository(databaseConnection, eventManager, packetManager)
         javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection, packetManager)
-        nodeRepository = NodeRepository(databaseConnection, serviceId, packetManager, eventManager)
+        nodeRepository = NodeRepository(databaseConnection, packetManager, eventManager)
         serverVersionRepository = CloudServerVersionRepository(databaseConnection, packetManager)
         configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager, packetManager)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager, configurationTemplateRepository)
         this.registerPackets()
         this.registerPacketListeners()
+    }
+
+    protected fun initApi() {
+        Guice.createInjector(this)
     }
 
     fun registerDefaults() {
@@ -151,29 +168,29 @@ abstract class BaseService(
     }
 
     private fun registerDefaultParsers() {
-        CommandArgumentParser.PARSERS[CloudNode::class] = CloudNodeParser(this.nodeRepository)
-        CommandArgumentParser.PARSERS[CloudServer::class] = CloudServerParser(this.serverRepository)
-        CommandArgumentParser.PARSERS[CloudServerVersion::class] = CloudServerVersionParser(this.serverVersionRepository)
-        CommandArgumentParser.PARSERS[CloudServerVersionType::class] = CloudServerVersionTypeParser(this.serverVersionTypeRepository)
-        CommandArgumentParser.PARSERS[JavaVersion::class] = JavaVersionParser(this.javaVersionRepository)
-        CommandArgumentParser.PARSERS[ServerVersion::class] = ServerVersionParser()
-        CommandArgumentParser.PARSERS[ConfigurationTemplate::class] = ConfigurationTemplateParser(this.configurationTemplateRepository)
-        CommandArgumentParser.PARSERS[IServerVersionHandler::class] = ServerVersionHandlerParser()
-        CommandArgumentParser.PARSERS[FileTemplate::class] = FileTemplateParser(this.fileTemplateRepository)
+        PARSERS[CloudNode::class] = CloudNodeParser(this.nodeRepository)
+        PARSERS[CloudServer::class] = CloudServerParser(this.serverRepository)
+        PARSERS[CloudServerVersion::class] = CloudServerVersionParser(this.serverVersionRepository)
+        PARSERS[CloudServerVersionType::class] = CloudServerVersionTypeParser(this.serverVersionTypeRepository)
+        PARSERS[CloudJavaVersion::class] = JavaVersionParser(this.javaVersionRepository)
+        PARSERS[ServerVersion::class] = ServerVersionParser()
+        PARSERS[ConfigurationTemplate::class] = ConfigurationTemplateParser(this.configurationTemplateRepository)
+        PARSERS[IServerVersionHandler::class] = ServerVersionHandlerParser()
+        PARSERS[FileTemplate::class] = FileTemplateParser(this.fileTemplateRepository)
     }
 
     private fun registerDefaultSuggesters() {
-        AbstractCommandSuggester.SUGGESTERS.add(RegisteredCloudNodeSuggester(this.nodeRepository))
-        AbstractCommandSuggester.SUGGESTERS.add(ConnectedCloudNodeSuggester(this.nodeRepository))
-        AbstractCommandSuggester.SUGGESTERS.add(CloudServerVersionSuggester(this.serverVersionRepository))
-        AbstractCommandSuggester.SUGGESTERS.add(CloudServerVersionTypeSuggester(this.serverVersionTypeRepository))
-        AbstractCommandSuggester.SUGGESTERS.add(ConfigurationTemplateSuggester(this.configurationTemplateRepository))
-        AbstractCommandSuggester.SUGGESTERS.add(JavaVersionSuggester(this.javaVersionRepository))
-        AbstractCommandSuggester.SUGGESTERS.add(ServerVersionSuggester())
-        AbstractCommandSuggester.SUGGESTERS.add(ServerVersionHandlerSuggester())
-        AbstractCommandSuggester.SUGGESTERS.add(FileTemplateSuggester(this.fileTemplateRepository))
-        AbstractCommandSuggester.SUGGESTERS.add(CloudServerSuggester(this.serverRepository))
-        AbstractCommandSuggester.SUGGESTERS.add(CloudConnectorFileNameSelector())
+        SUGGESTERS.add(RegisteredCloudNodeSuggester(this.nodeRepository))
+        SUGGESTERS.add(ConnectedCloudNodeSuggester(this.nodeRepository))
+        SUGGESTERS.add(CloudServerVersionSuggester(this.serverVersionRepository))
+        SUGGESTERS.add(CloudServerVersionTypeSuggester(this.serverVersionTypeRepository))
+        SUGGESTERS.add(ConfigurationTemplateSuggester(this.configurationTemplateRepository))
+        SUGGESTERS.add(JavaVersionSuggester(this.javaVersionRepository))
+        SUGGESTERS.add(ServerVersionSuggester())
+        SUGGESTERS.add(ServerVersionHandlerSuggester())
+        SUGGESTERS.add(FileTemplateSuggester(this.fileTemplateRepository))
+        SUGGESTERS.add(CloudServerSuggester(this.serverRepository))
+        SUGGESTERS.add(CloudConnectorFileNameSelector())
     }
 
     private fun registerPackets() {
@@ -190,6 +207,19 @@ abstract class BaseService(
             packetManager.registerListener(listener)
         }
         register(CloudServiceShutdownPacketListener(this))
+    }
+
+    override fun configure() {
+        bind(IPacketManager::class).toInstance(packetManager)
+        bind(IEventManager::class).toInstance(eventManager)
+        bind(ICloudPlayerRepository::class).toInstance(playerRepository)
+        bind(ICloudNodeRepository::class).toInstance(nodeRepository)
+        bind(ICloudServerVersionRepository::class).toInstance(serverVersionRepository)
+        bind(ICloudServerVersionTypeRepository::class).toInstance(serverVersionTypeRepository)
+        bind(ICloudServerRepository::class).toInstance(serverRepository)
+        bind(ICloudConfigurationTemplateRepository::class).toInstance(configurationTemplateRepository)
+        bind(ICloudJavaVersionRepository::class).toInstance(javaVersionRepository)
+        bind(Logger::class).annotatedWith(Names.named("base")).toInstance(LOGGER)
     }
 
 }

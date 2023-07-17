@@ -1,5 +1,7 @@
 package dev.redicloud.commands.api
 
+import dev.redicloud.api.commands.*
+
 class DefaultHelpFormatter(private val commandManager: CommandManager<*>) : ICommandHelpFormatter {
 
     override fun formatHelp(actor: ICommandActor<*>, context: CommandContext): CommandResponse {
@@ -7,11 +9,11 @@ class DefaultHelpFormatter(private val commandManager: CommandManager<*>) : ICom
         val commandName = if (split.isEmpty()) "" else split[0].lowercase()
         val parameters = split.drop(1)
 
-        val command = commandManager.getCommands().firstOrNull { it.isThis(context.input, false) }
+        val command = commandManager.registeredCommands.firstOrNull { it.isThis(context.input, false) }
         if (command == null) {
-            val predictedCommands = commandManager.getCommands()
+            val predictedCommands = commandManager.registeredCommands
                 .filter { it.isThis(context.input, true) }
-                .filter { actor.hasPermission(it.getPermission()) }
+                .filter { actor.hasPermission(it.permission) }
             if (predictedCommands.isEmpty()) return CommandResponse(
                 CommandResponseType.INVALID_COMMAND,
                 "Command '$commandName' was not found!"
@@ -21,8 +23,8 @@ class DefaultHelpFormatter(private val commandManager: CommandManager<*>) : ICom
             actor.sendMessage("§cCommand was not found! %tc%Here are some suggestions")
             actor.sendMessage("")
             predictedCommands.forEach {
-                actor.sendMessage("%hc%${it.getName()} §8| %tc%${it.getAliases().joinToString(separator = "§8, %tc%")}")
-                actor.sendMessage("§8➥ %tc%${it.getDescription()}")
+                actor.sendMessage("%hc%${it.name} §8| %tc%${it.aliases.joinToString(separator = "§8, %tc%")}")
+                actor.sendMessage("§8➥ %tc%${it.description}")
                 actor.sendMessage("")
             }
             actor.sendHeader("Help")

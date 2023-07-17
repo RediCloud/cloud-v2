@@ -1,15 +1,10 @@
 package dev.redicloud.tasks
 
-import dev.redicloud.event.EventManager
-import dev.redicloud.packets.PacketManager
 import dev.redicloud.tasks.executor.CloudTaskExecutor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
 
@@ -20,7 +15,7 @@ abstract class CloudTask(private val useLock: Boolean = true) {
     private var executors: MutableList<CloudTaskExecutor> = mutableListOf()
     private var executeCount: Int = 0
     private var started = false
-    internal lateinit var taskManager: CloudTaskManager
+    lateinit var taskManager: CloudTaskManager
     private val finishListener = mutableListOf<() -> Unit>()
     private val lock = ReentrantLock()
 
@@ -62,10 +57,6 @@ abstract class CloudTask(private val useLock: Boolean = true) {
         started = true
         executors.forEach { it.run(manager) }
     }
-
-    fun getEventManager(): EventManager = taskManager.eventManager
-
-    fun getPacketManager(): PacketManager = taskManager.packetManager
 
     fun getExecutors(): List<CloudTaskExecutor> = executors.toList()
 

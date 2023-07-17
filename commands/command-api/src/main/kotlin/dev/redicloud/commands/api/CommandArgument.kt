@@ -1,20 +1,29 @@
 package dev.redicloud.commands.api
 
+import dev.redicloud.api.commands.*
 import java.lang.reflect.Parameter
-import java.util.logging.LogManager
 import kotlin.reflect.KClass
 import kotlin.reflect.full.superclasses
 
-class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val index: Int) {
+class CommandArgument(
+    override val subCommand: CommandSubBase,
+    parameter: Parameter,
+    override val index: Int
+) : ICommandArgument {
 
-    val name: String
-    val required: Boolean //TODO
     val clazz: KClass<*>
-    val parser: CommandArgumentParser<*>?
-    val annotatedSuggester: AbstractCommandSuggester
+    val parser: ICommandArgumentParser<*>?
     val suggester: CommandArgumentSuggester
-    val suggesterParameter: Array<String>
-    val vararg: Boolean
+
+    override val name: String
+    override val required: Boolean
+    override val annotatedSuggester: AbstractCommandSuggester
+    override val annotatedSuggesterParameter: Array<String>
+    override val vararg: Boolean
+    override val pathFormat: String
+        get() = if (vararg) { "<$name...>" }else if (required) "<$name>" else "[$name]"
+    override val actorArgument: Boolean
+        get() = name == "_actor"
 
     init {
         if (parameter.type.kotlin.superclasses.any { it == ICommandActor::class }) {
@@ -23,47 +32,45 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
             clazz = parameter.type.kotlin
             parser = null
             annotatedSuggester = EmptySuggester()
-            suggesterParameter = arrayOf()
+            annotatedSuggesterParameter = arrayOf()
             vararg = false
         }else {
             if (!parameter.isAnnotationPresent(CommandParameter::class.java)) {
                 name = parameter.name
                 required = !parameter.isImplicit //TODO check String? and Int? etc.
                 annotatedSuggester = EmptySuggester()
-                suggesterParameter = emptyArray()
+                annotatedSuggesterParameter = emptyArray()
             } else {
                 val annotation = parameter.getAnnotation(CommandParameter::class.java)
                 name = annotation.name.ifEmpty { parameter.name }
                 required = annotation.required //TODO check String? and Int? etc.
-                annotatedSuggester = AbstractCommandSuggester.SUGGESTERS.firstOrNull { it::class == annotation.suggester } ?: EmptySuggester()
-                suggesterParameter = annotation.suggesterArguments
+                annotatedSuggester = SUGGESTERS.firstOrNull { it::class == annotation.suggester } ?: EmptySuggester()
+                annotatedSuggesterParameter = annotation.suggesterArguments
             }
             vararg = parameter.isVarArgs
             clazz = if (vararg) parameter.type.componentType.kotlin else parameter.type.kotlin
-            parser = CommandArgumentParser.PARSERS.filter {
+            parser = PARSERS.filter {
                 it.key.qualifiedName!!.replace("?", "") == clazz.qualifiedName!!.replace("?", "")
-            }.values.firstOrNull() ?: throw IllegalStateException("No parser found for ${clazz.qualifiedName} in arguments of '${subCommand.command.getName()} ${subCommand.path}'")
+            }.values.firstOrNull() ?: throw IllegalStateException("No parser found for ${clazz.qualifiedName} in arguments of '${subCommand.command.name} ${subCommand.path}'")
         }
         suggester = CommandArgumentSuggester(this)
-        if (vararg && !required) throw IllegalStateException("Vararg arguments can't be optional! (Argument: $name in '${subCommand.command.getName()} ${subCommand.path}')")
+        if (vararg && !required) throw IllegalStateException("Vararg arguments can't be optional! (Argument: $name in '${subCommand.command.name} ${subCommand.path}')")
     }
-
-    fun isActorArgument(): Boolean = name == "_actor"
 
     fun isThis(input: String, predict: Boolean): Boolean {
         if (!subCommand.isThis(input, predict)) {
             return false
         }
-        if (isActorArgument()) {
+        if (actorArgument) {
             return false
         }
         if (input.isEmpty()) {
             return false
         }
 
-        val optimalCurrentPaths = listOf(subCommand.path, *subCommand.aliasePaths)
+        val optimalCurrentPaths = listOf(subCommand.path, *subCommand.aliasPaths)
             .flatMap { subCommandPaths ->
-                listOf(subCommand.command.getName(), *subCommand.command.getAliases())
+                listOf(subCommand.command.name, *subCommand.command.aliases)
                 .map { commandPath -> "$commandPath $subCommandPaths".removeLastSpaces() }
             }.toSet()
 
@@ -82,7 +89,7 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
                 val inputCurrent = input.split(" ")[index]
                 if (it.isArgument()) {
                     argumentIndex++
-                    if (getPathFormat() == it || it.isEmpty() && predict) {
+                    if (pathFormat.lowercase() == it.lowercase() || it.isEmpty() && predict) {
                         lastWasThis = true
                         alreadyIndexed = true
                     }
@@ -97,7 +104,7 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
                 }
             }
             if (!alreadyIndexed) {
-                val aIndex = optimalPath.split(" ").indexOf(getPathFormat())
+                val aIndex = optimalPath.split(" ").indexOf(pathFormat)
                 if (aIndex != -1) {
                     if (input.removeLastSpaces().endsWith(" ") && predict && aIndex == index) {
                         return true
@@ -120,11 +127,5 @@ class CommandArgument(val subCommand: CommandSubBase, parameter: Parameter, val 
     }
 
     fun parse(input: String): Any? = parser?.parse(input)
-
-    fun getPathFormat(): String {
-        return if (vararg) {
-            "<$name...>"
-        }else if (required) "<$name>" else "[$name]"
-    }
 
 }

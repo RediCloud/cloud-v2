@@ -1,46 +1,44 @@
 package dev.redicloud.repository.server.version
 
+import dev.redicloud.api.repositories.version.ICloudServerVersion
+import dev.redicloud.api.repositories.version.IServerVersion
 import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.ConfigurationFileEditor
-import dev.redicloud.utils.ProcessConfiguration
+import dev.redicloud.utils.gson.GsonInterface
 import java.io.File
 import java.util.UUID
 
 class CloudServerVersion(
-    val uniqueId: UUID,
-    var typeId: UUID?,
-    var projectName: String,
-    var customDownloadUrl: String?,
-    var buildId: String?,
-    var version: ServerVersion,
-    var javaVersionId: UUID?,
-    var libPattern: String? = null,
-    var patch: Boolean = false,
-    val online: Boolean = false,
-    var used: Boolean = false,
-    jvmArguments: MutableList<String> = mutableListOf(),
-    environmentVariables: MutableMap<String, String> = mutableMapOf(),
-    programmParameters: MutableList<String> = mutableListOf(),
-    defaultFiles: MutableMap<String, String> = mutableMapOf(),
-    fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf()
-): ProcessConfiguration(
-    jvmArguments,
-    environmentVariables,
-    programmParameters,
-    defaultFiles,
-    fileEdits
-), Comparable<CloudServerVersion>, IClusterCacheObject {
+    override val uniqueId: UUID,
+    override var typeId: UUID?,
+    override var projectName: String,
+    override var customDownloadUrl: String?,
+    override var buildId: String?,
+    @GsonInterface(ServerVersion::class)
+    override var version: IServerVersion,
+    override var javaVersionId: UUID?,
+    override var libPattern: String? = null,
+    override var patch: Boolean = false,
+    override val online: Boolean = false,
+    override var used: Boolean = false,
+    override val jvmArguments: MutableList<String> = mutableListOf(),
+    override val environmentVariables: MutableMap<String, String> = mutableMapOf(),
+    override val programmParameters: MutableList<String> = mutableListOf(),
+    override val defaultFiles: MutableMap<String, String> = mutableMapOf(),
+    override val fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf()
+) : Comparable<CloudServerVersion>, IClusterCacheObject, ICloudServerVersion {
 
     companion object {
         private val logger = LogManager.Companion.logger(CloudServerVersion::class)
     }
 
-    fun getDisplayName(): String {
-        return "${projectName}_${version.name}"
-    }
+    override val displayName: String
+        get() {
+            return "${projectName}_${version.name}"
+        }
 
     fun doFileEdits(folder: File, action: (String) -> String = { it }) {
         fileEdits.forEach { (file, editInfo) ->

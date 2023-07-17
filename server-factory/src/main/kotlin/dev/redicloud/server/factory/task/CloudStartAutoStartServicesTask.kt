@@ -1,6 +1,6 @@
 package dev.redicloud.server.factory.task
 
-import dev.redicloud.api.server.CloudServerState
+import dev.redicloud.api.repositories.service.server.CloudServerState
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository

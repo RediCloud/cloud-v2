@@ -1,19 +1,23 @@
 package dev.redicloud.repository.service
 
+import dev.redicloud.api.repositories.service.ICloudServiceSession
 import dev.redicloud.utils.service.ServiceId
 import java.util.*
 
-data class ServiceSessions(
-    var registrationSession: ServiceSession? = null,
-    var currentSession: ServiceSession? = null,
+class ServiceSessions {
+    var currentSession: ServiceSession? = null
+    var registrationSession: ServiceSession? = null
     val sessionHistory: MutableList<ServiceSession> = mutableListOf()
-)
+}
 
-data class ServiceSession(
-    val serviceId: ServiceId,
-    val startTime: Long,
-    val ipAddress: String,
-    var endTime: Long = -1L,
-    val sessionId: UUID = UUID.randomUUID(),
-    var suspended: Boolean = false
-)
+class ServiceSession(
+    override val serviceId: ServiceId,
+    override val startTime: Long,
+    override val ipAddress: String
+) : ICloudServiceSession {
+
+    override val sessionId: UUID = UUID.randomUUID()
+    override var endTime: Long = -1L
+    override var suspended: Boolean = false
+
+}

@@ -3,6 +3,7 @@ group = "dev.redicloud.repository.template.file"
 dependencies {
     compileOnly(project(":api"))
     compileOnly(project(":utils"))
+    compileOnly(project(":cache"))
     compileOnly(project(":database"))
     compileOnly(project(":packets"))
     compileOnly(project(":repositories:node-repository"))

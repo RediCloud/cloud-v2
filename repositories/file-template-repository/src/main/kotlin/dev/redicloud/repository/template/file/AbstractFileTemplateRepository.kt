@@ -1,11 +1,12 @@
 package dev.redicloud.repository.template.file
 
+import dev.redicloud.api.repositories.template.file.ICloudFileTemplate
+import dev.redicloud.api.repositories.template.file.ICloudFileTemplateRepository
 import dev.redicloud.database.DatabaseConnection
-import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.repository.node.NodeRepository
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.utils.gson.gsonInterfaceFactory
 import dev.redicloud.utils.service.ServiceType
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
@@ -14,41 +15,42 @@ abstract class AbstractFileTemplateRepository(
     databaseConnection: DatabaseConnection,
     private val nodeRepository: NodeRepository,
     packetManager: PacketManager
-) : CachedDatabaseBucketRepository<FileTemplate>(
+) : CachedDatabaseBucketRepository<ICloudFileTemplate, FileTemplate>(
     databaseConnection,
     "file-template",
     null,
+    ICloudFileTemplate::class,
     FileTemplate::class,
     5.minutes,
     packetManager,
-    ServiceType.NODE
-) {
+    ServiceType.NODE,
+), ICloudFileTemplateRepository {
 
-    suspend fun getTemplate(uniqueId: UUID): FileTemplate? {
-        return getHandle(uniqueId.toString()).get()
+    override suspend fun getTemplate(uniqueId: UUID): FileTemplate? {
+        return get(uniqueId.toString())
     }
 
-    suspend fun getTemplate(displayName: String): FileTemplate? {
-        return getTemplates().firstOrNull { it.getDisplayName().lowercase() == displayName.lowercase() }
+    override suspend fun getTemplate(displayName: String): FileTemplate? {
+        return getTemplates().firstOrNull { it.displayName.lowercase() == displayName.lowercase() }
     }
 
-    suspend fun getTemplate(name: String, prefix: String): FileTemplate? {
+    override suspend fun getTemplate(name: String, prefix: String): FileTemplate? {
         return getTemplates().firstOrNull { it.name.lowercase() == name.lowercase() && it.prefix.lowercase() == prefix.lowercase() }
     }
 
-    suspend fun existsTemplate(uniqueId: UUID, prefix: String): Boolean {
-        return getHandle(uniqueId.toString()).isExists
+    override suspend fun existsTemplate(uniqueId: UUID, prefix: String): Boolean {
+        return exists(uniqueId.toString())
     }
 
-    suspend fun existsTemplate(displayName: String): Boolean {
-        return getTemplates().any { it.getDisplayName().lowercase() == displayName.lowercase() }
+    override suspend fun existsTemplate(displayName: String): Boolean {
+        return getTemplates().any { it.displayName.lowercase() == displayName.lowercase() }
     }
 
-    suspend fun existsTemplate(name: String, prefix: String): Boolean {
+    override suspend fun existsTemplate(name: String, prefix: String): Boolean {
         return getTemplates().any { it.name.lowercase() == name.lowercase() && it.prefix.lowercase() == prefix.lowercase() }
     }
 
-    suspend fun deleteTemplate(uniqueId: UUID) {
+    override suspend fun deleteTemplate(uniqueId: UUID): Boolean {
         val templates = getTemplates()
         val template =
             templates.firstOrNull { it.uniqueId == uniqueId } ?: throw Exception("Template $uniqueId not found!")
@@ -56,31 +58,30 @@ abstract class AbstractFileTemplateRepository(
             it.inherited.remove(template.uniqueId)
             updateTemplate(it)
         }
-        delete(uniqueId.toString())
-        if (template.getFolder().exists() && template.getFolder().isDirectory) {
-            template.getFolder().deleteRecursively()
-            if (template.getPrefixFolder().listFiles()?.isEmpty() == true) template.getPrefixFolder().deleteRecursively()
+        val state = delete(uniqueId.toString())
+        if (template.folder.exists() && template.folder.isDirectory) {
+            template.folder.deleteRecursively()
+            if (template.prefixFolder.listFiles()?.isEmpty() == true) template.prefixFolder.deleteRecursively()
             nodeRepository.getConnectedNodes().forEach {
                 pushTemplates(it.serviceId)
             }
         }
+        return state
     }
 
-    abstract suspend fun updateTemplate(template: FileTemplate): FileTemplate
-
-    suspend fun createTemplate(template: FileTemplate): FileTemplate {
-        getHandle(template.uniqueId.toString()).set(template)
-        if (!template.getFolder().exists()) template.getFolder().mkdirs()
+    override suspend fun createTemplate(template: ICloudFileTemplate): FileTemplate {
+        set(template.uniqueId.toString(), template as FileTemplate)
+        if (!template.folder.exists()) template.folder.mkdirs()
         nodeRepository.getConnectedNodes().forEach {
             pushTemplates(it.serviceId)
         }
         return template
     }
 
-    suspend fun getTemplates(): List<FileTemplate> = getAll()
+    override suspend fun getTemplates(): List<FileTemplate> = getAll()
 
-    suspend fun collectTemplates(
-        vararg templates: FileTemplate
+    override suspend fun collectTemplates(
+        vararg templates: ICloudFileTemplate
     ): List<FileTemplate> {
         val collectedTemplates = mutableListOf<FileTemplate>()
         templates.forEach { fileTemplate ->
@@ -96,5 +97,4 @@ abstract class AbstractFileTemplateRepository(
         return collectedTemplates
     }
 
-    abstract suspend fun pushTemplates(serviceId: ServiceId)
 }

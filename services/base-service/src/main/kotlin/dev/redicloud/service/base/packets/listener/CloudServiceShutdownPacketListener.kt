@@ -1,9 +1,9 @@
 package dev.redicloud.service.base.packets.listener
 
+import dev.redicloud.api.packets.PacketListener
 import dev.redicloud.service.base.packets.CloudServiceShutdownPacket
 import dev.redicloud.service.base.packets.CloudServiceShutdownResponse
 import dev.redicloud.logging.LogManager
-import dev.redicloud.packets.PacketListener
 import dev.redicloud.service.base.BaseService
 import kotlinx.coroutines.runBlocking
 

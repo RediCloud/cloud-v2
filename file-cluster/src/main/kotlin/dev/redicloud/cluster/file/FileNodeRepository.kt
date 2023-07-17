@@ -1,13 +1,34 @@
 package dev.redicloud.cluster.file
 
+import dev.redicloud.api.repositories.service.file.IFileNode
+import dev.redicloud.api.repositories.service.file.IFileNodeRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
+import dev.redicloud.repository.service.CachedServiceRepository
 import dev.redicloud.repository.service.ServiceRepository
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
+import kotlin.time.Duration.Companion.minutes
 
-class FileNodeRepository(databaseConnection: DatabaseConnection, packetManager: PacketManager) :
-    ServiceRepository<FileNode>(databaseConnection, databaseConnection.serviceId, ServiceType.FILE_NODE, packetManager) {
+class FileNodeRepository(
+    databaseConnection: DatabaseConnection,
+    packetManager: PacketManager
+) : ServiceRepository(
+    databaseConnection,
+    packetManager
+), IFileNodeRepository {
+
+    private val internalRepository = object : CachedServiceRepository<IFileNode, FileNode>(
+        databaseConnection,
+        ServiceType.FILE_NODE,
+        packetManager,
+        IFileNode::class,
+        FileNode::class,
+        5.minutes,
+        this
+    ) {
+        override suspend fun transformShutdownable(service: FileNode): FileNode = service
+    }
 
      fun migrateId(serviceId: ServiceId): ServiceId {
         return when (serviceId.type) {
@@ -17,28 +38,28 @@ class FileNodeRepository(databaseConnection: DatabaseConnection, packetManager: 
         }
     }
 
-    suspend fun getFileNode(serviceId: ServiceId): FileNode? {
-        return getService(migrateId(serviceId)) as FileNode?
+    override suspend fun getFileNode(serviceId: ServiceId): FileNode? {
+        return internalRepository.getService(migrateId(serviceId))
     }
 
-    suspend fun existsFileNode(serviceId: ServiceId): Boolean {
-        return existsService<FileNode>(migrateId(serviceId))
+    override suspend fun existsFileNode(serviceId: ServiceId): Boolean {
+        return internalRepository.existsService(migrateId(serviceId))
     }
 
-    suspend fun updateFileNode(fileNode: FileNode): FileNode {
-        return updateService(fileNode) as FileNode
+    override suspend fun updateFileNode(fileNode: IFileNode): FileNode {
+        return internalRepository.updateService(fileNode)
     }
 
-    suspend fun createFileNode(fileNode: FileNode): FileNode {
-        return createService(fileNode) as FileNode
+    override suspend fun createFileNode(fileNode: IFileNode): FileNode {
+        return internalRepository.createService(fileNode as FileNode)
     }
 
-    suspend fun getFileNodes(): List<FileNode> {
-        return getAll()
+    override suspend fun getRegisteredFileNodes(): List<FileNode> {
+        return internalRepository.getRegisteredServices()
     }
 
-    override suspend fun transformShutdownable(service: FileNode): FileNode {
-        return service
+    override suspend fun getConnectedFileNodes(): List<FileNode> {
+        return internalRepository.getConnectedServices()
     }
 
 }

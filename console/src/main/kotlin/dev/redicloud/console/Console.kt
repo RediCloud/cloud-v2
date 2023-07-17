@@ -1,12 +1,12 @@
 package dev.redicloud.console
 
-import dev.redicloud.commands.api.CommandResponseType
+import dev.redicloud.api.commands.CommandResponseType
+import dev.redicloud.api.events.IEventManager
 import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.commands.ConsoleCommandManager
 import dev.redicloud.console.events.ConsoleRunEvent
 import dev.redicloud.console.jline.*
 import dev.redicloud.console.utils.*
-import dev.redicloud.event.EventManager
 import dev.redicloud.logging.*
 import dev.redicloud.logging.handler.AcceptingLogHandler
 import dev.redicloud.logging.handler.LogFileHandler
@@ -35,7 +35,7 @@ import kotlin.system.exitProcess
 
 open class Console(
     val host: String,
-    val eventManager: EventManager?,
+    val eventManager: IEventManager?,
     override val saveLogToFile: Boolean = false,
     val logLevel: Level = getDefaultLogLevel(),
     override val uninstallAnsiOnClose: Boolean = true
@@ -160,11 +160,11 @@ open class Console(
 
                 if (!commandManager.areCommandsDisabled()) {
                     try {
-                        val response = commandManager.handleInput(commandManager.actor, line)
+                        val response = commandManager.handleInput(commandManager.defaultActor, line)
                         if (response.type == CommandResponseType.HELP_SENT) continue
                         if (response.message != null && response.type != CommandResponseType.BLANK_INPUT
                             && response.type != CommandResponseType.ERROR) {
-                            commandManager.actor.sendMessage(response.message!!)
+                            commandManager.defaultActor.sendMessage(response.message!!)
                         }
                         if (response.throwable != null && response.type == CommandResponseType.ERROR) {
                             LOGGER.severe(response.message!!, response.throwable!!)

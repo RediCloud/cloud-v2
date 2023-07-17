@@ -1,7 +1,7 @@
 package dev.redicloud.server.factory.screens
 
-import dev.redicloud.commands.api.CommandContext
-import dev.redicloud.commands.api.AbstractCommandSuggester
+import dev.redicloud.api.commands.CommandContext
+import dev.redicloud.api.commands.AbstractCommandSuggester
 import dev.redicloud.console.Console
 
 class ServerScreenSuggester(

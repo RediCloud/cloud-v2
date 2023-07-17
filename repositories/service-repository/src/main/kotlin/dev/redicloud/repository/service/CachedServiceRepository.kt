@@ -1,80 +1,139 @@
 package dev.redicloud.repository.service
 
-import dev.redicloud.cache.ClusterCache
+import dev.redicloud.api.repositories.service.ICloudService
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
+import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.utils.service.ServiceId
 import dev.redicloud.utils.service.ServiceType
+import kotlinx.coroutines.runBlocking
+import org.redisson.api.RList
 import kotlin.reflect.KClass
+import kotlin.reflect.cast
 import kotlin.time.Duration
 
-abstract class CachedServiceRepository<T : CloudService>(
-    databaseConnection: DatabaseConnection,
-    serviceId: ServiceId,
-    serviceType: ServiceType,
-    packetManager: PacketManager,
-    cacheClasses: Array<KClass<out T>>,
+abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
+    val databaseConnection: DatabaseConnection,
+    val targetServiceType: ServiceType,
+    val packetManager: PacketManager,
+    interfaceClass: KClass<I>,
+    implClass: KClass<K>,
     cacheDuration: Duration,
+    private val targetRepository: ServiceRepository,
     vararg cacheTypes: ServiceType
-) : ServiceRepository<T>(
+) : CachedDatabaseBucketRepository<I, K>(
     databaseConnection,
-    serviceId,
-    serviceType,
-    packetManager
+    "service:${targetServiceType.name.lowercase()}",
+    null,
+    interfaceClass,
+    implClass,
+    cacheDuration,
+    packetManager,
+    *cacheTypes
 ) {
 
-    private val caches = HashMap<KClass<out T>, ClusterCache<out T>>()
+    internal val shutdownAction: Runnable
+    internal var shutdownCalled = false
 
     init {
-        cacheClasses.forEach { cacheClass ->
-            caches[cacheClass] = ClusterCache(name, connection.serviceId, cacheClass, cacheDuration, packetManager, *cacheTypes)
+        shutdownAction = Runnable {
+            if (shutdownCalled) return@Runnable
+            shutdownCalled = true
+            runBlocking {
+                if (!databaseConnection.isConnected()) {
+                    throw Exception("Database connection is not connected! Cannot remove service from cluster")
+                }
+                val serviceId = databaseConnection.serviceId
+                if (serviceId.type != targetServiceType) return@runBlocking
+                connectedServices.remove(serviceId)
+                val service = getService(serviceId) ?: return@runBlocking
+                service.connected = false
+                if (service.currentSession != null) service.endSession()
+                if (service.canSelfUnregister() && service.unregisterAfterDisconnect()) {
+                    registeredServices.remove(serviceId)
+                    deleteService(interfaceClass.cast(transformShutdownable(service)))
+                }else {
+                    updateService(interfaceClass.cast(transformShutdownable(service)))
+                }
+            }
         }
     }
 
-    override suspend fun get(identifier: String): T? {
-        val cache = caches.values.firstOrNull { it.isCached(identifier) }
-        if (cache != null) return cache.get(identifier)
-        val result = super.get(identifier)
-        if (result != null) caches[result::class]?.updateCache(identifier, result)
-        return result
+    val connectedServices: RList<ServiceId>
+        get() {
+            return targetRepository.connectedServices
+        }
+
+    val registeredServices: RList<ServiceId>
+        get() {
+            return targetRepository.registeredServices
+        }
+
+    suspend fun getService(serviceId: ServiceId): K? {
+        if (serviceId.type != targetServiceType) throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${serviceId.type.name})")
+        return get(serviceId.id.toString())
     }
 
-    override suspend fun set(identifier: String, value: T) {
-        caches[value::class]?.updateCache(identifier, value)
-        super.set(identifier, value)
+    suspend fun getService(name: String): K? {
+        return getRegisteredServices().firstOrNull { it.name.lowercase() == name.lowercase() }
     }
 
-    override suspend fun delete(identifier: String): Boolean {
-        caches.values.forEach {
-            it.updateCache(identifier, null)
-        }
-        return super.delete(identifier)
+    suspend fun existsService(serviceId: ServiceId): Boolean {
+        if (serviceId.type != targetServiceType) throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${serviceId.type.name})")
+        return exists(serviceId.id.toString())
     }
 
-    override suspend fun exists(identifier: String): Boolean {
-        if (caches.values.any { it.isCached(identifier) }) return true
-        return super.exists(identifier)
+    suspend fun createService(cloudService: I): K {
+        if (cloudService.serviceId.type != targetServiceType) throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})")
+        return set(cloudService.serviceId.id.toString(), cloudService).also {
+            if (it.connected && !connectedServices.contains(it.serviceId)) {
+                connectedServices.add(it.serviceId)
+            }else if(!it.connected) {
+                connectedServices.remove(it.serviceId)
+            }
+            if (!registeredServices.contains(it.serviceId)) {
+                registeredServices.add(it.serviceId)
+            }
+        }
     }
 
-    override suspend fun getAll(customPattern: String?): List<T> {
-        val keyPattern = customPattern ?: "$name:*"
-        val keys = connection.getClient().getKeys().getKeysByPattern(keyPattern)
-        val new = mutableListOf<String>()
-        keys.forEach {
-            val identifier = it.substringAfter("$name:")
-            if (caches.values.any { cache -> cache.isCached(identifier) }) return@forEach
-            new.add(identifier)
+    suspend fun updateService(cloudService: I): K {
+        if (cloudService.serviceId.type != targetServiceType) throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})")
+        return set(cloudService.serviceId.id.toString(), cloudService).also {
+            if (it.connected && !connectedServices.contains(it.serviceId)) {
+                connectedServices.add(it.serviceId)
+            }else if(!it.connected) {
+                connectedServices.remove(it.serviceId)
+            }
+            if (!registeredServices.contains(it.serviceId)) {
+                registeredServices.add(it.serviceId)
+            }
         }
-        val toUpdate = mutableMapOf<String, T>()
-        new.forEach {
-            val result = super.get(it)
-            if (result != null) toUpdate[it] = result
-        }
-        caches.values.forEach { cache ->
-            val update = toUpdate.filter { cache.cacheClass.isInstance(it.value) }
-            cache.updateCache(update)
-        }
-        return caches.values.flatMap { it.getCache().values }
     }
+
+    suspend fun deleteService(cloudService: I): Boolean {
+        val state = delete(cloudService.serviceId.id.toString())
+        connectedServices.remove(cloudService.serviceId)
+        registeredServices.remove(cloudService.serviceId)
+        return state
+    }
+
+    suspend fun getRegisteredServices(): List<K> {
+        return registeredServices.filter { it.type == targetServiceType }.mapNotNull { getService(it) }
+    }
+
+    suspend fun getConnectedServices(): List<K> {
+        return connectedServices.filter { it.type == targetServiceType }.mapNotNull { getService(it) }
+    }
+
+    suspend fun getRegisteredServiceIds(): List<ServiceId> {
+        return registeredServices.filter { it.type == targetServiceType }.toList()
+    }
+
+    suspend fun getConnectedServiceIds(): List<ServiceId> {
+        return connectedServices.filter { it.type == targetServiceType }.toList()
+    }
+
+    abstract suspend fun transformShutdownable(service: K): K
 
 }

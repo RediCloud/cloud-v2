@@ -1,10 +1,10 @@
 package dev.redicloud.tasks
 
-import dev.redicloud.event.CloudEvent
-import dev.redicloud.event.EventManager
+import dev.redicloud.api.events.CloudEvent
+import dev.redicloud.api.events.IEventManager
 import dev.redicloud.logging.LogManager
-import dev.redicloud.packets.AbstractPacket
-import dev.redicloud.packets.PacketManager
+import dev.redicloud.api.packets.AbstractPacket
+import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.tasks.executor.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -15,8 +15,8 @@ import kotlin.reflect.KClass
 import kotlin.time.Duration
 
 class CloudTaskManager(
-    internal val eventManager: EventManager,
-    internal val packetManager: PacketManager,
+    internal val eventManager: IEventManager,
+    internal val packetManager: IPacketManager,
     threads: Int
 ) {
 

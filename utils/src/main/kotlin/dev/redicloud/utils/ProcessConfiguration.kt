@@ -2,16 +2,16 @@ package dev.redicloud.utils
 
 import java.util.regex.Pattern
 
-open class ProcessConfiguration(
-    val jvmArguments: MutableList<String> = mutableListOf(),
-    val environmentVariables: MutableMap<String, String> = mutableMapOf(),
-    val programmParameters: MutableList<String> = mutableListOf(),
+interface ProcessConfiguration {
+
+    val jvmArguments: MutableList<String>
+    val environmentVariables: MutableMap<String, String>
+    val programmParameters: MutableList<String>
     // URL -> Path
-    val defaultFiles: MutableMap<String, String> = mutableMapOf(),
+    val defaultFiles: MutableMap<String, String>
     // Path -> (edit key -> edit value)
-    val fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf(),
-    var references: MutableList<ProcessConfiguration>? = mutableListOf()
-) {
+    val fileEdits: MutableMap<String, MutableMap<String, String>>
+    val references: List<ProcessConfiguration>? get() = null
 
     fun getLibPatterns(vararg files: String): List<Pattern> {
         val patterns = mutableListOf<Pattern>()
@@ -32,18 +32,18 @@ open class ProcessConfiguration(
 
     companion object {
         fun collect(vararg processConfigurations: ProcessConfiguration): ProcessConfiguration {
-            val collected = ProcessConfiguration()
-            processConfigurations.forEach {
-                collected.jvmArguments.addAll(it.jvmArguments)
-                collected.environmentVariables.putAll(it.environmentVariables)
-                collected.programmParameters.addAll(it.programmParameters)
-                collected.defaultFiles.putAll(it.defaultFiles)
-                collected.fileEdits.putAll(it.fileEdits)
-                if (collected.references == null) collected.references = mutableListOf()
-                collected.references!!.add(it)
-            }
-            return collected
+            return CollectedProcessConfiguration(processConfigurations.toList())
         }
     }
 
+}
+
+class CollectedProcessConfiguration(
+    override val references: List<ProcessConfiguration>
+) : ProcessConfiguration {
+    override val jvmArguments: MutableList<String> = references.flatMap { it.jvmArguments }.toMutableList()
+    override val environmentVariables: MutableMap<String, String> = references.flatMap { it.environmentVariables.toList() }.toMap().toMutableMap()
+    override val programmParameters: MutableList<String> = references.flatMap { it.programmParameters }.toMutableList()
+    override val defaultFiles: MutableMap<String, String> = references.flatMap { it.defaultFiles.toList() }.toMap().toMutableMap()
+    override val fileEdits: MutableMap<String, MutableMap<String, String>> = references.flatMap { it.fileEdits.toList() }.toMap().toMutableMap()
 }

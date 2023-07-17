@@ -1,6 +1,9 @@
 package dev.redicloud.packets
 
 import com.google.gson.GsonBuilder
+import dev.redicloud.api.packets.AbstractPacket
+import dev.redicloud.api.packets.IPacketManager
+import dev.redicloud.api.packets.PacketListener
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.gson.fixKotlinAnnotations
@@ -12,7 +15,10 @@ import org.redisson.api.listener.MessageListener
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 
-class PacketManager(private val databaseConnection: DatabaseConnection, val serviceId: ServiceId) {
+class PacketManager(
+    private val databaseConnection: DatabaseConnection,
+    override val serviceId: ServiceId
+) : IPacketManager {
 
     companion object {
         private val LOGGER = LogManager.logger(PacketManager::class.java)
@@ -47,8 +53,7 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
             val packet = gson.fromJson(data, p.java)
             if (!packet.allowLocalReceiver && packet.sender == serviceId) return@MessageListener
             LOGGER.finest("Received packet ${p.simpleName} in channel $channel")
-            packet.manager = this
-            packet.received()
+            packet.received(this)
             packetsOfLast3Seconds.add(packet)
             packetScope.launch {
                 delay(3.seconds)
@@ -85,43 +90,31 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
         packetScope.cancel()
     }
 
-    fun isPacketRegistered(packetClazz: KClass<out AbstractPacket>): Boolean {
+    override fun isConnected(): Boolean {
+        return serviceTopic.countListeners() != 0
+    }
+
+    override fun isPacketRegistered(packetClazz: KClass<out AbstractPacket>): Boolean {
         return registeredPackets.any { it::class == packetClazz }
     }
 
-    fun isPacketRegistered(clazz: Class<out AbstractPacket>): Boolean {
-        return registeredPackets.any { it::class.java == clazz }
+    override fun registerPacket(packetClazz: KClass<out AbstractPacket>) {
+        registeredPackets.add(packetClazz)
     }
 
-    fun registerPacket(packet: KClass<out AbstractPacket>) {
-        registeredPackets.add(packet)
+    override fun unregisterPacket(packetClazz: KClass<out AbstractPacket>) {
+        registeredPackets.remove(packetClazz)
     }
 
-    fun unregisterPacket(packet: KClass<out AbstractPacket>) {
-        registeredPackets.remove(packet)
-    }
-
-    inline fun <reified T : AbstractPacket> listen(noinline handler: (T) -> Unit): PacketListener<T> {
-        val listener = PacketListener(T::class, handler)
-        registerListener(listener)
-        return listener
-    }
-
-    fun <T : AbstractPacket> listen(clazz: KClass<T>, handler: (T) -> Unit): PacketListener<T> {
-        val listener = PacketListener(clazz, handler)
-        registerListener(listener)
-        return listener
-    }
-
-    fun registerListener(listener: PacketListener<out AbstractPacket>) {
+    override fun registerListener(listener: PacketListener<out AbstractPacket>) {
         listeners.add(listener)
     }
 
-    fun unregisterListener(listener: PacketListener<out AbstractPacket>) {
+    override fun unregisterListener(listener: PacketListener<out AbstractPacket>) {
         listeners.remove(listener)
     }
 
-    suspend fun publish(packet: AbstractPacket, vararg receivers: ServiceId): PacketResponse {
+    override suspend fun publish(packet: AbstractPacket, vararg receivers: ServiceId): PacketResponse {
         packet.sender = serviceId
         val packedPacket = PackedPacket(gson.toJson(packet), packet::class.java.name)
         receivers.forEach {
@@ -131,14 +124,14 @@ class PacketManager(private val databaseConnection: DatabaseConnection, val serv
         return PacketResponse(this, packet)
     }
 
-    suspend fun publishAll(packet: AbstractPacket): PacketResponse {
+    override suspend fun publishBroadcast(packet: AbstractPacket): PacketResponse {
         packet.sender = serviceId
         val packedPacket = PackedPacket(gson.toJson(packet), packet::class.java.name)
         broadcastTopic.publish(packedPacket)
         return PacketResponse(this, packet)
     }
 
-    suspend fun publish(packet: AbstractPacket, vararg serviceTypes: ServiceType): PacketResponse {
+    override suspend fun publish(packet: AbstractPacket, vararg serviceTypes: ServiceType): PacketResponse {
         packet.sender = serviceId
         val packedPacket = PackedPacket(gson.toJson(packet), packet::class.java.name)
         serviceTypes.forEach { typedTopics[it]?.publish(packedPacket) }

@@ -2,15 +2,15 @@ package dev.redicloud.cluster.file
 
 import com.jcraft.jsch.*
 import com.jcraft.jsch.ChannelSftp.LsEntry
-import dev.redicloud.cluster.file.event.FileNodeConnectedEvent
-import dev.redicloud.cluster.file.event.FileNodeDisconnectedEvent
+import dev.redicloud.api.events.impl.node.file.FileNodeConnectedEvent
+import dev.redicloud.api.events.impl.node.file.FileNodeDisconnectedEvent
 import dev.redicloud.cluster.file.filter.IPFilter
 import dev.redicloud.cluster.file.packet.UnzipPacket
 import dev.redicloud.cluster.file.packet.UnzipResponse
 import dev.redicloud.cluster.file.utils.generatePassword
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
-import dev.redicloud.packets.AbstractPacket
+import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.utils.*
@@ -51,6 +51,7 @@ import kotlin.time.Duration.Companion.seconds
 
 
 class FileCluster(
+    val serviceId: ServiceId,
     val hostname: String,
     val fileNodeRepository: FileNodeRepository,
     val packetManager: PacketManager,
@@ -75,12 +76,12 @@ class FileCluster(
     }
 
     suspend fun connect() {
-        val thisNode = if (this.fileNodeRepository.existsFileNode(this.fileNodeRepository.serviceId)) {
-            fileNodeRepository.getFileNode(this.fileNodeRepository.serviceId)!!
+        val thisNode = if (this.fileNodeRepository.existsFileNode(serviceId)) {
+            fileNodeRepository.getFileNode(serviceId)!!
         } else {
-            val nodeInternal = this.nodeRepository.getNode(this.nodeRepository.serviceId) != null
+            val nodeInternal = this.nodeRepository.getNode(serviceId) != null
             val newFileNode = FileNode(
-                this.fileNodeRepository.migrateId(this.nodeRepository.serviceId),
+                this.fileNodeRepository.migrateId(serviceId),
                 -1, hostname,
                 "redicloud", generatePassword(32),
                 nodeInternal,
@@ -101,7 +102,7 @@ class FileCluster(
 
         sshd!!.passwordAuthenticator = PasswordAuthenticator { username, password, session ->
             runBlocking {
-                val node = fileNodeRepository.getFileNode(fileNodeRepository.serviceId) ?: return@runBlocking false
+                val node = fileNodeRepository.getFileNode(serviceId) ?: return@runBlocking false
                 val clientAddress = session.clientAddress
                 val hostname = when (clientAddress) {
                     is SshdSocketAddress -> {
@@ -117,7 +118,7 @@ class FileCluster(
                         return@runBlocking false
                     }
                 }
-                return@runBlocking node.isConnected()
+                return@runBlocking node.connected
                         && ipFilter.canConnect(hostname)
                         && username == node.username
                         && password == node.password
@@ -198,7 +199,7 @@ class FileCluster(
 
     suspend fun disconnect(immediately: Boolean) {
         if (sshd == null || !sshd!!.isStarted) return
-        val thisNode = fileNodeRepository.getFileNode(this.fileNodeRepository.serviceId) ?: throw IllegalStateException(
+        val thisNode = fileNodeRepository.getFileNode(serviceId) ?: throw IllegalStateException(
             "This file node is not registered in the file cluster!"
         )
         sshd!!.stop(immediately)

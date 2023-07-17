@@ -1,6 +1,7 @@
 package dev.redicloud.server.factory.screens
 
-import dev.redicloud.api.server.events.server.CloudServerDisconnectedEvent
+import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
+import dev.redicloud.api.events.listen
 import dev.redicloud.console.Console
 import dev.redicloud.console.utils.Screen
 import dev.redicloud.packets.PacketManager

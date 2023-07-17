@@ -1,7 +1,7 @@
 package dev.redicloud.service.base.suggester
 
-import dev.redicloud.commands.api.CommandContext
-import dev.redicloud.commands.api.AbstractCommandSuggester
+import dev.redicloud.api.commands.CommandContext
+import dev.redicloud.api.commands.AbstractCommandSuggester
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import kotlinx.coroutines.runBlocking
 
@@ -10,5 +10,5 @@ class FileTemplateSuggester(
 ) : AbstractCommandSuggester() {
 
     override fun suggest(context: CommandContext): Array<String> =
-        runBlocking { fileTemplateRepository.getTemplates().map { it.getDisplayName() }.toTypedArray() }
+        runBlocking { fileTemplateRepository.getTemplates().map { it.displayName }.toTypedArray() }
 }

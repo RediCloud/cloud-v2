@@ -1,22 +1,29 @@
 package dev.redicloud.service.node
 
-import dev.redicloud.api.server.events.server.CloudServerDisconnectedEvent
+import com.google.inject.AbstractModule
+import com.google.inject.Guice
+import com.google.inject.Guice.createInjector
+import dev.redicloud.api.commands.ICommand
+import dev.redicloud.api.commands.ICommandManager
+import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.cluster.file.FileNodeRepository
-import dev.redicloud.commands.api.CommandBase
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
-import dev.redicloud.repository.java.version.JavaVersion
-import dev.redicloud.repository.server.ServerRepository
+import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.repository.server.version.handler.IServerVersionHandler
+import dev.redicloud.api.repositories.version.IServerVersionHandler
 import dev.redicloud.repository.server.version.task.CloudServerVersionUpdateTask
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.server.factory.task.*
 import dev.redicloud.service.base.BaseService
-import dev.redicloud.service.base.events.node.NodeConnectEvent
-import dev.redicloud.service.base.events.node.NodeDisconnectEvent
-import dev.redicloud.service.base.events.node.NodeSuspendedEvent
+import dev.redicloud.api.events.impl.node.NodeConnectEvent
+import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
+import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
+import dev.redicloud.api.repositories.template.file.ICloudFileTemplateRepository
+import dev.redicloud.api.repositories.version.ICloudServerVersionTypeRepository
+import dev.redicloud.repository.server.version.handler.defaults.PaperMcServerVersionHandler
+import dev.redicloud.repository.server.version.handler.defaults.URLServerVersionHandler
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.repository.node.connect
 import dev.redicloud.service.node.commands.*
@@ -26,7 +33,6 @@ import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
 import dev.redicloud.service.node.tasks.metrics.MetricsTask
 import dev.redicloud.utils.TEMP_FOLDER
-import dev.redicloud.utils.loadProperties
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -48,7 +54,7 @@ class NodeService(
     init {
         console = NodeConsole(configuration, eventManager, nodeRepository, serverRepository)
         fileNodeRepository = FileNodeRepository(databaseConnection, packetManager)
-        fileCluster = FileCluster(configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
+        fileCluster = FileCluster(serviceId, configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
         fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster, packetManager)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console, packetManager)
         serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress, console, clusterConfiguration, configurationTemplateRepository, eventManager, fileCluster)
@@ -68,7 +74,10 @@ class NodeService(
                 LOGGER.warning("Error while checking java versions", e)
             }
 
-            IServerVersionHandler.registerDefaultHandlers(serverVersionRepository, serverVersionTypeRepository, javaVersionRepository, nodeRepository, console)
+            initApi()
+
+            IServerVersionHandler.registerHandler(URLServerVersionHandler(serviceId, serverVersionRepository, serverVersionTypeRepository, nodeRepository, console, javaVersionRepository))
+            IServerVersionHandler.registerHandler(PaperMcServerVersionHandler(serviceId, serverVersionRepository, serverVersionTypeRepository, javaVersionRepository, nodeRepository, console))
 
             this@NodeService.registerPreTasks()
             this@NodeService.connectFileCluster()
@@ -151,7 +160,7 @@ class NodeService(
 
     private fun registerPreTasks() {
         taskManager.builder()
-            .task(NodeChooseMasterTask(nodeRepository))
+            .task(NodeChooseMasterTask(serviceId, nodeRepository, eventManager))
             .instant()
             .event(NodeDisconnectEvent::class)
             .event(NodeSuspendedEvent::class)
@@ -159,7 +168,7 @@ class NodeService(
     }
 
     private suspend fun checkJavaVersions() {
-        val detected = mutableListOf<JavaVersion>()
+        val detected = mutableListOf<CloudJavaVersion>()
         javaVersionRepository.detectInstalledVersions().forEach {
             if (javaVersionRepository.existsVersion(it.name)) return@forEach
             javaVersionRepository.createVersion(it)
@@ -193,8 +202,7 @@ class NodeService(
         if (thisNode.maxMemory > Runtime.getRuntime().freeMemory()) throw IllegalStateException("Not enough memory available! Please increase the max memory of this node!")
     }
 
-    private fun registerPackets() {
-    }
+    private fun registerPackets() {}
 
     private suspend fun connectFileCluster() {
         try {
@@ -208,8 +216,8 @@ class NodeService(
     }
 
     private fun registerCommands() {
-        fun register(command: CommandBase) {
-            console.commandManager.register(command)
+        fun register(command: ICommand) {
+            console.commandManager.registerCommand(command)
         }
         register(ExitCommand(this))
         register(VersionCommand())
@@ -226,6 +234,13 @@ class NodeService(
 
     private fun initShutdownHook() {
         Runtime.getRuntime().addShutdownHook(Thread { this.shutdown() })
+    }
+
+    override fun configure() {
+        super.configure()
+        bind(ICommandManager::class).toInstance(console.commandManager)
+        bind(ICloudFileTemplateRepository::class).toInstance(fileTemplateRepository)
+        bind(ICloudServerVersionTypeRepository::class).toInstance(serverVersionTypeRepository)
     }
 
 }

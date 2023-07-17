@@ -1,9 +1,9 @@
 package dev.redicloud.service.node.commands
 
+import dev.redicloud.api.commands.*
 import dev.redicloud.commands.api.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
-import dev.redicloud.repository.java.version.JavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
@@ -16,7 +16,6 @@ import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.service.base.suggester.CloudServerVersionSuggester
 import dev.redicloud.service.base.suggester.ConfigurationTemplateSuggester
-import dev.redicloud.service.base.suggester.JavaVersionSuggester
 import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
 import dev.redicloud.utils.fileName
 import dev.redicloud.utils.isValidUrl
@@ -37,7 +36,7 @@ class ConfigurationTemplateCommand(
     private val serverVersionRepository: CloudServerVersionRepository,
     private val nodeRepository: NodeRepository,
     private val fileTemplateRepository: AbstractFileTemplateRepository
-) : CommandBase() {
+) : ICommand {
 
     companion object {
         val invalidChars = Regex("[/\\\\?%*:|\"<>]")
@@ -124,7 +123,7 @@ class ConfigurationTemplateCommand(
         val serverVersion = if (template.serverVersionId != null) {
             serverVersionRepository.getVersion(template.serverVersionId!!)
         }else null
-        actor.sendMessage("§8- %tc%Server version§8: %hc%${serverVersion?.getDisplayName() ?: "§cNot set"}")
+        actor.sendMessage("§8- %tc%Server version§8: %hc%${serverVersion?.displayName ?: "§cNot set"}")
         actor.sendMessage("§8- %tc%Static§8: %hc%${template.static.toSymbol()}")
         actor.sendMessage("§8- %tc%Start priority§8: %hc%${template.startPriority}")
         actor.sendMessage("§8- %tc%Fallback server§8: %hc%${template.fallbackServer.toSymbol()}")
@@ -142,7 +141,7 @@ class ConfigurationTemplateCommand(
         val templates = fileTemplateRepository.collectTemplates(*template.fileTemplateIds
             .mapNotNull { fileTemplateRepository.getTemplate(it) }.toTypedArray()
         ).toMutableList()
-        actor.sendMessage("§8- %tc%File templates§8: %hc%${if (templates.isEmpty()) "None" else templates.joinToString("§8, %hc%") { it.getDisplayName() }}")
+        actor.sendMessage("§8- %tc%File templates§8: %hc%${if (templates.isEmpty()) "None" else templates.joinToString("§8, %hc%") { it.displayName }}")
         actor.sendMessage("§8- %tc%JVM arguments§8:${if (template.jvmArguments.isEmpty()) " %hc%None" else ""}")
         template.jvmArguments.forEach {
             actor.sendMessage("§8  - %hc%$it")
@@ -435,7 +434,7 @@ class ConfigurationTemplateCommand(
         if (servers.isNotEmpty()) {
             actor.sendMessage("There are still servers registered on this node:")
             servers.forEach { server ->
-                actor.sendMessage("§8- %hc%${server.name} §7(${server.serviceId.id}) §8| %tc%Connected§8: ${(server.currentSession() != null).toSymbol()}")
+                actor.sendMessage("§8- %hc%${server.name} §7(${server.serviceId.id}) §8| %tc%Connected§8: ${(server.currentSession != null).toSymbol()}")
             }
         }
     }
@@ -619,7 +618,7 @@ class ConfigurationTemplateCommand(
     ) = runBlocking {
         template.serverVersionId = version.uniqueId
         configurationTemplateRepository.updateTemplate(template)
-        actor.sendMessage("The version of ${toConsoleValue(template.name)} was updated to ${toConsoleValue(version.getDisplayName())}!")
+        actor.sendMessage("The version of ${toConsoleValue(template.name)} was updated to ${toConsoleValue(version.displayName)}!")
     }
 
     @CommandSubPath("edit <name> startport <port>")

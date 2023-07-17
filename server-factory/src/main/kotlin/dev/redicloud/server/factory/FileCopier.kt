@@ -3,11 +3,10 @@ package dev.redicloud.server.factory
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.repository.server.version.handler.IServerVersionHandler
+import dev.redicloud.api.repositories.version.IServerVersionHandler
 import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.server.factory.utils.StartDataSnapshot
-import dev.redicloud.utils.CLOUD_VERSION
 import dev.redicloud.utils.CONNECTORS_FOLDER
 import dev.redicloud.utils.STATIC_FOLDER
 import dev.redicloud.utils.TEMP_SERVER_FOLDER
@@ -48,7 +47,7 @@ class FileCopier(
         lock.lock()
         try {
             CONNECTORS_FOLDER.createIfNotExists()
-            val connectorFile = snapshot.versionType.getConnectorFile(true)
+            val connectorFile = snapshot.versionType.getParsedConnectorFile(true)
             if (!connectorFile.exists()) {
                 if (snapshot.versionType.connectorDownloadUrl == null) {
                     logger.warning("Connector download url for ${snapshot.versionType.name} is not set! The server will not connect to the cloud cluster!")
@@ -63,7 +62,7 @@ class FileCopier(
                         return
                     }
                 }catch (e: Exception) {
-                    logger.warning("Failed to download connector for ${snapshot.versionType.name} from ${snapshot.versionType.getConnectorURL().toExternalForm()}", e)
+                    logger.warning("Failed to download connector for ${snapshot.versionType.name} from ${snapshot.versionType.getParsedConnectorURL().toExternalForm()}", e)
                     logger.warning("The server will not connect to the cloud cluster!")
                     logger.warning("You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'")
                     return
@@ -81,7 +80,7 @@ class FileCopier(
      * Copies all files for the server version to the work directory
      */
     suspend fun copyVersionFiles(force: Boolean = true, action: (String) -> String = { it }) {
-        logger.fine("Copying files for $serviceId of version ${snapshot.version.getDisplayName()}")
+        logger.fine("Copying files for $serviceId of version ${snapshot.version.displayName}")
         val versionHandler = IServerVersionHandler.getHandler(snapshot.versionType)
         versionHandler.getLock(snapshot.version).lock()
         try {
@@ -112,7 +111,7 @@ class FileCopier(
         if (!force && configurationTemplate.static) return
         logger.fine("Copying templates for $serviceId")
         templates.forEach {
-            it.getFolder().copyRecursively(workDirectory)
+            it.folder.copyRecursively(workDirectory)
         }
     }
 

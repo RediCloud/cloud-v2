@@ -11,6 +11,7 @@ dependencies {
     compileOnly(project(":utils"))
     compileOnly(project(":cache"))
     compileOnly(project(":repositories:service-repository"))
+    compileOnly(project(":repositories:server-repository"))
     compileOnly(project(":repositories:node-repository"))
     compileOnly(project(":repositories:server-repository"))
     compileOnly(project(":repositories:file-template-repository"))

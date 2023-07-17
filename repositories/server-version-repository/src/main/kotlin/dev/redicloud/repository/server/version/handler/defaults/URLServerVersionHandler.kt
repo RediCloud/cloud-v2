@@ -1,5 +1,11 @@
 package dev.redicloud.repository.server.version.handler.defaults
 
+import dev.redicloud.api.repositories.java.ICloudJavaVersion
+import dev.redicloud.api.repositories.java.ICloudJavaVersionRepository
+import dev.redicloud.api.repositories.service.node.ICloudNode
+import dev.redicloud.api.repositories.service.node.ICloudNodeRepository
+import dev.redicloud.api.repositories.service.server.ICloudServer
+import dev.redicloud.api.repositories.version.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.utils.toConsoleValue
@@ -11,9 +17,9 @@ import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.repository.server.version.handler.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.*
+import dev.redicloud.utils.service.ServiceId
 import khttp.get
 import java.io.File
 import java.util.*
@@ -23,26 +29,28 @@ import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.minutes
 
 open class URLServerVersionHandler(
-    override val serverVersionRepository: CloudServerVersionRepository,
-    override val nodeRepository: NodeRepository,
-    override val console: Console,
-    private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
-    private val javaVersionRepository: JavaVersionRepository
+    protected val serviceId: ServiceId,
+    protected val serverVersionRepository: ICloudServerVersionRepository,
+    protected val serverVersionTypeRepository: ICloudServerVersionTypeRepository,
+    protected val nodeRepository: ICloudNodeRepository,
+    protected val console: Console,
+    protected val javaVersionRepository: ICloudJavaVersionRepository,
+    override val default: Boolean = true,
+    override val name: String = "urldownloader"
 ) : IServerVersionHandler {
 
     companion object {
         private val logger = LogManager.logger(URLServerVersionHandler::class)
     }
 
-    override val name: String = "urldownloader"
-    override var lastUpdateCheck: Long = -1
-    private val locks = mutableMapOf<UUID, ReentrantLock>()
+    protected var lastUpdateCheck: Long = -1
+    protected val locks = mutableMapOf<UUID, ReentrantLock>()
 
-    override fun getLock(version: CloudServerVersion): ReentrantLock {
+    override fun getLock(version: ICloudServerVersion): ReentrantLock {
         return locks.getOrPut(version.uniqueId) { ReentrantLock() }
     }
 
-    override suspend fun download(version: CloudServerVersion, force: Boolean): File {
+    override suspend fun download(version: ICloudServerVersion, force: Boolean): File {
         var canceled = false
         var downloaded = false
         var error = false
@@ -54,9 +62,9 @@ open class URLServerVersionHandler(
                 null
             } else if (downloaded) {
                 canceled = true
-                "Downloading version %hc%${version.getDisplayName()}§8: ${if (error) "§4✘" else "§2✓"}"
+                "Downloading version %hc%${version.displayName}§8: ${if (error) "§4✘" else "§2✓"}"
             } else {
-                "Downloading version %hc%${version.getDisplayName()}§8: %tc%%loading%"
+                "Downloading version %hc%${version.displayName}§8: %tc%%loading%"
             }
         }
         console.startAnimation(animation)
@@ -64,20 +72,20 @@ open class URLServerVersionHandler(
         val jar = getJar(version)
         try {
             if (jar.exists() && !force) return jar
-            if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
+            if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
 
             val type = serverVersionTypeRepository.getType(version.typeId!!)
                 ?: throw NullPointerException("Cant find server version type ${version.typeId}")
-            if (version.customDownloadUrl == null) throw NullPointerException("Download url of ${version.getDisplayName()} is null")
+            if (version.customDownloadUrl == null) throw NullPointerException("Download url of ${version.displayName} is null")
 
-            val targetVersion = if (version.version.isLatest()) version.version.dynamicVersion() else version.version
+            val targetVersion = if (version.version.latest) version.version.dynamicVersion() else version.version
             val downloadUrl = version.customDownloadUrl!!
                 .replace("%build_id%", version.buildId ?: "-1")
                 .replace("%version_name%", targetVersion.name)
 
             val response = get(downloadUrl)
             if (response.statusCode != 200) throw IllegalStateException(
-                "Download of ${version.getDisplayName()} is not available ($downloadUrl -> ${response.statusCode}):\n" +
+                "Download of ${version.displayName} is not available ($downloadUrl -> ${response.statusCode}):\n" +
                         response.text
             )
 
@@ -97,20 +105,20 @@ open class URLServerVersionHandler(
                     val path = it.key
                     try {
                         if (!isValidUrl(url1)) {
-                            logger.warning("§cInvalid default file with url ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)}")
+                            logger.warning("§cInvalid default file with url ${toConsoleValue(url1, false)} for ${toConsoleValue(version.displayName, false)}")
                             return@add
                         }
                         val file = File(folder, path)
                         if (!file.parentFile.exists()) file.parentFile.mkdirs()
                         val response1 = get(url1)
                         if (response1.statusCode != 200) {
-                            logger.warning("§cDownload of default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)} is not available (${response.statusCode}):\n${response.text}")
+                            logger.warning("§cDownload of default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.displayName, false)} is not available (${response.statusCode}):\n${response.text}")
                             return@add
                         }
                         file.createNewFile()
                         file.writeBytes(response1.content)
                     }catch (e: Exception) {
-                        logger.warning("§cFailed to download default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.getDisplayName(), false)}", e)
+                        logger.warning("§cFailed to download default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.displayName, false)}", e)
                     }
                 }
             }
@@ -126,26 +134,47 @@ open class URLServerVersionHandler(
         return jar
     }
 
-    override suspend fun canDownload(version: CloudServerVersion): Boolean {
+    override suspend fun canDownload(version: ICloudServerVersion): Boolean {
         return version.customDownloadUrl != null && get(version.customDownloadUrl!!).statusCode == 200
     }
 
-    override suspend fun isUpdateAvailable(version: CloudServerVersion, force: Boolean): Boolean {
+    override suspend fun isUpdateAvailable(version: ICloudServerVersion, force: Boolean): Boolean {
         return false
     }
 
-    override suspend fun getVersions(version: CloudServerVersion): List<ServerVersion> = emptyList()
+    override suspend fun getVersions(version: ICloudServerVersion): List<IServerVersion> = emptyList()
 
-    override suspend fun getBuilds(version: CloudServerVersion, mcVersion: ServerVersion): List<String> = emptyList()
+    override suspend fun getBuilds(version: ICloudServerVersion, mcVersion: IServerVersion): List<String> = emptyList()
 
-    override suspend fun update(version: CloudServerVersion, versionType: CloudServerVersionType): File {
+    override suspend fun update(version: ICloudServerVersion, versionType: ICloudServerVersionType): File {
         download(version, true)
         if (isPatchVersion(version)) patch(version)
         serverVersionTypeRepository.downloadConnector(versionType)
         return getFolder(version)
     }
 
-    override suspend fun patch(version: CloudServerVersion) {
+    override suspend fun patchCommand(
+        type: ICloudServerVersionType,
+        javaVersion: ICloudJavaVersion,
+        jarToExecute: File
+    ): List<String> {
+        if(!javaVersion.isLocated(serviceId)) {
+            javaVersion.located[serviceId.id] = javaVersion.autoLocate()?.absolutePath ?: throw IllegalStateException("Java version ${javaVersion.id} not found")
+        }
+        val javaPath = javaVersion.located[serviceId.id]
+        if (javaPath == null || javaPath.isEmpty()) throw IllegalStateException("Java version ${javaVersion.id} not found")
+
+        val list = mutableListOf(
+            javaPath,
+            "-Xms512M",
+            "-Xmx512M",
+        )
+        list.add("-jar")
+        list.add(jarToExecute.absolutePath)
+        return list
+    }
+
+    override suspend fun patch(version: ICloudServerVersion) {
         if (!version.patch) return
         var canceled = false
         var patched = false
@@ -158,9 +187,9 @@ open class URLServerVersionHandler(
                 null
             } else if (patched) {
                 canceled = true
-                "Patching version %tc%${toConsoleValue(version.getDisplayName())}§8: ${if (error) "§4✘" else "§2✓"}"
+                "Patching version %tc%${toConsoleValue(version.displayName)}§8: ${if (error) "§4✘" else "§2✓"}"
             } else {
-                "Patching version %tc%${toConsoleValue(version.getDisplayName())}§8: %tc%%loading%"
+                "Patching version %tc%${toConsoleValue(version.displayName)}§8: %tc%%loading%"
             }
         }
         console.startAnimation(animation)
@@ -175,18 +204,18 @@ open class URLServerVersionHandler(
             versionDir.copyRecursively(tempDir, true)
             val tempJar = File(tempDir, jar.name)
 
-            if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.getDisplayName()}")
+            if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
             val type = serverVersionTypeRepository.getType(version.typeId!!)
                 ?: throw NullPointerException("Cant find server version type ${version.typeId}")
-            if (version.javaVersionId == null) throw NullPointerException("Cant find java version for ${version.getDisplayName()}")
+            if (version.javaVersionId == null) throw NullPointerException("Cant find java version for ${version.displayName}")
             val javaVersion = javaVersionRepository.getVersion(version.javaVersionId!!)
-                ?: throw NullPointerException("Cant find java version for ${version.getDisplayName()}")
+                ?: throw NullPointerException("Cant find java version for ${version.displayName}")
             findFreePort(40000..60000)
 
             val processBuilder = ProcessBuilder(patchCommand(type, javaVersion, tempJar))
             processBuilder.directory(tempDir)
             val process = processBuilder.start()
-            val screen = console.createScreen("patch_${version.getDisplayName()}")
+            val screen = console.createScreen("patch_${version.displayName}")
             ScreenProcessHandler(process, screen)
             process.waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
 

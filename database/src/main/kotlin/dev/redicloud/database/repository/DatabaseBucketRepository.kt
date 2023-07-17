@@ -1,39 +1,72 @@
 package dev.redicloud.database.repository
 
 import dev.redicloud.database.DatabaseConnection
+import dev.redicloud.utils.gson.gsonInterfaceFactory
 import org.redisson.api.RBucket
 import org.redisson.client.codec.BaseCodec
+import kotlin.reflect.KClass
+import kotlin.reflect.cast
+import kotlin.reflect.full.isSubclassOf
 
-open class DatabaseBucketRepository<T>(
+open class DatabaseBucketRepository<I : Any, K: Any>(
     connection: DatabaseConnection,
     name: String,
-    codec: BaseCodec? = null
-) : DatabaseRepository<T>(connection, name, codec) {
+    codec: BaseCodec? = null,
+    private val interfaceClass: KClass<I>,
+    private val implementationClass: KClass<K>
+) : DatabaseRepository<K>(connection, name, codec) {
 
-    protected open suspend fun set(identifier: String, value: T) = getHandle(identifier).set(value)
+    init {
+        if (!implementationClass.isSubclassOf(interfaceClass)) {
+            throw IllegalArgumentException("Implementation class must be a subclass of interface class ($implementationClass is not a subclass of $interfaceClass)")
+        }
+        gsonInterfaceFactory.register(interfaceClass, implementationClass)
+    }
 
-    protected open suspend fun get(identifier: String): T? = getHandle(identifier).get()
+    private val unsafe get() = UnsafeDatabaseBucketRepository(this)
+    fun unsafe() = unsafe
+
+    protected open suspend fun set(identifier: String, value: I): K {
+        getHandle(identifier).set(value)
+        return implementationClass.cast(value)
+    }
+
+    protected open suspend fun get(identifier: String): K? {
+        return implementationClass.cast(getHandle(identifier).get())
+    }
 
     protected open suspend fun delete(identifier: String): Boolean = getHandle(identifier).delete()
 
-    protected open suspend fun getAll(customPattern: String? = null): List<T> =
+    protected open suspend fun getAll(customPattern: String? = null): List<K> =
         connection.getClient().keys.getKeysByPattern(customPattern ?: "$name:*")
-            .mapNotNull { getUnsafeHandle<T>(it, true).get() }
+            .mapNotNull { getUnsafeHandle<K>(it, true).get() }
 
     protected open suspend fun exists(identifier: String): Boolean = getHandle(identifier).isExists
 
-    fun getHandle(identifier: String, customIdentifier: Boolean = false): RBucket<T> {
+    private fun getHandle(identifier: String, customIdentifier: Boolean = false): RBucket<I> {
         if (!connection.isConnected()) throw IllegalStateException("Not connected to database")
         val databaseIdentifier = if (customIdentifier) identifier else toDatabaseIdentifier(identifier)
         return if (codec != null) connection.getClient().getBucket(databaseIdentifier, codec)
         else connection.getClient().getBucket(databaseIdentifier)
     }
 
-    fun <X> getUnsafeHandle(identifier: String, customIdentifier: Boolean): RBucket<X> {
+    private fun <X> getUnsafeHandle(identifier: String, customIdentifier: Boolean): RBucket<X> {
         if (!connection.isConnected()) throw IllegalStateException("Not connected to database")
         val databaseIdentifier = if (customIdentifier) identifier else toDatabaseIdentifier(identifier)
         return if (codec != null) connection.getClient().getBucket(databaseIdentifier, codec)
         else connection.getClient().getBucket(databaseIdentifier)
+    }
+
+    class UnsafeDatabaseBucketRepository<I : Any, K: Any>(
+        val repository: DatabaseBucketRepository<I, K>
+    ) {
+        suspend fun set(identifier: String, value: I) = repository.set(identifier, value)
+        suspend fun get(identifier: String): K? = repository.get(identifier)
+        suspend fun delete(identifier: String): Boolean = repository.delete(identifier)
+        suspend fun getAll(customPattern: String? = null): List<K> = repository.getAll(customPattern)
+        suspend fun exists(identifier: String): Boolean = repository.exists(identifier)
+        fun getHandle(identifier: String, customIdentifier: Boolean = false): RBucket<I> = repository.getHandle(identifier, customIdentifier)
+        fun getUnsafeHandle(identifier: String, customIdentifier: Boolean = false): RBucket<K> = repository.getUnsafeHandle(identifier, customIdentifier)
     }
 
 }

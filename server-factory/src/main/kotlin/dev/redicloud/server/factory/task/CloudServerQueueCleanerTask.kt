@@ -1,6 +1,6 @@
 package dev.redicloud.server.factory.task
 
-import dev.redicloud.api.server.CloudServerState
+import dev.redicloud.api.repositories.service.server.CloudServerState
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.NodeRepository
@@ -24,7 +24,7 @@ class CloudServerQueueCleanerTask(
     override suspend fun execute(): Boolean {
         val nodes = nodeRepository.getConnectedNodes()
         val masterNode = nodes.firstOrNull { it.master }
-        if (masterNode?.serviceId != nodeRepository.serviceId) return false
+        if (masterNode?.serviceId != serverFactory.hostingId) return false
 
         serverFactory.getStartList().forEach { info ->
             val name = if (info.configurationTemplate != null) {
