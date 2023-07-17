@@ -100,10 +100,10 @@ class CommandSubBase(
         val final = parsedArguments.toTypedArray()
         return try {
             if (suspend) {
-                runBlocking { function.callSuspend(*final) } //TODO fix this
+                runBlocking { function.callSuspend(command.commandImpl, *final) } //TODO fix this
             }else {
-                // function.call(*final) //TODO fix this
-                function.javaMethod!!.invoke(command, *final)
+                // function.call(command.commandImpl, *final) //TODO fix this
+                function.javaMethod!!.invoke(command.commandImpl, *final)
             }
             CommandResponse(CommandResponseType.SUCCESS, null)
         }catch (e: Exception) {
