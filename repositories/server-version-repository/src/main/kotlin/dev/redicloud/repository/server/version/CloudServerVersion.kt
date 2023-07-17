@@ -1,6 +1,5 @@
 package dev.redicloud.repository.server.version
 
-import com.google.gson.annotations.Expose
 import dev.redicloud.api.repositories.version.ICloudServerVersion
 import dev.redicloud.api.repositories.version.IServerVersion
 import dev.redicloud.cache.IClusterCacheObject
@@ -8,7 +7,7 @@ import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.ConfigurationFileEditor
-import dev.redicloud.utils.ProcessConfiguration
+import dev.redicloud.utils.gson.GsonInterface
 import java.io.File
 import java.util.UUID
 
@@ -18,6 +17,7 @@ class CloudServerVersion(
     override var projectName: String,
     override var customDownloadUrl: String?,
     override var buildId: String?,
+    @GsonInterface(ServerVersion::class)
     override var version: IServerVersion,
     override var javaVersionId: UUID?,
     override var libPattern: String? = null,
