@@ -1,7 +1,19 @@
 package dev.redicloud.service.base
 
+import com.google.inject.Guice
+import com.google.inject.name.Named
+import com.google.inject.name.Names
+import dev.redicloud.api.events.IEventManager
+import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.cache.tasks.InvalidCacheTask
 import dev.redicloud.api.packets.PacketListener
+import dev.redicloud.api.repositories.java.ICloudJavaVersionRepository
+import dev.redicloud.api.repositories.player.ICloudPlayerRepository
+import dev.redicloud.api.repositories.service.node.ICloudNodeRepository
+import dev.redicloud.api.repositories.service.server.ICloudServerRepository
+import dev.redicloud.api.repositories.template.configuration.ICloudConfigurationTemplateRepository
+import dev.redicloud.api.repositories.version.ICloudServerVersionRepository
+import dev.redicloud.api.repositories.version.ICloudServerVersionTypeRepository
 import dev.redicloud.commands.api.PARSERS
 import dev.redicloud.commands.api.SUGGESTERS
 import dev.redicloud.repository.node.NodeRepository
@@ -22,6 +34,7 @@ import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.api.repositories.version.IServerVersionHandler
+import dev.redicloud.logging.Logger
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
@@ -33,6 +46,7 @@ import dev.redicloud.service.base.parser.*
 import dev.redicloud.service.base.suggester.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.tasks.CloudTaskManager
+import dev.redicloud.utils.InjectorModule
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.ioScope
 import dev.redicloud.utils.loadProperties
@@ -49,7 +63,7 @@ abstract class BaseService(
     databaseConfiguration: DatabaseConfiguration,
     _databaseConnection: DatabaseConnection?,
     val serviceId: ServiceId
-) {
+) : InjectorModule() {
 
     companion object {
         val LOGGER = LogManager.logger(BaseService::class)
@@ -117,6 +131,10 @@ abstract class BaseService(
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager, configurationTemplateRepository)
         this.registerPackets()
         this.registerPacketListeners()
+    }
+
+    protected fun initApi() {
+        Guice.createInjector(this)
     }
 
     fun registerDefaults() {
@@ -189,6 +207,19 @@ abstract class BaseService(
             packetManager.registerListener(listener)
         }
         register(CloudServiceShutdownPacketListener(this))
+    }
+
+    override fun configure() {
+        bind(IPacketManager::class).toInstance(packetManager)
+        bind(IEventManager::class).toInstance(eventManager)
+        bind(ICloudPlayerRepository::class).toInstance(playerRepository)
+        bind(ICloudNodeRepository::class).toInstance(nodeRepository)
+        bind(ICloudServerVersionRepository::class).toInstance(serverVersionRepository)
+        bind(ICloudServerVersionTypeRepository::class).toInstance(serverVersionTypeRepository)
+        bind(ICloudServerRepository::class).toInstance(serverRepository)
+        bind(ICloudConfigurationTemplateRepository::class).toInstance(configurationTemplateRepository)
+        bind(ICloudJavaVersionRepository::class).toInstance(javaVersionRepository)
+        bind(Logger::class).annotatedWith(Names.named("base")).toInstance(LOGGER)
     }
 
 }

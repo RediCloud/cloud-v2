@@ -1,6 +1,8 @@
 package dev.redicloud.service.minecraft
 
 import dev.redicloud.api.repositories.service.server.CloudServerState
+import dev.redicloud.api.repositories.template.file.ICloudFileTemplateRepository
+import dev.redicloud.api.repositories.version.ICloudServerVersionTypeRepository
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.CloudServer
@@ -75,4 +77,10 @@ abstract class MinecraftServerService<T> : BaseService(
     }
 
     abstract fun getConnectorPlugin(): T
+
+    override fun configure() {
+        super.configure()
+        bind(ICloudFileTemplateRepository::class).to(fileTemplateRepository)
+        bind(ICloudServerVersionTypeRepository::class).to(serverVersionTypeRepository)
+    }
 }

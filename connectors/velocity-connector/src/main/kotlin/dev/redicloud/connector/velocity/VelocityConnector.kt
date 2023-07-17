@@ -25,12 +25,14 @@ class VelocityConnector(
     private var velocityShuttingDown: Boolean
     private val registered: MutableMap<ServiceId, ServerInfo>
     override val serverPlayerProvider: IServerPlayerProvider
-    override val screenProvider: AbstractScreenProvider = VelocityScreenProvider(this.packetManager, this.proxyServer)
+    override val screenProvider: AbstractScreenProvider
 
     init {
+        initApi()
         this.velocityShuttingDown = false
         this.registered = mutableMapOf()
         this.serverPlayerProvider = VelocityServerPlayerProvider(proxyServer)
+        screenProvider = VelocityScreenProvider(this.packetManager, this.proxyServer)
         runBlocking {
             registerTasks()
             registerStartedServers()

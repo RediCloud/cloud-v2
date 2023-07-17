@@ -25,6 +25,7 @@ class BungeeCordConnector(
     private val registered: MutableMap<ServiceId, ServerInfo>
 
     init {
+        initApi()
         this.bungeecordShuttingDown = false
         this.serverPlayerProvider = BungeeCordServerPlayerProvider()
         this.registered = mutableMapOf()

@@ -1,6 +1,10 @@
 package dev.redicloud.service.node
 
+import com.google.inject.AbstractModule
+import com.google.inject.Guice
+import com.google.inject.Guice.createInjector
 import dev.redicloud.api.commands.ICommand
+import dev.redicloud.api.commands.ICommandManager
 import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.cluster.file.FileNodeRepository
@@ -16,6 +20,8 @@ import dev.redicloud.service.base.BaseService
 import dev.redicloud.api.events.impl.node.NodeConnectEvent
 import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
 import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
+import dev.redicloud.api.repositories.template.file.ICloudFileTemplateRepository
+import dev.redicloud.api.repositories.version.ICloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.defaults.PaperMcServerVersionHandler
 import dev.redicloud.repository.server.version.handler.defaults.URLServerVersionHandler
 import dev.redicloud.service.node.console.NodeConsole
@@ -67,6 +73,8 @@ class NodeService(
             try { this@NodeService.checkJavaVersions() } catch (e: Exception) {
                 LOGGER.warning("Error while checking java versions", e)
             }
+
+            initApi()
 
             IServerVersionHandler.registerHandler(URLServerVersionHandler(serviceId, serverVersionRepository, serverVersionTypeRepository, nodeRepository, console, javaVersionRepository))
             IServerVersionHandler.registerHandler(PaperMcServerVersionHandler(serviceId, serverVersionRepository, serverVersionTypeRepository, javaVersionRepository, nodeRepository, console))
@@ -194,8 +202,7 @@ class NodeService(
         if (thisNode.maxMemory > Runtime.getRuntime().freeMemory()) throw IllegalStateException("Not enough memory available! Please increase the max memory of this node!")
     }
 
-    private fun registerPackets() {
-    }
+    private fun registerPackets() {}
 
     private suspend fun connectFileCluster() {
         try {
@@ -227,6 +234,13 @@ class NodeService(
 
     private fun initShutdownHook() {
         Runtime.getRuntime().addShutdownHook(Thread { this.shutdown() })
+    }
+
+    override fun configure() {
+        super.configure()
+        bind(ICommandManager::class).toInstance(console.commandManager)
+        bind(ICloudFileTemplateRepository::class).toInstance(fileTemplateRepository)
+        bind(ICloudServerVersionTypeRepository::class).toInstance(serverVersionTypeRepository)
     }
 
 }
