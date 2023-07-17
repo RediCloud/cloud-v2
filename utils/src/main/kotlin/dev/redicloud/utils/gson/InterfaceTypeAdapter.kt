@@ -1,12 +1,11 @@
 package dev.redicloud.utils.gson
 
-import com.google.gson.Gson
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 
 class InterfaceTypeAdapter<T : Any>(
-    private val implClazz: Class<*>, private val gson: Gson
+    private val implClazz: Class<*>
 ) : TypeAdapter<T>() {
 
     override fun write(out: JsonWriter, value: T) {
@@ -23,13 +22,14 @@ class InterfaceTypeAdapter<T : Any>(
         while (`in`.hasNext()) {
             when (`in`.nextName()) {
                 "value" -> {
-                    value = gson.fromJson(`in`, implClazz) as? T
+                    val i = `in`
+                    value = gson.fromJson(i, implClazz) as? T
                 }
                 else -> `in`.skipValue()
             }
         }
         `in`.endObject()
 
-        return value ?: throw IllegalArgumentException("Failed to deserialize object")
+        return value ?: throw IllegalArgumentException("Failed to deserialize object: $`in`")
     }
 }
