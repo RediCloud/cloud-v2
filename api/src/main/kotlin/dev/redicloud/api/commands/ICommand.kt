@@ -1,7 +1,6 @@
 package dev.redicloud.api.commands
 
-interface ICommand {
-
-
-
-}
+/**
+ * Interface for the own command implementation
+ */
+interface ICommand

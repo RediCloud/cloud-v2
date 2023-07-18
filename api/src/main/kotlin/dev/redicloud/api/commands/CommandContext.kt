@@ -1,6 +1,15 @@
 package dev.redicloud.api.commands
 
+/**
+ * Represents the context of a command.
+ * @param input The complete input of the command.
+ * @param annotationArguments Arguments provided by the command parameter annotation.
+ */
 class CommandContext(val input: String, val annotationArguments: Array<String>) {
+
+    /**
+     * Gets a annotation argument by index or returns the default value if the index is out of bounds.
+     */
     fun <T> getOr(index: Int, default: T): T =
         if (annotationArguments.size > index) annotationArguments[index] as T else default
 
