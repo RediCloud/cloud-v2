@@ -1,4 +1,4 @@
-group = "dev.redicloud.repository.node"
+group = "dev.redicloud.repository"
 
 repositories {
     mavenCentral()

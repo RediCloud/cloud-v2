@@ -1,4 +1,4 @@
-group = "dev.redicloud.connector.bungeecord"
+group = "dev.redicloud.connector"
 
 repositories {
     maven("https://oss.sonatype.org/content/repositories/snapshots")

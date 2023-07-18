@@ -1,4 +1,4 @@
-group = "dev.redicloud.connector.bukkit.legacy"
+group = "dev.redicloud.connector"
 
 dependencies {
     shade("org.redisson:redisson:${Versions.redisson}") {

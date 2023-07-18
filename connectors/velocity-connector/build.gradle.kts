@@ -1,4 +1,4 @@
-group = "dev.redicloud.connector.velocity"
+group = "dev.redicloud.connector"
 
 repositories {
     mavenCentral()

@@ -1,4 +1,4 @@
-group = "dev.redicloud.event"
+group = "dev.redicloud"
 
 repositories {
     mavenCentral()

@@ -1,4 +1,4 @@
-group = "dev.redicloud.repository.template.file"
+group = "dev.redicloud.repository"
 
 dependencies {
     compileOnly(project(":api"))

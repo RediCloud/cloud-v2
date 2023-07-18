@@ -1,4 +1,4 @@
-group = "dev.redicloud.repository.server.version"
+group = "dev.redicloud.repository"
 
 dependencies {
     compileOnly(project(":api"))

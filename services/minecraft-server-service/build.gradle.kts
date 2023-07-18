@@ -1,4 +1,4 @@
-group = "dev.redicloud.service.minecraft"
+group = "dev.redicloud.service"
 
 dependencies {
     compileOnly(project(":api"))

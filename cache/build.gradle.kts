@@ -1,4 +1,4 @@
-group = "dev.redicloud.cache"
+group = "dev.redicloud"
 
 dependencies {
     compileOnly(project(":api"))

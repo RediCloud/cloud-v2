@@ -1,4 +1,4 @@
-group = "dev.redicloud.tasks"
+group = "dev.redicloud"
 
 repositories {
     mavenCentral()

@@ -6,7 +6,7 @@ plugins {
 }
 apply(plugin = "com.github.johnrengelman.shadow")
 
-group = "dev.redicloud.connector.bukkit"
+group = "dev.redicloud.connector"
 
 repositories {
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots")

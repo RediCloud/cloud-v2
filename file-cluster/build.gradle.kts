@@ -1,4 +1,4 @@
-group = "dev.redicloud.cluster.file"
+group = "dev.redicloud"
 
 dependencies {
     compileOnly(project(":utils"))

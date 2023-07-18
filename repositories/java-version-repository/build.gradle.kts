@@ -1,4 +1,4 @@
-group = "dev.redicloud.repository.java.version"
+group = "dev.redicloud.repository"
 
 dependencies {
     compileOnly(project(":api"))

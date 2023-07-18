@@ -1,6 +1,6 @@
 import dev.redicloud.libloader.plugin.LibraryLoader
 
-group = "dev.redicloud.console"
+group = "dev.redicloud"
 
 repositories {
     mavenCentral()

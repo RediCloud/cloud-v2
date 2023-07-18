@@ -2,7 +2,7 @@ import dev.redicloud.libloader.plugin.LibraryLoader
 
 apply(plugin = "dev.redicloud.libloader")
 
-group = "dev.redicloud.service.node"
+group = "dev.redicloud.service"
 
 the(LibraryLoader.LibraryLoaderConfig::class).mainClass.set("dev.redicloud.service.node.bootstrap.NodeBootstrapKt")
 
