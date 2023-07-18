@@ -5,11 +5,11 @@ import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.CachedServiceRepository
 import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
-import dev.redicloud.api.repositories.service.node.ICloudNode
-import dev.redicloud.api.repositories.service.node.ICloudNodeRepository
+import dev.redicloud.api.service.node.ICloudNode
+import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.repository.service.ServiceRepository
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import kotlin.time.Duration.Companion.minutes
 
 class NodeRepository(

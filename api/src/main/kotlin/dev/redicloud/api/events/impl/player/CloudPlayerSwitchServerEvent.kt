@@ -1,6 +1,6 @@
 package dev.redicloud.api.events.impl.player
 
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 import java.util.UUID
 
 class CloudPlayerSwitchServerEvent(

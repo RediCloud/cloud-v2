@@ -1,10 +1,10 @@
 package dev.redicloud.repository.server.version.handler.defaults
 
-import dev.redicloud.api.repositories.java.ICloudJavaVersionRepository
-import dev.redicloud.api.repositories.version.ICloudServerVersion
-import dev.redicloud.api.repositories.version.ICloudServerVersionRepository
-import dev.redicloud.api.repositories.version.ICloudServerVersionTypeRepository
-import dev.redicloud.api.repositories.version.IServerVersion
+import dev.redicloud.api.java.ICloudJavaVersionRepository
+import dev.redicloud.api.version.ICloudServerVersion
+import dev.redicloud.api.version.ICloudServerVersionRepository
+import dev.redicloud.api.version.ICloudServerVersionTypeRepository
+import dev.redicloud.api.version.IServerVersion
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.utils.toConsoleValue
@@ -14,7 +14,7 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.version.requester.PaperMcApiRequester
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.*
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 import khttp.get
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

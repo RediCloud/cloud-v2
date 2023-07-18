@@ -1,6 +1,6 @@
 package dev.redicloud.api.packets
 
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 import java.util.*
 
 abstract class AbstractPacket {

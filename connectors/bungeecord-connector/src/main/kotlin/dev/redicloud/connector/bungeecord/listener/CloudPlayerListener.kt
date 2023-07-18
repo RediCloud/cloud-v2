@@ -5,8 +5,8 @@ import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.defaultScope
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.md_5.bungee.api.ProxyServer

@@ -2,11 +2,9 @@ package dev.redicloud.cluster.file.packet
 
 import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.api.packets.IPacketManager
-import dev.redicloud.utils.toCloudFile
+import dev.redicloud.api.utils.toCloudFile
 import dev.redicloud.utils.unzipFile
 import kotlinx.coroutines.runBlocking
-import java.util.concurrent.TimeUnit
-import kotlin.time.Duration.Companion.seconds
 
 class UnzipPacket(
     val zipLocation: String,

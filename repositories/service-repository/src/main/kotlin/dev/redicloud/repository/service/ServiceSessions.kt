@@ -1,7 +1,7 @@
 package dev.redicloud.repository.service
 
-import dev.redicloud.api.repositories.service.ICloudServiceSession
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ICloudServiceSession
+import dev.redicloud.api.service.ServiceId
 import java.util.*
 
 class ServiceSessions {

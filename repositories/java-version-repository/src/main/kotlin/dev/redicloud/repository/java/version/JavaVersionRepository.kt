@@ -1,17 +1,17 @@
 package dev.redicloud.repository.java.version
 
 import com.google.gson.reflect.TypeToken
-import dev.redicloud.api.repositories.java.ICloudJavaVersionRepository
-import dev.redicloud.api.repositories.java.ICloudJavaVersion
-import dev.redicloud.api.repositories.java.ICloudJavaVersionInfo
+import dev.redicloud.api.java.ICloudJavaVersionRepository
+import dev.redicloud.api.java.ICloudJavaVersion
+import dev.redicloud.api.java.ICloudJavaVersionInfo
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import java.io.File
 import java.util.*
 import kotlin.time.Duration.Companion.minutes

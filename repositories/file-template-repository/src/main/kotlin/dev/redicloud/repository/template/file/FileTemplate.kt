@@ -1,8 +1,8 @@
 package dev.redicloud.repository.template.file
 
-import dev.redicloud.api.repositories.template.file.ICloudFileTemplate
+import dev.redicloud.api.template.file.ICloudFileTemplate
 import dev.redicloud.cache.IClusterCacheObject
-import dev.redicloud.utils.TEMPLATE_FOLDER
+import dev.redicloud.api.utils.TEMPLATE_FOLDER
 import java.io.File
 import java.util.*
 

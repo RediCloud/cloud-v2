@@ -1,6 +1,6 @@
 {
-  "id": "redicloud-connector-velocity",
-  "name": "redicloud-connector-velocity",
+  "id": "redicloud-connector",
+  "name": "redicloud-connector",
   "version": "2.0.0-SNAPSHOT",
   "url": "https://redicloud.dev",
   "authors": [

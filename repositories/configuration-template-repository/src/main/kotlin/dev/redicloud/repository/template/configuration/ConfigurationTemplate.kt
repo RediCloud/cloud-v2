@@ -1,9 +1,8 @@
 package dev.redicloud.repository.template.configuration
 
-import dev.redicloud.api.repositories.template.configuration.ICloudConfigurationTemplate
+import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import dev.redicloud.cache.IClusterCacheObject
-import dev.redicloud.utils.ProcessConfiguration
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 import java.util.*
 import kotlin.time.Duration.Companion.seconds
 

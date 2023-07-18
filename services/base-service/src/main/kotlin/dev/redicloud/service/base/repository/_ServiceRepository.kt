@@ -7,8 +7,8 @@ import dev.redicloud.repository.service.CachedServiceRepository
 import dev.redicloud.repository.service.ServiceRepository
 import dev.redicloud.service.base.packets.ServicePingPacket
 import dev.redicloud.service.base.packets.ServicePingResponse
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import kotlin.time.Duration.Companion.seconds
 
 suspend fun ServerRepository.pingService(serviceId: ServiceId): Long {

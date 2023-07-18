@@ -1,11 +1,11 @@
 package dev.redicloud.repository.service
 
-import dev.redicloud.api.repositories.service.ICloudService
+import dev.redicloud.api.service.ICloudService
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import org.redisson.api.RList
 import kotlin.reflect.KClass

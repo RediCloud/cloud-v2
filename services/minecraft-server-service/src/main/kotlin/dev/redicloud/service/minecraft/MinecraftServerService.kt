@@ -1,8 +1,9 @@
 package dev.redicloud.service.minecraft
 
-import dev.redicloud.api.repositories.service.server.CloudServerState
-import dev.redicloud.api.repositories.template.file.ICloudFileTemplateRepository
-import dev.redicloud.api.repositories.version.ICloudServerVersionTypeRepository
+import com.google.inject.name.Names
+import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.template.file.ICloudFileTemplateRepository
+import dev.redicloud.api.version.ICloudServerVersionTypeRepository
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.CloudServer
@@ -14,8 +15,8 @@ import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
 import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
 import dev.redicloud.service.minecraft.repositories.connect
 import dev.redicloud.service.minecraft.tasks.CloudServerInfoTask
-import dev.redicloud.utils.DATABASE_JSON
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.utils.DATABASE_JSON
+import dev.redicloud.api.service.ServiceId
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -26,6 +27,7 @@ abstract class MinecraftServerService<T> : BaseService(
 ) {
 
 
+    private val hostServiceId: ServiceId
     final override val fileTemplateRepository: AbstractFileTemplateRepository
     final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
     abstract val serverPlayerProvider: IServerPlayerProvider
@@ -35,11 +37,8 @@ abstract class MinecraftServerService<T> : BaseService(
     init {
         fileTemplateRepository = BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository, packetManager)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(this.databaseConnection, null, packetManager)
-
-        runBlocking {
-            registerDefaults()
-            serverRepository.connect(serviceId)
-        }
+        hostServiceId = runBlocking { serverRepository.connect(serviceId) }
+        registerDefaults()
     }
 
     open fun onEnable() = runBlocking {
@@ -80,7 +79,8 @@ abstract class MinecraftServerService<T> : BaseService(
 
     override fun configure() {
         super.configure()
-        bind(ICloudFileTemplateRepository::class).to(fileTemplateRepository)
-        bind(ICloudServerVersionTypeRepository::class).to(serverVersionTypeRepository)
+        bind(ICloudFileTemplateRepository::class).toInstance(fileTemplateRepository)
+        bind(ICloudServerVersionTypeRepository::class).toInstance(serverVersionTypeRepository)
+        bind(ServiceId::class).annotatedWith(Names.named("hostServiceId")).toInstance(hostServiceId)
     }
 }

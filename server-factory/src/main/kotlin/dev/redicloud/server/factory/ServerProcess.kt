@@ -1,6 +1,6 @@
 package dev.redicloud.server.factory
 
-import dev.redicloud.api.repositories.service.server.CloudServerState
+import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.service.base.packets.CloudServiceShutdownPacket
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.console.utils.ScreenProcessHandler
@@ -10,17 +10,17 @@ import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
-import dev.redicloud.api.repositories.version.IServerVersionHandler
+import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.server.factory.screens.ServerScreen
 import dev.redicloud.server.factory.utils.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
-import dev.redicloud.utils.CLOUD_PATH
-import dev.redicloud.utils.LIB_FOLDER
-import dev.redicloud.utils.ProcessConfiguration
+import dev.redicloud.api.utils.CLOUD_PATH
+import dev.redicloud.api.utils.LIB_FOLDER
+import dev.redicloud.api.utils.ProcessConfiguration
 import dev.redicloud.utils.findFreePort
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.seconds
 

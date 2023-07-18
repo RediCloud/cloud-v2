@@ -3,8 +3,8 @@ package dev.redicloud.service.base.parser
 import dev.redicloud.api.commands.ICommandArgumentParser
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.isServiceId
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.isServiceId
 import kotlinx.coroutines.runBlocking
 
 class CloudNodeParser(private val nodeRepository: NodeRepository) : ICommandArgumentParser<CloudNode> {

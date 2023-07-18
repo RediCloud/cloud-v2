@@ -6,8 +6,8 @@ import dev.redicloud.cache.packets.CacheResetPacket
 import dev.redicloud.cache.packets.CacheUpdatePacket
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.gson.gson
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass

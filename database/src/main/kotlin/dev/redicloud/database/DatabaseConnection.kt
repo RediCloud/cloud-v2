@@ -2,11 +2,10 @@ package dev.redicloud.database
 
 import dev.redicloud.database.codec.GsonCodec
 import dev.redicloud.database.config.DatabaseConfiguration
-import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.database.repository.DatabaseRepository
 import dev.redicloud.logging.LogManager
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
 import org.redisson.client.codec.BaseCodec

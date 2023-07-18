@@ -7,13 +7,13 @@ import dev.redicloud.api.events.IEventManager
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.cache.tasks.InvalidCacheTask
 import dev.redicloud.api.packets.PacketListener
-import dev.redicloud.api.repositories.java.ICloudJavaVersionRepository
-import dev.redicloud.api.repositories.player.ICloudPlayerRepository
-import dev.redicloud.api.repositories.service.node.ICloudNodeRepository
-import dev.redicloud.api.repositories.service.server.ICloudServerRepository
-import dev.redicloud.api.repositories.template.configuration.ICloudConfigurationTemplateRepository
-import dev.redicloud.api.repositories.version.ICloudServerVersionRepository
-import dev.redicloud.api.repositories.version.ICloudServerVersionTypeRepository
+import dev.redicloud.api.java.ICloudJavaVersionRepository
+import dev.redicloud.api.player.ICloudPlayerRepository
+import dev.redicloud.api.service.node.ICloudNodeRepository
+import dev.redicloud.api.service.server.ICloudServerRepository
+import dev.redicloud.api.template.configuration.ICloudConfigurationTemplateRepository
+import dev.redicloud.api.version.ICloudServerVersionRepository
+import dev.redicloud.api.version.ICloudServerVersionTypeRepository
 import dev.redicloud.commands.api.PARSERS
 import dev.redicloud.commands.api.SUGGESTERS
 import dev.redicloud.repository.node.NodeRepository
@@ -33,7 +33,7 @@ import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.api.repositories.version.IServerVersionHandler
+import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.logging.Logger
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
@@ -50,8 +50,8 @@ import dev.redicloud.utils.InjectorModule
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.ioScope
 import dev.redicloud.utils.loadProperties
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -220,6 +220,7 @@ abstract class BaseService(
         bind(ICloudConfigurationTemplateRepository::class).toInstance(configurationTemplateRepository)
         bind(ICloudJavaVersionRepository::class).toInstance(javaVersionRepository)
         bind(Logger::class).annotatedWith(Names.named("base")).toInstance(LOGGER)
+        bind(ServiceId::class).annotatedWith(Names.named("this")).toInstance(serviceId)
     }
 
 }

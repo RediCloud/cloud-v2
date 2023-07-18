@@ -1,6 +1,6 @@
 package dev.redicloud.service.node.console
 
-import dev.redicloud.api.repositories.service.server.CloudServerState
+import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.api.events.impl.server.CloudServerConnectedEvent
 import dev.redicloud.api.events.impl.server.CloudServerDeleteEvent
 import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent

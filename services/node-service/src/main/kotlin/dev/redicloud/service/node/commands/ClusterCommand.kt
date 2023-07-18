@@ -10,7 +10,7 @@ import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
 import dev.redicloud.service.node.NodeService
 import dev.redicloud.service.node.repository.node.suspendNode
 import dev.redicloud.utils.*
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking

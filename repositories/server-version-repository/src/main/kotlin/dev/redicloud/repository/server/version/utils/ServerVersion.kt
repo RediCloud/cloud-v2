@@ -1,7 +1,7 @@
 package dev.redicloud.repository.server.version.utils
 
 import com.google.gson.reflect.TypeToken
-import dev.redicloud.api.repositories.version.IServerVersion
+import dev.redicloud.api.version.IServerVersion
 import dev.redicloud.utils.getTextOfAPIWithFallback
 import dev.redicloud.utils.gson.gson
 

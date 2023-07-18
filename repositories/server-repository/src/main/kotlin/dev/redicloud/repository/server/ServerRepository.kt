@@ -12,11 +12,11 @@ import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepo
 import dev.redicloud.api.events.impl.server.CloudServerRegisteredEvent
 import dev.redicloud.api.events.impl.server.CloudServerStateChangeEvent
 import dev.redicloud.api.events.listen
-import dev.redicloud.api.repositories.service.server.*
+import dev.redicloud.api.service.server.*
 import dev.redicloud.repository.service.ServiceRepository
 import dev.redicloud.utils.defaultScope
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.minutes
 

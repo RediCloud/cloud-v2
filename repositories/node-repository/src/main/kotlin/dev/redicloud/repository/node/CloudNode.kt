@@ -1,10 +1,10 @@
 package dev.redicloud.repository.node
 
-import dev.redicloud.api.repositories.service.node.ICloudNode
+import dev.redicloud.api.service.node.ICloudNode
 import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.repository.service.CloudService
 import dev.redicloud.repository.service.ServiceSessions
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 
 class CloudNode(
     serviceId: ServiceId,

@@ -6,7 +6,8 @@ import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.api.repositories.version.IServerVersionHandler
+import dev.redicloud.api.version.IServerVersionHandler
+import dev.redicloud.api.utils.CONNECTORS_FOLDER
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.service.base.suggester.CloudConnectorFileNameSelector
 import dev.redicloud.service.base.suggester.CloudServerVersionTypeSuggester

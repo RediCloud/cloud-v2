@@ -2,7 +2,7 @@ package dev.redicloud.service.base.suggester
 
 import dev.redicloud.api.commands.CommandContext
 import dev.redicloud.api.commands.AbstractCommandSuggester
-import dev.redicloud.api.repositories.version.IServerVersionHandler
+import dev.redicloud.api.version.IServerVersionHandler
 
 class ServerVersionHandlerSuggester : AbstractCommandSuggester() {
 

@@ -2,7 +2,7 @@ package dev.redicloud.service.node.commands
 
 import dev.redicloud.api.commands.*
 import dev.redicloud.api.commands.BooleanSuggester
-import dev.redicloud.api.repositories.service.server.CloudServerState
+import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.node.CloudNode

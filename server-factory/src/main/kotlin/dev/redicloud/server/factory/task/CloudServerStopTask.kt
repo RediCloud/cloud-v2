@@ -1,6 +1,6 @@
 package dev.redicloud.server.factory.task
 
-import dev.redicloud.api.repositories.service.server.CloudServerState
+import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
@@ -9,7 +9,7 @@ import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepo
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.tasks.CloudTask
 import dev.redicloud.utils.MultiAsyncAction
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 
 class CloudServerStopTask(
     private val serviceId: ServiceId,

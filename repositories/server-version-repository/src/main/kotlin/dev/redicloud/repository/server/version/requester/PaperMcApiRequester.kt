@@ -1,7 +1,7 @@
 package dev.redicloud.repository.server.version.requester
 
-import dev.redicloud.api.repositories.version.ICloudServerVersionType
-import dev.redicloud.api.repositories.version.IServerVersion
+import dev.redicloud.api.version.ICloudServerVersionType
+import dev.redicloud.api.version.IServerVersion
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.gson.gson
 import khttp.get

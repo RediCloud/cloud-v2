@@ -6,7 +6,7 @@ import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.api.repositories.version.IServerVersionHandler
+import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.utils.EasyCache
 import kotlin.time.Duration.Companion.seconds

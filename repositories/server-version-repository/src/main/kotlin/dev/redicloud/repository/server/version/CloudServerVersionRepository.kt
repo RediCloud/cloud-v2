@@ -1,7 +1,7 @@
 package dev.redicloud.repository.server.version
 
 import com.google.gson.reflect.TypeToken
-import dev.redicloud.api.repositories.version.*
+import dev.redicloud.api.version.*
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
@@ -12,7 +12,7 @@ import dev.redicloud.utils.SingleCache
 import dev.redicloud.utils.getTextOfAPIWithFallback
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceType
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
 

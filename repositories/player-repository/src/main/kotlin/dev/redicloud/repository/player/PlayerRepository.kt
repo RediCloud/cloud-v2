@@ -3,13 +3,13 @@ package dev.redicloud.repository.player
 import dev.redicloud.api.events.impl.player.CloudPlayerConnectedEvent
 import dev.redicloud.api.events.impl.player.CloudPlayerDisconnectEvent
 import dev.redicloud.api.events.impl.player.CloudPlayerSwitchServerEvent
-import dev.redicloud.api.repositories.player.ICloudPlayer
-import dev.redicloud.api.repositories.player.ICloudPlayerRepository
+import dev.redicloud.api.player.ICloudPlayer
+import dev.redicloud.api.player.ICloudPlayerRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceType
 import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
 

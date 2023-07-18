@@ -7,7 +7,7 @@ import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.service.minecraft.ProxyServerService
 import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
 import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 import kotlinx.coroutines.runBlocking
 import net.md_5.bungee.api.ProxyServer
 import net.md_5.bungee.api.config.ServerInfo

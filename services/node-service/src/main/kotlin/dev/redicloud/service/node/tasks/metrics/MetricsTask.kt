@@ -8,7 +8,7 @@ import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.tasks.CloudTask
 import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.gson
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 import java.util.*
 
 class MetricsTask(

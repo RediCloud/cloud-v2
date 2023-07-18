@@ -7,7 +7,7 @@ import dev.redicloud.console.utils.Screen
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.service.base.packets.ScreenCommandPacket
 import dev.redicloud.utils.defaultScope
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 import kotlinx.coroutines.launch
 
 class ServerScreen(

@@ -4,7 +4,7 @@ import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
 import dev.redicloud.tasks.CloudTask
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 
 class CloudServerInfoTask(
     private val serviceId: ServiceId,

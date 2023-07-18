@@ -5,7 +5,7 @@ import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.events.listen
 import dev.redicloud.service.minecraft.ProxyServerService
 import dev.redicloud.utils.defaultScope
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.launch
 
 class CloudServerListener(

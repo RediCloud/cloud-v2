@@ -1,13 +1,13 @@
 package dev.redicloud.repository.template.file
 
-import dev.redicloud.api.repositories.template.file.ICloudFileTemplate
-import dev.redicloud.api.repositories.template.file.ICloudFileTemplateRepository
+import dev.redicloud.api.template.file.ICloudFileTemplate
+import dev.redicloud.api.template.file.ICloudFileTemplateRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.utils.gson.gsonInterfaceFactory
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceType
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
 

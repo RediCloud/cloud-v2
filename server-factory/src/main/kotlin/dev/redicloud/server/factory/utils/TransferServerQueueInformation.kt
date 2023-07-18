@@ -1,6 +1,6 @@
 package dev.redicloud.server.factory.utils
 
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 
 data class TransferServerQueueInformation(
     val serverId: ServiceId,

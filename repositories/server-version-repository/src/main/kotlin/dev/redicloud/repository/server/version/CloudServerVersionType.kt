@@ -1,6 +1,7 @@
 package dev.redicloud.repository.server.version
 
-import dev.redicloud.api.repositories.version.ICloudServerVersionType
+import dev.redicloud.api.version.ICloudServerVersionType
+import dev.redicloud.api.utils.CONNECTORS_FOLDER
 import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
@@ -33,7 +34,8 @@ class CloudServerVersionType(
 
     override fun getParsedConnectorFile(nodeFolder: Boolean): File {
         return if (nodeFolder) {
-            File(CONNECTORS_FOLDER.getFile(), connectorPluginName
+            File(
+                CONNECTORS_FOLDER.getFile(), connectorPluginName
                 .replace("%cloud_version%", CLOUD_VERSION)
                 .replace("%build_number%", BUILD_NUMBER)
             )

@@ -1,8 +1,8 @@
 
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import dev.redicloud.api.repositories.version.ICloudServerVersion
-import dev.redicloud.api.repositories.version.IServerVersion
+import dev.redicloud.api.version.ICloudServerVersion
+import dev.redicloud.api.version.IServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.requester.BuildsResponse
 import dev.redicloud.repository.server.version.requester.PaperMcApiRequester

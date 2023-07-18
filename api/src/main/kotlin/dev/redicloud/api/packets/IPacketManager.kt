@@ -1,7 +1,7 @@
 package dev.redicloud.api.packets
 
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import kotlin.reflect.KClass
 
 interface IPacketManager {

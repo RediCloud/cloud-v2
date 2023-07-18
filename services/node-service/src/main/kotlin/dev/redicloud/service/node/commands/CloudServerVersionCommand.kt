@@ -11,7 +11,7 @@ import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
-import dev.redicloud.api.repositories.version.IServerVersionHandler
+import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.service.base.suggester.*

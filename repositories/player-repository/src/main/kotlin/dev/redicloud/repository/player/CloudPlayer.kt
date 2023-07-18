@@ -1,9 +1,9 @@
 package dev.redicloud.repository.player
 
-import dev.redicloud.api.repositories.player.ICloudPlayer
+import dev.redicloud.api.player.ICloudPlayer
 import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.repository.server.version.utils.ServerVersion
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 import java.util.UUID
 
 class CloudPlayer(

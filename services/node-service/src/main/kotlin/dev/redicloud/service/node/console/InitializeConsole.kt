@@ -1,5 +1,7 @@
 package dev.redicloud.service.node.console
 
+import dev.redicloud.api.utils.DATABASE_JSON
+import dev.redicloud.api.utils.NODE_JSON
 import dev.redicloud.console.Console
 import dev.redicloud.console.jline.ConsoleQuestion
 import dev.redicloud.console.jline.ConsoleQuestionCondition
@@ -15,8 +17,8 @@ import dev.redicloud.repository.java.version.isJavaVersionNotSupported
 import dev.redicloud.repository.java.version.isJavaVersionSupported
 import dev.redicloud.service.node.NodeConfiguration
 import dev.redicloud.utils.*
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import java.util.*
 import java.util.logging.Filter

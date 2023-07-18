@@ -2,7 +2,7 @@ package dev.redicloud.repository.service
 
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 import kotlinx.coroutines.runBlocking
 import org.redisson.api.RList
 

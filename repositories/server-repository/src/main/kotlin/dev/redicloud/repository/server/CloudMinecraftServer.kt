@@ -1,10 +1,10 @@
 package dev.redicloud.repository.server
 
-import dev.redicloud.api.repositories.service.server.CloudServerState
-import dev.redicloud.api.repositories.service.server.ICloudMinecraftServer
+import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.service.server.ICloudMinecraftServer
 import dev.redicloud.repository.service.ServiceSessions
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 
 class CloudMinecraftServer(
     serviceId: ServiceId,

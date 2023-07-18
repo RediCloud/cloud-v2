@@ -4,7 +4,7 @@ import dev.redicloud.api.events.*
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.utils.gson.gson
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.reflect.KClass

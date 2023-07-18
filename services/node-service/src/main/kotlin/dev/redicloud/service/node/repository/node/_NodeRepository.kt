@@ -7,7 +7,7 @@ import dev.redicloud.repository.service.ServiceSessions
 import dev.redicloud.api.events.impl.node.NodeConnectEvent
 import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
 import dev.redicloud.service.node.NodeService
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.utils.toMb
 
 val LOGGER = LogManager.logger(NodeRepository::class)

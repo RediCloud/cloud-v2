@@ -2,6 +2,8 @@ package dev.redicloud.console
 
 import dev.redicloud.api.commands.CommandResponseType
 import dev.redicloud.api.events.IEventManager
+import dev.redicloud.api.utils.CONSOLE_HISTORY_FILE
+import dev.redicloud.api.utils.LOG_FOLDER
 import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.commands.ConsoleCommandManager
 import dev.redicloud.console.events.ConsoleRunEvent

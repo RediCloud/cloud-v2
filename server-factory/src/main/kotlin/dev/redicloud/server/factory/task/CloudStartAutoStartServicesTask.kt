@@ -1,13 +1,13 @@
 package dev.redicloud.server.factory.task
 
-import dev.redicloud.api.repositories.service.server.CloudServerState
+import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.server.factory.utils.ServerQueueInformation
 import dev.redicloud.tasks.CloudTask
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 import java.util.UUID
 
 class CloudStartAutoStartServicesTask(

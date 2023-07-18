@@ -1,6 +1,6 @@
 package dev.redicloud.repository.java.version
 
-import dev.redicloud.api.repositories.java.ICloudJavaVersionInfo
+import dev.redicloud.api.java.ICloudJavaVersionInfo
 
 class JavaVersionInfo(
     override val major: Int,

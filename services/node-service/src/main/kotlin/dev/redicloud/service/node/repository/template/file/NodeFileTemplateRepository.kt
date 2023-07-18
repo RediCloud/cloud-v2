@@ -2,7 +2,11 @@ package dev.redicloud.service.node.repository.template.file
 
 import com.jcraft.jsch.ChannelSftp
 import com.jcraft.jsch.Session
-import dev.redicloud.api.repositories.template.file.ICloudFileTemplate
+import dev.redicloud.api.template.file.ICloudFileTemplate
+import dev.redicloud.api.utils.STORAGE_FOLDER
+import dev.redicloud.api.utils.TEMPLATE_FOLDER
+import dev.redicloud.api.utils.TEMP_FILE_TRANSFER_FOLDER
+import dev.redicloud.api.utils.toUniversalPath
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
@@ -10,7 +14,7 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.utils.*
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 import java.io.File
 import java.util.*
 

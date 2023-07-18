@@ -1,9 +1,9 @@
 package dev.redicloud.repository.service
 
-import dev.redicloud.api.repositories.service.ICloudService
-import dev.redicloud.api.repositories.service.ICloudServiceSession
+import dev.redicloud.api.service.ICloudService
+import dev.redicloud.api.service.ICloudServiceSession
 import dev.redicloud.cache.IClusterCacheObject
-import dev.redicloud.utils.service.ServiceId
+import dev.redicloud.api.service.ServiceId
 
 abstract class CloudService(
     override val serviceId: ServiceId,

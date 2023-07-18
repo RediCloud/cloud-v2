@@ -7,8 +7,8 @@ import dev.redicloud.api.packets.PacketListener
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.gson.fixKotlinAnnotations
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.*
 import org.redisson.api.RTopic
 import org.redisson.api.listener.MessageListener

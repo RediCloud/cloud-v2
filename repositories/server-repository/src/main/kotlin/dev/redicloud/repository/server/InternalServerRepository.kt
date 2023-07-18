@@ -1,12 +1,12 @@
 package dev.redicloud.repository.server
 
-import dev.redicloud.api.repositories.service.server.CloudServerState
-import dev.redicloud.api.repositories.service.server.ICloudServer
+import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.service.server.ICloudServer
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.CachedServiceRepository
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.minutes
 

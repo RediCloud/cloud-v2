@@ -2,9 +2,12 @@ package dev.redicloud.server.factory
 
 import com.jcraft.jsch.ChannelSftp
 import com.jcraft.jsch.Session
-import dev.redicloud.api.repositories.service.server.CloudServerState
+import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.api.events.impl.server.CloudServerDeleteEvent
 import dev.redicloud.api.events.impl.server.CloudServerTransferredEvent
+import dev.redicloud.api.utils.STATIC_FOLDER
+import dev.redicloud.api.utils.TEMP_FILE_TRANSFER_FOLDER
+import dev.redicloud.api.utils.toUniversalPath
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.console.Console
 import dev.redicloud.database.DatabaseConnection
@@ -29,8 +32,8 @@ import dev.redicloud.server.factory.screens.ServerScreenSuggester
 import dev.redicloud.server.factory.utils.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.*
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.redisson.api.RList

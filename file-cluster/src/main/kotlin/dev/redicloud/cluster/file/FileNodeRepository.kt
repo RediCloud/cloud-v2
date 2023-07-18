@@ -1,13 +1,13 @@
 package dev.redicloud.cluster.file
 
-import dev.redicloud.api.repositories.service.file.IFileNode
-import dev.redicloud.api.repositories.service.file.IFileNodeRepository
+import dev.redicloud.api.service.file.IFileNode
+import dev.redicloud.api.service.file.IFileNodeRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.CachedServiceRepository
 import dev.redicloud.repository.service.ServiceRepository
-import dev.redicloud.utils.service.ServiceId
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import kotlin.time.Duration.Companion.minutes
 
 class FileNodeRepository(

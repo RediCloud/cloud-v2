@@ -1,8 +1,5 @@
 package dev.redicloud.service.node
 
-import com.google.inject.AbstractModule
-import com.google.inject.Guice
-import com.google.inject.Guice.createInjector
 import dev.redicloud.api.commands.ICommand
 import dev.redicloud.api.commands.ICommandManager
 import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
@@ -12,7 +9,7 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.api.repositories.version.IServerVersionHandler
+import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.repository.server.version.task.CloudServerVersionUpdateTask
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.server.factory.task.*
@@ -20,8 +17,8 @@ import dev.redicloud.service.base.BaseService
 import dev.redicloud.api.events.impl.node.NodeConnectEvent
 import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
 import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
-import dev.redicloud.api.repositories.template.file.ICloudFileTemplateRepository
-import dev.redicloud.api.repositories.version.ICloudServerVersionTypeRepository
+import dev.redicloud.api.template.file.ICloudFileTemplateRepository
+import dev.redicloud.api.version.ICloudServerVersionTypeRepository
 import dev.redicloud.repository.server.version.handler.defaults.PaperMcServerVersionHandler
 import dev.redicloud.repository.server.version.handler.defaults.URLServerVersionHandler
 import dev.redicloud.service.node.console.NodeConsole
@@ -32,7 +29,7 @@ import dev.redicloud.service.node.tasks.node.NodeChooseMasterTask
 import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
 import dev.redicloud.service.node.tasks.metrics.MetricsTask
-import dev.redicloud.utils.TEMP_FOLDER
+import dev.redicloud.api.utils.TEMP_FOLDER
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds

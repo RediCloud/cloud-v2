@@ -5,7 +5,7 @@ import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.packets.PacketManager
-import dev.redicloud.utils.service.ServiceType
+import dev.redicloud.api.service.ServiceType
 import org.redisson.client.codec.BaseCodec
 import kotlin.reflect.KClass
 import kotlin.time.Duration
