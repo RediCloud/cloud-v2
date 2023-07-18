@@ -136,7 +136,7 @@ abstract class BaseService(
     }
 
     protected fun initApi() {
-        LOGGER.info("Initializing RediCloud API!")
+        if (serviceId.type.isServer()) LOGGER.info("Initializing RediCloud API!")
         injector = Guice.createInjector(this)
     }
 
