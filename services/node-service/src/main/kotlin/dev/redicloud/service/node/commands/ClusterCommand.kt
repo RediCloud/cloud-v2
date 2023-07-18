@@ -32,7 +32,7 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
                     actor.sendMessage("§8> §a${if (node.master) node.identifyName() + " §8(§6master§8)" else node.identifyName()}")
                     actor.sendMessage("   - Status§8: %hc%${
                         if (node.suspended) "§4● §8(§fsuspended§8)"
-                        else if (node.suspended) "§2● §8(§fconnected§8)"
+                        else if (node.connected) "§2● §8(§fconnected§8)"
                         else "§c● §8(§fdisconnected§8)"
                     }")
                     actor.sendMessage("   - Memory§8: %hc%${node.currentMemoryUsage} §8/ %hc%${node.maxMemory}")
