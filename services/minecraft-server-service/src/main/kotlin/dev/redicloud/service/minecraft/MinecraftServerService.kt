@@ -81,6 +81,6 @@ abstract class MinecraftServerService<T> : BaseService(
         super.configure()
         bind(ICloudFileTemplateRepository::class).toInstance(fileTemplateRepository)
         bind(ICloudServerVersionTypeRepository::class).toInstance(serverVersionTypeRepository)
-        bind(ServiceId::class).annotatedWith(Names.named("hostServiceId")).toInstance(hostServiceId)
+        bind(ServiceId::class).annotatedWith(Names.named("host")).toInstance(hostServiceId)
     }
 }
