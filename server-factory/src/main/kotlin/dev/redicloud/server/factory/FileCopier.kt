@@ -22,11 +22,14 @@ class FileCopier(
     private val snapshot: StartDataSnapshot
 ) {
 
+    companion object {
+        private val logger = LogManager.logger(FileCopier::class)
+    }
+
     val serviceId = cloudServer.serviceId
     val configurationTemplate = serverProcess.configurationTemplate
     val templates: List<FileTemplate>
     val workDirectory: File
-    private val logger = LogManager.logger(FileCopier::class)
 
     init {
         // get templates by given configuration template and collect also inherited templates

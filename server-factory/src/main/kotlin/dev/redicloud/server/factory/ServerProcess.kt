@@ -40,12 +40,12 @@ class ServerProcess(
     var process: Process? = null
     var handler: ScreenProcessHandler? = null
     var processConfiguration: ProcessConfiguration? = null
-    private val logger = LogManager.logger(ServerProcess::class)
     internal lateinit var fileCopier: FileCopier
     internal var cloudServer: CloudServer? = null
     internal var stopped = false
 
     companion object {
+        private val logger = LogManager.logger(ServerProcess::class)
         val SERVER_STOP_TIMEOUT = System.getProperty("redicloud.server.stop.timeout", "20").toInt()
     }
 

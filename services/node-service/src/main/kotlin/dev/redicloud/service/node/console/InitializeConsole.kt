@@ -28,7 +28,10 @@ class InitializeConsole() : Console(
     "unknown", null, logLevel = getLogLevelByProperty() ?: Level.SEVERE, uninstallAnsiOnClose = false
 ) {
 
-    private val logger = LogManager.logger(this)
+    companion object {
+        private val logger = LogManager.logger(InitializeConsole::class)
+    }
+
     var firstStartDetected = false
 
     private val nodeNameQuestion = ConsoleQuestion(

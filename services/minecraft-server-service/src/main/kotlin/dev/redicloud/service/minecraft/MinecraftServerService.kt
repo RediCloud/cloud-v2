@@ -26,13 +26,15 @@ abstract class MinecraftServerService<T> : BaseService(
     ServiceId.fromString(System.getenv("RC_SERVICE_ID"))
 ) {
 
+    companion object {
+        private val logger = LogManager.logger(MinecraftServerService::class)
+    }
 
     private val hostServiceId: ServiceId
     final override val fileTemplateRepository: AbstractFileTemplateRepository
     final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
     abstract val serverPlayerProvider: IServerPlayerProvider
     abstract val screenProvider: AbstractScreenProvider
-    val logger = LogManager.Companion.logger(MinecraftServerService::class)
 
     init {
         fileTemplateRepository = BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository, packetManager)

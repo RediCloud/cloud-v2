@@ -58,6 +58,10 @@ class ServerFactory(
     private val fileCluster: FileCluster
 ) {
 
+    companion object {
+        private val logger = LogManager.logger(ServerFactory::class)
+    }
+
     internal val hostingId = databaseConnection.serviceId
 
     internal val startQueue: RList<ServerQueueInformation> =
@@ -69,7 +73,6 @@ class ServerFactory(
     internal val transferQueue: RList<TransferServerQueueInformation> =
         databaseConnection.getClient().getList("server-factory:queue:transfer")
     private val processes: MutableList<ServerProcess> = mutableListOf()
-    private val logger = LogManager.logger(ServerFactory::class)
     private val idLock = databaseConnection.getClient().getLock("server-factory:id-lock")
     var shutdown = false
 

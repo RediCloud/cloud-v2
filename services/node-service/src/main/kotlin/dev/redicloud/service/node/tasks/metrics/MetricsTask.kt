@@ -19,7 +19,7 @@ class MetricsTask(
 ) : CloudTask() {
 
     companion object {
-        private val logger = LogManager.Companion.logger(MetricsTask::class)
+        private val logger = LogManager.logger(MetricsTask::class)
     }
 
     override suspend fun execute(): Boolean {
