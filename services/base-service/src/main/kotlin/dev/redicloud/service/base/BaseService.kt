@@ -53,6 +53,7 @@ import dev.redicloud.utils.loadProperties
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.template.file.ICloudFileTemplateRepository
+import dev.redicloud.api.utils.injector
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -135,7 +136,8 @@ abstract class BaseService(
     }
 
     protected fun initApi() {
-        Guice.createInjector(this)
+        LOGGER.info("Initializing RediCloud API!")
+        injector = Guice.createInjector(this)
     }
 
     fun registerDefaults() {
