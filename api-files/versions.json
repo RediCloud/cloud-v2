@@ -1,28 +1,6 @@
 [
   {
-    "uniqueId": "7d0f65a2-bc0a-4aa4-8296-ee15c0182062",
-    "typeId": "6dc3fa6b-d8ae-4e31-b40e-519b43671e5b",
-    "projectName": "bungeecord",
-    "customDownloadUrl": "https://ci.md-5.net/job/BungeeCord/lastSuccessfulBuild/artifact/bootstrap/target/BungeeCord.jar",
-    "buildId": null,
-    "version": {
-      "name": "latest",
-      "protocolId": -1,
-      "versionTypes": []
-    },
-    "javaVersionId": null,
-    "libPattern": null,
-    "patch": false,
-    "online": true,
-    "used": false,
-    "jvmArguments": [],
-    "environmentVariables": {},
-    "programmParameters": [],
-    "defaultFiles": {},
-    "fileEdits": {}
-  },
-  {
-    "uniqueId": "a0fc6d6c-7388-42ca-83e7-a42a8dccb24e",
+    "uniqueId": "feb5ffd3-cefa-5edc-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.16.5.jar",
@@ -46,7 +24,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "1094664c-45af-47b7-8310-c61480a2defc",
+    "uniqueId": "3dfeffcf-d5f5-6ff5-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.17.jar",
@@ -70,7 +48,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "162f277d-9729-4593-886b-b3a25cebd263",
+    "uniqueId": "d5bffbcc-f5d6-f9a7-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.17.1.jar",
@@ -94,7 +72,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "39da6117-65ef-465e-969b-48b75aa1caf3",
+    "uniqueId": "fbfdbfff-fabf-ef73-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.18.jar",
@@ -118,7 +96,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "9cfd0f2a-1053-4951-b406-f867d274cc0a",
+    "uniqueId": "d37fffd7-ffff-fdaf-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.18.1.jar",
@@ -142,7 +120,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "27d38ffb-475b-4506-b750-e64a7c513bcd",
+    "uniqueId": "df8d35f9-eeff-c9b5-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.18.2.jar",
@@ -166,7 +144,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "5222809c-b345-4746-8f88-7f102e915da8",
+    "uniqueId": "9f9eb771-ef2f-7ff2-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.19.jar",
@@ -190,7 +168,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "b5203c36-f685-4970-9bac-bab92f3456dc",
+    "uniqueId": "9bfe7fff-f67d-ff57-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.19.1.jar",
@@ -214,7 +192,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "9e6f9bd8-7844-4fa0-9d70-92f3e0ef8a2c",
+    "uniqueId": "e9fbee7f-bec0-a1f3-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.19.2.jar",
@@ -238,7 +216,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "e7302fd1-94cf-4ac5-98cf-9a65721a2556",
+    "uniqueId": "ffdbf1e9-e7d7-ebcf-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.19.3.jar",
@@ -262,7 +240,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "66f69497-5041-4577-9212-52a18e061c5f",
+    "uniqueId": "f5b1fdff-fb37-fff7-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.19.4.jar",
@@ -286,7 +264,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "61de1c01-3907-4070-9215-14a4af20b4d6",
+    "uniqueId": "7fad9ffb-6dfd-5fab-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.20.jar",
@@ -310,7 +288,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "bd638891-a57d-4abf-8ef2-71b2b57f83b5",
+    "uniqueId": "eb37fdaf-996d-5faf-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.20.1.jar",
@@ -334,7 +312,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "582abed8-e82c-485e-9e69-155166e57223",
+    "uniqueId": "eb37fdaf-996d-5faf-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.20.1.jar",
@@ -356,7 +334,29 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "f320554a-17c6-4f8f-b0bb-3edf2728d4cf",
+    "uniqueId": "f3777feb-effd-efbf-0000-000000000000",
+    "typeId": "6dc3fa6b-d8ae-4e31-b40e-519b43671e5b",
+    "projectName": "bungeecord",
+    "customDownloadUrl": "https://ci.md-5.net/job/BungeeCord/lastSuccessfulBuild/artifact/bootstrap/target/BungeeCord.jar",
+    "buildId": null,
+    "version": {
+      "name": "latest",
+      "protocolId": -1,
+      "versionTypes": []
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": false,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programmParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
+    "uniqueId": "15efaceb-57ff-33f4-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.8.8/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -380,7 +380,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "8ced2eec-5414-4b7c-8153-03a078dd53eb",
+    "uniqueId": "f7dbca3f-7ecd-9cff-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.9.4/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -404,7 +404,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "9ed7c5fc-97f9-4251-9d5b-04a834f5d580",
+    "uniqueId": "df67c5ce-ffbd-f3ef-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.10.2/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -428,7 +428,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "ce337c0c-23ef-4bab-a6b9-ed716bc830a9",
+    "uniqueId": "79fd9ebb-3ddf-eff7-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.11.2/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -452,7 +452,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "1a74d971-fd6e-48a9-813b-428b8e6132d3",
+    "uniqueId": "7dfec7ef-fa7c-7fff-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.12/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -476,7 +476,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "15e77ae3-3c5c-409b-bbe1-18b7e4b74adc",
+    "uniqueId": "ee9ddfdb-6bff-ed7e-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.12.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -500,7 +500,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "0078358f-b7d0-4a09-b86f-b46fa76bbff5",
+    "uniqueId": "dfff71b3-ef7e-b9f1-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.12.2/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -524,7 +524,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "833eafcb-52c2-452c-a9cc-29b2d95c7605",
+    "uniqueId": "ff3fbfeb-bfdb-e3f7-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.13/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -548,7 +548,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "ea22c796-00be-41f7-9b93-1bceb5f6af48",
+    "uniqueId": "c5fefbb9-caad-d77e-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.13.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -572,7 +572,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "235b7dad-3bb8-4a77-b96f-8ec0fc5ac056",
+    "uniqueId": "edc73fef-3fbf-feff-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.13.2/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -596,7 +596,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "61d2c664-26f3-4b61-92ec-2885b2ee5222",
+    "uniqueId": "fbfbfec1-fa7d-8f7b-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.14/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -620,7 +620,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "cf947d0e-5512-4679-8fc8-4fee0541f05c",
+    "uniqueId": "bd7fb9ee-7f7d-e65f-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.14.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -644,7 +644,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "1fbbe575-ea62-46a8-b70c-0023a67ffb55",
+    "uniqueId": "befddbff-eedd-f59f-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.14.2/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -668,7 +668,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "d4822099-a282-4773-a369-9b42527f7920",
+    "uniqueId": "5fb7feda-ffff-7fd7-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.14.3/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -692,7 +692,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "ceff1af9-dcc6-4b0d-b808-8390d5099af0",
+    "uniqueId": "ffddcf9e-aff4-7ffc-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.14.4/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -716,7 +716,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "92d80290-1f30-489a-9218-c7e57fbb5000",
+    "uniqueId": "cfeffedf-c7de-c3af-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.15/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -740,7 +740,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "d28a016c-be00-4c77-8e40-7ea974d7bc5c",
+    "uniqueId": "d56ffff9-bfaf-feaf-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.15.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -764,7 +764,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "5201d32e-7831-47c2-ae28-8a927278ad8a",
+    "uniqueId": "bfffffdb-a793-fffa-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.15.2/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -788,7 +788,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "38a26e11-d2f9-4a0a-9dc5-be59b7d2dc5b",
+    "uniqueId": "ef377757-ff17-e01f-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.16.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -812,7 +812,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "21e29f50-76fd-4e17-a17b-f2ec8195317e",
+    "uniqueId": "0dffda5f-1ffd-f78f-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.16.2/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -836,7 +836,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "f0e7c4d5-e01d-48f0-9ffc-99176b6f70b1",
+    "uniqueId": "837f7fc9-be35-bbfc-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.16.3/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -860,7 +860,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "6496ef96-ea83-4a4a-900f-f6e616dacbf6",
+    "uniqueId": "f4f3e7ff-dfee-bf15-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.16.4/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -884,7 +884,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "3598bdde-d21b-42bb-9349-d52859e5d010",
+    "uniqueId": "35fa1f79-fbfb-7fec-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.16.5/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -908,7 +908,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "3535b532-0502-4fa8-9cd7-9b1fef0d1098",
+    "uniqueId": "bff7f2ff-9a4b-edfc-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.17/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -932,7 +932,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "429f9975-ea8e-449a-b1bc-8946e63fe4b6",
+    "uniqueId": "b6eb0cb9-d1fb-7fff-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.17.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -956,7 +956,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "bd3cf06d-ee12-42e4-949c-2922484d529a",
+    "uniqueId": "f873fdab-f6ef-bffc-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.18/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -980,7 +980,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "8284e83d-97e4-4016-8e70-ff1e8db074ee",
+    "uniqueId": "e6ceebf7-7f3e-af99-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.18.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1004,7 +1004,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "55fc18b4-a8de-43fc-b0f7-e56001b7343c",
+    "uniqueId": "f33cf7fb-6ffd-98bd-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.18.2/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1028,7 +1028,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "50e8a125-59e9-47c5-988d-5b611fbe9359",
+    "uniqueId": "8d227d7c-cdcf-bcdb-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.19/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1052,7 +1052,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "8adf0466-b692-4ed7-880f-babffb105faa",
+    "uniqueId": "7eefcde4-f5fe-9bf3-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.19.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1076,7 +1076,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "8233eb74-d357-4505-910f-5174cb59a878",
+    "uniqueId": "177b86b5-bf33-f7ff-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.19.2/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1100,7 +1100,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "1252800d-23c3-4677-a709-330b69e14b78",
+    "uniqueId": "fb9bf90f-7eee-18cd-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.19.3/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1124,7 +1124,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "f0231aa2-c5ab-487b-82ba-45abeb61464c",
+    "uniqueId": "dfbbf8fc-7fec-f4ef-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.19.4/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1148,7 +1148,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "18dafb2a-ecde-4559-8fbc-80b6b8e1718d",
+    "uniqueId": "fd3affe5-bbf3-7dff-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.20/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1172,7 +1172,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "77166c5a-a7b8-4b35-8a00-1634911f4d57",
+    "uniqueId": "e73e3e9f-f5d6-0ffb-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.20.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1196,7 +1196,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "45a0ca81-a9b8-4eb4-85ee-e47d5d2618bd",
+    "uniqueId": "e73e3e9f-f5d6-0ffb-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.20.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1218,7 +1218,31 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "53cf488e-85fa-4f0e-a14c-755fa16db613",
+    "uniqueId": "377c7efd-fefd-bde6-0000-000000000000",
+    "typeId": "e0982b0f-f27f-4206-a373-ce12ad8ea333",
+    "projectName": "velocity",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/velocity/versions/3.2.0-SNAPSHOT/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "buildId": "260",
+    "version": {
+      "name": "3.2.0-SNAPSHOT",
+      "protocolId": 763,
+      "versionTypes": [
+        "VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": false,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programmParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
+    "uniqueId": "bff27e5f-4ffb-79ff-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.11/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1242,7 +1266,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "9e3267f3-2ddf-4ff2-bf1b-5ecdf5ae507d",
+    "uniqueId": "b1bbf7ff-ef70-fbf7-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.12/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1266,7 +1290,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "4ee739d9-3d1f-4c3b-baaf-34757a2a8eee",
+    "uniqueId": "3fedbfff-fafd-ff5f-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.13/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1290,7 +1314,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "11ef392b-ca78-4b9f-a459-6ac3905262fb",
+    "uniqueId": "77bdbfff-febe-efaf-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.14/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1314,7 +1338,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "5ff395d4-e6e0-4c4b-ba07-a67b11e7a49a",
+    "uniqueId": "defc3eff-fbff-8ff9-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.15/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1338,7 +1362,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "9d4009ea-1bdc-41a8-bf7b-3d2c8fa1f66c",
+    "uniqueId": "e2d7ecdf-f5f7-fdff-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.16/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1362,7 +1386,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "f58091a0-f9fa-455c-940e-9e04844016d6",
+    "uniqueId": "f7fffffb-1ff7-f2be-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.17/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1386,7 +1410,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "e6f3efcd-a6ba-4988-b078-d798cbc671bc",
+    "uniqueId": "effbd6b3-d5f7-9f76-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.18/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1410,7 +1434,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "6839ac51-3fef-471e-a59c-d7863f785019",
+    "uniqueId": "f7f3b77f-febf-ebf6-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.19/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1434,7 +1458,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "6644180a-24be-4c22-99d7-c02af870b99a",
+    "uniqueId": "6bfcfe9f-ed6d-ab79-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.20/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1458,7 +1482,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "0acfcd6d-c05e-4c53-b74d-a17cf58963c1",
+    "uniqueId": "fffffe57-fbde-2f3f-0000-000000000000",
     "typeId": "6fa280a8-aaed-4ee7-99e4-c337b6985098",
     "projectName": "folia",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/1.19.4/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1482,7 +1506,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "b059a1f9-d385-433e-a1d0-fc1210053608",
+    "uniqueId": "7eb77fbd-eabf-fb7d-0000-000000000000",
     "typeId": "6fa280a8-aaed-4ee7-99e4-c337b6985098",
     "projectName": "folia",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/1.20.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -1506,7 +1530,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "a37bea91-f808-4d68-bd13-a550ce0213e3",
+    "uniqueId": "7eb77fbd-eabf-fb7d-0000-000000000000",
     "typeId": "6fa280a8-aaed-4ee7-99e4-c337b6985098",
     "projectName": "folia",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/1.20.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",

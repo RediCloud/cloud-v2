@@ -1,5 +1,6 @@
 package dev.redicloud.utils
 
+import java.security.MessageDigest
 import java.util.*
 
 fun String.isUUID(): Boolean {
@@ -17,4 +18,11 @@ fun String.replaceLast(targetChar: String, replacement: String): String {
         return replaceRange(lastIndexOf, lastIndexOf + 1, replacement)
     }
     return this
+}
+
+private val md5 = MessageDigest.getInstance("MD5")
+fun String.toUUID(): UUID {
+    val bytes = md5.digest(this.toByteArray())
+    val bigInt = bytes.foldIndexed(0L) { index, acc, byte -> acc or ((byte.toLong() and 0xff) shl (index * 8)) }
+    return UUID(bigInt, 0)
 }

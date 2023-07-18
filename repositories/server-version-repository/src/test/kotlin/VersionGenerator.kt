@@ -1,5 +1,4 @@
 
-import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import dev.redicloud.api.version.ICloudServerVersion
 import dev.redicloud.api.version.IServerVersion
@@ -9,6 +8,7 @@ import dev.redicloud.repository.server.version.requester.PaperMcApiRequester
 import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.gson.*
 import dev.redicloud.utils.isValidUrl
+import dev.redicloud.utils.toUUID
 import java.util.*
 
 suspend fun main() {
@@ -56,16 +56,16 @@ suspend fun generatePaperMCVersions(typeName: String, typeId: UUID, patch: Boole
     val onlineVersions = mutableListOf<ICloudServerVersion>()
     ServerVersion.versions().filter { !it.unknown }.forEach { version ->
         val versionName = if (version.latest) version.dynamicVersion().name else version.name
-        val url = "/projects/${typeName.lowercase()}/versions/${versionName.lowercase()}"
+        val url = "/projects/${typeName.lowercase()}/versions/${versionName}"
         val builds = PaperMcApiRequester.request<BuildsResponse>(url)
             .responseObject?.builds?.toList() ?: emptyList()
         val buildId = builds.maxByOrNull { it } ?: -1
         if (buildId == -1) return@forEach
         val cloudVersion = CloudServerVersion(
-            UUID.randomUUID(),
+            "${typeName.lowercase()}_${versionName.lowercase()}".toUUID(),
             typeId,
             typeName.lowercase(),
-            "https://api.papermc.io/v2/projects/${typeName.lowercase()}/versions/${versionName.lowercase()}/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+            "https://api.papermc.io/v2/projects/${typeName}/versions/${versionName}/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
             buildId.toString(),
             version,
             null,
@@ -93,7 +93,7 @@ suspend fun generateSpigotVersions(): List<ICloudServerVersion> {
         val url = "https://download.getbukkit.org/spigot/spigot-${versionName.lowercase()}.jar"
         if (!isValidUrl(url)) return@forEach
         val cloudVersion = CloudServerVersion(
-            UUID.randomUUID(),
+            "spigot_${versionName.lowercase()}".toUUID(),
             UUID.fromString("6760e0ea-455d-44bc-84c4-ec603125e61a"),
             "spigot",
             url,
@@ -120,7 +120,7 @@ suspend fun generateBungeeCord(): List<ICloudServerVersion> {
     val latest = ServerVersion.versions().first { it.latest }
     val url = "https://ci.md-5.net/job/BungeeCord/lastSuccessfulBuild/artifact/bootstrap/target/BungeeCord.jar"
     val cloudVersion = CloudServerVersion(
-        UUID.randomUUID(),
+        "bungeecord_${latest.name.lowercase()}".toUUID(),
         UUID.fromString("6dc3fa6b-d8ae-4e31-b40e-519b43671e5b"),
         "bungeecord",
         url,
