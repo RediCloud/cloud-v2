@@ -1,6 +1,7 @@
 package dev.redicloud.database.repository
 
 import dev.redicloud.database.DatabaseConnection
+import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.gson.gsonInterfaceFactory
 import org.redisson.api.RBucket
 import org.redisson.client.codec.BaseCodec
@@ -27,12 +28,15 @@ open class DatabaseBucketRepository<I : Any, K: Any>(
     fun unsafe() = unsafe
 
     protected open suspend fun set(identifier: String, value: I): K {
+        if (!implementationClass.isInstance(value)) throw IllegalStateException("${value::class.qualifiedName} is not of type ${implementationClass.qualifiedName}")
         getHandle(identifier).set(value)
         return implementationClass.cast(value)
     }
 
     protected open suspend fun get(identifier: String): K? {
-        return implementationClass.cast(getHandle(identifier).get())
+        val v = getHandle(identifier).get() ?: return null
+        if (!implementationClass.isInstance(v)) throw IllegalStateException("${v::class.qualifiedName} is not of type ${implementationClass.qualifiedName}")
+        return implementationClass.cast(v)
     }
 
     protected open suspend fun delete(identifier: String): Boolean = getHandle(identifier).delete()
