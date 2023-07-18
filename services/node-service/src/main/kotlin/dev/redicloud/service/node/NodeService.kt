@@ -236,8 +236,6 @@ class NodeService(
     override fun configure() {
         super.configure()
         bind(ICommandManager::class).toInstance(console.commandManager)
-        bind(ICloudFileTemplateRepository::class).toInstance(fileTemplateRepository)
-        bind(ICloudServerVersionTypeRepository::class).toInstance(serverVersionTypeRepository)
     }
 
 }

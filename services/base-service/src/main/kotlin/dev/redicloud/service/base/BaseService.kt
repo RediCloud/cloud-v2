@@ -52,6 +52,7 @@ import dev.redicloud.utils.ioScope
 import dev.redicloud.utils.loadProperties
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.api.template.file.ICloudFileTemplateRepository
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -219,6 +220,7 @@ abstract class BaseService(
         bind(ICloudServerRepository::class).toInstance(serverRepository)
         bind(ICloudConfigurationTemplateRepository::class).toInstance(configurationTemplateRepository)
         bind(ICloudJavaVersionRepository::class).toInstance(javaVersionRepository)
+        bind(ICloudFileTemplateRepository::class).toInstance(fileTemplateRepository)
         bind(Logger::class).annotatedWith(Names.named("base")).toInstance(LOGGER)
         bind(ServiceId::class).annotatedWith(Names.named("this")).toInstance(serviceId)
     }
