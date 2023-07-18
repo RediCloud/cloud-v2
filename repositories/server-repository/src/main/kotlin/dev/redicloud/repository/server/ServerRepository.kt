@@ -1,13 +1,10 @@
 package dev.redicloud.repository.server
 
-import dev.redicloud.api.events.impl.server.CloudServerConnectedEvent
-import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.events.impl.server.CloudServerUnregisteredEvent
 import dev.redicloud.api.events.impl.template.configuration.ConfigurationTemplateUpdateEvent
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
-import dev.redicloud.repository.service.CachedServiceRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.api.events.impl.server.CloudServerRegisteredEvent
 import dev.redicloud.api.events.impl.server.CloudServerStateChangeEvent
@@ -18,13 +15,12 @@ import dev.redicloud.utils.defaultScope
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.minutes
 
 class ServerRepository(
     databaseConnection: DatabaseConnection,
     private val serviceId: ServiceId,
     packetManager: PacketManager,
-    private val eventManager: EventManager,
+    val eventManager: EventManager,
     configurationTemplateRepository: ConfigurationTemplateRepository
 ) : ServiceRepository (
     databaseConnection,
@@ -81,22 +77,13 @@ class ServerRepository(
     }
 
     override suspend fun <T : ICloudServer> updateServer(cloudServer: T): T {
-        val oldServer = getServer<T>(cloudServer.serviceId)
-        when (cloudServer) {
+        val impl = when (cloudServer) {
             is CloudMinecraftServer -> internalMinecraftServerRepository.updateService(cloudServer as CloudMinecraftServer)
             is CloudProxyServer -> internalProxyServerRepository.updateService(cloudServer as CloudProxyServer)
             else -> throw IllegalArgumentException("Unknown service type ${cloudServer.serviceId.type} (${cloudServer.serviceId.type})")
         }
-        if (oldServer?.state != cloudServer.state) {
+        if (impl.oldState != cloudServer.state) {
             eventManager.fireEvent(CloudServerStateChangeEvent(cloudServer.serviceId, cloudServer.state))
-        }
-
-        if (oldServer != null && (oldServer.connected != cloudServer.connected || (oldServer.state != cloudServer.state && cloudServer.state == CloudServerState.STOPPED))) {
-            if (cloudServer.connected) {
-                eventManager.fireEvent(CloudServerConnectedEvent(cloudServer.serviceId))
-            } else if (cloudServer.state == CloudServerState.STOPPED) {
-                eventManager.fireEvent(CloudServerDisconnectedEvent(cloudServer.serviceId))
-            }
         }
         return cloudServer
     }

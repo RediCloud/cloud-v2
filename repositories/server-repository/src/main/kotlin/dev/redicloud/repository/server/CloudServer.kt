@@ -15,7 +15,7 @@ abstract class CloudServer(
     override var hostNodeId: ServiceId,
     serviceSessions: ServiceSessions,
     override var hidden: Boolean,
-    override var state: CloudServerState = CloudServerState.UNKNOWN,
+    initState: CloudServerState = CloudServerState.UNKNOWN,
     override var port: Int = -1,
     override var maxPlayers: Int = -1,
     override var connectedPlayers: MutableList<UUID>
@@ -24,6 +24,16 @@ abstract class CloudServer(
     "${configurationTemplate.name}${configurationTemplate.serverSplitter}$id",
     serviceSessions
 ), ICloudServer {
+
+    override var state: CloudServerState = initState
+        set(value) {
+            if (value != field) {
+                oldState = field
+            }
+            field = value
+        }
+    internal var oldState = initState
+
 
     override fun unregisterAfterDisconnect(): Boolean {
         return super<CloudService>.unregisterAfterDisconnect() && !configurationTemplate.static

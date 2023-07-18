@@ -1,5 +1,6 @@
 package dev.redicloud.server.factory
 
+import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.service.base.packets.CloudServiceShutdownPacket
 import dev.redicloud.console.utils.toConsoleValue
@@ -21,6 +22,7 @@ import dev.redicloud.api.utils.ProcessConfiguration
 import dev.redicloud.utils.findFreePort
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.event.EventManager
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.seconds
 
@@ -28,6 +30,7 @@ class ServerProcess(
     val configurationTemplate: ConfigurationTemplate,
     private val serverRepository: ServerRepository,
     private val packetManager: PacketManager,
+    private val eventManager: EventManager,
     private val bindHost: String,
     private val clusterConfiguration: ClusterConfiguration,
     val serverId: ServiceId,
@@ -124,6 +127,7 @@ class ServerProcess(
             cloudServer!!.connected = false
             cloudServer!!.connectedPlayers.clear()
             serverRepository.updateServer(cloudServer!!)
+            eventManager.fireEvent(CloudServerDisconnectedEvent(serverId))
 
             if (cloudServer!!.unregisterAfterDisconnect()) {
                 serverRepository.deleteServer(cloudServer!!)

@@ -4,6 +4,7 @@ import com.jcraft.jsch.ChannelSftp
 import com.jcraft.jsch.Session
 import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.api.events.impl.server.CloudServerDeleteEvent
+import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.events.impl.server.CloudServerTransferredEvent
 import dev.redicloud.api.utils.STATIC_FOLDER
 import dev.redicloud.api.utils.TEMP_FILE_TRANSFER_FOLDER
@@ -183,6 +184,7 @@ class ServerFactory(
             configurationTemplate,
             serverRepository,
             packetManager,
+            eventManager,
             bindHost,
             clusterConfiguration,
             serviceId,
@@ -321,6 +323,7 @@ class ServerFactory(
                 newConfigurationTemplate,
                 serverRepository,
                 packetManager,
+                eventManager,
                 bindHost,
                 clusterConfiguration,
                 serviceId,
@@ -430,6 +433,7 @@ class ServerFactory(
             server.connected = false
             server.connectedPlayers.clear()
             serverRepository.updateServer(server)
+            eventManager.fireEvent(CloudServerDisconnectedEvent(server.serviceId))
 
             if (server.unregisterAfterDisconnect()) {
                 serverRepository.deleteServer(server)
