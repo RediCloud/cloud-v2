@@ -1,0 +1,7 @@
+name: redicloud-example-plugin
+version: 1.0.0-SNAPSHOT
+main: dev.redicloud.example.plugin.ExamplePlugin
+author: RediCloud
+description: Example plugin for RediCloud
+depend:
+  - redicloud-connector

@@ -72,3 +72,5 @@ findProject(":connectors:bukkit-legacy")?.name = "bukkit-legacy"
 include("cache")
 include("repositories:cache-repository")
 findProject(":repositories:cache-repository")?.name = "cache-repository"
+include("examples:example-plugin")
+findProject(":examples:example-plugin")?.name = "example-plugin"
