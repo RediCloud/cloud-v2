@@ -16,6 +16,7 @@ import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.service.base.suggester.CloudServerVersionSuggester
 import dev.redicloud.service.base.suggester.ConfigurationTemplateSuggester
+import dev.redicloud.service.base.suggester.FileTemplateSuggester
 import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
 import dev.redicloud.utils.fileName
 import dev.redicloud.utils.isValidUrl
@@ -386,7 +387,7 @@ class ConfigurationTemplateCommand(
     fun editFileTemplateAdd(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
-        @CommandParameter("template") fileTemplate: FileTemplate
+        @CommandParameter("template", true, FileTemplateSuggester::class) fileTemplate: FileTemplate
     ) = runBlocking {
         template.fileTemplateIds.add(fileTemplate.uniqueId)
         configurationTemplateRepository.updateTemplate(template)
@@ -399,7 +400,7 @@ class ConfigurationTemplateCommand(
     fun editFileTemplateRemove(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
-        @CommandParameter("template") fileTemplate: FileTemplate
+        @CommandParameter("template", true, FileTemplateSuggester::class) fileTemplate: FileTemplate
     ) = runBlocking {
         template.fileTemplateIds.remove(fileTemplate.uniqueId)
         configurationTemplateRepository.updateTemplate(template)
