@@ -12,7 +12,7 @@ import java.util.*
 import kotlin.time.Duration.Companion.minutes
 
 abstract class AbstractFileTemplateRepository(
-    databaseConnection: DatabaseConnection,
+    private val databaseConnection: DatabaseConnection,
     private val nodeRepository: NodeRepository,
     packetManager: PacketManager
 ) : CachedDatabaseBucketRepository<ICloudFileTemplate, FileTemplate>(
@@ -63,6 +63,7 @@ abstract class AbstractFileTemplateRepository(
             template.folder.deleteRecursively()
             if (template.prefixFolder.listFiles()?.isEmpty() == true) template.prefixFolder.deleteRecursively()
             nodeRepository.getConnectedNodes().forEach {
+                if (it.serviceId == databaseConnection.serviceId) return@forEach
                 pushTemplates(it.serviceId)
             }
         }
@@ -73,6 +74,7 @@ abstract class AbstractFileTemplateRepository(
         set(template.uniqueId.toString(), template as FileTemplate)
         if (!template.folder.exists()) template.folder.mkdirs()
         nodeRepository.getConnectedNodes().forEach {
+            if (it.serviceId == databaseConnection.serviceId) return@forEach
             pushTemplates(it.serviceId)
         }
         return template
