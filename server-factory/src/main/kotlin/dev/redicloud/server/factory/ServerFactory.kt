@@ -410,13 +410,13 @@ class ServerFactory(
         internalCall: Boolean = false
     ) {
         val server = serverRepository.getServer<CloudServer>(serviceId) ?: throw NullPointerException("Server not found")
-        if (server.hostNodeId != serviceId) throw IllegalArgumentException("Server is not on this node")
+        if (server.hostNodeId != hostingId) throw IllegalArgumentException("Server is not on this node")
         if (server.state == CloudServerState.STOPPED && !force || server.state == CloudServerState.STOPPING && !force) return
-        val thisNode = nodeRepository.getNode(serviceId)
+        val thisNode = nodeRepository.getNode(hostingId)
         if (thisNode != null) {
             thisNode.currentMemoryUsage = thisNode.currentMemoryUsage - server.configurationTemplate.maxMemory
             if (thisNode.currentMemoryUsage < 0) thisNode.currentMemoryUsage = 0
-            thisNode.hostedServers.remove(serviceId)
+            thisNode.hostedServers.remove(hostingId)
             nodeRepository.updateNode(thisNode)
         }
         val process = processes.firstOrNull { it.serverId == serviceId }
