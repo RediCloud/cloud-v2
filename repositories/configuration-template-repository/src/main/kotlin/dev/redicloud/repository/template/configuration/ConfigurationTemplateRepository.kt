@@ -44,7 +44,7 @@ class ConfigurationTemplateRepository(
     }
 
     override suspend fun createTemplate(configurationTemplate: ICloudConfigurationTemplate): ConfigurationTemplate {
-        return createTemplate(configurationTemplate)
+        return set(configurationTemplate.uniqueId.toString(), configurationTemplate)
     }
 
     override suspend fun updateTemplate(configurationTemplate: ICloudConfigurationTemplate): ConfigurationTemplate {
