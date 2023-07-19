@@ -229,6 +229,8 @@ abstract class BaseService(
         bind(ICloudFileTemplateRepository::class).toInstance(fileTemplateRepository)
         bind(Logger::class).annotatedWith(Names.named("base")).toInstance(LOGGER)
         bind(ServiceId::class).annotatedWith(Names.named("this")).toInstance(serviceId)
+        bind(java.util.logging.Logger::class).annotatedWith(Names.named("root")).toInstance(LogManager.rootLogger())
+        bind(java.util.logging.Logger::class).annotatedWith(Names.named("service")).toInstance(LOGGER)
     }
 
 }
