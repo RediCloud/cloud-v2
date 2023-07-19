@@ -1,8 +1,12 @@
 package dev.redicloud.modules
 
+import com.google.inject.Key
+import com.google.inject.name.Named
+import com.google.inject.name.Names
 import dev.redicloud.api.modules.ICloudModule
 import dev.redicloud.api.modules.IModuleHandler
 import dev.redicloud.api.modules.ModuleLifeCycle
+import dev.redicloud.api.modules.ModuleTask
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.utils.CloudInjectable
 import dev.redicloud.api.utils.MODULE_FOLDER
@@ -11,13 +15,16 @@ import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.apply.impl.JarResourceLoader
 import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.gson.gson
-import jdk.internal.misc.VM
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
 import java.util.jar.JarFile
 import kotlin.concurrent.withLock
-import kotlin.reflect.full.createInstance
-import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.KClass
+import kotlin.reflect.full.*
+import kotlin.reflect.jvm.ExperimentalReflectionOnLambdas
+import kotlin.reflect.jvm.javaMethod
+import kotlin.reflect.jvm.reflect
 
 class ModuleHandler(
     private val serviceId: ServiceId
@@ -30,6 +37,19 @@ class ModuleHandler(
     private val modules = mutableListOf<ModuleData<*>>()
     private val lock = ReentrantLock()
     private val moduleFiles = mutableListOf<File>()
+
+    fun loadModules() {
+        detectModules()
+        moduleFiles.forEach {
+            loadModule(it)
+        }
+    }
+
+    fun unloadModules() {
+        modules.forEach {
+            unloadModule(it)
+        }
+    }
 
     fun detectModules() = lock.withLock {
         moduleFiles.clear()
@@ -47,7 +67,7 @@ class ModuleHandler(
         }
     }
 
-    fun loadModule(file: File) = lock.withLock {
+    internal fun loadModule(file: File) = lock.withLock {
         if (modules.any { it.file == file }) {
             logger.warning("Tried to load module that is already loaded: ${file.name}")
             return
@@ -94,14 +114,85 @@ class ModuleHandler(
             return@withLock
         }
 
-        val moduleData = ModuleData(description.id, moduleInstance, file, description, ModuleLifeCycle.UNLOAD, loader)
-        modules.add(moduleData)
+        val tasks = mutableListOf<ModuleTaskData>()
+        (moduleClass.declaredMemberFunctions + moduleClass.declaredMemberExtensionFunctions).filter {
+            it.hasAnnotation<ModuleTask>()
+        }.forEach {
+            val annotation = it.findAnnotation<ModuleTask>()!!
+            tasks.add(ModuleTaskData(it, annotation.lifeCycle, annotation.order))
+        }
 
-        this.runModuleTasks(moduleInstance, ModuleLifeCycle.LOAD)
+        val moduleData = ModuleData(description.id, moduleInstance, file, description, ModuleLifeCycle.UNLOAD, loader, tasks)
+
+        if (tasks.isEmpty()) {
+            logger.warning("Module ${description.id} has no tasks!")
+        }
+
+        try {
+            val tasksCount = callTasks(moduleData, ModuleLifeCycle.LOAD)
+            modules.add(moduleData)
+            logger.info("Loaded module ${description.id} with $tasksCount load tasks!")
+        }catch (e: Exception) {
+            moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
+            logger.warning("Failed to load module ${description.id}!", e)
+            return@withLock
+        }
     }
 
-    fun runModuleTasks(module: ICloudModule, lifeCycle: ModuleLifeCycle) {
-        TODO("Not yet implemented")
+    internal fun reloadModule(moduleData: ModuleData<*>) = lock.withLock {
+        if (moduleData.lifeCycle != ModuleLifeCycle.LOAD) {
+            logger.warning("Tried to reload module ${moduleData.id} that is not loaded!")
+            return
+        }
+        try {
+            val tasksCount = callTasks(moduleData, ModuleLifeCycle.RELOAD)
+            moduleData.lifeCycle = ModuleLifeCycle.LOAD
+            logger.info("Reloaded module ${moduleData.id} with $tasksCount reload tasks!")
+        }catch (e: Exception) {
+            moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
+            logger.warning("Failed to reload module ${moduleData.id}!", e)
+            return@withLock
+        }
+    }
+
+    internal fun unloadModule(moduleData: ModuleData<*>) = lock.withLock {
+        if (moduleData.lifeCycle != ModuleLifeCycle.LOAD) {
+            logger.warning("Tried to unload module ${moduleData.id} that is not loaded!")
+            return
+        }
+        try {
+            val tasksCount = callTasks(moduleData, ModuleLifeCycle.UNLOAD)
+            logger.info("Unloaded module ${moduleData.id} with $tasksCount unload tasks!")
+        }catch (e: Exception) {
+            moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
+            logger.warning("Failed to unload module ${moduleData.id}!", e)
+            return@withLock
+        }
+    }
+
+    internal fun callTasks(moduleData: ModuleData<*>, targetLifeCycle: ModuleLifeCycle): Int {
+        val tasks = moduleData.tasks
+        var tasksCount = 0
+        moduleData.lifeCycle = targetLifeCycle
+        tasks.filter { it.lifeCycle == targetLifeCycle }.sortedBy { it.order }.forEach {
+            val function = it.function
+            val injectParameters = mutableListOf<Any>()
+            function.javaMethod!!.parameters.forEach {
+                val type = it.type.kotlin
+                val key = if (it.isAnnotationPresent(Named::class.java)) {
+                    Key.get(type.java, it.getAnnotation(Named::class.java))
+                }else Key.get(type.java)
+                val instance = injector.getInstance(key)
+                injectParameters.add(instance)
+            }
+            if (function.isSuspend) { //TODO test suspend
+                runBlocking { function.callSuspend(moduleData.module, *injectParameters.toTypedArray()) }
+            }else {
+                function.javaMethod!!.invoke(moduleData.module, *injectParameters.toTypedArray())
+            }
+            tasksCount++
+        }
+        return tasksCount
     }
 
     override fun getState(moduleId: String): ModuleLifeCycle? {
@@ -117,27 +208,27 @@ class ModuleHandler(
     }
 
     override fun reload(module: ICloudModule) {
-        TODO("Not yet implemented")
+        reloadModule(modules.firstOrNull { it.module == module } ?: return)
     }
 
     override fun reload(moduleId: String) {
-        TODO("Not yet implemented")
+        reloadModule(modules.firstOrNull { it.id == moduleId } ?: return)
     }
 
     override fun unload(module: ICloudModule) {
-        TODO("Not yet implemented")
+        unloadModule(modules.firstOrNull { it.module == module } ?: return)
     }
 
     override fun unload(moduleId: String) {
-        TODO("Not yet implemented")
+        unloadModule(modules.firstOrNull { it.id == moduleId } ?: return)
     }
 
     override fun load(module: ICloudModule) {
-        TODO("Not yet implemented")
+        loadModule(modules.firstOrNull { it.module == module }?.file ?: return)
     }
 
     override fun load(moduleId: String) {
-        TODO("Not yet implemented")
+        loadModule(modules.firstOrNull { it.id == moduleId }?.file ?: return)
     }
 
 }
