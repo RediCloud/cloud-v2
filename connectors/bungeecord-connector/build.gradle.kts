@@ -27,6 +27,7 @@ dependencies {
     shade(project(":logging"))
     shade(project(":console"))
     shade(project(":tasks"))
+    shade(project(":modules:module-handler"))
     shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
 
     compileOnly("net.md-5:bungeecord-api:1.19-R0.1-SNAPSHOT")

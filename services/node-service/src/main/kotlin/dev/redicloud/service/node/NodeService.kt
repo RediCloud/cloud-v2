@@ -71,8 +71,6 @@ class NodeService(
                 LOGGER.warning("Error while checking java versions", e)
             }
 
-            initApi()
-
             IServerVersionHandler.registerHandler(URLServerVersionHandler(serviceId, serverVersionRepository, serverVersionTypeRepository, nodeRepository, console, javaVersionRepository))
             IServerVersionHandler.registerHandler(PaperMcServerVersionHandler(serviceId, serverVersionRepository, serverVersionTypeRepository, javaVersionRepository, nodeRepository, console))
 
@@ -81,6 +79,9 @@ class NodeService(
             this@NodeService.registerPackets()
             this@NodeService.registerCommands()
             this@NodeService.registerTasks()
+
+            initApi()
+            moduleHandler.loadModules()
         }
     }
 

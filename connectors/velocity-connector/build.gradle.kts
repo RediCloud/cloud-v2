@@ -28,6 +28,7 @@ dependencies {
     shade(project(":logging"))
     shade(project(":console"))
     shade(project(":tasks"))
+    shade(project(":modules:module-handler"))
     shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
 
     compileOnly("com.velocitypowered:velocity-api:3.1.1")

@@ -54,6 +54,7 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.template.file.ICloudFileTemplateRepository
 import dev.redicloud.api.utils.injector
+import dev.redicloud.modules.ModuleHandler
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -87,6 +88,7 @@ abstract class BaseService(
     val eventManager: EventManager
     val taskManager: CloudTaskManager
     val clusterConfiguration: ClusterConfiguration
+    val moduleHandler: ModuleHandler
 
     init {
         runBlocking {
@@ -131,6 +133,7 @@ abstract class BaseService(
         serverVersionRepository = CloudServerVersionRepository(databaseConnection, packetManager)
         configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager, packetManager)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager, configurationTemplateRepository)
+        moduleHandler = ModuleHandler(serviceId)
         this.registerPackets()
         this.registerPacketListeners()
     }
@@ -148,6 +151,7 @@ abstract class BaseService(
     open fun shutdown(force: Boolean = false) {
         SHUTTINGDOWN = true
         runBlocking {
+            moduleHandler.unloadModules()
             nodeRepository.shutdownAction.run()
             serverRepository.shutdownAction.run()
             taskManager.getTasks().forEach { it.cancel() }
