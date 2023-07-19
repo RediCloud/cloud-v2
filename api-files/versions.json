@@ -312,7 +312,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "eb37fdaf-996d-5faf-0000-000000000000",
+    "uniqueId": "fffffd7d-baeb-fbf7-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
     "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.20.1.jar",
@@ -1176,7 +1176,7 @@
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.20.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
-    "buildId": "83",
+    "buildId": "84",
     "version": {
       "name": "1.20.1",
       "protocolId": 763,
@@ -1196,11 +1196,11 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "e73e3e9f-f5d6-0ffb-0000-000000000000",
+    "uniqueId": "ddb3f3da-ff7f-a7ff-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.20.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
-    "buildId": "83",
+    "buildId": "84",
     "version": {
       "name": "latest",
       "protocolId": -1,
@@ -1530,7 +1530,7 @@
     "fileEdits": {}
   },
   {
-    "uniqueId": "7eb77fbd-eabf-fb7d-0000-000000000000",
+    "uniqueId": "be9efff6-7fac-fddf-0000-000000000000",
     "typeId": "6fa280a8-aaed-4ee7-99e4-c337b6985098",
     "projectName": "folia",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/1.20.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",

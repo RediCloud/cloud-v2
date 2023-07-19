@@ -62,7 +62,7 @@ suspend fun generatePaperMCVersions(typeName: String, typeId: UUID, patch: Boole
         val buildId = builds.maxByOrNull { it } ?: -1
         if (buildId == -1) return@forEach
         val cloudVersion = CloudServerVersion(
-            "${typeName.lowercase()}_${versionName.lowercase()}".toUUID(),
+            "${typeName.lowercase()}_${version.name.lowercase()}".toUUID(),
             typeId,
             typeName.lowercase(),
             "https://api.papermc.io/v2/projects/${typeName}/versions/${versionName}/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
@@ -93,7 +93,7 @@ suspend fun generateSpigotVersions(): List<ICloudServerVersion> {
         val url = "https://download.getbukkit.org/spigot/spigot-${versionName.lowercase()}.jar"
         if (!isValidUrl(url)) return@forEach
         val cloudVersion = CloudServerVersion(
-            "spigot_${versionName.lowercase()}".toUUID(),
+            "spigot_${version.name.lowercase()}".toUUID(),
             UUID.fromString("6760e0ea-455d-44bc-84c4-ec603125e61a"),
             "spigot",
             url,
