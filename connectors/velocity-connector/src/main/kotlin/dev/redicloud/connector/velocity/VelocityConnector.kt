@@ -37,6 +37,7 @@ class VelocityConnector(
             registerTasks()
             registerStartedServers()
         }
+        moduleHandler.loadModules()
     }
 
     override fun registerServer(server: CloudMinecraftServer) {

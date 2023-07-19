@@ -19,6 +19,7 @@ class BukkitConnector(val plugin: JavaPlugin) : MinecraftServerService<JavaPlugi
         serverPlayerProvider = BukkitServerPlayerProvider()
         screenProvider = BukkitScreenProvider(this.packetManager)
         registerTasks()
+        moduleHandler.loadModules()
     }
 
     override fun getConnectorPlugin(): JavaPlugin {

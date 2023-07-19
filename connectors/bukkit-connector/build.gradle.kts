@@ -37,6 +37,7 @@ dependencies {
     shade(project(":tasks"))
     shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
     shade(project(":connectors:bukkit-legacy"))
+    shade(project(":modules:module-handler"))
 
     compileOnly("org.spigotmc:spigot-api:${Versions.minecraftVersion}")
 

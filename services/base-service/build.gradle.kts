@@ -23,6 +23,7 @@ dependencies {
     compileOnly(project(":events"))
     compileOnly(project(":tasks"))
     compileOnly(project(":console"))
+    compileOnly(project(":modules:module-handler"))
     compileOnly(project(":logging"))
     compileOnly(project(":commands:command-api"))
 

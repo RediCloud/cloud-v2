@@ -32,6 +32,7 @@ class BungeeCordConnector(
         runBlocking {
             registerTasks()
         }
+        moduleHandler.loadModules()
     }
 
     override fun registerServer(server: CloudMinecraftServer) {

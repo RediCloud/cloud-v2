@@ -18,6 +18,7 @@ include("logging")
 include("tasks")
 include("file-cluster")
 include("server-factory")
+include("cache")
 
 include("services:base-service")
 findProject(":services:base-service")?.name = "base-service"
@@ -69,8 +70,14 @@ findProject(":repositories:player-repository")?.name = "player-repository"
 
 include("connectors:bukkit-legacy")
 findProject(":connectors:bukkit-legacy")?.name = "bukkit-legacy"
-include("cache")
+
 include("repositories:cache-repository")
 findProject(":repositories:cache-repository")?.name = "cache-repository"
+
 include("examples:example-plugin")
 findProject(":examples:example-plugin")?.name = "example-plugin"
+
+include("modules:module-handler")
+findProject(":modules:module-handler")?.name = "module-handler"
+include("examples:example-module")
+findProject(":examples:example-module")?.name = "example-module"

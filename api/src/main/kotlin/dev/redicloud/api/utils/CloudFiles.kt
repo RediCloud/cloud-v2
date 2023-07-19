@@ -19,6 +19,7 @@ val MINECRAFT_VERSIONS_FOLDER = CloudFile("versions", "storage", folder = true)
 val TEMPLATE_FOLDER = CloudFile("templates", "storage", folder = true)
 val DATABASE_JSON = CloudFile("database.json", "storage")
 val CONNECTORS_FOLDER = CloudFile("connectors", "storage", folder = true)
+val MODULE_FOLDER = CloudFile("modules", "storage", folder = true)
 
 fun toCloudFile(universalPath: String): File {
     return File(CLOUD_PATH, universalPath)
