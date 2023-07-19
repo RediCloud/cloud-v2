@@ -1,0 +1,15 @@
+{
+  "name": "example-module",
+  "id": "example-module",
+  "version": "2.0.0-SNAPSHOT",
+  "description": "A example module for redicloud",
+  "website": "https://redocloud.dev/",
+  "authors": [
+    "Redicloud"
+  ],
+  "mainClasses": {
+    "NODE": "dev.redicloud.example.ExampleModule",
+    "MINECRAFT_SERVER": "dev.redicloud.example.ExampleModule",
+    "PROXY_SERVER": "dev.redicloud.example.ExampleModule"
+  }
+}
