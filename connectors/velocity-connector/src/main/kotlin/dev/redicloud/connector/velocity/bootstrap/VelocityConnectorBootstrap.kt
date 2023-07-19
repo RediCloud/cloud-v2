@@ -12,6 +12,7 @@ import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.loaders.URLClassLoaderJarLoader
 import dev.redicloud.utils.loadProperties
 import java.net.URLClassLoader
+import java.util.logging.Logger
 import kotlin.system.exitProcess
 
 
@@ -44,8 +45,11 @@ class VelocityConnectorBootstrap @Inject constructor(val proxyServer: ProxyServe
 
     @Subscribe(order = PostOrder.LAST)
     fun onShutdown(event: ProxyShutdownEvent) {
-        if (connector == null) exitProcess(0)
-        connector?.logger?.info("Disabling cloud connector...")
+        if (connector == null) {
+            exitProcess(0)
+        } else {
+            Logger.getGlobal().info("Disabling cloud connector...")
+        }
         connector?.onDisable()
     }
 

@@ -4,6 +4,7 @@ import dev.redicloud.connector.bukkit.BukkitConnector
 import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.loaders.URLClassLoaderJarLoader
 import dev.redicloud.utils.loadProperties
+import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 import java.net.URLClassLoader
 import kotlin.system.exitProcess
@@ -27,8 +28,11 @@ class BukkitConnectorBootstrap : JavaPlugin() {
     }
 
     override fun onDisable() {
-        if (connector == null) exitProcess(0)
-        connector?.logger?.info("Disabling cloud connector...")
+        if (connector == null) {
+            exitProcess(0)
+        } else {
+            Bukkit.getLogger().info("Disabling cloud connector...")
+        }
         connector?.bukkitShuttingDown = true
         connector?.onDisable()
     }
