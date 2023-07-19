@@ -10,5 +10,6 @@ data class ModuleData<T : ICloudModule>(
     val file: File,
     val description: ModuleDescription,
     var lifeCycle: ModuleLifeCycle,
-    var loader: ModuleClassLoader
+    var loader: ModuleClassLoader,
+    val tasks: List<ModuleTaskData>
 )
