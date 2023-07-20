@@ -12,17 +12,15 @@ import java.io.File
 import java.util.ArrayList
 import kotlin.time.Duration.Companion.seconds
 
-/*
-   Repo-Structure:
-   .redicloud | identify as repo
-   modules.json | list of modules (ids)
-   your-module-1 | folder
-       - module.json | module info
-       - module.jar | module file
-   your-module-1 | folder
-       - module.json | module info
-       - module.jar | module file
-*/
+/**
+ * Repo-Structure:
+ * .redicloud | identify as repo
+ * modules.json | list of modules (ids)
+ * <module-id> | folder
+ *    - module.json | module info
+ *    - <version> | folder
+ *        - <module-id>-<version>.jar | module file
+ */
 
 class ModuleWebRepository(
     val repoUrl: String
