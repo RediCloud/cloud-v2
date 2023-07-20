@@ -50,7 +50,14 @@ class ModuleHandler(
     private val lock = ReentrantLock()
     private val moduleFiles = mutableListOf<File>()
     private val cachedDescription = mutableListOf<ModuleDescription>()
-    private val repositories = mutableListOf<ModuleWebRepository>()
+    val repositories = mutableListOf<ModuleWebRepository>()
+
+    suspend fun loadModules() {
+        detectModules()
+        moduleFiles.forEach {
+            loadModule(it)
+        }
+    }
 
     override suspend fun updateModules(silent: Boolean, loadModules: Boolean) = lock.withLock {
         runBlocking {
@@ -88,16 +95,54 @@ class ModuleHandler(
         }
     }
 
-    suspend fun loadModules() {
-        detectModules()
-        updateModules(loadModules = false)
-        moduleFiles.forEach {
-            loadModule(it)
+    suspend fun uninstall(data: ModuleData<*>) {
+        logger.info("Uninstalling module %hc%${data.id}%tc%...")
+        val file = data.file
+        if (data.loaded) {
+            unloadModule(data)
+        }
+        file.delete()
+        logger.info("Module with id ${data.id}uninstalled!")
+    }
+
+    suspend fun install(moduleId: String, load: Boolean = true) {
+        if (getModuleDescription(moduleId) != null) {
+            logger.info("§cModule with id $moduleId already installed!")
+            return
+        }
+        val repository = repositories.firstOrNull { it.hasModule(moduleId) }
+        if (repository == null) {
+            logger.info("§cModule with id $moduleId not found!")
+            return
+        }
+        val info = repository.getModuleInfo(moduleId)
+        if (info == null) {
+            logger.info("§cModule with id $moduleId not found!")
+            return
+        }
+        val latest = repository.getLatestVersion(info.id)
+        if (latest == null) {
+            logger.info("§cModule with id $moduleId not found!")
+            return
+        }
+        logger.info("Installing module %hc%${info.id} §8(%tc%${latest}%tc%...")
+        try {
+            val file = repository.download(info.id, latest)
+            logger.info("Module with id $moduleId installed!")
+            if (load) {
+                loadModule(file)
+            }else {
+                logger.info("Use 'module load $moduleId' to load the module!")
+            }
+        }catch (e: Exception) {
+            logger.info("§cFailed to install module with id $moduleId!")
+            return
         }
     }
 
     fun unloadModules() {
         modules.forEach {
+            if (!it.loaded) return@forEach
             unloadModule(it)
         }
     }
@@ -131,7 +176,7 @@ class ModuleHandler(
     }
 
     fun loadModule(file: File) = lock.withLock {
-        if (modules.any { it.file == file }) {
+        if (modules.any { it.file == file && it.loaded }) {
             logger.warning("Tried to load module that is already loaded: ${file.name}")
             return
         }
