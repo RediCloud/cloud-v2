@@ -10,8 +10,10 @@ import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.toSymbol
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 @Command("module")
+@CommandAlias(["modules"])
 @CommandDescription("Manage all modules")
 class ModuleCommand(
     private val moduleHandler: ModuleHandler,
@@ -20,20 +22,31 @@ class ModuleCommand(
 
     @CommandSubPath("list")
     @CommandDescription("List all modules")
-    fun list(actor: ConsoleActor) {
+    fun list(actor: ConsoleActor) = defaultScope.launch {
         val modules = moduleHandler.getModuleDatas()
         actor.sendHeader("Modules")
         actor.sendMessage("")
         actor.sendMessage("Loaded §8(%hc%${modules.filter { it.lifeCycle == ModuleLifeCycle.LOAD }.size}§8)")
         modules.filter { it.lifeCycle == ModuleLifeCycle.LOAD }.forEach {
-            actor.sendMessage("§8-%hc%${it.description.name}%tc% §8(%tc%${it.description.version}§8)")
-            actor.sendMessage("\t§8➥ %tc%${it.description.description} §8| %tc%${it.description.website}")
+            actor.sendMessage("§8- %hc%${it.description.id}%tc% §8(%tc%${it.description.version}§8)")
+            actor.sendMessage("\t§8➥ %tc%${it.description.description}")
         }
         actor.sendMessage("")
         actor.sendMessage("Unloaded §8(%hc%${modules.filter { it.lifeCycle == ModuleLifeCycle.UNLOAD }.size}§8)")
         modules.filter { it.lifeCycle == ModuleLifeCycle.UNLOAD }.forEach {
-            actor.sendMessage("§8-%hc%${it.description.name}%tc% §8(%tc%${it.description.version}§8)")
-            actor.sendMessage("\t§8➥ %tc%${it.description.description} §8| %tc%${it.description.website}")
+            actor.sendMessage("§8- %hc%${it.description.id}%tc% §8(%tc%${it.description.version}§8)")
+            actor.sendMessage("\t§8➥ %tc%${it.description.description}")
+        }
+        val moduleInfos = moduleHandler.repositories
+            .flatMap { repo -> repo.getModuleIds().mapNotNull { repo.getModuleInfo(it) } }
+            .filter { moduleHandler.getModuleDescription(it.id) == null }
+        actor.sendMessage("")
+        actor.sendMessage("Available §8(%hc%${moduleInfos.size}§8)")
+        moduleInfos.forEach {
+            val repo = moduleHandler.getRepository(it.id)!!
+            actor.sendMessage("§8- %hc%${it.id}%tc% §8(%tc%${it.versions.lastOrNull() ?: "unknown"}§8)")
+            actor.sendMessage("\t§8➥ %tc%${it.description}")
+            actor.sendMessage("\t§8➥ %tc%${repo.repoUrl}")
         }
         actor.sendMessage("")
         actor.sendHeader("Modules")
@@ -119,7 +132,7 @@ class ModuleCommand(
         actor.sendMessage("Version§8: %hc%${data.description.version}")
         actor.sendMessage("Description§8: %hc%${data.description.description}")
         actor.sendMessage("Website§8: %hc%${data.description.website}")
-        actor.sendMessage("Author§8: %hc%${data.description.authors.joinToString("§8, %hc%")}")
+        actor.sendMessage("Authors§8: %hc%${data.description.authors.joinToString("§8, %hc%")}")
         actor.sendMessage("Supported services§8: %hc%${data.description.mainClasses.keys.joinToString("§8, %hc%") { it.name }}")
         actor.sendHeader("Module Info")
     }
@@ -155,9 +168,10 @@ class ModuleCommand(
             return
         }
         try {
-            ModuleWebRepository(url).repoUrl
+            val repo = ModuleWebRepository(url)
             repositoryUrls.add(url)
-            clusterConfiguration.set("module-repositories", gson.toJson(repositoryUrls))
+            clusterConfiguration.set("module-repositories", repositoryUrls)
+            moduleHandler.repositories.add(repo)
             actor.sendMessage("§aRepository with url $url added!")
         }catch (e: Exception) {
             actor.sendMessage("§cRepository with url $url is not a valid repository!")
@@ -176,8 +190,65 @@ class ModuleCommand(
             return
         }
         repositoryUrls.removeIf { it.lowercase() == url.lowercase() }
-        clusterConfiguration.set("module-repositories", gson.toJson(repositoryUrls))
+        clusterConfiguration.set("module-repositories", repositoryUrls)
+        moduleHandler.repositories.removeIf { it.repoUrl.lowercase() == url.lowercase() }
         actor.sendMessage("§aRepository with url $url removed!")
+    }
+
+    @CommandSubPath("install <id>")
+    @CommandDescription("Install a module")
+    fun install(
+        @CommandParameter("id") id: String
+    ) = defaultScope.launch {
+        moduleHandler.install(id, true)
+    }
+
+    @CommandSubPath("update <id>")
+    @CommandDescription("Update a module")
+    fun update(
+        actor: ConsoleActor,
+        @CommandParameter("id") id: String
+    ) = defaultScope.launch {
+        val data = moduleHandler.getModuleDatas().firstOrNull { it.description.id == id }
+        if (data == null) {
+            actor.sendMessage("§cModule with id $id not found!")
+            return@launch
+        }
+        val targetRepository = moduleHandler.getRepository(data.id)
+        if (targetRepository == null) {
+            actor.sendMessage("§cModule with id $id has no repository!")
+            return@launch
+        }
+        if (!targetRepository.isUpdateAvailable(data.description)) {
+            actor.sendMessage("§cModule with id $id has no update available!")
+            return@launch
+        }
+        actor.sendMessage("Updating module %hc%${data.id}%tc%...")
+        val loaded = data.loaded
+        if (loaded) moduleHandler.unloadModule(data)
+        val info = targetRepository.getModuleInfo(data.id)!!
+        val latest = targetRepository.getLatestVersion(info.id)!!
+        targetRepository.download(info.id, latest)
+        actor.sendMessage("Module with id $id updated!")
+        if (loaded) {
+            moduleHandler.loadModule(data.description.cachedFile!!)
+        }else {
+            actor.sendMessage("Use 'module load $id' to load the module!")
+        }
+    }
+
+    @CommandSubPath("uninstall <id>")
+    @CommandDescription("Uninstall a module")
+    fun uninstall(
+        actor: ConsoleActor,
+        @CommandParameter("id") id: String
+    ) = defaultScope.launch {
+        val data = moduleHandler.getModuleDatas().firstOrNull { it.description.id == id }
+        if (data == null) {
+            actor.sendMessage("§cModule with id $id not found!")
+            return@launch
+        }
+        moduleHandler.uninstall(data)
     }
 
 }
