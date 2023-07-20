@@ -52,7 +52,7 @@ class ModuleHandler(
     private val cachedDescription = mutableListOf<ModuleDescription>()
     private val repositories = mutableListOf<ModuleWebRepository>()
 
-    override suspend fun updateModules(silent: Boolean) = lock.withLock {
+    override suspend fun updateModules(silent: Boolean, loadModules: Boolean) = lock.withLock {
         runBlocking {
             cachedDescription.forEach { description ->
                 try {
@@ -80,7 +80,7 @@ class ModuleHandler(
                         logger.warning("Failed to find downloaded module ${description.id}!")
                         return@forEach
                     }
-                    loadModule(file)
+                    if (loadModules) loadModule(file)
                 }catch (e: Exception) {
                     logger.severe("Failed to update module ${description.id}!", e)
                 }
@@ -88,8 +88,9 @@ class ModuleHandler(
         }
     }
 
-    fun loadModules() {
+    suspend fun loadModules() {
         detectModules()
+        updateModules(loadModules = false)
         moduleFiles.forEach {
             loadModule(it)
         }
