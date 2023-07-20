@@ -133,7 +133,7 @@ abstract class BaseService(
         serverVersionRepository = CloudServerVersionRepository(databaseConnection, packetManager)
         configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager, packetManager)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager, configurationTemplateRepository)
-        moduleHandler = ModuleHandler(serviceId)
+        moduleHandler = ModuleHandler(serviceId, clusterConfiguration.getList<String>("module-repositories"))
         this.registerPackets()
         this.registerPacketListeners()
     }

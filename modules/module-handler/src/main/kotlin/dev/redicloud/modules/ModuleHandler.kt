@@ -29,7 +29,7 @@ import kotlin.reflect.jvm.reflect
 
 class ModuleHandler(
     private val serviceId: ServiceId,
-    private val repoUrls: List<String>
+    repoUrls: List<String>
 ) : IModuleHandler {
 
     companion object {

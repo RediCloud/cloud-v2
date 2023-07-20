@@ -4,14 +4,18 @@ import dev.redicloud.api.commands.*
 import dev.redicloud.api.modules.ModuleLifeCycle
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.modules.ModuleHandler
+import dev.redicloud.modules.repository.ModuleWebRepository
+import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.defaultScope
+import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.toSymbol
 import kotlinx.coroutines.launch
 
 @Command("module")
 @CommandDescription("Manage all modules")
 class ModuleCommand(
-    private val moduleHandler: ModuleHandler
+    private val moduleHandler: ModuleHandler,
+    private val clusterConfiguration: ClusterConfiguration
 ) : ICommand {
 
     @CommandSubPath("list")
@@ -118,6 +122,62 @@ class ModuleCommand(
         actor.sendMessage("Author§8: %hc%${data.description.authors.joinToString("§8, %hc%")}")
         actor.sendMessage("Supported services§8: %hc%${data.description.mainClasses.keys.joinToString("§8, %hc%") { it.name }}")
         actor.sendHeader("Module Info")
+    }
+
+    @CommandSubPath("repository list")
+    @CommandDescription("List all repositories")
+    fun repositoriesList(
+        actor: ConsoleActor
+    ) {
+        val repositoryUrls = clusterConfiguration.getList<String>("module-repositories")
+        if (repositoryUrls.isEmpty()) {
+            actor.sendMessage("§cNo repositories found!")
+            return
+        }
+        actor.sendHeader("Repositories")
+        actor.sendMessage("")
+        repositoryUrls.forEach {
+            actor.sendMessage("§8- %hc%$it")
+        }
+        actor.sendMessage("")
+        actor.sendHeader("Repositories")
+    }
+
+    @CommandSubPath("repository add <url>")
+    @CommandDescription("Add a repository")
+    fun repositoriesAdd(
+        actor: ConsoleActor,
+        @CommandParameter("url") url: String
+    ) {
+        val repositoryUrls = clusterConfiguration.getList<String>("module-repositories").toMutableList()
+        if (repositoryUrls.any { it.lowercase() == url.lowercase() }) {
+            actor.sendMessage("§cRepository with url $url already exists!")
+            return
+        }
+        try {
+            ModuleWebRepository(url).repoUrl
+            repositoryUrls.add(url)
+            clusterConfiguration.set("module-repositories", gson.toJson(repositoryUrls))
+            actor.sendMessage("§aRepository with url $url added!")
+        }catch (e: Exception) {
+            actor.sendMessage("§cRepository with url $url is not a valid repository!")
+        }
+    }
+
+    @CommandSubPath("repository remove <url>")
+    @CommandDescription("Remove a repository")
+    fun repositoriesRemove(
+        actor: ConsoleActor,
+        @CommandParameter("url") url: String
+    ) {
+        val repositoryUrls = clusterConfiguration.getList<String>("module-repositories").toMutableList()
+        if (!repositoryUrls.none { it.lowercase() == url.lowercase() }) {
+            actor.sendMessage("§cRepository with url $url not found!")
+            return
+        }
+        repositoryUrls.removeIf { it.lowercase() == url.lowercase() }
+        clusterConfiguration.set("module-repositories", gson.toJson(repositoryUrls))
+        actor.sendMessage("§aRepository with url $url removed!")
     }
 
 }
