@@ -5,6 +5,7 @@ import dev.redicloud.connector.bukkit.provider.BukkitServerPlayerProvider
 import dev.redicloud.service.minecraft.MinecraftServerService
 import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
 import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
+import kotlinx.coroutines.runBlocking
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -19,7 +20,7 @@ class BukkitConnector(val plugin: JavaPlugin) : MinecraftServerService<JavaPlugi
         serverPlayerProvider = BukkitServerPlayerProvider()
         screenProvider = BukkitScreenProvider(this.packetManager)
         registerTasks()
-        moduleHandler.loadModules()
+        runBlocking { moduleHandler.loadModules() }
     }
 
     override fun getConnectorPlugin(): JavaPlugin {
