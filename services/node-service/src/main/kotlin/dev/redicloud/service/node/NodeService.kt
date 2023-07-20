@@ -228,6 +228,7 @@ class NodeService(
         register(FileTemplateCommand(this.fileTemplateRepository))
         register(ServerCommand(this.serverFactory, this.serverRepository, this.nodeRepository))
         register(ScreenCommand(this.console))
+        register(ModuleCommand(this.moduleHandler))
     }
 
     private fun initShutdownHook() {

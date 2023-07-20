@@ -37,6 +37,7 @@ class ModuleHandler(
     private val modules = mutableListOf<ModuleData<*>>()
     private val lock = ReentrantLock()
     private val moduleFiles = mutableListOf<File>()
+    private val cachedDescription = mutableListOf<ModuleDescription>()
 
     fun loadModules() {
         detectModules()
@@ -64,10 +65,22 @@ class ModuleHandler(
             }else true
         }?.forEach {
             moduleFiles.add(it)
+            loadDescription(it)
         }
     }
 
-    internal fun loadModule(file: File) = lock.withLock {
+    fun loadDescription(file: File): ModuleDescription {
+        val jarFile = JarFile(file)
+        val moduleInfoEntry = jarFile.getJarEntry("module.json")!!
+        val inputStream = jarFile.getInputStream(moduleInfoEntry)
+        val description = gson.fromJson(inputStream.reader().readText(), ModuleDescription::class.java)
+        description.cachedFile = file
+        cachedDescription.removeIf { it.id == description.id }
+        cachedDescription.add(description)
+        return description
+    }
+
+    fun loadModule(file: File) = lock.withLock {
         if (modules.any { it.file == file }) {
             logger.warning("Tried to load module that is already loaded: ${file.name}")
             return
@@ -77,12 +90,9 @@ class ModuleHandler(
             return
         }
 
-        val jarFile = JarFile(file)
-        val moduleInfoEntry = jarFile.getJarEntry("module.json")!!
-        val inputStream = jarFile.getInputStream(moduleInfoEntry)
-        val description = gson.fromJson(inputStream.reader().readText(), ModuleDescription::class.java)
+        val description = loadDescription(file)
 
-        if (modules.any { it.id == description.id }) {
+        if (modules.any { it.id == description.id && it.loaded}) {
             logger.warning("Tried to load module with id that is already loaded: ${description.id}")
             return
         }
@@ -122,7 +132,7 @@ class ModuleHandler(
             tasks.add(ModuleTaskData(it, annotation.lifeCycle, annotation.order))
         }
 
-        val moduleData = ModuleData(description.id, moduleInstance, file, description, ModuleLifeCycle.UNLOAD, loader, tasks)
+        val moduleData = ModuleData(description.id, moduleInstance, file, description, ModuleLifeCycle.UNLOAD, loader, tasks, false)
 
         if (tasks.isEmpty()) {
             logger.warning("Module ${description.id} has no tasks!")
@@ -132,6 +142,7 @@ class ModuleHandler(
             val tasksCount = callTasks(moduleData, ModuleLifeCycle.LOAD)
             modules.add(moduleData)
             logger.info("Loaded module ${description.id} with $tasksCount load tasks!")
+            moduleData.loaded = true
         }catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
             logger.warning("Failed to load module ${description.id}!", e)
@@ -139,7 +150,7 @@ class ModuleHandler(
         }
     }
 
-    internal fun reloadModule(moduleData: ModuleData<*>) = lock.withLock {
+    fun reloadModule(moduleData: ModuleData<*>) = lock.withLock {
         if (moduleData.lifeCycle != ModuleLifeCycle.LOAD) {
             logger.warning("Tried to reload module ${moduleData.id} that is not loaded!")
             return
@@ -155,12 +166,13 @@ class ModuleHandler(
         }
     }
 
-    internal fun unloadModule(moduleData: ModuleData<*>) = lock.withLock {
-        if (moduleData.lifeCycle != ModuleLifeCycle.LOAD) {
+    fun unloadModule(moduleData: ModuleData<*>) = lock.withLock {
+        if (moduleData.lifeCycle != ModuleLifeCycle.LOAD || modules.none { it.id == moduleData.id && it.loaded }) {
             logger.warning("Tried to unload module ${moduleData.id} that is not loaded!")
             return
         }
         try {
+            moduleData.loaded = false
             val tasksCount = callTasks(moduleData, ModuleLifeCycle.UNLOAD)
             logger.info("Unloaded module ${moduleData.id} with $tasksCount unload tasks!")
         }catch (e: Exception) {
@@ -193,6 +205,10 @@ class ModuleHandler(
             tasksCount++
         }
         return tasksCount
+    }
+
+    fun getModuleDescription(moduleId: String): ModuleDescription? {
+        return cachedDescription.firstOrNull { it.id == moduleId }
     }
 
     override fun getState(moduleId: String): ModuleLifeCycle? {
@@ -229,6 +245,10 @@ class ModuleHandler(
 
     override fun load(moduleId: String) {
         loadModule(modules.firstOrNull { it.id == moduleId }?.file ?: return)
+    }
+
+    fun getModuleDatas(): List<ModuleData<*>> {
+        return modules
     }
 
 }
