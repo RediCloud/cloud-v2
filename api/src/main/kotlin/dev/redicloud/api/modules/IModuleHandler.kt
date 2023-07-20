@@ -2,6 +2,8 @@ package dev.redicloud.api.modules
 
 interface IModuleHandler {
 
+    suspend fun updateModules(silent: Boolean = false)
+
     fun getState(moduleId: String): ModuleLifeCycle?
 
     fun getState(module: ICloudModule): ModuleLifeCycle?

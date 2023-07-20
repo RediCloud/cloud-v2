@@ -14,6 +14,7 @@ import dev.redicloud.api.utils.injector
 import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.apply.impl.JarResourceLoader
 import dev.redicloud.logging.LogManager
+import dev.redicloud.modules.repository.ModuleWebRepository
 import dev.redicloud.utils.gson.gson
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -27,17 +28,65 @@ import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.reflect
 
 class ModuleHandler(
-    private val serviceId: ServiceId
+    private val serviceId: ServiceId,
+    private val repoUrls: List<String>
 ) : IModuleHandler {
 
     companion object {
         private val logger = LogManager.logger(ModuleHandler::class)
     }
 
+    init {
+        repoUrls.forEach {
+            try {
+                repositories.add(ModuleWebRepository(it))
+            }catch (e: Exception) {
+                logger.severe("Failed to add module repository $it!", e)
+            }
+        }
+    }
+
     private val modules = mutableListOf<ModuleData<*>>()
     private val lock = ReentrantLock()
     private val moduleFiles = mutableListOf<File>()
     private val cachedDescription = mutableListOf<ModuleDescription>()
+    private val repositories = mutableListOf<ModuleWebRepository>()
+
+    override suspend fun updateModules(silent: Boolean) = lock.withLock {
+        runBlocking {
+            cachedDescription.forEach { description ->
+                try {
+                    val targetRepositories = if (description.cachedFile != null) {
+                        repositories.filter { it.isUpdateAvailable(description) }
+                    }else emptyList()
+
+                    if (targetRepositories.isEmpty()) return@forEach
+
+                    if (targetRepositories.size > 2) {
+                        logger.warning("Found more than 2 repositories that have an update for module ${description.id}!")
+                        targetRepositories.forEach { logger.warning(" - ${it.repoUrl} | ${it.getLatestVersion(description.id)}") }
+                        return@forEach
+                    }
+
+                    val targetRepository = targetRepositories.first()
+                    val data = modules.firstOrNull { description.id == it.id }
+                    if (data != null && (data.loaded || data.lifeCycle == ModuleLifeCycle.LOAD)) {
+                        unloadModule(data)
+                    }
+                    targetRepository.download(description.id, description.version)
+                    detectModules()
+                    val file = moduleFiles.firstOrNull { it.name == "${description.id}-${description.version}.jar" }
+                    if (file == null) {
+                        logger.warning("Failed to find downloaded module ${description.id}!")
+                        return@forEach
+                    }
+                    loadModule(file)
+                }catch (e: Exception) {
+                    logger.severe("Failed to update module ${description.id}!", e)
+                }
+            }
+        }
+    }
 
     fun loadModules() {
         detectModules()
@@ -180,6 +229,10 @@ class ModuleHandler(
             logger.warning("Failed to unload module ${moduleData.id}!", e)
             return@withLock
         }
+    }
+
+    suspend fun getRepository(moduleId: String): ModuleWebRepository? {
+        return repositories.firstOrNull { it.hasModule(moduleId) }
     }
 
     internal fun callTasks(moduleData: ModuleData<*>, targetLifeCycle: ModuleLifeCycle): Int {
