@@ -11,5 +11,6 @@ data class ModuleData<T : ICloudModule>(
     val description: ModuleDescription,
     var lifeCycle: ModuleLifeCycle,
     var loader: ModuleClassLoader,
-    val tasks: List<ModuleTaskData>
+    val tasks: List<ModuleTaskData>,
+    var loaded: Boolean
 )
