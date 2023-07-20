@@ -11,7 +11,7 @@ class PaperMcApiRequester {
     companion object {
         private val cache = mutableMapOf<String, Any>()
         val BASE_URL = "https://api.papermc.io/v2"
-        suspend inline fun <reified T> request(apiUrl: String): Response<T> {
+        private suspend inline fun <reified T> request(apiUrl: String): Response<T> {
             val response = get(BASE_URL + apiUrl)
             val json = response.jsonObject.toString()
             return Response(json, gson.fromJson(json, T::class.java), response.statusCode)
