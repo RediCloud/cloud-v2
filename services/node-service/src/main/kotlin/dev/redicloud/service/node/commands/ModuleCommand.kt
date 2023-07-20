@@ -4,7 +4,9 @@ import dev.redicloud.api.commands.*
 import dev.redicloud.api.modules.ModuleLifeCycle
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.modules.ModuleHandler
+import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.toSymbol
+import kotlinx.coroutines.launch
 
 @Command("module")
 @CommandDescription("Manage all modules")
@@ -96,16 +98,19 @@ class ModuleCommand(
     fun info(
         actor: ConsoleActor,
         @CommandParameter("id") id: String
-    ) {
+    ) = defaultScope.launch {
         moduleHandler.detectModules()
         val data = moduleHandler.getModuleDatas().firstOrNull { it.description.id == id }
         if (data == null) {
             actor.sendMessage("§cModule with id $id not found!")
-            return
+            return@launch
         }
+        val targetRepository = moduleHandler.getRepository(data.id)
         actor.sendHeader("Module Info")
         actor.sendMessage("Name§8: %hc%${data.description.name}")
         actor.sendMessage("ID§8: %hc%${data.description.id}")
+        actor.sendMessage("Repository§8: %hc%${targetRepository?.repoUrl ?: "None"}")
+        actor.sendMessage("Update available§8: %hc%${(targetRepository?.isUpdateAvailable(data.description) ?: false).toSymbol()}")
         actor.sendMessage("Loaded§8: %hc%${data.loaded.toSymbol()}")
         actor.sendMessage("Version§8: %hc%${data.description.version}")
         actor.sendMessage("Description§8: %hc%${data.description.description}")
