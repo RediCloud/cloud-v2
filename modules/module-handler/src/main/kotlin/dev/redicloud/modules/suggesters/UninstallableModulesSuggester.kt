@@ -10,7 +10,6 @@ class UninstallableModulesSuggester(
 
     override fun suggest(context: CommandContext): Array<String> {
         return moduleHandler.getCachedDescriptions()
-            .filter { moduleHandler.getModuleData(it.id)?.loaded == true }
             .map { it.id }
             .toTypedArray()
     }
