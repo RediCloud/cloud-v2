@@ -141,7 +141,7 @@ abstract class BaseService(
             moduleRepositoryUrls.add(defaultRepoUrl)
             clusterConfiguration.set("module-repositories", moduleRepositoryUrls)
         }
-        moduleHandler = ModuleHandler(serviceId, moduleRepositoryUrls)
+        moduleHandler = ModuleHandler(serviceId, moduleRepositoryUrls, eventManager, packetManager)
         this.registerPackets()
         this.registerPacketListeners()
     }

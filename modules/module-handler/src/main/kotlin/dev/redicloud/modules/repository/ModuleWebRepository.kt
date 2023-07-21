@@ -3,6 +3,7 @@ package dev.redicloud.modules.repository
 import com.google.gson.reflect.TypeToken
 import dev.redicloud.api.utils.MODULE_FOLDER
 import dev.redicloud.modules.ModuleDescription
+import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.utils.SingleCache
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.isValidUrl
@@ -23,25 +24,34 @@ import kotlin.time.Duration.Companion.seconds
  */
 
 class ModuleWebRepository(
-    val repoUrl: String
+    val repoUrl: String,
+    private val moduleHandler: ModuleHandler
 ) {
 
     init {
-        runBlocking {
-            val validResponse = runBlocking { request<String>("$repoUrl/.redicloud") }
-            if (validResponse.responseCode != 200 && validResponse.responseCode != 400) throw IllegalStateException("Repository is down? ${validResponse.responseCode} for ${repoUrl}")
-            if (validResponse.responseCode == 400) throw IllegalStateException("Repository is not marked as redicloud module repository. Create a file called '.redicloud' in the root of your repository. (url: $repoUrl)")
+        val response = get("$repoUrl/.redicloud")
+        if (response.statusCode != 200 && response.statusCode != 400) {
+            throw IllegalStateException("Repository is down? ${response.statusCode} for ${repoUrl}")
+        }
+        if (response.statusCode == 400) {
+            throw IllegalStateException("Repository is not marked as redicloud module repository. Create a file called '.redicloud' in the root of your repository. (url: $repoUrl)")
         }
     }
 
     private suspend inline fun <reified T> request(apiUrl: String): Response<T> {
         val response = get(repoUrl + apiUrl)
+        if (response.statusCode != 200) {
+            return Response("{}", null, response.statusCode)
+        }
         val json = response.jsonObject.toString()
         return Response(json, gson.fromJson(json, T::class.java), response.statusCode)
     }
 
     private suspend inline fun <reified T> requestList(apiUrl: String): Response<List<T>> {
         val response = get(repoUrl.removeSuffix("/") + apiUrl)
+        if (response.statusCode != 200) {
+            return Response("{}", null, response.statusCode)
+        }
         val type = object : TypeToken<ArrayList<T>>() {}.type
         val json = response.text
         val list = gson.fromJson<List<T>>(json, type)
@@ -52,8 +62,8 @@ class ModuleWebRepository(
         return getModuleInfo(moduleId) != null
     }
 
-    private val moduleIdCache = SingleCache<List<String>>(15.seconds) {
-        requestList<String>("modules.json").responseObject ?: listOf()
+    private val moduleIdCache = SingleCache(15.seconds) {
+        requestList<String>("/modules.json").responseObject ?: listOf()
     }
     suspend fun getModuleIds(): List<String> {
         return moduleIdCache.get() ?: listOf()
@@ -64,8 +74,7 @@ class ModuleWebRepository(
     }
 
     suspend fun getModuleBytes(moduleId: String, version: String): ByteArray? {
-        val info = getModuleInfo(moduleId) ?: return null
-        val response = get("$repoUrl/$moduleId-$version.jar")
+        val response = get("$repoUrl/$moduleId/$version/$moduleId-$version.jar")
         return response.content
     }
 
@@ -74,8 +83,9 @@ class ModuleWebRepository(
         return info.versions.lastOrNull()
     }
 
-    suspend fun isUpdateAvailable(description: ModuleDescription): Boolean {
-        val lastVersion = getLatestVersion(description.id) ?: return false
+    suspend fun isUpdateAvailable(moduleId: String): Boolean {
+        val lastVersion = getLatestVersion(moduleId) ?: return false
+        val description = moduleHandler.getModuleDescription(moduleId) ?: return false
         return lastVersion != description.version
     }
 
@@ -84,9 +94,11 @@ class ModuleWebRepository(
         val localFile = File(MODULE_FOLDER.getFile(), "$moduleId-$version.jar")
         val bytes = getModuleBytes(moduleId, version) ?: throw IllegalStateException("Module not found: $moduleId-$version")
         val tmpFile = File(MODULE_FOLDER.getFile(), "$moduleId-$version.jar.download")
+        tmpFile.createNewFile()
         tmpFile.writeBytes(bytes)
         if (localFile.exists()) localFile.delete()
         tmpFile.renameTo(localFile)
+        moduleHandler.detectModules()
         return localFile
     }
 
