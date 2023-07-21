@@ -62,7 +62,7 @@ class ModuleCommand(
     @CommandDescription("Load a module")
     fun load(
         actor: ConsoleActor,
-        @CommandParameter("id", true, LoadablesModulesSuggester::class) id: String
+        @CommandParameter("id", true, LoadableModulesSuggester::class) id: String
     ) {
         moduleHandler.detectModules()
         val description = moduleHandler.getModuleDescription(id)
