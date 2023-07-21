@@ -2,7 +2,6 @@ package dev.redicloud.modules
 
 import com.google.inject.Key
 import com.google.inject.name.Named
-import com.google.inject.name.Names
 import dev.redicloud.api.modules.ICloudModule
 import dev.redicloud.api.modules.IModuleHandler
 import dev.redicloud.api.modules.ModuleLifeCycle
@@ -11,46 +10,57 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.utils.CloudInjectable
 import dev.redicloud.api.utils.MODULE_FOLDER
 import dev.redicloud.api.utils.injector
+import dev.redicloud.commands.api.SUGGESTERS
+import dev.redicloud.event.EventManager
 import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.apply.impl.JarResourceLoader
 import dev.redicloud.logging.LogManager
 import dev.redicloud.modules.repository.ModuleWebRepository
+import dev.redicloud.modules.suggesters.*
+import dev.redicloud.packets.PacketManager
 import dev.redicloud.utils.gson.gson
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
 import java.util.jar.JarFile
 import kotlin.concurrent.withLock
-import kotlin.reflect.KClass
 import kotlin.reflect.full.*
-import kotlin.reflect.jvm.ExperimentalReflectionOnLambdas
 import kotlin.reflect.jvm.javaMethod
-import kotlin.reflect.jvm.reflect
 
 class ModuleHandler(
     private val serviceId: ServiceId,
-    repoUrls: List<String>
+    repoUrls: List<String>,
+    private val eventManager: EventManager,
+    private val packetManager: PacketManager
 ) : IModuleHandler {
 
     companion object {
         private val logger = LogManager.logger(ModuleHandler::class)
     }
 
-    init {
-        repoUrls.forEach {
-            try {
-                repositories.add(ModuleWebRepository(it))
-            }catch (e: Exception) {
-                logger.severe("Failed to add module repository $it!", e)
-            }
-        }
-    }
-
-    private val modules = mutableListOf<ModuleData<*>>()
+    private val loaders = mutableMapOf<String, ModuleClassLoader>()
     private val lock = ReentrantLock()
     private val moduleFiles = mutableListOf<File>()
-    private val cachedDescription = mutableListOf<ModuleDescription>()
+    private val cachedDescriptions = mutableListOf<ModuleDescription>()
     val repositories = mutableListOf<ModuleWebRepository>()
+
+    init {
+        repoUrls.forEach { url ->
+            try {
+                ModuleWebRepository(url, this).also {
+                    repositories.add(it)
+                }
+            }catch (e: Exception) {
+                logger.severe("Failed to add module repository $url!", e)
+            }
+        }
+        SUGGESTERS.add(InstallableModulesSuggester(this))
+        SUGGESTERS.add(LoadablesModulesSuggester(this))
+        SUGGESTERS.add(ReloadableModulesSuggester(this))
+        SUGGESTERS.add(UninstallableModulesSuggester(this))
+        SUGGESTERS.add(UnloadableModulesSuggester(this))
+        SUGGESTERS.add(InstalledModulesSuggester(this))
+    }
 
     suspend fun loadModules() {
         detectModules()
@@ -61,10 +71,10 @@ class ModuleHandler(
 
     override suspend fun updateModules(silent: Boolean, loadModules: Boolean) = lock.withLock {
         runBlocking {
-            cachedDescription.forEach { description ->
+            cachedDescriptions.forEach { description ->
                 try {
                     val targetRepositories = if (description.cachedFile != null) {
-                        repositories.filter { it.isUpdateAvailable(description) }
+                        repositories.filter { it.isUpdateAvailable(description.id) }
                     }else emptyList()
 
                     if (targetRepositories.isEmpty()) return@forEach
@@ -76,9 +86,9 @@ class ModuleHandler(
                     }
 
                     val targetRepository = targetRepositories.first()
-                    val data = modules.firstOrNull { description.id == it.id }
+                    val data = getModuleData(description.id)
                     if (data != null && (data.loaded || data.lifeCycle == ModuleLifeCycle.LOAD)) {
-                        unloadModule(data)
+                        unloadModule(data.id)
                     }
                     targetRepository.download(description.id, description.version)
                     detectModules()
@@ -95,14 +105,21 @@ class ModuleHandler(
         }
     }
 
-    suspend fun uninstall(data: ModuleData<*>) {
-        logger.info("Uninstalling module %hc%${data.id}%tc%...")
-        val file = data.file
-        if (data.loaded) {
-            unloadModule(data)
+    suspend fun uninstall(moduleId: String) {
+        logger.info("Uninstalling module %hc%$moduleId%tc%...")
+        val file = getModuleData(moduleId).also { data ->
+            if (data == null) return@also
+            if (data.loaded) unloadModule(data.id)
+            moduleFiles.removeIf { it.name == data.description.name }
+        }?.file ?: cachedDescriptions.firstOrNull { it.id == moduleId }?.cachedFile
+        if (file == null) {
+            logger.info("§cModule with id $moduleId not found!")
+            return
         }
+        cachedDescriptions.removeIf { it.id == moduleId }
+        loaders.remove(moduleId)?.close()
         file.delete()
-        logger.info("Module with id ${data.id}uninstalled!")
+        logger.info("Module with id %hc%$moduleId %tc%uninstalled!")
     }
 
     suspend fun install(moduleId: String, load: Boolean = true) {
@@ -125,9 +142,13 @@ class ModuleHandler(
             logger.info("§cModule with id $moduleId not found!")
             return
         }
-        logger.info("Installing module %hc%${info.id} §8(%tc%${latest}%tc%...")
+        logger.info("Installing module %hc%${info.id} §8(%tc%${latest}§8)%tc%...")
         try {
             val file = repository.download(info.id, latest)
+            if (file.length() < 1000) {
+                logger.info("§cFailed to install module with id $moduleId!")
+                return
+            }
             logger.info("Module with id $moduleId installed!")
             if (load) {
                 loadModule(file)
@@ -141,8 +162,7 @@ class ModuleHandler(
     }
 
     fun unloadModules() {
-        modules.forEach {
-            if (!it.loaded) return@forEach
+        loaders.map { it.value.data.id }.toList().forEach {
             unloadModule(it)
         }
     }
@@ -170,31 +190,31 @@ class ModuleHandler(
         val inputStream = jarFile.getInputStream(moduleInfoEntry)
         val description = gson.fromJson(inputStream.reader().readText(), ModuleDescription::class.java)
         description.cachedFile = file
-        cachedDescription.removeIf { it.id == description.id }
-        cachedDescription.add(description)
+        cachedDescriptions.removeIf { it.id == description.id }
+        cachedDescriptions.add(description)
         return description
     }
 
     fun loadModule(file: File) = lock.withLock {
-        if (modules.any { it.file == file && it.loaded }) {
-            logger.warning("Tried to load module that is already loaded: ${file.name}")
+        if (!file.exists()) {
+            logger.warning("Tried to load module that does not exist: ${file.name}")
             return
         }
-        if (!moduleFiles.contains(file)) {
-            logger.warning("Tried to load module that is not detected as module: ${file.name}")
+        if (file.extension != "jar") {
+            logger.warning("Tried to load module that is not a jar file: ${file.name}")
+            return
+        }
+        if (loaders.any { it.value.data.file == file }) {
+            logger.warning("Tried to load module that is already loaded: ${file.name}")
             return
         }
 
         val description = loadDescription(file)
 
-        if (modules.any { it.id == description.id && it.loaded}) {
-            logger.warning("Tried to load module with id that is already loaded: ${description.id}")
-            return
-        }
-
         if (!description.mainClasses.containsKey(serviceId.type)) return@withLock
 
-        val loader = ModuleClassLoader(description.id, arrayOf(file.toURI().toURL()), this.javaClass.classLoader)
+        val moduleData = ModuleData(description.id, file, description, ModuleLifeCycle.UNLOAD, false)
+        val loader = ModuleClassLoader(moduleData, file, this.javaClass.classLoader)
 
         try {
             Bootstrap().apply(loader, loader, JarResourceLoader(description.id, file))
@@ -207,7 +227,8 @@ class ModuleHandler(
             logger.warning("Main class of module ${description.id} is not a subclass of ICloudModule!")
             return@withLock
         }
-        var moduleInstance: ICloudModule? = null
+        loaders[description.id] = loader
+        val moduleInstance: ICloudModule?
         try {
             moduleInstance = if (moduleClass.isSubclassOf(CloudInjectable::class)) {
                 injector.getInstance(moduleClass.java)
@@ -218,6 +239,7 @@ class ModuleHandler(
             logger.warning("Failed to load module ${description.id}!", e)
             return@withLock
         }
+        moduleData.init(moduleInstance)
 
         val tasks = mutableListOf<ModuleTaskData>()
         (moduleClass.declaredMemberFunctions + moduleClass.declaredMemberExtensionFunctions).filter {
@@ -227,15 +249,14 @@ class ModuleHandler(
             tasks.add(ModuleTaskData(it, annotation.lifeCycle, annotation.order))
         }
 
-        val moduleData = ModuleData(description.id, moduleInstance, file, description, ModuleLifeCycle.UNLOAD, loader, tasks, false)
+        loader.init(tasks)
 
         if (tasks.isEmpty()) {
             logger.warning("Module ${description.id} has no tasks!")
         }
 
         try {
-            val tasksCount = callTasks(moduleData, ModuleLifeCycle.LOAD)
-            modules.add(moduleData)
+            val tasksCount = callTasks(moduleData.id, ModuleLifeCycle.LOAD)
             logger.info("Loaded module ${description.id} with $tasksCount load tasks!")
             moduleData.loaded = true
         }catch (e: Exception) {
@@ -245,13 +266,22 @@ class ModuleHandler(
         }
     }
 
-    fun reloadModule(moduleData: ModuleData<*>) = lock.withLock {
+    override fun reloadModule(moduleId: String) = lock.withLock {
+        val moduleData = getModuleData(moduleId)
+        if (moduleData == null) {
+            logger.warning("Tried to reload module $moduleId that is not loaded!")
+            return
+        }
         if (moduleData.lifeCycle != ModuleLifeCycle.LOAD) {
             logger.warning("Tried to reload module ${moduleData.id} that is not loaded!")
             return
         }
+        if (!isModuleReloadable(moduleId)) {
+            logger.warning("Tried to reload module ${moduleData.id} that is not reloadable!")
+            return
+        }
         try {
-            val tasksCount = callTasks(moduleData, ModuleLifeCycle.RELOAD)
+            val tasksCount = callTasks(moduleData.id, ModuleLifeCycle.RELOAD)
             moduleData.lifeCycle = ModuleLifeCycle.LOAD
             logger.info("Reloaded module ${moduleData.id} with $tasksCount reload tasks!")
         }catch (e: Exception) {
@@ -261,18 +291,24 @@ class ModuleHandler(
         }
     }
 
-    fun unloadModule(moduleData: ModuleData<*>) = lock.withLock {
-        if (moduleData.lifeCycle != ModuleLifeCycle.LOAD || modules.none { it.id == moduleData.id && it.loaded }) {
-            logger.warning("Tried to unload module ${moduleData.id} that is not loaded!")
+    override fun unloadModule(moduleId: String) = lock.withLock {
+        if (!loaders.containsKey(moduleId)) {
+            logger.warning("Tried to unload module $moduleId that is not loaded!")
             return
         }
         try {
-            moduleData.loaded = false
-            val tasksCount = callTasks(moduleData, ModuleLifeCycle.UNLOAD)
-            logger.info("Unloaded module ${moduleData.id} with $tasksCount unload tasks!")
+            val file = getModuleData(moduleId)!!.file
+            getModuleData(moduleId)!!.loaded = false
+            val tasksCount = callTasks(moduleId, ModuleLifeCycle.UNLOAD)
+            loaders.remove(moduleId)?.also {
+                packetManager.unregister(it)
+                eventManager.unregister(it)
+                it.close()
+            }
+            JarFile(file).close()
+            logger.info("Unloaded module $moduleId with $tasksCount unload tasks!")
         }catch (e: Exception) {
-            moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
-            logger.warning("Failed to unload module ${moduleData.id}!", e)
+            logger.warning("Failed to unload module $moduleId!", e)
             return@withLock
         }
     }
@@ -281,11 +317,12 @@ class ModuleHandler(
         return repositories.firstOrNull { it.hasModule(moduleId) }
     }
 
-    internal fun callTasks(moduleData: ModuleData<*>, targetLifeCycle: ModuleLifeCycle): Int {
-        val tasks = moduleData.tasks
+    internal fun callTasks(moduleId: String, targetLifeCycle: ModuleLifeCycle): Int {
+        val moduleData = getModuleData(moduleId) ?: return 0
+        val loader = loaders[moduleData.id] ?: return 0
         var tasksCount = 0
         moduleData.lifeCycle = targetLifeCycle
-        tasks.filter { it.lifeCycle == targetLifeCycle }.sortedBy { it.order }.forEach {
+        loader.tasks.filter { it.lifeCycle == targetLifeCycle }.sortedBy { it.order }.forEach {
             val function = it.function
             val injectParameters = mutableListOf<Any>()
             function.javaMethod!!.parameters.forEach {
@@ -297,9 +334,9 @@ class ModuleHandler(
                 injectParameters.add(instance)
             }
             if (function.isSuspend) { //TODO test suspend
-                runBlocking { function.callSuspend(moduleData.module, *injectParameters.toTypedArray()) }
+                runBlocking { function.callSuspend(moduleData.instance, *injectParameters.toTypedArray()) }
             }else {
-                function.javaMethod!!.invoke(moduleData.module, *injectParameters.toTypedArray())
+                function.javaMethod!!.invoke(moduleData.instance, *injectParameters.toTypedArray())
             }
             tasksCount++
         }
@@ -307,47 +344,31 @@ class ModuleHandler(
     }
 
     fun getModuleDescription(moduleId: String): ModuleDescription? {
-        return cachedDescription.firstOrNull { it.id == moduleId }
+        return cachedDescriptions.firstOrNull { it.id == moduleId }
+    }
+
+    fun getModuleData(moduleId: String): ModuleData? {
+        return loaders[moduleId]?.data
     }
 
     override fun getState(moduleId: String): ModuleLifeCycle? {
-        return modules.firstOrNull { it.id == moduleId }?.lifeCycle
+        return getModuleData(moduleId)?.lifeCycle
     }
 
-    override fun getState(module: ICloudModule): ModuleLifeCycle? {
-        return modules.firstOrNull { it.module == module }?.lifeCycle
+    override fun isModuleReloadable(moduleId: String): Boolean {
+        return loaders[moduleId]?.tasks?.filter { it.lifeCycle == ModuleLifeCycle.RELOAD }?.isNotEmpty() ?: false
     }
 
-    override fun <T : ICloudModule> getModule(module: String): T? {
-        return modules.firstOrNull { it.id == module }?.module as? T
+    override fun loadModule(moduleId: String) {
+        loadModule(cachedDescriptions.firstOrNull { it.id == moduleId }?.cachedFile ?: return)
     }
 
-    override fun reload(module: ICloudModule) {
-        reloadModule(modules.firstOrNull { it.module == module } ?: return)
+    fun getModuleDatas(): List<ModuleData> {
+        return loaders.map { it.value.data }
     }
 
-    override fun reload(moduleId: String) {
-        reloadModule(modules.firstOrNull { it.id == moduleId } ?: return)
-    }
-
-    override fun unload(module: ICloudModule) {
-        unloadModule(modules.firstOrNull { it.module == module } ?: return)
-    }
-
-    override fun unload(moduleId: String) {
-        unloadModule(modules.firstOrNull { it.id == moduleId } ?: return)
-    }
-
-    override fun load(module: ICloudModule) {
-        loadModule(modules.firstOrNull { it.module == module }?.file ?: return)
-    }
-
-    override fun load(moduleId: String) {
-        loadModule(modules.firstOrNull { it.id == moduleId }?.file ?: return)
-    }
-
-    fun getModuleDatas(): List<ModuleData<*>> {
-        return modules
+    fun getCachedDescriptions(): List<ModuleDescription> {
+        return cachedDescriptions
     }
 
 }

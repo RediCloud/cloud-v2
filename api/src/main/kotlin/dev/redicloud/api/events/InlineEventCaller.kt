@@ -10,6 +10,8 @@ class InlineEventCaller<T : CloudEvent>(
     val handler: (T) -> Unit
 ) {
 
+    val classLoader = this::class.java.classLoader
+
     fun unregister() {
         defaultScope.launch { eventManager.unregisterListener(this@InlineEventCaller) }
     }
