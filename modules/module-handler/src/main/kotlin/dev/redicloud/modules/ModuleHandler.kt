@@ -55,7 +55,7 @@ class ModuleHandler(
             }
         }
         SUGGESTERS.add(InstallableModulesSuggester(this))
-        SUGGESTERS.add(LoadablesModulesSuggester(this))
+        SUGGESTERS.add(LoadableModulesSuggester(this))
         SUGGESTERS.add(ReloadableModulesSuggester(this))
         SUGGESTERS.add(UninstallableModulesSuggester(this))
         SUGGESTERS.add(UnloadableModulesSuggester(this))
@@ -80,8 +80,8 @@ class ModuleHandler(
                     if (targetRepositories.isEmpty()) return@forEach
 
                     if (targetRepositories.size > 2) {
-                        logger.warning("Found more than 2 repositories that have an update for module ${description.id}!")
-                        targetRepositories.forEach { logger.warning(" - ${it.repoUrl} | ${it.getLatestVersion(description.id)}") }
+                        logger.warning("§cFound more than 2 repositories that have an update for module ${description.id}!")
+                        targetRepositories.forEach { logger.warning("§c - ${it.repoUrl} | ${it.getLatestVersion(description.id)}") }
                         return@forEach
                     }
 
@@ -94,7 +94,7 @@ class ModuleHandler(
                     detectModules()
                     val file = moduleFiles.firstOrNull { it.name == "${description.id}-${description.version}.jar" }
                     if (file == null) {
-                        logger.warning("Failed to find downloaded module ${description.id}!")
+                        logger.warning("§cFailed to find downloaded module ${description.id}!")
                         return@forEach
                     }
                     if (loadModules) loadModule(file)
@@ -116,10 +116,14 @@ class ModuleHandler(
             logger.info("§cModule with id $moduleId not found!")
             return
         }
-        cachedDescriptions.removeIf { it.id == moduleId }
-        loaders.remove(moduleId)?.close()
-        file.delete()
-        logger.info("Module with id %hc%$moduleId %tc%uninstalled!")
+        if (file.delete()) {
+            cachedDescriptions.removeIf { it.id == moduleId }
+            loaders.remove(moduleId)?.close()
+            logger.info("Module with id %hc%$moduleId %tc%uninstalled!")
+        } else {
+            logger.warning("§cFailed to uninstall module with id $moduleId!")
+            logger.warning("§cStop the node and delete the file manually: ${file.absolutePath}")
+        }
     }
 
     suspend fun install(moduleId: String, load: Boolean = true) {
@@ -129,24 +133,24 @@ class ModuleHandler(
         }
         val repository = repositories.firstOrNull { it.hasModule(moduleId) }
         if (repository == null) {
-            logger.info("§cModule with id $moduleId not found!")
+            logger.warning("§cModule with id $moduleId not found!")
             return
         }
         val info = repository.getModuleInfo(moduleId)
         if (info == null) {
-            logger.info("§cModule with id $moduleId not found!")
+            logger.warning("§cModule with id $moduleId not found!")
             return
         }
         val latest = repository.getLatestVersion(info.id)
         if (latest == null) {
-            logger.info("§cModule with id $moduleId not found!")
+            logger.warning("§cModule with id $moduleId not found!")
             return
         }
         logger.info("Installing module %hc%${info.id} §8(%tc%${latest}§8)%tc%...")
         try {
             val file = repository.download(info.id, latest)
             if (file.length() < 1000) {
-                logger.info("§cFailed to install module with id $moduleId!")
+                logger.warning("§cFailed to install module with id $moduleId!")
                 return
             }
             logger.info("Module with id $moduleId installed!")
@@ -156,7 +160,7 @@ class ModuleHandler(
                 logger.info("Use 'module load $moduleId' to load the module!")
             }
         }catch (e: Exception) {
-            logger.info("§cFailed to install module with id $moduleId!")
+            logger.warning("§cFailed to install module with id $moduleId!")
             return
         }
     }
@@ -197,19 +201,24 @@ class ModuleHandler(
 
     fun loadModule(file: File) = lock.withLock {
         if (!file.exists()) {
-            logger.warning("Tried to load module that does not exist: ${file.name}")
+            logger.warning("§cTried to load module that does not exist: ${file.name}")
             return
         }
         if (file.extension != "jar") {
-            logger.warning("Tried to load module that is not a jar file: ${file.name}")
+            logger.warning("§cTried to load module that is not a jar file: ${file.name}")
             return
         }
         if (loaders.any { it.value.data.file == file }) {
-            logger.warning("Tried to load module that is already loaded: ${file.name}")
+            logger.warning("§cTried to load module that is already loaded: ${file.name}")
             return
         }
 
         val description = loadDescription(file)
+
+        if (loaders.any { it.value.data.id == description.id }) {
+            logger.warning("§cTried to load module that is already loaded: ${description.id}")
+            return
+        }
 
         if (!description.mainClasses.containsKey(serviceId.type)) return@withLock
 
@@ -224,7 +233,7 @@ class ModuleHandler(
 
         val moduleClass = loader.loadClass(description.mainClasses[serviceId.type]!!).kotlin
         if (!moduleClass.isSubclassOf(ICloudModule::class)) {
-            logger.warning("Main class of module ${description.id} is not a subclass of ICloudModule!")
+            logger.warning("§cMain class of module ${description.id} is not a subclass of ICloudModule!")
             return@withLock
         }
         loaders[description.id] = loader
@@ -236,7 +245,7 @@ class ModuleHandler(
                 moduleClass.createInstance()
             } as ICloudModule
         }catch (e: Exception) {
-            logger.warning("Failed to load module ${description.id}!", e)
+            logger.warning("§cFailed to load module ${description.id}!", e)
             return@withLock
         }
         moduleData.init(moduleInstance)
@@ -252,7 +261,7 @@ class ModuleHandler(
         loader.init(tasks)
 
         if (tasks.isEmpty()) {
-            logger.warning("Module ${description.id} has no tasks!")
+            logger.warning("§cModule ${description.id} has no tasks!")
         }
 
         try {
@@ -261,7 +270,7 @@ class ModuleHandler(
             moduleData.loaded = true
         }catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
-            logger.warning("Failed to load module ${description.id}!", e)
+            logger.warning("§cFailed to load module ${description.id}!", e)
             return@withLock
         }
     }
@@ -269,15 +278,15 @@ class ModuleHandler(
     override fun reloadModule(moduleId: String) = lock.withLock {
         val moduleData = getModuleData(moduleId)
         if (moduleData == null) {
-            logger.warning("Tried to reload module $moduleId that is not loaded!")
+            logger.warning("§cTried to reload module $moduleId that is not loaded!")
             return
         }
         if (moduleData.lifeCycle != ModuleLifeCycle.LOAD) {
-            logger.warning("Tried to reload module ${moduleData.id} that is not loaded!")
+            logger.warning("§cTried to reload module ${moduleData.id} that is not loaded!")
             return
         }
         if (!isModuleReloadable(moduleId)) {
-            logger.warning("Tried to reload module ${moduleData.id} that is not reloadable!")
+            logger.warning("§cTried to reload module ${moduleData.id} that is not reloadable!")
             return
         }
         try {
@@ -286,14 +295,14 @@ class ModuleHandler(
             logger.info("Reloaded module ${moduleData.id} with $tasksCount reload tasks!")
         }catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
-            logger.warning("Failed to reload module ${moduleData.id}!", e)
+            logger.warning("§cFailed to reload module ${moduleData.id}!", e)
             return@withLock
         }
     }
 
     override fun unloadModule(moduleId: String) = lock.withLock {
         if (!loaders.containsKey(moduleId)) {
-            logger.warning("Tried to unload module $moduleId that is not loaded!")
+            logger.warning("§cTried to unload module $moduleId that is not loaded!")
             return
         }
         try {
@@ -308,7 +317,7 @@ class ModuleHandler(
             JarFile(file).close()
             logger.info("Unloaded module $moduleId with $tasksCount unload tasks!")
         }catch (e: Exception) {
-            logger.warning("Failed to unload module $moduleId!", e)
+            logger.warning("§cFailed to unload module $moduleId!", e)
             return@withLock
         }
     }
