@@ -5,12 +5,12 @@ import dev.redicloud.api.modules.ModuleLifeCycle
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.modules.repository.ModuleWebRepository
+import dev.redicloud.modules.suggesters.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.defaultScope
-import dev.redicloud.utils.gson.gson
+import dev.redicloud.utils.mapTo
 import dev.redicloud.utils.toSymbol
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 @Command("module")
 @CommandAlias(["modules"])
@@ -26,20 +26,26 @@ class ModuleCommand(
         val modules = moduleHandler.getModuleDatas()
         actor.sendHeader("Modules")
         actor.sendMessage("")
-        actor.sendMessage("Loaded §8(%hc%${modules.filter { it.lifeCycle == ModuleLifeCycle.LOAD }.size}§8)")
-        modules.filter { it.lifeCycle == ModuleLifeCycle.LOAD }.forEach {
-            actor.sendMessage("§8- %hc%${it.description.id}%tc% §8(%tc%${it.description.version}§8)")
-            actor.sendMessage("\t§8➥ %tc%${it.description.description}")
+        val loaded = modules.filter { it.lifeCycle == ModuleLifeCycle.LOAD }.map { it.description }
+        actor.sendMessage("Loaded §8(%hc%${loaded.size}§8)")
+        loaded.forEach {
+            actor.sendMessage("§8- %hc%${it.id}%tc% §8(%tc%${it.version}§8)")
+            actor.sendMessage("\t§8➥ %tc%${it.description}")
         }
         actor.sendMessage("")
-        actor.sendMessage("Unloaded §8(%hc%${modules.filter { it.lifeCycle == ModuleLifeCycle.UNLOAD }.size}§8)")
-        modules.filter { it.lifeCycle == ModuleLifeCycle.UNLOAD }.forEach {
-            actor.sendMessage("§8- %hc%${it.description.id}%tc% §8(%tc%${it.description.version}§8)")
-            actor.sendMessage("\t§8➥ %tc%${it.description.description}")
+        val unloaded = modules
+            .filter { it.lifeCycle == ModuleLifeCycle.UNLOAD }
+            .map { it.description } + moduleHandler.getCachedDescriptions()
+            .filter { desc -> loaded.none { it.id == desc.id } }
+        actor.sendMessage("Unloaded §8(%hc%${unloaded.size}§8)")
+        unloaded.forEach {
+            actor.sendMessage("§8- %hc%${it.id}%tc% §8(%tc%${it.version}§8)")
+            actor.sendMessage("\t§8➥ %tc%${it.description}")
         }
         val moduleInfos = moduleHandler.repositories
             .flatMap { repo -> repo.getModuleIds().mapNotNull { repo.getModuleInfo(it) } }
-            .filter { moduleHandler.getModuleDescription(it.id) == null }
+            .filter { desc -> loaded.none { it.id == desc.id } }
+            .filter { desc -> unloaded.none { it.id == desc.id } }
         actor.sendMessage("")
         actor.sendMessage("Available §8(%hc%${moduleInfos.size}§8)")
         moduleInfos.forEach {
@@ -56,7 +62,7 @@ class ModuleCommand(
     @CommandDescription("Load a module")
     fun load(
         actor: ConsoleActor,
-        @CommandParameter("id") id: String
+        @CommandParameter("id", true, LoadablesModulesSuggester::class) id: String
     ) {
         moduleHandler.detectModules()
         val description = moduleHandler.getModuleDescription(id)
@@ -76,45 +82,25 @@ class ModuleCommand(
     @CommandSubPath("unload <id>")
     @CommandDescription("Unload a module")
     fun unload(
-        actor: ConsoleActor,
-        @CommandParameter("id") id: String
+        @CommandParameter("id", true, UnloadableModulesSuggester::class) id: String
     ) {
-        moduleHandler.detectModules()
-        val data = moduleHandler.getModuleDatas().firstOrNull { it.description.id == id }
-        if (data == null || !data.loaded) {
-            actor.sendMessage("§cModule with id $id not found!")
-            return
-        }
-        actor.sendMessage("Unloading module %hc%${data.id}%tc%...")
-        moduleHandler.unloadModule(data)
+        moduleHandler.unloadModule(id)
     }
 
     @CommandSubPath("reload <id>")
     @CommandDescription("Reload a module")
     fun reload(
         actor: ConsoleActor,
-        @CommandParameter("id") id: String
+        @CommandParameter("id", true, ReloadableModulesSuggester::class) id: String
     ) {
-        moduleHandler.detectModules()
-        val data = moduleHandler.getModuleDatas().firstOrNull { it.description.id == id }
-        if (data == null || !data.loaded) {
-            actor.sendMessage("§cModule with id $id not found!")
-            return
-        }
-        if (data.tasks.none { it.lifeCycle == ModuleLifeCycle.RELOAD }) {
-            actor.sendMessage("§cModule with id $id can't be reloaded!")
-            return
-        }
-        actor.sendMessage("Reloading module %hc%${data.id}%tc%...")
-        moduleHandler.unloadModule(data)
-        moduleHandler.loadModule(data.description.cachedFile!!)
+        moduleHandler.reloadModule(id)
     }
 
     @CommandSubPath("info <id>")
     @CommandDescription("Get info about a module")
     fun info(
         actor: ConsoleActor,
-        @CommandParameter("id") id: String
+        @CommandParameter("id", true, InstalledModulesSuggester::class) id: String
     ) = defaultScope.launch {
         moduleHandler.detectModules()
         val data = moduleHandler.getModuleDatas().firstOrNull { it.description.id == id }
@@ -127,7 +113,7 @@ class ModuleCommand(
         actor.sendMessage("Name§8: %hc%${data.description.name}")
         actor.sendMessage("ID§8: %hc%${data.description.id}")
         actor.sendMessage("Repository§8: %hc%${targetRepository?.repoUrl ?: "None"}")
-        actor.sendMessage("Update available§8: %hc%${(targetRepository?.isUpdateAvailable(data.description) ?: false).toSymbol()}")
+        actor.sendMessage("Update available§8: %hc%${(targetRepository?.isUpdateAvailable(data.id) ?: false).toSymbol()}")
         actor.sendMessage("Loaded§8: %hc%${data.loaded.toSymbol()}")
         actor.sendMessage("Version§8: %hc%${data.description.version}")
         actor.sendMessage("Description§8: %hc%${data.description.description}")
@@ -168,7 +154,7 @@ class ModuleCommand(
             return
         }
         try {
-            val repo = ModuleWebRepository(url)
+            val repo = ModuleWebRepository(url, this.moduleHandler)
             repositoryUrls.add(url)
             clusterConfiguration.set("module-repositories", repositoryUrls)
             moduleHandler.repositories.add(repo)
@@ -198,7 +184,7 @@ class ModuleCommand(
     @CommandSubPath("install <id>")
     @CommandDescription("Install a module")
     fun install(
-        @CommandParameter("id") id: String
+        @CommandParameter("id", true, InstallableModulesSuggester::class) id: String
     ) = defaultScope.launch {
         moduleHandler.install(id, true)
     }
@@ -207,31 +193,27 @@ class ModuleCommand(
     @CommandDescription("Update a module")
     fun update(
         actor: ConsoleActor,
-        @CommandParameter("id") id: String
+        @CommandParameter("id", true, InstalledModulesSuggester::class) id: String
     ) = defaultScope.launch {
-        val data = moduleHandler.getModuleDatas().firstOrNull { it.description.id == id }
-        if (data == null) {
-            actor.sendMessage("§cModule with id $id not found!")
-            return@launch
-        }
-        val targetRepository = moduleHandler.getRepository(data.id)
+        val targetRepository = moduleHandler.getRepository(id)
         if (targetRepository == null) {
             actor.sendMessage("§cModule with id $id has no repository!")
             return@launch
         }
-        if (!targetRepository.isUpdateAvailable(data.description)) {
+        if (!targetRepository.isUpdateAvailable(id)) {
             actor.sendMessage("§cModule with id $id has no update available!")
             return@launch
         }
-        actor.sendMessage("Updating module %hc%${data.id}%tc%...")
-        val loaded = data.loaded
-        if (loaded) moduleHandler.unloadModule(data)
-        val info = targetRepository.getModuleInfo(data.id)!!
-        val latest = targetRepository.getLatestVersion(info.id)!!
-        targetRepository.download(info.id, latest)
+        actor.sendMessage("Updating module %hc%$id%tc%...")
+        val file = moduleHandler.getModuleData(id)?.mapTo {
+            if (it.loaded) it.file else null
+        }
+        if (file != null) moduleHandler.unloadModule(id)
+        val latest = targetRepository.getLatestVersion(id)!!
+        targetRepository.download(id, latest)
         actor.sendMessage("Module with id $id updated!")
-        if (loaded) {
-            moduleHandler.loadModule(data.description.cachedFile!!)
+        if (file != null) {
+            moduleHandler.loadModule(file)
         }else {
             actor.sendMessage("Use 'module load $id' to load the module!")
         }
@@ -241,14 +223,9 @@ class ModuleCommand(
     @CommandDescription("Uninstall a module")
     fun uninstall(
         actor: ConsoleActor,
-        @CommandParameter("id") id: String
+        @CommandParameter("id", true, UninstallableModulesSuggester::class) id: String
     ) = defaultScope.launch {
-        val data = moduleHandler.getModuleDatas().firstOrNull { it.description.id == id }
-        if (data == null) {
-            actor.sendMessage("§cModule with id $id not found!")
-            return@launch
-        }
-        moduleHandler.uninstall(data)
+        moduleHandler.uninstall(id)
     }
 
 }
