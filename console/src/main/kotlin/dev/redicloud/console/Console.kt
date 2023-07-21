@@ -69,8 +69,8 @@ open class Console(
     override var matchingHistorySearch = true
 
     @OptIn(DelicateCoroutinesApi::class)
-    private val scope = CoroutineScope(newSingleThreadContext("console-scope"))
-    private val animationScope = CoroutineScope(Dispatchers.Default)
+    private val scope = CoroutineScope(newSingleThreadContext("console-scope") + coroutineExceptionHandler)
+    private val animationScope = CoroutineScope(Dispatchers.Default + coroutineExceptionHandler)
     private var logRecordDispatcher: ThreadRecordDispatcher? = null
 
     init {

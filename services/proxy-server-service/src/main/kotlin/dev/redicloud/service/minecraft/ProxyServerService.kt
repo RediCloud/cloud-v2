@@ -3,12 +3,13 @@ package dev.redicloud.service.minecraft
 import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.service.minecraft.listener.CloudServerListener
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.utils.coroutineExceptionHandler
 import kotlinx.coroutines.runBlocking
 
 abstract class ProxyServerService<T> : MinecraftServerService<T>() {
 
     init {
-        runBlocking {
+        runBlocking(coroutineExceptionHandler) {
             registerListeners()
         }
     }
