@@ -6,6 +6,7 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.tasks.executor.*
+import dev.redicloud.utils.coroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.newFixedThreadPoolContext
@@ -27,7 +28,7 @@ class CloudTaskManager(
     internal val tasks = ConcurrentHashMap<UUID, CloudTask>()
 
     @OptIn(DelicateCoroutinesApi::class)
-    internal val scope = CoroutineScope(newFixedThreadPoolContext(threads, "CloudTaskManager"))
+    internal val scope = CoroutineScope(newFixedThreadPoolContext(threads, "CloudTaskManager") + coroutineExceptionHandler)
 
     fun register(task: CloudTask): UUID {
         if (tasks.containsKey(task.id)) throw IllegalArgumentException("Task with id ${task.id} is already registered")

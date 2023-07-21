@@ -2,7 +2,7 @@
   "name": "example-module",
   "id": "example-module",
   "version": "2.0.0-SNAPSHOT",
-  "description": "A example module for redicloud",
+  "description": "An example module for redicloud",
   "website": "https://redocloud.dev/",
   "authors": [
     "Redicloud"
