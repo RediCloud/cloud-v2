@@ -11,11 +11,9 @@ class UnloadableModulesSuggester(
 
     override fun suggest(context: CommandContext): Array<String> {
         val modules = moduleHandler.getModuleDatas()
-        val loaded = modules.filter { it.lifeCycle == ModuleLifeCycle.LOAD }.map { it.description }
-        val results = moduleHandler.getModuleDatas()
-            .filter { it.lifeCycle == ModuleLifeCycle.UNLOAD }
-            .map { it.description } + moduleHandler.getCachedDescriptions()
-            .filter { desc -> loaded.none { it.id == desc.id } }
+        val loaded = modules.filter { it.lifeCycle == ModuleLifeCycle.LOAD || it.loaded }.map { it.description }
+        val results = loaded + moduleHandler.getCachedDescriptions()
+            .filter { desc -> loaded.any { it.id == desc.id } }
         return results
             .map { it.id }
             .toTypedArray()
