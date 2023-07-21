@@ -11,7 +11,7 @@ class InstallableModulesSuggester(
 
     override fun suggest(context: CommandContext): Array<String> {
         return moduleHandler.repositories.flatMap { runBlocking { it.getModuleIds() } }
-            .filter { id -> !moduleHandler.getCachedDescriptions().none { it.id == id } }
+            .filter { id -> moduleHandler.getCachedDescriptions().none { it.id == id } }
             .toTypedArray()
     }
 
