@@ -65,13 +65,28 @@ interface IServerVersionHandler {
 
         fun getHandler(type: ICloudServerVersionType): IServerVersionHandler =
             CACHE_HANDLERS.firstOrNull { it.name.lowercase() == type.versionHandlerName.lowercase() }
-                ?: CACHE_HANDLERS.first { it.default }
+                ?: getDefaultHandler()
+
+        fun getHandlerStrict(name: String): IServerVersionHandler? =
+            CACHE_HANDLERS.firstOrNull { it.name.lowercase() == name.lowercase() }
 
         fun registerHandler(serverVersionHandler: IServerVersionHandler): IServerVersionHandler {
             if (CACHE_HANDLERS.any { it.name.lowercase() == serverVersionHandler.name.lowercase() })
                 return CACHE_HANDLERS.first { it.name.lowercase() == serverVersionHandler.name.lowercase() }
             CACHE_HANDLERS.add(serverVersionHandler)
             return serverVersionHandler
+        }
+
+        fun unregisterHandler(serverVersionHandler: IServerVersionHandler) {
+            CACHE_HANDLERS.remove(serverVersionHandler)
+        }
+
+        fun getDefaultHandler(): IServerVersionHandler {
+            return CACHE_HANDLERS.first { it.default }
+        }
+
+        fun unregisterHandler(name: String) {
+            CACHE_HANDLERS.removeIf { it.name.lowercase() == name.lowercase() }
         }
 
     }

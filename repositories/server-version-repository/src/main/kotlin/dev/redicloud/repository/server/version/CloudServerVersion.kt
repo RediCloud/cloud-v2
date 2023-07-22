@@ -5,7 +5,7 @@ import dev.redicloud.api.version.IServerVersion
 import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
-import dev.redicloud.repository.server.version.utils.ServerVersion
+import dev.redicloud.repository.server.version.serverversion.ServerVersion
 import dev.redicloud.utils.ConfigurationFileEditor
 import dev.redicloud.utils.gson.GsonInterface
 import java.io.File

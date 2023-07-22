@@ -1,22 +1,27 @@
-package dev.redicloud.repository.server.version.requester
+package dev.redicloud.module.papermc
 
+
+import com.google.gson.Gson
 import dev.redicloud.api.version.ICloudServerVersionType
 import dev.redicloud.api.version.IServerVersion
-import dev.redicloud.repository.server.version.utils.ServerVersion
-import dev.redicloud.utils.gson.gson
+import dev.redicloud.api.version.IVersionRepository
 import khttp.get
 
-class PaperMcApiRequester {
+class PaperMcApiRequester(
+    private val versionRepository: IVersionRepository
+) {
 
     companion object {
-        private val cache = mutableMapOf<String, Any>()
         val BASE_URL = "https://api.papermc.io/v2"
+        val gson = Gson()
         suspend inline fun <reified T> request(apiUrl: String): Response<T> {
             val response = get(BASE_URL + apiUrl)
             val json = response.jsonObject.toString()
             return Response(json, gson.fromJson(json, T::class.java), response.statusCode)
         }
     }
+
+    private val cache = mutableMapOf<String, Any>()
 
     suspend fun getBuilds(type: ICloudServerVersionType, minecraftVersion: IServerVersion): List<Int> {
         val url = "/projects/${type.name.lowercase()}/versions/${minecraftVersion.name}"
@@ -31,7 +36,7 @@ class PaperMcApiRequester {
         val url = "/projects/${type.name.lowercase()}"
         if (cache.contains(url)) return cache[url] as List<IServerVersion>
         val versions = request<VersionsResponse>(url).responseObject
-            ?.versions?.mapNotNull { ServerVersion.parse(it) }?.toList() ?: emptyList() //TODO only paper able versions
+            ?.versions?.mapNotNull { versionRepository.parse(it) }?.toList() ?: emptyList() //TODO only paper able versions
         cache[url] = versions
         return versions
     }
@@ -62,4 +67,3 @@ data class VersionsResponse(
     val version_groups: Array<String>,
     val versions: Array<String>
 )
-

@@ -1,7 +1,6 @@
 package dev.redicloud.service.base
 
 import com.google.inject.Guice
-import com.google.inject.name.Named
 import com.google.inject.name.Names
 import dev.redicloud.api.events.IEventManager
 import dev.redicloud.api.packets.IPacketManager
@@ -35,7 +34,7 @@ import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.logging.Logger
-import dev.redicloud.repository.server.version.utils.ServerVersion
+import dev.redicloud.repository.server.version.serverversion.ServerVersion
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplate
@@ -54,8 +53,9 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.template.file.ICloudFileTemplateRepository
 import dev.redicloud.api.utils.injector
+import dev.redicloud.api.version.IVersionRepository
 import dev.redicloud.modules.ModuleHandler
-import dev.redicloud.utils.gson.gson
+import dev.redicloud.repository.server.version.serverversion.VersionRepository
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -94,7 +94,7 @@ abstract class BaseService(
     init {
         runBlocking {
             loadProperties(Thread.currentThread().contextClassLoader)
-            ServerVersion.loadIfNotLoaded()
+            VersionRepository.loadIfNotLoaded()
         }
         databaseConnection = if (_databaseConnection != null && _databaseConnection.isConnected()) {
             _databaseConnection
@@ -237,6 +237,7 @@ abstract class BaseService(
         bind(ICloudConfigurationTemplateRepository::class).toInstance(configurationTemplateRepository)
         bind(ICloudJavaVersionRepository::class).toInstance(javaVersionRepository)
         bind(ICloudFileTemplateRepository::class).toInstance(fileTemplateRepository)
+        bind(IVersionRepository::class).toInstance(VersionRepository)
         bind(Logger::class).annotatedWith(Names.named("base")).toInstance(LOGGER)
         bind(ServiceId::class).annotatedWith(Names.named("this")).toInstance(serviceId)
         bind(java.util.logging.Logger::class).annotatedWith(Names.named("root")).toInstance(LogManager.rootLogger())

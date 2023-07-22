@@ -3,18 +3,15 @@ package dev.redicloud.connector.bungeecord.listener
 import dev.redicloud.repository.player.PlayerRepository
 import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.repository.server.ServerRepository
-import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.md_5.bungee.api.ProxyServer
-import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.api.chat.ComponentBuilder
 import net.md_5.bungee.api.event.LoginEvent
 import net.md_5.bungee.api.event.PlayerDisconnectEvent
-import net.md_5.bungee.api.event.PostLoginEvent
 import net.md_5.bungee.api.event.ServerConnectEvent
 import net.md_5.bungee.api.event.ServerConnectedEvent
 import net.md_5.bungee.api.event.ServerKickEvent
@@ -22,7 +19,6 @@ import net.md_5.bungee.api.plugin.Listener
 import net.md_5.bungee.api.plugin.Plugin
 import net.md_5.bungee.event.EventHandler
 import net.md_5.bungee.event.EventPriority
-import java.security.Provider.Service
 
 class CloudPlayerListener(
     private val serviceId: ServiceId,

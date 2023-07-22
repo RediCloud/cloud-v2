@@ -155,7 +155,7 @@ class ModuleHandler(
                 logger.warning("§cFailed to install module with id $moduleId!")
                 return
             }
-            logger.info("Module with id $moduleId installed!")
+            logger.info("Module with id %hc%$moduleId%tc% installed!")
             if (load) {
                 loadModule(file)
             }else {
@@ -274,7 +274,7 @@ class ModuleHandler(
 
         try {
             val tasksCount = callTasks(moduleData.id, ModuleLifeCycle.LOAD)
-            logger.info("Loaded module ${description.id} with $tasksCount load tasks!")
+            logger.info("Loaded module %hc%${description.id}%tc% with %hc%$tasksCount%tc% load tasks!")
             moduleData.loaded = true
         }catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
@@ -300,7 +300,7 @@ class ModuleHandler(
         try {
             val tasksCount = callTasks(moduleData.id, ModuleLifeCycle.RELOAD)
             moduleData.lifeCycle = ModuleLifeCycle.LOAD
-            logger.info("Reloaded module ${moduleData.id} with $tasksCount reload tasks!")
+            logger.info("Reloaded module %hc%${moduleData.id}%tc% with %hc%$tasksCount%tc% reload tasks!")
         }catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
             logger.warning("§cFailed to reload module ${moduleData.id}!", e)
@@ -323,7 +323,7 @@ class ModuleHandler(
                 it.close()
             }
             JarFile(file).close()
-            logger.info("Unloaded module $moduleId with $tasksCount unload tasks!")
+            logger.info("Unloaded module %hc%$moduleId%tc% with %hc%$tasksCount%tc% unload tasks!")
         }catch (e: Exception) {
             logger.warning("§cFailed to unload module $moduleId!", e)
             return@withLock

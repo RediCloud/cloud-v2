@@ -2,7 +2,6 @@ package dev.redicloud.repository.server.version
 
 import com.google.gson.reflect.TypeToken
 import dev.redicloud.api.version.*
-import dev.redicloud.api.version.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.utils.toConsoleValue
@@ -10,7 +9,7 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
-import dev.redicloud.repository.server.version.utils.ServerVersion
+import dev.redicloud.repository.server.version.serverversion.ServerVersion
 import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory

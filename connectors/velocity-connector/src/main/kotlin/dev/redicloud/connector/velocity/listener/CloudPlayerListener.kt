@@ -3,7 +3,6 @@ package dev.redicloud.connector.velocity.listener
 import com.velocitypowered.api.event.PostOrder
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
-import com.velocitypowered.api.event.connection.LoginEvent
 import com.velocitypowered.api.event.connection.PostLoginEvent
 import com.velocitypowered.api.event.player.KickedFromServerEvent
 import com.velocitypowered.api.event.player.ServerConnectedEvent
@@ -13,7 +12,6 @@ import dev.redicloud.repository.player.CloudPlayer
 import dev.redicloud.repository.player.PlayerRepository
 import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.repository.server.ServerRepository
-import dev.redicloud.repository.server.version.utils.ServerVersion
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.runBlocking

@@ -76,7 +76,11 @@ class CloudServerVersionTypeCommand(
         actor.sendHeader("Server-Version type")
         actor.sendMessage("")
         actor.sendMessage("Name§8: %hc%${type.name}")
-        actor.sendMessage("Handler§8: %hc%${type.versionHandlerName}")
+        val handler = IServerVersionHandler.getHandlerStrict(type.versionHandlerName)
+        actor.sendMessage("Handler§8: %hc%${
+            handler?.name
+                ?: (IServerVersionHandler.getDefaultHandler().name + " §8(§ccan´t found '${type.versionHandlerName}'§8)")
+        }")
         actor.sendMessage("Default§8: %hc%${type.defaultType.toSymbol()}")
         actor.sendMessage("Proxy§8: %hc%${type.proxy.toSymbol()}")
         actor.sendMessage(

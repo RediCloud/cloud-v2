@@ -7,7 +7,7 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
-import dev.redicloud.repository.server.version.utils.ServerVersion
+import dev.redicloud.repository.server.version.serverversion.ServerVersion
 import dev.redicloud.utils.SingleCache
 import dev.redicloud.utils.getTextOfAPIWithFallback
 import dev.redicloud.utils.gson.gson

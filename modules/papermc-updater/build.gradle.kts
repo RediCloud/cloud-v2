@@ -1,21 +1,14 @@
-group = "dev.redicloud.modules"
-
-repositories {
-    // Repo for redicloud artifacts
-    maven("https://repo.redicloud.dev/releases")
-    maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots")
-}
+group = "dev.redicloud.module"
 
 dependencies {
-    // Internal usage, ignore it
     compileOnly(project(":api"))
+    compileOnly(project(":console"))
+    compileOnly(project(":logging"))
+    compileOnly(project(":utils"))
 
-    // External usage, use it
-    // compileOnly("dev.redicloud:api:${Versions.cloud}")
-
-    compileOnly("org.spigotmc:spigot-api:${Versions.minecraftVersion}")
+    dependency("com.github.jkcclemens:khttp:${Versions.khttp}")
+    dependency("com.google.code.gson:gson:${Versions.gson}")
 }
-
 tasks.register("buildAndCopy") {
     dependsOn(tasks.named("build"))
     doLast {

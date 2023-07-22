@@ -1,53 +1,37 @@
-package dev.redicloud.repository.server.version.handler.defaults
+package dev.redicloud.module.papermc
 
-import dev.redicloud.api.java.ICloudJavaVersionRepository
-import dev.redicloud.api.version.ICloudServerVersion
-import dev.redicloud.api.version.ICloudServerVersionRepository
-import dev.redicloud.api.version.ICloudServerVersionTypeRepository
-import dev.redicloud.api.version.IServerVersion
+import dev.redicloud.api.java.ICloudJavaVersion
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.node.ICloudNodeRepository
+import dev.redicloud.api.version.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.utils.toConsoleValue
-import dev.redicloud.logging.LogManager
-import dev.redicloud.repository.java.version.JavaVersionRepository
-import dev.redicloud.repository.node.NodeRepository
-import dev.redicloud.repository.server.version.requester.PaperMcApiRequester
-import dev.redicloud.repository.server.version.utils.ServerVersion
-import dev.redicloud.utils.*
-import dev.redicloud.api.service.ServiceId
+import dev.redicloud.logging.Logger
+import dev.redicloud.utils.BUILD_NUMBER
+import dev.redicloud.utils.CLOUD_VERSION
+import dev.redicloud.utils.MultiAsyncAction
+import dev.redicloud.utils.isValidUrl
 import khttp.get
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.File
-import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.Duration.Companion.minutes
 
 class PaperMcServerVersionHandler(
-    serviceId: ServiceId,
-    serverVersionRepository: ICloudServerVersionRepository,
-    serverVersionTypeRepository: ICloudServerVersionTypeRepository,
-    javaVersionRepository: ICloudJavaVersionRepository,
-    nodeRepository: NodeRepository,
-    console: Console,
-) : URLServerVersionHandler(
-    serviceId,
-    serverVersionRepository,
-    serverVersionTypeRepository,
-    nodeRepository,
-    console,
-    javaVersionRepository,
-    false,
-    "papermc"
-) {
+    private val serviceId: ServiceId,
+    private val serverVersionRepository: ICloudServerVersionRepository,
+    private val serverVersionTypeRepository: ICloudServerVersionTypeRepository,
+    private val javaVersionRepository: ICloudServerVersionRepository,
+    private val nodeRepository: ICloudNodeRepository,
+    private val console: Console,
+    private val versionRepository: IVersionRepository,
+    private val requester: PaperMcApiRequester,
+    private val logger: Logger
+) : IServerVersionHandler {
 
-
-    companion object {
-        private val logger = LogManager.logger(PaperMcServerVersionHandler::class)
-    }
-
-    private val requester = PaperMcApiRequester()
+    override val name: String = "papermc"
+    override val default: Boolean = false
+    private var lastUpdateCheck: Long = -1L
 
     override suspend fun download(version: ICloudServerVersion, force: Boolean): File {
         var canceled = false
@@ -200,4 +184,25 @@ class PaperMcServerVersionHandler(
             ?: throw NullPointerException("Cant find server version type ${version.typeId}")
         return requester.getBuilds(type, mcVersion).map { it.toString() }
     }
+
+    override suspend fun update(version: ICloudServerVersion, versionType: ICloudServerVersionType): File {
+        return IServerVersionHandler.getDefaultHandler().update(version, versionType)
+    }
+
+    override suspend fun patch(version: ICloudServerVersion) {
+        IServerVersionHandler.getDefaultHandler().patch(version)
+    }
+
+    override suspend fun patchCommand(
+        type: ICloudServerVersionType,
+        javaVersion: ICloudJavaVersion,
+        jarToExecute: File
+    ): List<String> {
+        return IServerVersionHandler.getDefaultHandler().patchCommand(type, javaVersion, jarToExecute)
+    }
+
+    override fun getLock(version: ICloudServerVersion): ReentrantLock {
+        return IServerVersionHandler.getDefaultHandler().getLock(version)
+    }
+
 }
