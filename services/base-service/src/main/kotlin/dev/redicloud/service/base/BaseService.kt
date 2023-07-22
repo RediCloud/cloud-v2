@@ -133,7 +133,13 @@ abstract class BaseService(
         serverVersionRepository = CloudServerVersionRepository(databaseConnection, packetManager)
         configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager, packetManager)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager, configurationTemplateRepository)
-        moduleHandler = ModuleHandler(serviceId)
+        val moduleRepositoryUrls = clusterConfiguration.getList<String>("module-repositories").toMutableList()
+        val defaultRepoUrl = System.getProperty("redicloud.modules.default.repo", "https://api.redicloud.dev/module-repository")
+        if (!moduleRepositoryUrls.contains(defaultRepoUrl)) {
+            moduleRepositoryUrls.add(defaultRepoUrl)
+            clusterConfiguration.set("module-repositories", moduleRepositoryUrls)
+        }
+        moduleHandler = ModuleHandler(serviceId, moduleRepositoryUrls, eventManager, packetManager)
         this.registerPackets()
         this.registerPacketListeners()
     }
