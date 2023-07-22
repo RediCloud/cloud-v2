@@ -2,22 +2,16 @@ package dev.redicloud.api.modules
 
 interface IModuleHandler {
 
+    suspend fun updateModules(silent: Boolean = false, loadModules: Boolean = false)
+
     fun getState(moduleId: String): ModuleLifeCycle?
 
-    fun getState(module: ICloudModule): ModuleLifeCycle?
+    fun isModuleReloadable(moduleId: String): Boolean
 
-    fun <T : ICloudModule> getModule(module: String): T?
+    fun reloadModule(moduleId: String)
 
-    fun reload(module: ICloudModule)
+    fun unloadModule(moduleId: String)
 
-    fun reload(moduleId: String)
-
-    fun unload(module: ICloudModule)
-
-    fun unload(moduleId: String)
-
-    fun load(module: ICloudModule)
-
-    fun load(moduleId: String)
+    fun loadModule(moduleId: String)
 
 }

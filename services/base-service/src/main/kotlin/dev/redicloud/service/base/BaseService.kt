@@ -55,6 +55,7 @@ import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.template.file.ICloudFileTemplateRepository
 import dev.redicloud.api.utils.injector
 import dev.redicloud.modules.ModuleHandler
+import dev.redicloud.utils.gson.gson
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -88,7 +89,7 @@ abstract class BaseService(
     val eventManager: EventManager
     val taskManager: CloudTaskManager
     val clusterConfiguration: ClusterConfiguration
-    val moduleHandler: ModuleHandler
+    abstract val moduleHandler: ModuleHandler
 
     init {
         runBlocking {
@@ -133,15 +134,18 @@ abstract class BaseService(
         serverVersionRepository = CloudServerVersionRepository(databaseConnection, packetManager)
         configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager, packetManager)
         serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager, configurationTemplateRepository)
+        this.registerPackets()
+        this.registerPacketListeners()
+    }
+
+    protected fun loadModuleRepositoryUrls(): List<String> {
         val moduleRepositoryUrls = clusterConfiguration.getList<String>("module-repositories").toMutableList()
         val defaultRepoUrl = System.getProperty("redicloud.modules.default.repo", "https://api.redicloud.dev/module-repository")
         if (!moduleRepositoryUrls.contains(defaultRepoUrl)) {
             moduleRepositoryUrls.add(defaultRepoUrl)
             clusterConfiguration.set("module-repositories", moduleRepositoryUrls)
         }
-        moduleHandler = ModuleHandler(serviceId, moduleRepositoryUrls, eventManager, packetManager)
-        this.registerPackets()
-        this.registerPacketListeners()
+        return moduleRepositoryUrls
     }
 
     protected fun initApi() {

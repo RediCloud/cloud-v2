@@ -33,6 +33,17 @@ class EventManager(
         }
     }
 
+    fun unregister(classLoader: ClassLoader) {
+        lock.lock()
+        try {
+            handlers.values.forEach { list ->
+                list.removeIf { it.listener::class.java.classLoader == classLoader }
+            }
+        } finally {
+            lock.unlock()
+        }
+    }
+
     override fun registerListener(listener: Any) {
         val objClass = listener::class
         objClass.declaredMemberFunctions.forEach { function ->

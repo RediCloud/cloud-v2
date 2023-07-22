@@ -1,6 +1,7 @@
 package dev.redicloud.packets
 
 import com.google.gson.GsonBuilder
+import dev.redicloud.api.events.InlineEventCaller
 import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.api.packets.PacketListener
@@ -9,6 +10,7 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.gson.fixKotlinAnnotations
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.utils.coroutineExceptionHandler
 import kotlinx.coroutines.*
 import org.redisson.api.RTopic
 import org.redisson.api.listener.MessageListener
@@ -32,7 +34,7 @@ class PacketManager(
     private val listeners = mutableListOf<PacketListener<out AbstractPacket>>()
     internal val packetResponses = mutableListOf<PacketResponse>()
     internal val packetsOfLast3Seconds = mutableListOf<AbstractPacket>()
-    internal val packetScope = CoroutineScope(Dispatchers.IO)
+    internal val packetScope = CoroutineScope(Dispatchers.IO + coroutineExceptionHandler)
 
     init {
         if (!databaseConnection.isConnected()) throw IllegalStateException("Database connection is not connected!")
@@ -114,6 +116,11 @@ class PacketManager(
         listeners.remove(listener)
     }
 
+    fun unregister(classLoader: ClassLoader) {
+        listeners.removeIf { it.javaClass.classLoader == classLoader }
+        registeredPackets.removeIf { it.java.classLoader == classLoader }
+    }
+
     override suspend fun publish(packet: AbstractPacket, vararg receivers: ServiceId): PacketResponse {
         packet.sender = serviceId
         val packedPacket = PackedPacket(gson.toJson(packet), packet::class.java.name)
@@ -137,5 +144,6 @@ class PacketManager(
         serviceTypes.forEach { typedTopics[it]?.publish(packedPacket) }
         return PacketResponse(this, packet)
     }
+
 
 }
