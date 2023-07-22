@@ -17,9 +17,6 @@ import dev.redicloud.service.base.BaseService
 import dev.redicloud.api.events.impl.node.NodeConnectEvent
 import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
 import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
-import dev.redicloud.api.template.file.ICloudFileTemplateRepository
-import dev.redicloud.api.version.ICloudServerVersionTypeRepository
-import dev.redicloud.repository.server.version.handler.defaults.PaperMcServerVersionHandler
 import dev.redicloud.repository.server.version.handler.defaults.URLServerVersionHandler
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.repository.node.connect
@@ -30,6 +27,7 @@ import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
 import dev.redicloud.service.node.tasks.metrics.MetricsTask
 import dev.redicloud.api.utils.TEMP_FOLDER
+import dev.redicloud.console.Console
 import dev.redicloud.modules.ModuleHandler
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.minutes
@@ -75,7 +73,6 @@ class NodeService(
             }
 
             IServerVersionHandler.registerHandler(URLServerVersionHandler(serviceId, serverVersionRepository, serverVersionTypeRepository, nodeRepository, console, javaVersionRepository))
-            IServerVersionHandler.registerHandler(PaperMcServerVersionHandler(serviceId, serverVersionRepository, serverVersionTypeRepository, javaVersionRepository, nodeRepository, console))
 
             this@NodeService.registerPreTasks()
             this@NodeService.connectFileCluster()
@@ -241,6 +238,7 @@ class NodeService(
     override fun configure() {
         super.configure()
         bind(ICommandManager::class).toInstance(console.commandManager)
+        bind(Console::class).toInstance(console)
     }
 
 }
