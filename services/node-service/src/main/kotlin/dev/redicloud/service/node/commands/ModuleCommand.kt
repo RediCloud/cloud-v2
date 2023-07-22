@@ -119,7 +119,7 @@ class ModuleCommand(
         actor.sendMessage("Description§8: %hc%${data.description.description}")
         actor.sendMessage("Website§8: %hc%${data.description.website}")
         actor.sendMessage("Authors§8: %hc%${data.description.authors.joinToString("§8, %hc%")}")
-        actor.sendMessage("Supported services§8: %hc%${data.description.mainClasses.keys.joinToString("§8, %hc%") { it.name }}")
+        actor.sendMessage("Supported services§8: %hc%${data.description.mainClasses.keys.joinToString("§8, %hc%") { it }}")
         actor.sendHeader("Module Info")
     }
 

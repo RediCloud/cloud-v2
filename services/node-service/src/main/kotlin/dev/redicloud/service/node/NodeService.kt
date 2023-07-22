@@ -30,6 +30,7 @@ import dev.redicloud.service.node.tasks.NodePingTask
 import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
 import dev.redicloud.service.node.tasks.metrics.MetricsTask
 import dev.redicloud.api.utils.TEMP_FOLDER
+import dev.redicloud.modules.ModuleHandler
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -43,6 +44,7 @@ class NodeService(
 
     override val fileTemplateRepository: NodeFileTemplateRepository
     override val serverVersionTypeRepository: CloudServerVersionTypeRepository
+    override val moduleHandler: ModuleHandler
     val console: NodeConsole
     val fileNodeRepository: FileNodeRepository
     val fileCluster: FileCluster
@@ -55,6 +57,7 @@ class NodeService(
         fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster, packetManager)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console, packetManager)
         serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress, console, clusterConfiguration, configurationTemplateRepository, eventManager, fileCluster)
+        moduleHandler = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, null)
 
         runBlocking {
             registerDefaults()

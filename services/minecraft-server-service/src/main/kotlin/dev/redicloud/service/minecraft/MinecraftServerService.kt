@@ -17,6 +17,8 @@ import dev.redicloud.service.minecraft.repositories.connect
 import dev.redicloud.service.minecraft.tasks.CloudServerInfoTask
 import dev.redicloud.api.utils.DATABASE_JSON
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.version.ICloudServerVersionType
+import dev.redicloud.modules.ModuleHandler
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -32,6 +34,7 @@ abstract class MinecraftServerService<T> : BaseService(
 
     private val hostServiceId: ServiceId
     final override val fileTemplateRepository: AbstractFileTemplateRepository
+    final override val moduleHandler: ModuleHandler
     final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
     abstract val serverPlayerProvider: IServerPlayerProvider
     abstract val screenProvider: AbstractScreenProvider
@@ -40,7 +43,14 @@ abstract class MinecraftServerService<T> : BaseService(
         fileTemplateRepository = BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository, packetManager)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(this.databaseConnection, null, packetManager)
         hostServiceId = runBlocking { serverRepository.connect(serviceId) }
+        moduleHandler = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, runBlocking { getVersionType() })
         registerDefaults()
+    }
+
+    private suspend fun getVersionType(): ICloudServerVersionType {
+        val server = serverRepository.getServer<CloudServer>(serviceId) ?: throw IllegalStateException("Server not found!")
+        val version = serverVersionRepository.getVersion(server.configurationTemplate.serverVersionId!!)!!
+        return serverVersionTypeRepository.getType(version.typeId!!)!!
     }
 
     open fun onEnable() = runBlocking {
