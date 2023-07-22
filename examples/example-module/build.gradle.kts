@@ -21,7 +21,7 @@ tasks.register("buildAndCopy") {
     doLast {
         val outputJar = Builds.getOutputFileName(project) + ".jar"
         val original = File(project.buildDir.resolve("libs"), outputJar)
-        val outputJarFile = File(project.buildDir.resolve("libs"), "${original.nameWithoutExtension}-local.jar")
+        val outputJarFile = File(project.buildDir.resolve("libs"), "${Builds.getOutputModuleFileName(project)}.jar")
         original.renameTo(outputJarFile)
         if (original.exists()) {
             original.delete()
