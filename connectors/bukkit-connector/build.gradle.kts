@@ -40,10 +40,6 @@ dependencies {
     shade(project(":modules:module-handler"))
 
     compileOnly("org.spigotmc:spigot-api:${Versions.minecraftVersion}")
-
-    implementation("org.ow2.asm:asm:9.2")
-    implementation("org.ow2.asm:asm-commons:9.2")
-    implementation("org.ow2.asm:asm-util:9.2")
 }
 
 tasks.register("buildAndCopy") {
@@ -79,6 +75,7 @@ val shadowModJar by tasks.creating(ShadowJar::class) {
 
     relocate("io.netty", "dev.redicloud.netty")
     relocate("com.google.gson", "dev.redicloud.gson")
+    relocate("com.google.common", "dev.redicloud.common")
 
     from(provider { zipTree(tasks.jar.get().archiveFile) })
     destinationDirectory.set(buildDir.resolve("shadowing"))
