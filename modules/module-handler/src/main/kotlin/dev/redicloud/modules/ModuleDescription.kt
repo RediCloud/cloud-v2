@@ -11,6 +11,6 @@ data class ModuleDescription(
     val description: String,
     val website: String? = null,
     val authors: List<String>,
-    val mainClasses: HashMap<ServiceType, String>,
+    val mainClasses: HashMap<String, String>,
     @Expose(deserialize = false, serialize = false) var cachedFile: File? = null
 )

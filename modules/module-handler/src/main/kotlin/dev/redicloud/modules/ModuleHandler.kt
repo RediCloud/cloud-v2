@@ -11,6 +11,9 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.utils.CloudInjectable
 import dev.redicloud.api.utils.MODULE_FOLDER
 import dev.redicloud.api.utils.injector
+import dev.redicloud.api.version.ICloudServerVersionType
+import dev.redicloud.commands.api.SUGGESTERS
+import dev.redicloud.event.EventManager
 import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.apply.impl.JarResourceLoader
 import dev.redicloud.logging.LogManager
@@ -27,7 +30,11 @@ import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.reflect
 
 class ModuleHandler(
-    private val serviceId: ServiceId
+    private val serviceId: ServiceId,
+    repoUrls: List<String>,
+    private val eventManager: EventManager,
+    private val packetManager: PacketManager,
+    private val serverVersionType: ICloudServerVersionType?
 ) : IModuleHandler {
 
     companion object {
@@ -97,7 +104,11 @@ class ModuleHandler(
             return
         }
 
-        if (!description.mainClasses.containsKey(serviceId.type)) return@withLock
+        val identifierTypes = mutableListOf<String>()
+        identifierTypes.add(serviceId.type.name.lowercase())
+        if (serverVersionType != null) identifierTypes.add("${serviceId.type.name}_${serverVersionType.name}".lowercase())
+
+        val matchedMain: String = identifierTypes.firstOrNull { description.mainClasses.map { it.key.lowercase() }.contains(it.lowercase()) } ?: return@withLock
 
         val loader = ModuleClassLoader(description.id, arrayOf(file.toURI().toURL()), this.javaClass.classLoader)
 
@@ -107,7 +118,7 @@ class ModuleHandler(
             // No library loader found, can be ignored
         }
 
-        val moduleClass = loader.loadClass(description.mainClasses[serviceId.type]!!).kotlin
+        val moduleClass = loader.loadClass(matchedMain).kotlin
         if (!moduleClass.isSubclassOf(ICloudModule::class)) {
             logger.warning("Main class of module ${description.id} is not a subclass of ICloudModule!")
             return@withLock
