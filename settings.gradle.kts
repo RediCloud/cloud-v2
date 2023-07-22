@@ -79,5 +79,9 @@ findProject(":examples:example-plugin")?.name = "example-plugin"
 
 include("modules:module-handler")
 findProject(":modules:module-handler")?.name = "module-handler"
+
 include("examples:example-module")
 findProject(":examples:example-module")?.name = "example-module"
+
+include("modules:papermc-updater")
+findProject(":modules:papermc-updater")?.name = "papermc-updater"
