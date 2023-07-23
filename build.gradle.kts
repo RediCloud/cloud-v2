@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.extra
+
 plugins {
     kotlin("jvm")
     id("dev.redicloud.libloader") version Versions.libloader apply false
@@ -6,6 +8,7 @@ plugins {
 allprojects {
     apply(plugin = "kotlin")
     apply(plugin = "dev.redicloud.libloader")
+    apply(plugin = "maven-publish")
 
     val dependency by configurations.creating
     configurations.compileClasspath.get().extendsFrom(dependency)
@@ -56,6 +59,47 @@ allprojects {
             attributes["Launcher-Agent-Class"] = "dev.redicloud.libloader.boot.Agent"
         }
         archiveFileName.set(Builds.getOutputFileName(this@allprojects) + ".jar")
+    }
+
+
+    afterEvaluate {
+        fun findProperty(name: String): String? {
+            val envValue = System.getenv(name)
+            val propValue = findProperty(name)?.toString()
+            return envValue ?: propValue
+        }
+        val publishToRepository = runCatching { extra.get("publishToRepository") }.getOrNull()?.toString().toBoolean()
+            ?: return@afterEvaluate
+        if (!publishToRepository) return@afterEvaluate
+        val snapshotVersion = version.toString().endsWith("-SNAPSHOT")
+        val repositorySnapshotUrl = findProperty("RC_REPOSITORY_SNAPSHOT_URL") ?: return@afterEvaluate
+        val repositoryReleaseUrl = findProperty("RC_REPOSITORY_RELEASE_URL") ?: return@afterEvaluate
+        val repositoryUsername = findProperty("RC_REPOSITORY_USERNAME") ?: return@afterEvaluate
+        val repositoryPassword = findProperty("RC_REPOSITORY_PASSWORD") ?: return@afterEvaluate
+        val repositoryUrl = if (snapshotVersion) repositorySnapshotUrl else repositoryReleaseUrl
+        (extensions["publishing"] as PublishingExtension).apply {
+            repositories {
+                maven {
+                    name = "redicloud"
+                    url = uri(repositoryUrl)
+                    credentials {
+                        username = repositoryUsername
+                        password = repositoryPassword
+                    }
+                    authentication {
+                        create<BasicAuthentication>("basic")
+                    }
+                }
+                publications {
+                    create<MavenPublication>(project.name.replace("-", "_")) {
+                        groupId = project.group.toString()
+                        artifactId = project.name
+                        version = Versions.cloud
+                        from(components["java"])
+                    }
+                }
+            }
+        }
     }
 
 }

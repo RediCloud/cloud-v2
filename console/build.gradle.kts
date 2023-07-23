@@ -1,5 +1,7 @@
 import dev.redicloud.libloader.plugin.LibraryLoader
 
+val publishToRepository by extra("publishToRepository")
+
 group = "dev.redicloud"
 
 repositories {
