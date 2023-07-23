@@ -63,19 +63,18 @@ allprojects {
 
 
     afterEvaluate {
-        fun findProperty(name: String): String? {
+        fun findConfigurationValue(name: String): String? {
             val envValue = System.getenv(name)
             val propValue = findProperty(name)?.toString()
             return envValue ?: propValue
         }
-        val publishToRepository = runCatching { extra.get("publishToRepository") }.getOrNull()?.toString().toBoolean()
-            ?: return@afterEvaluate
+        val publishToRepository = runCatching { extra.get("publishToRepository").toString().toBoolean() }.getOrNull() ?: return@afterEvaluate
         if (!publishToRepository) return@afterEvaluate
         val snapshotVersion = version.toString().endsWith("-SNAPSHOT")
-        val repositorySnapshotUrl = findProperty("RC_REPOSITORY_SNAPSHOT_URL") ?: return@afterEvaluate
-        val repositoryReleaseUrl = findProperty("RC_REPOSITORY_RELEASE_URL") ?: return@afterEvaluate
-        val repositoryUsername = findProperty("RC_REPOSITORY_USERNAME") ?: return@afterEvaluate
-        val repositoryPassword = findProperty("RC_REPOSITORY_PASSWORD") ?: return@afterEvaluate
+        val repositorySnapshotUrl = findConfigurationValue("RC_REPOSITORY_SNAPSHOT_URL") ?: return@afterEvaluate
+        val repositoryReleaseUrl = findConfigurationValue("RC_REPOSITORY_RELEASE_URL") ?: return@afterEvaluate
+        val repositoryUsername = findConfigurationValue("RC_REPOSITORY_USERNAME") ?: return@afterEvaluate
+        val repositoryPassword = findConfigurationValue("RC_REPOSITORY_PASSWORD") ?: return@afterEvaluate
         val repositoryUrl = if (snapshotVersion) repositorySnapshotUrl else repositoryReleaseUrl
         (extensions["publishing"] as PublishingExtension).apply {
             repositories {

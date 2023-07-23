@@ -1,6 +1,8 @@
-import dev.redicloud.libloader.plugin.LibraryLoader
+plugins {
+    `maven-publish`
+}
 
-val publishToRepository by extra("publishToRepository")
+val publishToRepository by extra(true)
 
 group = "dev.redicloud"
 
