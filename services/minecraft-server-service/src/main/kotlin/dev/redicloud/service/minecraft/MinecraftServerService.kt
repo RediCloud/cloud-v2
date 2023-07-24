@@ -17,8 +17,11 @@ import dev.redicloud.service.minecraft.repositories.connect
 import dev.redicloud.service.minecraft.tasks.CloudServerInfoTask
 import dev.redicloud.api.utils.DATABASE_JSON
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.utils.ICurrentServerData
+import dev.redicloud.api.version.ICloudServerVersion
 import dev.redicloud.api.version.ICloudServerVersionType
 import dev.redicloud.modules.ModuleHandler
+import dev.redicloud.service.minecraft.utils.CurrentServerData
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -38,19 +41,38 @@ abstract class MinecraftServerService<T> : BaseService(
     final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
     abstract val serverPlayerProvider: IServerPlayerProvider
     abstract val screenProvider: AbstractScreenProvider
+    val currentServerData: CurrentServerData
 
     init {
         fileTemplateRepository = BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository, packetManager)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(this.databaseConnection, null, packetManager)
         hostServiceId = runBlocking { serverRepository.connect(serviceId) }
+        currentServerData = runBlocking {
+            CurrentServerData(
+                getServer().serviceId,
+                getServer().name,
+                getServer().id,
+                getServer().maxPlayers,
+                getServer().connectedPlayers,
+                getServer().state,
+                getServer().configurationTemplate.name,
+                getVersion().displayName
+            )
+        }
         moduleHandler = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, runBlocking { getVersionType() })
         registerDefaults()
     }
 
     private suspend fun getVersionType(): ICloudServerVersionType {
-        val server = serverRepository.getServer<CloudServer>(serviceId) ?: throw IllegalStateException("Server not found!")
-        val version = serverVersionRepository.getVersion(server.configurationTemplate.serverVersionId!!)!!
-        return serverVersionTypeRepository.getType(version.typeId!!)!!
+        return serverVersionTypeRepository.getType(getVersion().typeId!!)!!
+    }
+
+    private suspend fun getVersion(): ICloudServerVersion {
+        return serverVersionRepository.getVersion(getServer().configurationTemplate.serverVersionId!!)!!
+    }
+
+    private suspend fun getServer(): CloudServer {
+        return serverRepository.getServer<CloudServer>(serviceId) ?: throw IllegalStateException("Server not found!")
     }
 
     open fun onEnable() = runBlocking {
@@ -81,7 +103,7 @@ abstract class MinecraftServerService<T> : BaseService(
 
     protected fun registerTasks() {
         taskManager.builder()
-            .task(CloudServerInfoTask(this.serviceId, this.serverRepository, this.serverPlayerProvider))
+            .task(CloudServerInfoTask(this.serviceId, this.serverRepository, this.serverPlayerProvider, this.currentServerData))
             .instant()
             .period(1500.milliseconds)
             .register()
@@ -92,5 +114,6 @@ abstract class MinecraftServerService<T> : BaseService(
     override fun configure() {
         super.configure()
         bind(ServiceId::class).annotatedWith(Names.named("host")).toInstance(hostServiceId)
+        bind(ICurrentServerData::class.java).toInstance(currentServerData)
     }
 }
