@@ -444,7 +444,7 @@ open class Console(
     override fun hasColorSupport(): Boolean = ansiSupported
 
     override fun resetPrompt() {
-        prompt = System.getProperty("redicloud.console.promt", "§8• %hc%%user%§8@§f%host% §8➔ §r")
+        prompt = System.getProperty("redicloud.console.prompt", "§8• %hc%%user%§8@§f%host% §8➔ §r")
         updatePrompt()
     }
 
