@@ -59,6 +59,7 @@ import dev.redicloud.repository.server.version.serverversion.VersionRepository
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.redisson.api.RedissonClient
 import java.util.logging.Level
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
@@ -242,6 +243,9 @@ abstract class BaseService(
         bind(ServiceId::class).annotatedWith(Names.named("this")).toInstance(serviceId)
         bind(java.util.logging.Logger::class).annotatedWith(Names.named("root")).toInstance(LogManager.rootLogger())
         bind(java.util.logging.Logger::class).annotatedWith(Names.named("service")).toInstance(LOGGER)
+        if (System.getProperty("redicloud.inject.database") != "false") {
+            bind(RedissonClient::class).toInstance(databaseConnection.getClient())
+        }
     }
 
 }
