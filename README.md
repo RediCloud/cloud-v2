@@ -1,4 +1,4 @@
-# RediCloud (WIP = work in progress)
+# RediCloud
 
 A redis based cluster cloud system for minecraft. 
 **[[Discord](https://discord.gg/g2HV52VV4G)]**
@@ -13,7 +13,7 @@ A redis based cluster cloud system for minecraft.
 
 (✅ = done | ⚙️ = in progress | ❌ = not started | 🚧 = done, but not tested enough)
 
-! The cloud is still in early development. Not all planned features are listed. If you are missing a feature or have an idea, join the RediCloud discord. !
+! The cloud is still in development. Not all planned features are listed. If you are missing a feature or have an idea, join the RediCloud discord. !
 
 - redis for communication and storage ✅
 - node clustering (decentralized) ✅
