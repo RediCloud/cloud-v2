@@ -43,6 +43,7 @@ class NodeService(
     override val fileTemplateRepository: NodeFileTemplateRepository
     override val serverVersionTypeRepository: CloudServerVersionTypeRepository
     override val moduleHandler: ModuleHandler
+    override val categoryChannelName: String? = null
     val console: NodeConsole
     val fileNodeRepository: FileNodeRepository
     val fileCluster: FileCluster
