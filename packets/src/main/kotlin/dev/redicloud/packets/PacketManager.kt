@@ -30,10 +30,10 @@ class PacketManager(
     }
 
     private val registeredPackets = mutableListOf<KClass<out AbstractPacket>>()
-    private val serviceTopic: RReliableTopic
-    private val broadcastTopic: RReliableTopic
-    private val categoryChannel: RReliableTopic?
-    private val typedTopics: MutableMap<ServiceType, RReliableTopic> = mutableMapOf()
+    private val serviceTopic: RTopic
+    private val broadcastTopic: RTopic
+    private val categoryChannel: RTopic?
+    private val typedTopics: MutableMap<ServiceType, RTopic> = mutableMapOf()
     private val gson = GsonBuilder().fixKotlinAnnotations().create()
     private val listeners = mutableListOf<PacketListener<out AbstractPacket>>()
     internal val packetResponses = mutableListOf<PacketResponse>()
@@ -43,13 +43,13 @@ class PacketManager(
     init {
         if (!databaseConnection.isConnected()) throw IllegalStateException("Database connection is not connected!")
 
-        serviceTopic = databaseConnection.getClient().getReliableTopic(serviceId.toName())
-        broadcastTopic = databaseConnection.getClient().getReliableTopic("broadcast")
+        serviceTopic = databaseConnection.getClient().getTopic(serviceId.toName())
+        broadcastTopic = databaseConnection.getClient().getTopic("broadcast")
         ServiceType.values().forEach {
-            typedTopics[it] = databaseConnection.getClient().getReliableTopic(it.name.lowercase())
+            typedTopics[it] = databaseConnection.getClient().getTopic(it.name.lowercase())
         }
         if (categoryChannelName != null) {
-            this.categoryChannel = databaseConnection.getClient().getReliableTopic(categoryChannelName)
+            this.categoryChannel = databaseConnection.getClient().getTopic(categoryChannelName)
         } else {
             this.categoryChannel = null
         }
@@ -159,7 +159,7 @@ class PacketManager(
     override suspend fun publishToCategory(packet: AbstractPacket, categoryName: String): IPacketResponse {
         packet.sender = serviceId
         val packedPacket = PackedPacket(gson.toJson(packet), packet::class.java.name)
-        databaseConnection.getClient().getReliableTopic(categoryName).publish(packedPacket)
+        databaseConnection.getClient().getTopic(categoryName).publish(packedPacket)
         return PacketResponse(this, packet)
     }
 
