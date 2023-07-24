@@ -38,6 +38,8 @@ interface IPacketManager {
 
     suspend fun publish(packet: AbstractPacket, vararg serviceTypes: ServiceType): IPacketResponse
 
+    suspend fun publishToCategory(packet: AbstractPacket, categoryName: String): IPacketResponse
+
 }
 
 inline fun <reified T : AbstractPacket> IPacketManager.listen(noinline handler: (T) -> Unit): PacketListener<T> {

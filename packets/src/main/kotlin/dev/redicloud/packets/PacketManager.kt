@@ -4,6 +4,7 @@ import com.google.gson.GsonBuilder
 import dev.redicloud.api.events.InlineEventCaller
 import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.api.packets.IPacketManager
+import dev.redicloud.api.packets.IPacketResponse
 import dev.redicloud.api.packets.PacketListener
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
@@ -12,6 +13,7 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.utils.coroutineExceptionHandler
 import kotlinx.coroutines.*
+import org.redisson.api.RReliableTopic
 import org.redisson.api.RTopic
 import org.redisson.api.listener.MessageListener
 import kotlin.reflect.KClass
@@ -19,7 +21,8 @@ import kotlin.time.Duration.Companion.seconds
 
 class PacketManager(
     private val databaseConnection: DatabaseConnection,
-    override val serviceId: ServiceId
+    override val serviceId: ServiceId,
+    private val categoryChannelName: String? = null
 ) : IPacketManager {
 
     companion object {
@@ -27,9 +30,10 @@ class PacketManager(
     }
 
     private val registeredPackets = mutableListOf<KClass<out AbstractPacket>>()
-    private val serviceTopic: RTopic
-    private val broadcastTopic: RTopic
-    private val typedTopics: MutableMap<ServiceType, RTopic> = mutableMapOf()
+    private val serviceTopic: RReliableTopic
+    private val broadcastTopic: RReliableTopic
+    private val categoryChannel: RReliableTopic?
+    private val typedTopics: MutableMap<ServiceType, RReliableTopic> = mutableMapOf()
     private val gson = GsonBuilder().fixKotlinAnnotations().create()
     private val listeners = mutableListOf<PacketListener<out AbstractPacket>>()
     internal val packetResponses = mutableListOf<PacketResponse>()
@@ -39,10 +43,15 @@ class PacketManager(
     init {
         if (!databaseConnection.isConnected()) throw IllegalStateException("Database connection is not connected!")
 
-        serviceTopic = databaseConnection.getClient().getTopic(serviceId.toName())
-        broadcastTopic = databaseConnection.getClient().getTopic("broadcast")
+        serviceTopic = databaseConnection.getClient().getReliableTopic(serviceId.toName())
+        broadcastTopic = databaseConnection.getClient().getReliableTopic("broadcast")
         ServiceType.values().forEach {
-            typedTopics[it] = databaseConnection.getClient().getTopic(it.name.lowercase())
+            typedTopics[it] = databaseConnection.getClient().getReliableTopic(it.name.lowercase())
+        }
+        if (categoryChannelName != null) {
+            this.categoryChannel = databaseConnection.getClient().getReliableTopic(categoryChannelName)
+        } else {
+            this.categoryChannel = null
         }
 
         val messageListener = MessageListener<PackedPacket> { channel, messageData ->
@@ -83,12 +92,14 @@ class PacketManager(
         typedTopics.forEach { (_, topic) ->
             topic.addListener(PackedPacket::class.java, messageListener)
         }
+        categoryChannel?.addListener(PackedPacket::class.java, messageListener)
     }
 
     fun disconnect() {
         serviceTopic.removeAllListeners()
         broadcastTopic.removeAllListeners()
         typedTopics.forEach { (_, topic) -> topic.removeAllListeners() }
+        categoryChannel?.removeAllListeners()
         packetScope.cancel()
     }
 
@@ -142,6 +153,13 @@ class PacketManager(
         packet.sender = serviceId
         val packedPacket = PackedPacket(gson.toJson(packet), packet::class.java.name)
         serviceTypes.forEach { typedTopics[it]?.publish(packedPacket) }
+        return PacketResponse(this, packet)
+    }
+
+    override suspend fun publishToCategory(packet: AbstractPacket, categoryName: String): IPacketResponse {
+        packet.sender = serviceId
+        val packedPacket = PackedPacket(gson.toJson(packet), packet::class.java.name)
+        databaseConnection.getClient().getReliableTopic(categoryName).publish(packedPacket)
         return PacketResponse(this, packet)
     }
 
