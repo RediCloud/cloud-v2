@@ -92,7 +92,7 @@ class CloudPlayerListener(
     }
 
     @Subscribe(order = PostOrder.FIRST)
-    fun onServerConnected(event: ServerConnectedEvent) = runBlocking {
+    fun onServerConnected(event: ServerConnectedEvent): Unit = runBlocking {
         val player = event.player
         val cloudPlayer = playerRepository.getPlayer(player.uniqueId)
         if (cloudPlayer == null) {
