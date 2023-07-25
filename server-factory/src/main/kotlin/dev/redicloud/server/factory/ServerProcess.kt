@@ -23,6 +23,7 @@ import dev.redicloud.utils.findFreePort
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.event.EventManager
+import dev.redicloud.repository.node.CloudNode
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.seconds
 
@@ -201,25 +202,25 @@ class ServerProcess(
                 add("--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED")
             }
         }
-        configurationTemplate.jvmArguments.forEach { list.add(replacePlaceholders(it)) }
+        configurationTemplate.jvmArguments.forEach { list.add(replacePlaceholders(it, snapshotData)) }
         list.add("-Xms${configurationTemplate.maxMemory}M")
         list.add("-Xmx${configurationTemplate.maxMemory}M")
 
-        type.jvmArguments.forEach { list.add(replacePlaceholders(it)) }
+        type.jvmArguments.forEach { list.add(replacePlaceholders(it, snapshotData)) }
         list.add("-jar")
         val versionHandler = IServerVersionHandler.getHandler(type)
         val jarToExecute = versionHandler.getJar(snapshotData.version)
         list.add(jarToExecute.absolutePath)
-        processConfiguration!!.programmParameters.forEach { list.add(replacePlaceholders(it)) }
+        processConfiguration!!.programmParameters.forEach { list.add(replacePlaceholders(it, snapshotData)) }
         list.addAll(processConfiguration!!.programmParameters)
         return list
     }
 
-    fun replacePlaceholders(text: String): String =
+    fun replacePlaceholders(text: String, snapshotData: StartDataSnapshot): String =
         text.replace("%PORT%", port.toString())
             .replace("%SERVICE_ID%", cloudServer?.serviceId?.toName() ?: "unknown")
             .replace("%SERVICE_NAME%", cloudServer?.serviceId?.toName() ?: "unknown")
-            .replace("%HOSTNAME%", cloudServer?.currentOrLastSession()?.ipAddress ?: "127.0.0.1")
+            .replace("%HOSTNAME%", snapshotData.hostname)
             .replace("%PROXY_SECRET%", clusterConfiguration.get("proxy-secret") ?: "redicloud_secret")
             .replace("%MAX_PLAYERS%", (cloudServer?.maxPlayers ?: if (serverId.type == ServiceType.PROXY_SERVER) 100 else 20).toString())
 

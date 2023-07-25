@@ -169,7 +169,9 @@ class ServerFactory(
         val dataResult = snapshotData.loadData(
             serverVersionRepository,
             serverVersionTypeRepository,
-            javaVersionRepository
+            javaVersionRepository,
+            nodeRepository,
+            hostingId
         )
         if (dataResult != null) return dataResult
         if (!snapshotData.version.used) {
@@ -195,7 +197,7 @@ class ServerFactory(
         )
 
         processes.add(serverProcess)
-        var cloudServer: CloudServer? = null
+        val cloudServer: CloudServer?
         try {
 
             val thisNode = nodeRepository.getNode(hostingId)!!
@@ -280,7 +282,7 @@ class ServerFactory(
             // copy all templates
             copier.copyTemplates()
             // copy all version files
-            copier.copyVersionFiles { serverProcess.replacePlaceholders(it) }
+            copier.copyVersionFiles { serverProcess.replacePlaceholders(it, snapshotData) }
             // copy connector
             copier.copyConnector()
 
@@ -313,7 +315,9 @@ class ServerFactory(
             val dataResult = snapshotData.loadData(
                 serverVersionRepository,
                 serverVersionTypeRepository,
-                javaVersionRepository
+                javaVersionRepository,
+                nodeRepository,
+                hostingId
             )
             if (dataResult != null) return dataResult
             if (!snapshotData.version.used) {
@@ -392,7 +396,7 @@ class ServerFactory(
                 // copy all templates
                 copier.copyTemplates(false)
                 // copy all version files
-                copier.copyVersionFiles(false) { serverProcess.replacePlaceholders(it) }
+                copier.copyVersionFiles(false) { serverProcess.replacePlaceholders(it, snapshotData) }
                 // copy connector
                 copier.copyConnector()
 

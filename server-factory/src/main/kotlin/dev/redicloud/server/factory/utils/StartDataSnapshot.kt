@@ -1,5 +1,6 @@
 package dev.redicloud.server.factory.utils
 
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
@@ -7,6 +8,7 @@ import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.api.version.IServerVersionHandler
+import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.utils.EasyCache
 import kotlin.time.Duration.Companion.seconds
@@ -26,12 +28,15 @@ class StartDataSnapshot private constructor(
     lateinit var versionType: CloudServerVersionType
     lateinit var javaVersion: CloudJavaVersion
     lateinit var versionHandler: IServerVersionHandler
+    lateinit var hostname: String
     var startResult: StartResult? = null
 
     suspend fun loadData(
         serverVersionRepository: CloudServerVersionRepository,
         serverVersionTypeRepository: CloudServerVersionTypeRepository,
-        javaVersionRepository: JavaVersionRepository
+        javaVersionRepository: JavaVersionRepository,
+        nodeRepository: NodeRepository,
+        hostServiceId: ServiceId
     ): StartResult? {
         if (configurationTemplate.serverVersionId == null) {
             startResult = UnknownServerVersionStartResult(null)
@@ -74,6 +79,12 @@ class StartDataSnapshot private constructor(
             return startResult
         }
         this.versionHandler = versionHandler
+        val hostName = runCatching { nodeRepository.getNode(hostServiceId) }.getOrNull()?.currentOrLastSession()?.ipAddress
+        if (hostName == null) {
+            startResult = UnknownErrorStartResult(Exception("Cant find host node: ${hostServiceId.toName()}"))
+            return startResult
+        }
+        this.hostname = hostName
         return null
     }
 
