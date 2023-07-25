@@ -22,12 +22,8 @@ class CloudServerListener(
     }
 
     private val onServerDisconnectEvent = proxyServerService.eventManager.listen<CloudServerDisconnectedEvent> {
-        defaultScope.launch {
-            if (it.serviceId.type != ServiceType.MINECRAFT_SERVER) return@launch
-            val server = proxyServerService.serverRepository.getMinecraftServer(it.serviceId)
-                ?: throw IllegalStateException("Cant unregister server that is not in the repository: ${it.serviceId.toName()}")
-            proxyServerService.unregisterServer(server)
-        }
+        if (it.serviceId.type != ServiceType.MINECRAFT_SERVER) return@listen
+        proxyServerService.unregisterServer(it.serviceId)
     }
 
 }
