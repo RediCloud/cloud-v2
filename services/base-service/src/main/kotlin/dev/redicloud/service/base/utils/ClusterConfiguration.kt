@@ -13,7 +13,7 @@ class ClusterConfiguration(
 
     val map = databaseConnection.getClient()
         .getLocalCachedMap(
-            "cluster-configuration", LocalCachedMapOptions.defaults<String, String>()
+            "cloud:cluster-configuration", LocalCachedMapOptions.defaults<String, String>()
                 .storeMode(LocalCachedMapOptions.StoreMode.LOCALCACHE_REDIS)
                 .syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
         )

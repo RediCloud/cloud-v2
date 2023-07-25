@@ -18,8 +18,8 @@ abstract class ServiceRepository(
     val internalRepositories: MutableList<CachedServiceRepository<*, *>> = mutableListOf()
 
     init {
-        connectedServices = databaseConnection.getClient().getList("service:connected")
-        registeredServices = databaseConnection.getClient().getList("service:registered")
+        connectedServices = databaseConnection.getClient().getList("cloud:service:connected")
+        registeredServices = databaseConnection.getClient().getList("cloud:service:registered")
 
         shutdownAction = Runnable {
             if (shutdownCalled) return@Runnable
