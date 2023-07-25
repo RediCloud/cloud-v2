@@ -28,46 +28,51 @@ class ScreenProcessHandler(
     override fun run() {
         var stopped = false
         while (!stopped) {
-            val inputReader = InputStreamReader(inputStream)
-            val bufferedReader = BufferedReader(inputReader)
-            while (process.isAlive && inputStream.isOpen()) {
-                val line = bufferedReader.readLine()
-                if (line == null || line.isEmpty()) continue
-                screen.println(line)
-                lines.forEach { it(line) }
-            }
-            bufferedReader.close()
-            inputReader.close()
-
-            if (errorStream.isOpen()) {
-                val errorReader = InputStreamReader(errorStream)
-                val errorBufferedReader = BufferedReader(errorReader)
-                while (errorStream.isOpen() && errorReader.ready()) {
-                    val line = errorBufferedReader.readLine()
+            try {
+                val inputReader = InputStreamReader(inputStream)
+                val bufferedReader = BufferedReader(inputReader)
+                while (process.isAlive && inputStream.isOpen()) {
+                    val line = bufferedReader.readLine()
                     if (line == null || line.isEmpty()) continue
-
                     screen.println(line)
                     lines.forEach { it(line) }
-
-                    if (filterSpam) {
-                        if (!screen.isActive()) {
-                            val identifier = line
-                                .replace(Regex("\\[.*?\\]"), "")
-                                .trim()
-                            if (logged.contains(identifier)) return
-                            logged.add(identifier)
-                        }
-                        LOGGER.warning("[${screen.name}]: §c$line")
-                    }
                 }
-                errorBufferedReader.close()
-                errorReader.close()
-            }
+                bufferedReader.close()
+                inputReader.close()
 
-            if (!process.isAlive) {
-                exits.forEach { it(process.exitValue()) }
-                screen.destroy()
-                stopped = true
+                if (errorStream.isOpen()) {
+                    val errorReader = InputStreamReader(errorStream)
+                    val errorBufferedReader = BufferedReader(errorReader)
+                    while (errorStream.isOpen() && errorReader.ready()) {
+                        val line = errorBufferedReader.readLine()
+                        if (line == null || line.isEmpty()) continue
+
+                        screen.println(line)
+                        lines.forEach { it(line) }
+
+                        if (filterSpam) {
+                            if (!screen.isActive()) {
+                                val identifier = line
+                                    .replace(Regex("\\[.*?\\]"), "")
+                                    .trim()
+                                if (logged.contains(identifier)) return
+                                logged.add(identifier)
+                            }
+                            LOGGER.warning("[${screen.name}]: §c$line")
+                        }
+                    }
+                    errorBufferedReader.close()
+                    errorReader.close()
+                }
+
+                if (!process.isAlive) {
+                    exits.forEach { it(process.exitValue()) }
+                    screen.destroy()
+                    stopped = true
+                }
+            }catch (e: Exception) {
+                if (!inputStream.isOpen() && !errorStream.isOpen()) return
+                LOGGER.severe("Error while reading process output", e)
             }
         }
     }
