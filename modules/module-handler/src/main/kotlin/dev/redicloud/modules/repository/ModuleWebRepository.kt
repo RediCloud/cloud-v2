@@ -91,6 +91,7 @@ class ModuleWebRepository(
 
     //TODO: download console animation
     suspend fun download(moduleId: String, version: String): File {
+        MODULE_FOLDER.createIfNotExists()
         val localFile = File(MODULE_FOLDER.getFile(), "$moduleId-$version.jar")
         val bytes = getModuleBytes(moduleId, version) ?: throw IllegalStateException("Module not found: $moduleId-$version")
         val tmpFile = File(MODULE_FOLDER.getFile(), "$moduleId-$version.jar.download")
