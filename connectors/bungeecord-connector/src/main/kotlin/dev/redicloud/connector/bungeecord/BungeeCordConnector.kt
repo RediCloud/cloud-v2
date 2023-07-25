@@ -52,10 +52,10 @@ class BungeeCordConnector(
         ProxyServer.getInstance().servers[server.name] = serverInfo
     }
 
-    override fun unregisterServer(server: CloudMinecraftServer) {
+    override fun unregisterServer(serviceId: ServiceId) {
         if (ProxyServer.getInstance().servers == null) return
-        val serverInfo = registered.remove(server.serviceId) ?: return
-        ProxyServer.getInstance().servers.remove(server.name, serverInfo)
+        val serverInfo = registered.remove(serviceId) ?: return
+        ProxyServer.getInstance().servers.remove(serverInfo.name, serverInfo)
     }
 
     override fun onEnable() {

@@ -54,8 +54,8 @@ class VelocityConnector(
         this.proxyServer.registerServer(serverInfo)
     }
 
-    override fun unregisterServer(server: CloudMinecraftServer) {
-        val serverInfo = registered.remove(server.serviceId) ?: return
+    override fun unregisterServer(serviceId: ServiceId) {
+        val serverInfo = registered.remove(serviceId) ?: return
         this.proxyServer.unregisterServer(serverInfo)
     }
 

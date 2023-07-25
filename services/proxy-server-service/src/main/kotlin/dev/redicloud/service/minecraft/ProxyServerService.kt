@@ -1,5 +1,6 @@
 package dev.redicloud.service.minecraft
 
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.service.minecraft.listener.CloudServerListener
 import dev.redicloud.api.service.ServiceType
@@ -16,7 +17,7 @@ abstract class ProxyServerService<T> : MinecraftServerService<T>() {
 
     abstract fun registerServer(server: CloudMinecraftServer)
 
-    abstract fun unregisterServer(server: CloudMinecraftServer)
+    abstract fun unregisterServer(serviceId: ServiceId)
 
     private fun registerListeners() {
         this.eventManager.registerListener(CloudServerListener(this))
