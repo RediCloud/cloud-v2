@@ -18,7 +18,7 @@ class BukkitConnector(val plugin: JavaPlugin) : MinecraftServerService<JavaPlugi
         initApi()
         bukkitShuttingDown = false
         serverPlayerProvider = BukkitServerPlayerProvider()
-        screenProvider = BukkitScreenProvider(this.packetManager)
+        screenProvider = BukkitScreenProvider(this.packetManager, this.plugin)
         registerTasks()
         runBlocking { moduleHandler.loadModules() }
     }
