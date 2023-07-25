@@ -7,6 +7,7 @@ import dev.redicloud.utils.gson.gson
 import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.findAnnotation
@@ -235,11 +236,13 @@ class EventManager(
 
     internal fun fireLocalEvent(event: CloudEvent) {
         val eventType = event::class
-        handlers[eventType]?.forEach { handlerMethod ->
-            try {
-                handlerMethod.function.call(handlerMethod.listener, event)
-            } catch (e: Exception) {
-                LOGGER.severe("Error while calling event handler", e)
+        lock.withLock {
+            handlers[eventType]?.forEach { handlerMethod ->
+                try {
+                    handlerMethod.function.call(handlerMethod.listener, event)
+                } catch (e: Exception) {
+                    LOGGER.severe("Error while calling event handler", e)
+                }
             }
         }
     }
