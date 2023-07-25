@@ -36,18 +36,7 @@ abstract class MinecraftServerService<T> : BaseService(
     }
 
     private val hostServiceId: ServiceId
-    val currentServerData: CurrentServerData = runBlocking {
-        CurrentServerData(
-            getServer().serviceId,
-            getServer().name,
-            getServer().id,
-            getServer().maxPlayers,
-            getServer().connectedPlayers,
-            getServer().state,
-            getServer().configurationTemplate.name,
-            getVersion().displayName
-        )
-    }
+    val currentServerData: CurrentServerData
     final override val fileTemplateRepository: AbstractFileTemplateRepository
     final override val moduleHandler: ModuleHandler
     final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
@@ -57,6 +46,20 @@ abstract class MinecraftServerService<T> : BaseService(
     init {
         fileTemplateRepository = BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository, packetManager)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(this.databaseConnection, null, packetManager)
+        val server = runBlocking { getServer() }
+        val version = runBlocking { getVersion() }
+        currentServerData = runBlocking {
+            CurrentServerData(
+                server.serviceId,
+                server.name,
+                server.id,
+                server.maxPlayers,
+                server.connectedPlayers,
+                server.state,
+                server.configurationTemplate.name,
+                version.displayName
+            )
+        }
         hostServiceId = runBlocking { serverRepository.connect(serviceId) }
         packetManager.registerCategoryChannel(currentServerData.configurationTemplateName)
         moduleHandler = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, runBlocking { getVersionType() })
