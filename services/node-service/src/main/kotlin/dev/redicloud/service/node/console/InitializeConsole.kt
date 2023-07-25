@@ -165,6 +165,7 @@ class InitializeConsole() : Console(
 
     override fun sendHeader() {
         super.sendHeader()
+        getJavaVersion() // Load versions
         writeLine("§8» §fChecks§8:")
         writeLine("§f‾‾‾‾‾‾‾‾‾‾‾‾‾")
         writeLine("§8• §fLibraries §8» ${checkLibs()}")
