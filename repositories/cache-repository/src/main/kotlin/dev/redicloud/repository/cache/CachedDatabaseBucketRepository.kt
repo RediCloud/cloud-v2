@@ -52,7 +52,7 @@ open class CachedDatabaseBucketRepository<I : Any, K : Any>(
     }
 
     override suspend fun getAll(customPattern: String?): List<K> {
-        val keyPattern = customPattern ?: "$name:*"
+        val keyPattern = customPattern ?: "cloud:$name:*"
         val keys = connection.getClient().keys.getKeysByPattern(keyPattern)
         val new = mutableListOf<String>()
         keys.forEach {

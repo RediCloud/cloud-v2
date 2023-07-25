@@ -45,7 +45,7 @@ class JavaVersionRepository(
 
     override suspend fun getVersion(uniqueId: UUID): CloudJavaVersion? = get(uniqueId.toString())
 
-    override suspend fun existsVersion(name: String): Boolean = getVersion(name) != null
+    override suspend fun existsVersion(name: String): Boolean = getVersions().any { it.name.lowercase() == name.lowercase() }
 
     override suspend fun existsVersion(uniqueId: UUID): Boolean = exists(uniqueId.toString())
 
