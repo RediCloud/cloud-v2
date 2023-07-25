@@ -51,8 +51,6 @@ abstract class MinecraftServerService<T> : BaseService(
     final override val fileTemplateRepository: AbstractFileTemplateRepository
     final override val moduleHandler: ModuleHandler
     final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
-    final override val categoryChannelName: String
-        get() = currentServerData.configurationTemplateName
     abstract val serverPlayerProvider: IServerPlayerProvider
     abstract val screenProvider: AbstractScreenProvider
 
@@ -60,6 +58,7 @@ abstract class MinecraftServerService<T> : BaseService(
         fileTemplateRepository = BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository, packetManager)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(this.databaseConnection, null, packetManager)
         hostServiceId = runBlocking { serverRepository.connect(serviceId) }
+        packetManager.registerCategoryChannel(currentServerData.configurationTemplateName)
         moduleHandler = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, runBlocking { getVersionType() })
         registerDefaults()
     }

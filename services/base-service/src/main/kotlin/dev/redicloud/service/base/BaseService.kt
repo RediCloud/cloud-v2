@@ -82,7 +82,6 @@ abstract class BaseService(
     val serverVersionRepository: CloudServerVersionRepository
     abstract val fileTemplateRepository: AbstractFileTemplateRepository
     abstract val serverVersionTypeRepository: CloudServerVersionTypeRepository
-    abstract val categoryChannelName: String?
     val serverRepository: ServerRepository
     val configurationTemplateRepository: ConfigurationTemplateRepository
     val javaVersionRepository: JavaVersionRepository
@@ -117,7 +116,7 @@ abstract class BaseService(
 
         clusterConfiguration = ClusterConfiguration(databaseConnection)
 
-        packetManager = PacketManager(databaseConnection, serviceId, categoryChannelName)
+        packetManager = PacketManager(databaseConnection, serviceId)
         eventManager = EventManager("base-event-manager", packetManager)
         val taskThreads = when(serviceId.type) {
             ServiceType.NODE -> 4

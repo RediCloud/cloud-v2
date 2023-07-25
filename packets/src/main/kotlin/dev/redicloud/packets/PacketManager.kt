@@ -21,24 +21,25 @@ import kotlin.time.Duration.Companion.seconds
 
 class PacketManager(
     private val databaseConnection: DatabaseConnection,
-    override val serviceId: ServiceId,
-    private val categoryChannelName: String? = null
+    override val serviceId: ServiceId
 ) : IPacketManager {
 
     companion object {
         private val LOGGER = LogManager.logger(PacketManager::class.java)
     }
 
+    private var categoryChannelName: String? = null
     private val registeredPackets = mutableListOf<KClass<out AbstractPacket>>()
     private val serviceTopic: RTopic
     private val broadcastTopic: RTopic
-    private val categoryChannel: RTopic?
+    private var categoryChannel: RTopic? = null
     private val typedTopics: MutableMap<ServiceType, RTopic> = mutableMapOf()
     private val gson = GsonBuilder().fixKotlinAnnotations().create()
     private val listeners = mutableListOf<PacketListener<out AbstractPacket>>()
     internal val packetResponses = mutableListOf<PacketResponse>()
     internal val packetsOfLast3Seconds = mutableListOf<AbstractPacket>()
     internal val packetScope = CoroutineScope(Dispatchers.IO + coroutineExceptionHandler)
+    private val messageListener = createMessageListener()
 
     init {
         if (!databaseConnection.isConnected()) throw IllegalStateException("Database connection is not connected!")
@@ -48,13 +49,16 @@ class PacketManager(
         ServiceType.values().forEach {
             typedTopics[it] = databaseConnection.getClient().getTopic(it.name.lowercase())
         }
-        if (categoryChannelName != null) {
-            this.categoryChannel = databaseConnection.getClient().getTopic(categoryChannelName)
-        } else {
-            this.categoryChannel = null
-        }
 
-        val messageListener = MessageListener<PackedPacket> { channel, messageData ->
+        serviceTopic.addListener(PackedPacket::class.java, messageListener)
+        broadcastTopic.addListener(PackedPacket::class.java, messageListener)
+        typedTopics.forEach { (_, topic) ->
+            topic.addListener(PackedPacket::class.java, messageListener)
+        }
+    }
+
+    private fun createMessageListener(): MessageListener<PackedPacket> {
+        return MessageListener<PackedPacket> { channel, messageData ->
             val data = messageData.data
             val p = registeredPackets.firstOrNull { it.qualifiedName == messageData.clazz }
             if (p == null) {
@@ -87,12 +91,6 @@ class PacketManager(
                 }
             }
         }
-        serviceTopic.addListener(PackedPacket::class.java, messageListener)
-        broadcastTopic.addListener(PackedPacket::class.java, messageListener)
-        typedTopics.forEach { (_, topic) ->
-            topic.addListener(PackedPacket::class.java, messageListener)
-        }
-        categoryChannel?.addListener(PackedPacket::class.java, messageListener)
     }
 
     fun disconnect() {
@@ -101,6 +99,18 @@ class PacketManager(
         typedTopics.forEach { (_, topic) -> topic.removeAllListeners() }
         categoryChannel?.removeAllListeners()
         packetScope.cancel()
+    }
+
+    fun registerCategoryChannel(name: String) {
+        if (this.categoryChannelName != null) throw IllegalStateException("Category channel is already registered!")
+        this.categoryChannelName = name
+
+        categoryChannel?.addListener(PackedPacket::class.java, messageListener)
+        if (categoryChannelName != null) {
+            this.categoryChannel = databaseConnection.getClient().getTopic(categoryChannelName)
+        } else {
+            this.categoryChannel = null
+        }
     }
 
     override fun isConnected(): Boolean {
