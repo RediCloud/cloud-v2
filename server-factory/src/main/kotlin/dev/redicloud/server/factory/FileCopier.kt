@@ -12,6 +12,7 @@ import dev.redicloud.api.utils.STATIC_FOLDER
 import dev.redicloud.api.utils.TEMP_SERVER_FOLDER
 import kotlinx.coroutines.runBlocking
 import java.io.File
+import kotlin.concurrent.withLock
 
 
 class FileCopier(
@@ -46,9 +47,7 @@ class FileCopier(
 
     suspend fun copyConnector() {
         logger.fine("Copying connector for $serviceId")
-        val lock = serverVersionTypeRepository.getLock(snapshot.versionType)
-        lock.lock()
-        try {
+        serverVersionTypeRepository.getLock(snapshot.versionType).withLock {
             CONNECTORS_FOLDER.createIfNotExists()
             val connectorFile = snapshot.versionType.getParsedConnectorFile(true)
             if (!connectorFile.exists()) {
@@ -58,7 +57,7 @@ class FileCopier(
                     return
                 }
                 try {
-                    serverVersionTypeRepository.downloadConnector(snapshot.versionType, lock = false)
+                    runBlocking { serverVersionTypeRepository.downloadConnector(snapshot.versionType, lock = false) }
                     if (!connectorFile.exists()) {
                         logger.warning("Connector file for ${snapshot.versionType.name} does not exist! The server will not connect to the cloud cluster!")
                         logger.warning("You can set the connector file in the server version type settings with: 'svt edit <name> connector jar <connector>'")
@@ -74,8 +73,6 @@ class FileCopier(
             val pluginFolder = File(workDirectory, snapshot.versionType.connectorFolder)
             if (!pluginFolder.exists()) pluginFolder.mkdirs()
             connectorFile.copyTo(File(pluginFolder, connectorFile.name), overwrite = true)
-        }finally {
-            lock.unlock()
         }
     }
 
@@ -85,25 +82,24 @@ class FileCopier(
     suspend fun copyVersionFiles(force: Boolean = true, action: (String) -> String = { it }) {
         logger.fine("Copying files for $serviceId of version ${snapshot.version.displayName}")
         val versionHandler = IServerVersionHandler.getHandler(snapshot.versionType)
-        versionHandler.getLock(snapshot.version).lock()
-        try {
-            if (!versionHandler.isPatched(snapshot.version) && versionHandler.isPatchVersion(snapshot.version)) {
-                versionHandler.patch(snapshot.version)
-            }else if(!versionHandler.isDownloaded(snapshot.version)) {
-                versionHandler.download(snapshot.version)
-            }
-            if (force && configurationTemplate.static || !configurationTemplate.static) {
-                versionHandler.getFolder(snapshot.version).copyRecursively(workDirectory)
-            }else {
-                val jar = versionHandler.getJar(snapshot.version)
-                if (jar.exists()) {
-                    jar.copyTo(File(workDirectory, jar.name), overwrite = true)
+        versionHandler.getLock(snapshot.version).withLock {
+            runBlocking {
+                if (!versionHandler.isPatched(snapshot.version) && versionHandler.isPatchVersion(snapshot.version)) {
+                    versionHandler.patch(snapshot.version)
+                }else if(!versionHandler.isDownloaded(snapshot.version)) {
+                    versionHandler.download(snapshot.version)
                 }
+                if (force && configurationTemplate.static || !configurationTemplate.static) {
+                    versionHandler.getFolder(snapshot.version).copyRecursively(workDirectory)
+                }else {
+                    val jar = versionHandler.getJar(snapshot.version)
+                    if (jar.exists()) {
+                        jar.copyTo(File(workDirectory, jar.name), overwrite = true)
+                    }
+                }
+                snapshot.versionType.doFileEdits(workDirectory, action)
+                snapshot.version.doFileEdits(workDirectory, action)
             }
-            snapshot.versionType.doFileEdits(workDirectory, action)
-            snapshot.version.doFileEdits(workDirectory, action)
-        }finally {
-            versionHandler.getLock(snapshot.version).unlock()
         }
     }
 
