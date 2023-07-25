@@ -47,6 +47,10 @@ open class Console(
         val LOGGER: Logger = LogManager.logger(Console::class.java)
         private val DATE_FORMAT = SimpleDateFormat("HH:mm:ss.SSS")
         private var FIRST_INIT = true
+        lateinit var TERMINAL: Terminal
+        private var CONSOLE_THREAD: Thread? = null
+        lateinit var LINE_READER: ConsoleLineReader
+        var CURRENT_CONSOLE: Console? = null
     }
 
     internal val currentQuestion: ConsoleQuestion? = null
@@ -59,8 +63,6 @@ open class Console(
     override val commandManager = ConsoleCommandManager(this)
     override var lineFormat: String = System.getProperty("redicloud.console.lineformat", "§8[§f%time%§8] %level%§8: %tc%%message%")
     private val runningAnimations: MutableMap<UUID, Pair<Job, AbstractConsoleAnimation>> = mutableMapOf()
-    val terminal: Terminal
-    internal val lineReader: ConsoleLineReader
     override var prompt: String = System.getProperty("redicloud.console.prompt", "§8• %hc%%user%§8@%tc%%host% §8➔ §r")
     var highlightColor: ConsoleColor = ConsoleColor.valueOf(System.getProperty("redicloud.console.highlight", "CYAN").uppercase())
     var textColor: ConsoleColor = ConsoleColor.valueOf(System.getProperty("redicloud.console.hightlight", "WHITE").uppercase())
@@ -68,41 +70,46 @@ open class Console(
     override var printingEnabled = true
     override var matchingHistorySearch = true
 
-    @OptIn(DelicateCoroutinesApi::class)
-    private val scope = CoroutineScope(newSingleThreadContext("console-scope") + coroutineExceptionHandler)
     private val animationScope = CoroutineScope(Dispatchers.Default + coroutineExceptionHandler)
     private var logRecordDispatcher: ThreadRecordDispatcher? = null
 
     init {
+        CURRENT_CONSOLE = this
+        if (FIRST_INIT) {
+            TERMINAL = TerminalBuilder.builder()
+                .system(true)
+                .encoding(Charsets.UTF_8)
+                .build()
+            LINE_READER = ConsoleLineReader().apply {
+                completer = ConsoleCompleter(this@Console)
+                //highlighter = ConsoleHighlighter(this@Console)
+                option(LineReader.Option.AUTO_GROUP, false)
+                option(LineReader.Option.AUTO_MENU_LIST, true)
+                option(LineReader.Option.AUTO_FRESH_LINE, true)
+                option(LineReader.Option.EMPTY_WORD_OPTIONS, false)
+                option(LineReader.Option.HISTORY_TIMESTAMPED, false)
+                option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
+
+                variable(LineReader.BELL_STYLE, "none")
+                variable(LineReader.HISTORY_SIZE, 500)
+                variable(LineReader.COMPLETION_STYLE_LIST_BACKGROUND, "inverse")
+                variable(LineReader.HISTORY_FILE, CONSOLE_HISTORY_FILE.getFile().path)
+            }
+        } else {
+            LINE_READER.completer = ConsoleCompleter(this@Console)
+        }
         ansiSupported = AnsiInstaller().install()
 
         disableJLineLogger()
 
-        terminal = TerminalBuilder.builder()
-            .system(true)
-            .encoding(Charsets.UTF_8)
-            .build()
-        lineReader = ConsoleLineReader(this).apply {
-            completer = ConsoleCompleter(this@Console)
-            //highlighter = ConsoleHighlighter(this@Console)
-            option(LineReader.Option.AUTO_GROUP, false)
-            option(LineReader.Option.AUTO_MENU_LIST, true)
-            option(LineReader.Option.AUTO_FRESH_LINE, true)
-            option(LineReader.Option.EMPTY_WORD_OPTIONS, false)
-            option(LineReader.Option.HISTORY_TIMESTAMPED, false)
-            option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
-
-            variable(LineReader.BELL_STYLE, "none")
-            variable(LineReader.HISTORY_SIZE, 500)
-            variable(LineReader.COMPLETION_STYLE_LIST_BACKGROUND, "inverse")
-            variable(LineReader.HISTORY_FILE, CONSOLE_HISTORY_FILE.getFile().path)
-        }
-
         initializeLogging()
 
+        if (FIRST_INIT) {
+            this.run()
+        }
         this.updatePrompt()
-        this.run()
         clearScreen()
+        FIRST_INIT = false
     }
 
     private fun initializeLogging() {
@@ -149,18 +156,28 @@ open class Console(
     open fun handleUserInterrupt(e: Exception) { exitProcess(0) }
 
     private fun run() {
-        scope.launch {
-            eventManager?.fireEvent(ConsoleRunEvent(this@Console))
+        CONSOLE_THREAD = Thread({
+            fun readLineInput(): String? {
+                try {
+                    return LINE_READER.readLine(CURRENT_CONSOLE?.prompt ?: "")
+                } catch (_: EndOfFileException) {
+                } catch (e: UserInterruptException) {
+                    handleUserInterrupt(e)
+                }
+                return null
+            }
+            CURRENT_CONSOLE?.eventManager?.fireEvent(ConsoleRunEvent(this@Console))
             var line: String? = null
             while (!Thread.currentThread().isInterrupted) {
                 line = readLineInput() ?: continue
-                defaultScreen.addLine(prompt + line + "\r\n")
-                runningAnimations.forEach { (_, animation) -> animation.second.addToCursorUp(1) }
+                CURRENT_CONSOLE?.defaultScreen?.addLine(prompt + line + "\r\n")
+                CURRENT_CONSOLE?.runningAnimations?.forEach { (_, animation) -> animation.second.addToCursorUp(1) }
 
-                inputReader.forEach { it.acceptInput(line) }
-                inputReader.clear()
+                CURRENT_CONSOLE?.inputReader?.forEach { it.acceptInput(line) }
+                CURRENT_CONSOLE?.inputReader?.clear()
 
-                if (!commandManager.areCommandsDisabled()) {
+                if (CURRENT_CONSOLE?.commandManager?.areCommandsDisabled() == false) {
+                    val commandManager = CURRENT_CONSOLE?.commandManager ?: continue
                     try {
                         val response = commandManager.handleInput(commandManager.defaultActor, line)
                         if (response.type == CommandResponseType.HELP_SENT) continue
@@ -176,31 +193,22 @@ open class Console(
                     }
                 }
             }
-        }
-    }
-
-    private fun readLineInput(): String? {
-        try {
-            return lineReader.readLine(this@Console.prompt)
-        } catch (_: EndOfFileException) {
-        } catch (e: UserInterruptException) {
-            handleUserInterrupt(e)
-        }
-        return null
+        }, "RC Console")
+        CONSOLE_THREAD!!.start()
     }
 
     private fun print(text: String) {
-        this.lineReader.terminal.puts(InfoCmp.Capability.carriage_return)
-        this.lineReader.terminal.puts(InfoCmp.Capability.clr_eol)
-        this.lineReader.terminal.writer().print(text)
-        this.lineReader.terminal.flush()
+        LINE_READER.terminal.puts(InfoCmp.Capability.carriage_return)
+        LINE_READER.terminal.puts(InfoCmp.Capability.clr_eol)
+        LINE_READER.terminal.writer().print(text)
+        LINE_READER.terminal.flush()
         redisplay()
     }
 
     private fun redisplay() {
-        if (!this.lineReader.isReading) return
-        this.lineReader.callWidget(LineReader.REDRAW_LINE)
-        this.lineReader.callWidget(LineReader.REDISPLAY)
+        if (!LINE_READER.isReading) return
+        LINE_READER.callWidget(LineReader.REDRAW_LINE)
+        LINE_READER.callWidget(LineReader.REDISPLAY)
     }
 
     suspend fun readNextInput(): String {
@@ -245,7 +253,7 @@ open class Console(
 
     fun updatePrompt() {
         this.prompt = formatText(this.prompt, "", false)
-        this.lineReader.setPrompt(this.prompt)
+        LINE_READER.setPrompt(this.prompt)
     }
 
     override fun runningAnimations(): List<AbstractConsoleAnimation> = runningAnimations.values.map { it.second }
@@ -337,19 +345,19 @@ open class Console(
 
 
     override fun commandHistory(): List<String> =
-        lineReader.history.map { it.line() }.toList()
+        LINE_READER.history.map { it.line() }.toList()
 
     override fun commandHistory(history: List<String>?) {
         try {
-            lineReader.history.purge()
+            LINE_READER.history.purge()
         } catch (e: IOException) {
             LOGGER.severe("Failed to purge console history", e)
         }
-        history?.forEach { lineReader.history.add(it) }
+        history?.forEach { LINE_READER.history.add(it) }
     }
 
     override fun commandInputValue(commandInputValue: String) {
-        lineReader.buffer.write(commandInputValue)
+        LINE_READER.buffer.write(commandInputValue)
     }
 
     override fun enableCommands() {
@@ -459,19 +467,21 @@ open class Console(
     }
 
     override fun clearScreen() {
-        terminal.puts(InfoCmp.Capability.clear_screen)
-        terminal.flush()
+        TERMINAL.puts(InfoCmp.Capability.clear_screen)
+        TERMINAL.flush()
         this.redisplay()
     }
 
-    @Throws(Exception::class)
-    override fun close() {
+    override fun close(processExit: Boolean) {
         cancelAnimations()
-        this.scope.cancel()
         this.animationScope.cancel()
         runBlocking { logRecordDispatcher?.shutdown() }
-        terminal.flush()
-        terminal.close()
+        if (processExit) {
+            TERMINAL.reader().shutdown()
+            TERMINAL.pause()
+            TERMINAL.close()
+            CONSOLE_THREAD?.interrupt()
+        }
         if (uninstallAnsiOnClose) AnsiConsole.systemUninstall()
     }
 

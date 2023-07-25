@@ -1,5 +1,6 @@
 package dev.redicloud.console.jline
 
+import dev.redicloud.api.events.IEventManager
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.commands.ConsoleCommandManager
@@ -7,7 +8,7 @@ import dev.redicloud.console.utils.Screen
 import org.fusesource.jansi.Ansi
 
 
-interface IConsole : AutoCloseable {
+interface IConsole {
 
 
     var printingEnabled: Boolean
@@ -87,5 +88,7 @@ interface IConsole : AutoCloseable {
     fun emptyPrompt()
 
     fun clearScreen()
+
+    fun close(processExit: Boolean = false)
 
 }

@@ -3,10 +3,11 @@ package dev.redicloud.console.jline
 import dev.redicloud.console.Console
 import org.jline.reader.impl.LineReaderImpl
 
-class ConsoleLineReader(private val console: Console) : LineReaderImpl(console.terminal, "RediCloud-Console", null) {
+class ConsoleLineReader : LineReaderImpl(Console.TERMINAL, "RediCloud-Console", null) {
 
     override fun historySearchBackward(): Boolean {
-        if (console.matchingHistorySearch) return super.historySearchBackward()
+        if (Console.CURRENT_CONSOLE == null) return true
+        if (Console.CURRENT_CONSOLE!!.matchingHistorySearch) return super.historySearchBackward()
         return if (this.history.previous()) {
             this.setBuffer(this.history.current())
             true
@@ -14,7 +15,8 @@ class ConsoleLineReader(private val console: Console) : LineReaderImpl(console.t
     }
 
     override fun historySearchForward(): Boolean {
-        if (console.matchingHistorySearch) return super.historySearchForward()
+        if (Console.CURRENT_CONSOLE == null) return true
+        if (Console.CURRENT_CONSOLE!!.matchingHistorySearch) return super.historySearchForward()
         return if (this.history.previous()) {
             this.setBuffer(this.history.current())
             true

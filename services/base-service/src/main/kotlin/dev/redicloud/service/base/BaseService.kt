@@ -54,6 +54,7 @@ import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.template.file.ICloudFileTemplateRepository
 import dev.redicloud.api.utils.injector
 import dev.redicloud.api.version.IVersionRepository
+import dev.redicloud.console.Console
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.repository.server.version.serverversion.VersionRepository
 import kotlinx.coroutines.cancel
@@ -171,6 +172,7 @@ abstract class BaseService(
             databaseConnection.disconnect()
             defaultScope.cancel()
             ioScope.cancel()
+            Console.Companion.CURRENT_CONSOLE?.close(true)
         }
     }
 
