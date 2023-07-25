@@ -1,3 +1,7 @@
+plugins {
+    kotlin("kapt")
+}
+
 group = "dev.redicloud.connector"
 
 repositories {
@@ -32,7 +36,7 @@ dependencies {
     shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
 
     compileOnly("com.velocitypowered:velocity-api:3.1.1")
-    annotationProcessor("com.velocitypowered:velocity-api:3.1.1")
+    kapt("com.velocitypowered:velocity-api:3.1.1")
 }
 
 tasks.register("buildAndCopy") {
