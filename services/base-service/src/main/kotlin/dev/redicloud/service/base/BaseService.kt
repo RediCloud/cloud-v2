@@ -245,6 +245,7 @@ abstract class BaseService(
         bind(ServiceId::class).annotatedWith(Names.named("this")).toInstance(serviceId)
         bind(java.util.logging.Logger::class).annotatedWith(Names.named("root")).toInstance(LogManager.rootLogger())
         bind(java.util.logging.Logger::class).annotatedWith(Names.named("service")).toInstance(LOGGER)
+        bind(CloudTaskManager::class).toInstance(taskManager)
         if (System.getProperty("redicloud.inject.database") != "false") {
             bind(RedissonClient::class).toInstance(databaseConnection.getClient())
         }

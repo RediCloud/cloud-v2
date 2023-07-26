@@ -1,5 +1,7 @@
 group = "dev.redicloud"
 
+val publishToRepository by extra(true)
+
 repositories {
     mavenCentral()
 }
