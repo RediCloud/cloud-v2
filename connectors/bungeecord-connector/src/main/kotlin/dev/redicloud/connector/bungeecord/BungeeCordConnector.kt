@@ -69,6 +69,16 @@ class BungeeCordConnector(
             ProxyServer.getInstance().stop()
             return
         }
+        runBlocking {
+            ProxyServer.getInstance().players.forEach { proxiedPlayer ->
+                playerRepository.getPlayer(proxiedPlayer.uniqueId)?.let {
+                    it.connected = false
+                    it.proxyId = null
+                    it.serverId = null
+                    playerRepository.updatePlayer(it)
+                }
+            }
+        }
         super.onDisable()
     }
 

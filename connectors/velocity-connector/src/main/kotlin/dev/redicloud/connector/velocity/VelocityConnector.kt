@@ -69,6 +69,16 @@ class VelocityConnector(
             this.proxyServer.shutdown()
             return
         }
+        runBlocking {
+            proxyServer.allPlayers.forEach { player ->
+                playerRepository.getPlayer(player.uniqueId)?.let {
+                    it.connected = false
+                    it.proxyId = null
+                    it.serverId = null
+                    playerRepository.updatePlayer(it)
+                }
+            }
+        }
         super.onDisable()
     }
 
