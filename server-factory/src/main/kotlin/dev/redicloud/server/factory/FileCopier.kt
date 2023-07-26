@@ -110,7 +110,7 @@ class FileCopier(
         if (!force && configurationTemplate.static) return
         logger.fine("Copying templates for $serviceId")
         templates.forEach {
-            it.folder.copyRecursively(workDirectory)
+            it.folder.copyRecursively(workDirectory, overwrite = false)
         }
     }
 
