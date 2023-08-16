@@ -10,7 +10,7 @@ import dev.redicloud.tasks.CloudTask
 import dev.redicloud.api.service.ServiceId
 import java.util.UUID
 
-class CloudStartAutoStartServicesTask(
+class CloudAutoStartServerTask(
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
     private val serverRepository: ServerRepository,
     private val serverFactory: ServerFactory,

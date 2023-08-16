@@ -119,7 +119,7 @@ class NodeService(
             .period(3.seconds)
             .register()
         taskManager.builder()
-            .task(CloudStartAutoStartServicesTask(this.configurationTemplateRepository, this.serverRepository, this.serverFactory, this.nodeRepository))
+            .task(CloudAutoStartServerTask(this.configurationTemplateRepository, this.serverRepository, this.serverFactory, this.nodeRepository))
             .event(CloudServerDisconnectedEvent::class)
             .delay(2.seconds)
             .period(5.seconds)
