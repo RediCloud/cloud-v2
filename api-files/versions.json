@@ -1245,7 +1245,7 @@
     "uniqueId": "bff27e5f-4ffb-79ff-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.11/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.11/builds/%build_id%/downloads/waterfall-%version_name%-%build_id%.jar",
     "buildId": "108",
     "version": {
       "name": "1.11",
@@ -1269,7 +1269,7 @@
     "uniqueId": "b1bbf7ff-ef70-fbf7-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.12/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.12/builds/%build_id%/downloads/waterfall-%version_name%-%build_id%.jar",
     "buildId": "185",
     "version": {
       "name": "1.12",
@@ -1293,7 +1293,7 @@
     "uniqueId": "3fedbfff-fafd-ff5f-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.13/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.13/builds/%build_id%/downloads/waterfall-%version_name%-%build_id%.jar",
     "buildId": "276",
     "version": {
       "name": "1.13",
@@ -1317,7 +1317,7 @@
     "uniqueId": "77bdbfff-febe-efaf-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.14/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.14/builds/%build_id%/downloads/waterfall-%version_name%-%build_id%.jar",
     "buildId": "301",
     "version": {
       "name": "1.14",
@@ -1341,7 +1341,7 @@
     "uniqueId": "defc3eff-fbff-8ff9-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.15/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.15/builds/%build_id%/downloads/waterfall-%version_name%-%build_id%.jar",
     "buildId": "350",
     "version": {
       "name": "1.15",
@@ -1365,7 +1365,7 @@
     "uniqueId": "e2d7ecdf-f5f7-fdff-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.16/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.16/builds/%build_id%/downloads/waterfall-%version_name%-%build_id%.jar",
     "buildId": "431",
     "version": {
       "name": "1.16",
@@ -1389,7 +1389,7 @@
     "uniqueId": "f7fffffb-1ff7-f2be-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.17/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.17/builds/%build_id%/downloads/waterfall-%version_name%-%build_id%.jar",
     "buildId": "454",
     "version": {
       "name": "1.17",
@@ -1413,7 +1413,7 @@
     "uniqueId": "effbd6b3-d5f7-9f76-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.18/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.18/builds/%build_id%/downloads/waterfall-%version_name%-%build_id%.jar",
     "buildId": "488",
     "version": {
       "name": "1.18",
@@ -1437,7 +1437,7 @@
     "uniqueId": "f7f3b77f-febf-ebf6-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.19/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.19/builds/%build_id%/downloads/waterfall-%version_name%-%build_id%.jar",
     "buildId": "535",
     "version": {
       "name": "1.19",
@@ -1461,7 +1461,7 @@
     "uniqueId": "6bfcfe9f-ed6d-ab79-0000-000000000000",
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.20/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.20/builds/%build_id%/downloads/waterfall-%version_name%-%build_id%.jar",
     "buildId": "536",
     "version": {
       "name": "1.20",
@@ -1485,7 +1485,7 @@
     "uniqueId": "fffffe57-fbde-2f3f-0000-000000000000",
     "typeId": "6fa280a8-aaed-4ee7-99e4-c337b6985098",
     "projectName": "folia",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/1.19.4/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/1.19.4/builds/%build_id%/downloads/folia-%version_name%-%build_id%.jar",
     "buildId": "39",
     "version": {
       "name": "1.19.4",
@@ -1509,7 +1509,7 @@
     "uniqueId": "7eb77fbd-eabf-fb7d-0000-000000000000",
     "typeId": "6fa280a8-aaed-4ee7-99e4-c337b6985098",
     "projectName": "folia",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/1.20.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/1.20.1/builds/%build_id%/downloads/folia-%version_name%-%build_id%.jar",
     "buildId": "10",
     "version": {
       "name": "1.20.1",
@@ -1533,7 +1533,7 @@
     "uniqueId": "be9efff6-7fac-fddf-0000-000000000000",
     "typeId": "6fa280a8-aaed-4ee7-99e4-c337b6985098",
     "projectName": "folia",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/1.20.1/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/1.20.1/builds/%build_id%/downloads/folia-%version_name%-%build_id%.jar",
     "buildId": "10",
     "version": {
       "name": "latest",

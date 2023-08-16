@@ -149,8 +149,8 @@
         "player_limit": "%MAX_PLAYERS%"
       }
     },
-    "connectorPluginName": "redicloud-connector-waterfall-%cloud_version%-%build_number%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/connectors/redicloud-waterfall-connector-%cloud_version%.jar",
+    "connectorPluginName": "redicloud-bungeecord-connector-%cloud_version%-%build_number%.jar",
+    "connectorDownloadUrl": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/connectors/redicloud-bungeecord-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
     "libPattern": null
   },
