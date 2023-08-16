@@ -21,7 +21,8 @@ class StartDataSnapshot private constructor(
         private val easyCache = EasyCache<StartDataSnapshot, ConfigurationTemplate>(3.seconds) {
             StartDataSnapshot(it!!)
         }
-        suspend fun of(configurationTemplate: ConfigurationTemplate) = easyCache.get(configurationTemplate)!!
+        fun of(configurationTemplate: ConfigurationTemplate) = easyCache.get(configurationTemplate)
+            ?: easyCache.get(configurationTemplate)!!
     }
 
     lateinit var version: CloudServerVersion
