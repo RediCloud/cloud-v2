@@ -8,7 +8,6 @@ pluginManagement {
     }
 }
 
-include("api")
 include("database")
 include("packets")
 include("utils")
@@ -17,8 +16,14 @@ include("console")
 include("logging")
 include("tasks")
 include("file-cluster")
-include("server-factory")
 include("cache")
+
+
+include("server-factories:node-server-factory")
+findProject(":server-factories:node-server-factory")?.name = "node-server-factory"
+
+include("apis:base-api")
+findProject(":apis:base-api")?.name = "base-api"
 
 include("services:base-service")
 findProject(":services:base-service")?.name = "base-service"
@@ -85,3 +90,9 @@ findProject(":examples:example-module")?.name = "example-module"
 
 include("modules:papermc-updater")
 findProject(":modules:papermc-updater")?.name = "papermc-updater"
+
+include("apis:node-api")
+findProject(":apis:node-api")?.name = "node-api"
+
+include("server-factories:remote-server-factory")
+findProject(":server-factories:remote-server-factory")?.name = "remote-server-factory"

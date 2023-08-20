@@ -5,10 +5,11 @@ import dev.redicloud.api.service.server.ICloudProxyServer
 import dev.redicloud.repository.service.ServiceSessions
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 
 class CloudProxyServer(
     serviceId: ServiceId,
-    configurationTemplate: ConfigurationTemplate,
+    configurationTemplate: ICloudConfigurationTemplate,
     id: Int,
     hostNodeId: ServiceId,
     serviceSessions: ServiceSessions,

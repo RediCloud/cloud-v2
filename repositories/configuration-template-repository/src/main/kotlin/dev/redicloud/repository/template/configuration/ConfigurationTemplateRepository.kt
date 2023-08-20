@@ -7,7 +7,6 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
-import dev.redicloud.utils.gson.gsonInterfaceFactory
 import dev.redicloud.api.service.ServiceType
 import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
