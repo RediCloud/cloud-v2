@@ -1,6 +1,7 @@
 package dev.redicloud.server.factory
 
 import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
+import dev.redicloud.api.server.factory.ICloudServerProcess
 import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.service.base.packets.CloudServiceShutdownPacket
 import dev.redicloud.console.utils.toConsoleValue
@@ -22,24 +23,26 @@ import dev.redicloud.utils.findFreePort
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
+import dev.redicloud.api.utils.ProcessHandler
 import dev.redicloud.event.EventManager
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.seconds
 
 class ServerProcess(
-    val configurationTemplate: ICloudConfigurationTemplate,
+    override val configurationTemplate: ICloudConfigurationTemplate,
     private val serverRepository: ServerRepository,
     private val packetManager: PacketManager,
     private val eventManager: EventManager,
     private val bindHost: String,
     private val clusterConfiguration: ClusterConfiguration,
-    val serverId: ServiceId,
-    val hostServiceId: ServiceId
-) {
-    val port: Int
-    var process: Process? = null
-    var handler: ScreenProcessHandler? = null
-    var processConfiguration: ProcessConfiguration? = null
+    override val serverId: ServiceId,
+    override val hostServiceId: ServiceId
+) : ICloudServerProcess {
+
+    override val port: Int
+    override var process: Process? = null
+    override var processHandler: ProcessHandler? = null
+    override var processConfiguration: ProcessConfiguration? = null
     internal lateinit var fileCopier: FileCopier
     internal var cloudServer: CloudServer? = null
     internal var stopped = false
@@ -94,8 +97,8 @@ class ServerProcess(
 
         process = processBuilder.start()
         // create handler and listen for exit
-        handler = ScreenProcessHandler(process!!, serverScreen)
-        handler!!.onExit { runBlocking { stop(internalCall =  true) } }
+        processHandler = ScreenProcessHandler(process!!, serverScreen)
+        processHandler!!.onExit { runBlocking { stop(internalCall =  true) } }
 
         cloudServer.state = CloudServerState.STARTING
         cloudServer.port = port

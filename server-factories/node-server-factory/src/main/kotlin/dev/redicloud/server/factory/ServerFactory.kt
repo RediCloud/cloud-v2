@@ -6,6 +6,7 @@ import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.api.events.impl.server.CloudServerDeleteEvent
 import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.events.impl.server.CloudServerTransferredEvent
+import dev.redicloud.api.server.factory.ICloudServerFactory
 import dev.redicloud.api.utils.STATIC_FOLDER
 import dev.redicloud.api.utils.TEMP_FILE_TRANSFER_FOLDER
 import dev.redicloud.api.utils.toUniversalPath
@@ -60,12 +61,12 @@ class ServerFactory(
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
     private val eventManager: EventManager,
     private val fileCluster: FileCluster
-) : RemoteServerFactory(databaseConnection, nodeRepository, serverRepository) {
+) : ICloudServerFactory, RemoteServerFactory(databaseConnection, nodeRepository, serverRepository) {
 
     companion object {
         private val logger = LogManager.logger(ServerFactory::class)
     }
-    private val processes: MutableList<ServerProcess> = mutableListOf()
+    override val hostedProcesses: MutableList<ServerProcess> = mutableListOf()
     private val idLock = databaseConnection.getClient().getLock("server-factory:id-lock")
 
     init {
@@ -151,7 +152,7 @@ class ServerFactory(
             hostingId
         )
 
-        processes.add(serverProcess)
+        hostedProcesses.add(serverProcess)
         val cloudServer: CloudServer?
         try {
 
@@ -161,7 +162,7 @@ class ServerFactory(
                 if (configurationTemplate.nodeIds.contains(thisNode.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
 
                 // check if the node has enough ram
-                val ramUsage = processes.sumOf { configurationTemplate.maxMemory }
+                val ramUsage = hostedProcesses.sumOf { configurationTemplate.maxMemory }
                 val calculatedRamUsage = ramUsage + configurationTemplate.maxMemory
                 if (calculatedRamUsage > thisNode.maxMemory) return NotEnoughRamOnNodeStartResult()
 
@@ -291,7 +292,7 @@ class ServerFactory(
                 serviceId,
                 hostingId
             )
-            processes.add(serverProcess)
+            hostedProcesses.add(serverProcess)
             try {
 
                 val thisNode = nodeRepository.getNode(hostingId)!!
@@ -300,7 +301,7 @@ class ServerFactory(
                     if (newConfigurationTemplate.nodeIds.contains(thisNode.serviceId) && newConfigurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
 
                     // check if the node has enough ram
-                    val ramUsage = processes.sumOf { newConfigurationTemplate.maxMemory }
+                    val ramUsage = hostedProcesses.sumOf { newConfigurationTemplate.maxMemory }
                     val calculatedRamUsage = ramUsage + newConfigurationTemplate.maxMemory
                     if (calculatedRamUsage > thisNode.maxMemory) return NotEnoughRamOnNodeStartResult()
 
@@ -384,10 +385,10 @@ class ServerFactory(
             thisNode.hostedServers.remove(hostingId)
             nodeRepository.updateNode(thisNode)
         }
-        val process = processes.firstOrNull { it.serverId == serviceId }
+        val process = hostedProcesses.firstOrNull { it.serverId == serviceId }
         if (process != null) {
             process.stop(force, internalCall)
-            processes.remove(process)
+            hostedProcesses.remove(process)
         }
         if (!internalCall) {
             server.state = CloudServerState.STOPPED
@@ -454,7 +455,7 @@ class ServerFactory(
         if (!force && shutdown) return
         shutdown = true
         val actions = MultiAsyncAction()
-        processes.toList().forEach {
+        hostedProcesses.toList().forEach {
             actions.add {
                 try {
                     stopServer(it.cloudServer!!.serviceId, force)

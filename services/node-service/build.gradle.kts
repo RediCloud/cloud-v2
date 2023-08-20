@@ -13,6 +13,7 @@ repositories {
 dependencies {
     shade(project(":cache"))
     shade(project(":apis:base-api"))
+    shade(project(":apis:node-api"))
     shade(project(":services:base-service"))
     shade(project(":repositories:node-repository"))
     shade(project(":repositories:service-repository"))
