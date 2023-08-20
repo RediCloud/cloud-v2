@@ -1,4 +1,4 @@
-package dev.redicloud.server.factory.utils
+package dev.redicloud.api.utils.factory
 
 import dev.redicloud.api.service.ServiceId
 

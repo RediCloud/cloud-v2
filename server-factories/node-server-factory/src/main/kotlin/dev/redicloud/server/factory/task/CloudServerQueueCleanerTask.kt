@@ -28,9 +28,9 @@ class CloudServerQueueCleanerTask(
 
         serverFactory.getStartList().forEach { info ->
             val name = if (info.configurationTemplate != null) {
-                info.configurationTemplate.name
+                info.configurationTemplate!!.name
             } else if (info.serviceId != null) {
-                info.serviceId.toName()
+                info.serviceId!!.toName()
             } else null
 
             if (name == null) {
@@ -40,7 +40,7 @@ class CloudServerQueueCleanerTask(
             }
 
             if (info.serviceId != null) {
-                val node = nodeRepository.getNode(info.serviceId)
+                val node = nodeRepository.getNode(info.serviceId!!)
                 if (node == null || !node.connected && info.queueTime - (MAX_QUEUE_TIME/3) > 0) {
                     logger.warning("§cNode for template ${toConsoleValue(name, false)} is not connected, cancelling server start!")
                     serverFactory.startQueue.remove(info)

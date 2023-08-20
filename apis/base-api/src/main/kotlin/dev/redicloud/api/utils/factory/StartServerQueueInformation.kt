@@ -1,16 +1,16 @@
-package dev.redicloud.server.factory.utils
+package dev.redicloud.api.utils.factory
 
-import dev.redicloud.repository.node.CloudNode
-import dev.redicloud.repository.server.CloudServer
-import dev.redicloud.repository.server.ServerRepository
-import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.node.ICloudNode
+import dev.redicloud.api.service.server.ICloudServer
+import dev.redicloud.api.service.server.ICloudServerRepository
+import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import java.util.LinkedList
 import java.util.UUID
 
 data class ServerQueueInformation(
     val uniqueId: UUID = UUID.randomUUID(),
-    val configurationTemplate: ConfigurationTemplate?,
+    val configurationTemplate: ICloudConfigurationTemplate?,
     val serviceId: ServiceId?,
     val failedStarts: FailedStarts = FailedStarts(),
     val nodeStartOrder: MutableList<ServiceId> = mutableListOf(),
@@ -20,7 +20,7 @@ data class ServerQueueInformation(
 
 class FailedStarts : LinkedList<String>() {
     fun addFailedStart(serviceId: ServiceId, result: StartResultType) {
-        val key = "${serviceId.toName()}:$result:"
+        val key = "${serviceId.toName()}:${result.name}:"
         val current = firstOrNull { it.startsWith(key) }?.split(":")?.get(2)?.toIntOrNull() ?: 0
         removeIf { it.startsWith(key) }
         add("$key${current + 1}")
@@ -29,7 +29,7 @@ class FailedStarts : LinkedList<String>() {
         return filter { it.startsWith("${serviceId.toName()}:") }.sumOf { it.split(":")[2].toInt() }
     }
     fun getFailedStarts(serviceId: ServiceId, result: StartResultType): Int {
-        return filter { it.startsWith("${serviceId.toName()}:$result:") }.sumOf { it.split(":")[2].toInt() }
+        return filter { it.startsWith("${serviceId.toName()}:${result.name}:") }.sumOf { it.split(":")[2].toInt() }
     }
     fun getFailedNodes(): List<ServiceId> {
         return filter { it.split(":")[2].toIntOrNull() != 0 }.map { ServiceId.fromString(it.split(":")[0]) }
@@ -38,18 +38,6 @@ class FailedStarts : LinkedList<String>() {
         var count = 0
         forEach { count += it.split(":")[2].toIntOrNull() ?: 0 }
         return count
-    }
-    fun toMap(): Map<ServiceId, Map<StartResultType, Int>> {
-        val map = mutableMapOf<ServiceId, MutableMap<StartResultType, Int>>()
-        forEach {
-            val split = it.split(":")
-            val serviceId = ServiceId.fromString(split[0])
-            val result = StartResultType.valueOf(split[1])
-            val count = split[2].toIntOrNull() ?: 0
-            if (!map.containsKey(serviceId)) map[serviceId] = mutableMapOf()
-            map[serviceId]!![result] = count
-        }
-        return map
     }
     fun removeFails(serviceId: ServiceId) {
         removeIf { it.startsWith("${serviceId.toName()}:") }
@@ -86,7 +74,7 @@ fun ServerQueueInformation.getFailedStarts(): Int {
     return failedStarts.getFailedStats()
 }
 
-suspend fun ServerQueueInformation.calculateStartOrder(nodes: List<CloudNode>, serverRepository: ServerRepository): MutableList<ServiceId> {
+suspend fun ServerQueueInformation.calculateStartOrder(nodes: List<ICloudNode>, serverRepository: ICloudServerRepository): MutableList<ServiceId> {
     nodeStartOrder.clear()
 
     nodes.forEach {
@@ -98,7 +86,7 @@ suspend fun ServerQueueInformation.calculateStartOrder(nodes: List<CloudNode>, s
     return nodeStartOrder
 }
 
-suspend fun ServerQueueInformation.calculateStartPriority(cloudNode: CloudNode, serverRepository: ServerRepository): Int {
+suspend fun ServerQueueInformation.calculateStartPriority(cloudNode: ICloudNode, serverRepository: ICloudServerRepository): Int {
     var count = 0
 
     if (!cloudNode.connected) {
@@ -114,7 +102,7 @@ suspend fun ServerQueueInformation.calculateStartPriority(cloudNode: CloudNode, 
             return -1
         }
     }else if(serviceId != null) {
-        val server = serverRepository.getServer<CloudServer>(serviceId)
+        val server = serverRepository.getServer<ICloudServer>(serviceId)
         val storedConfigurationTemplate = server?.configurationTemplate
         if (storedConfigurationTemplate != null && storedConfigurationTemplate.nodeIds.isNotEmpty() && !storedConfigurationTemplate.nodeIds.contains(cloudNode.serviceId)) {
             addFailedStart(cloudNode.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)

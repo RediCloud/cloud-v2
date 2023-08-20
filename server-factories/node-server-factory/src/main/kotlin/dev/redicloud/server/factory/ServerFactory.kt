@@ -35,6 +35,10 @@ import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.*
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
+import dev.redicloud.api.utils.factory.ServerQueueInformation
+import dev.redicloud.api.utils.factory.TransferServerQueueInformation
+import dev.redicloud.api.utils.factory.calculateStartOrder
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.redisson.api.RList
@@ -56,25 +60,13 @@ class ServerFactory(
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
     private val eventManager: EventManager,
     private val fileCluster: FileCluster
-) {
+) : RemoteServerFactory(databaseConnection, nodeRepository, serverRepository) {
 
     companion object {
         private val logger = LogManager.logger(ServerFactory::class)
     }
-
-    internal val hostingId = databaseConnection.serviceId
-
-    internal val startQueue: RList<ServerQueueInformation> =
-        databaseConnection.getClient().getList("server-factory:queue:start")
-    internal val stopQueue: RList<ServiceId> =
-        databaseConnection.getClient().getList("server-factory:queue:stop")
-    internal val deleteQueue: RList<ServiceId> =
-        databaseConnection.getClient().getList("server-factory:queue:delete")
-    internal val transferQueue: RList<TransferServerQueueInformation> =
-        databaseConnection.getClient().getList("server-factory:queue:transfer")
     private val processes: MutableList<ServerProcess> = mutableListOf()
     private val idLock = databaseConnection.getClient().getLock("server-factory:id-lock")
-    var shutdown = false
 
     init {
         console.commandManager.registerParser(ServerScreen::class.java, ServerScreenParser(console))
@@ -85,10 +77,10 @@ class ServerFactory(
         return startQueue.toMutableList().sortedWith(compareBy<ServerQueueInformation>
         {
             if (it.configurationTemplate != null) {
-                it.configurationTemplate.startPriority
+                it.configurationTemplate!!.startPriority
             } else if (it.serviceId != null) {
                 val configuration = runBlocking {
-                    serverRepository.getServer<CloudServer>(it.serviceId)?.configurationTemplate
+                    serverRepository.getServer<CloudServer>(it.serviceId!!)?.configurationTemplate
                 }
                 configuration?.startPriority ?: 50
             } else {
@@ -97,47 +89,9 @@ class ServerFactory(
         }.thenByDescending { it.queueTime }).toList()
     }
 
-
-    fun queueStart(configurationTemplate: ConfigurationTemplate, count: Int = 1) =
-        ioScope.launch {
-            val info = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, null, queueTime = System.currentTimeMillis())
-            val nodes = nodeRepository.getRegisteredNodes()
-            info.calculateStartOrder(nodes, serverRepository)
-            for (i in 1..count) {
-                val clone = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, null, info.failedStarts, info.nodeStartOrder, null, System.currentTimeMillis())
-                startQueue.add(clone)
-            }
-        }
-
-    fun queueStart(serviceId: ServiceId) =
-        ioScope.launch {
-            val info = ServerQueueInformation(UUID.randomUUID(), null, serviceId, queueTime = System.currentTimeMillis())
-            val nodes = nodeRepository.getRegisteredNodes()
-            info.calculateStartOrder(nodes, serverRepository)
-            startQueue.add(info)
-        }
-
-    fun queueStart(queueInformation: ServerQueueInformation) {
+    fun queueStart(queueInformation: ServerQueueInformation) =
         ioScope.launch {
             startQueue.add(queueInformation)
-        }
-    }
-
-    fun queueStop(serviceId: ServiceId, force: Boolean = false) =
-        ioScope.launch {
-            val server = serverRepository.getServer<CloudServer>(serviceId) ?: return@launch
-            if (server.state == CloudServerState.STOPPED || server.state == CloudServerState.STOPPING && !force) return@launch
-            stopQueue.add(serviceId)
-        }
-
-    fun queueDelete(serviceId: ServiceId) =
-        ioScope.launch {
-            deleteQueue.add(serviceId)
-        }
-
-    fun queueTransfer(serviceId: ServiceId, targetNodeId: ServiceId) =
-        ioScope.launch {
-            transferQueue.add(TransferServerQueueInformation(serviceId, targetNodeId))
         }
 
     suspend internal fun deleteServer(serviceId: ServiceId): Boolean {
@@ -160,8 +114,9 @@ class ServerFactory(
      * @return the result of the start
      */
     suspend internal fun startServer(
-        configurationTemplate: ConfigurationTemplate,
-        force: Boolean = false
+        configurationTemplate: ICloudConfigurationTemplate,
+        force: Boolean = false,
+        serverUniqueId: UUID? = null
     ): StartResult {
         logger.fine("Prepare server ${configurationTemplate.uniqueId}...")
 
@@ -180,7 +135,7 @@ class ServerFactory(
         }
 
         val serviceId = ServiceId(
-            UUID.randomUUID(),
+            serverUniqueId ?: UUID.randomUUID(),
             if (snapshotData.versionType.proxy) ServiceType.PROXY_SERVER else ServiceType.MINECRAFT_SERVER
         )
 
@@ -519,7 +474,7 @@ class ServerFactory(
     /**
      * Gets the next id for a server with the given configuration template
      */
-    private suspend fun getIdForServer(configuration: ConfigurationTemplate): Int {
+    private suspend fun getIdForServer(configuration: ICloudConfigurationTemplate): Int {
         idLock.lock()
         try {
             val usedIds = serverRepository.getRegisteredServers()

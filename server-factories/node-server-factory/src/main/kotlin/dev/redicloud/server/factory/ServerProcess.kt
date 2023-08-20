@@ -12,7 +12,6 @@ import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.api.version.IServerVersionHandler
-import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.server.factory.screens.ServerScreen
 import dev.redicloud.server.factory.utils.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
@@ -22,12 +21,13 @@ import dev.redicloud.api.utils.ProcessConfiguration
 import dev.redicloud.utils.findFreePort
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import dev.redicloud.event.EventManager
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.seconds
 
 class ServerProcess(
-    val configurationTemplate: ConfigurationTemplate,
+    val configurationTemplate: ICloudConfigurationTemplate,
     private val serverRepository: ServerRepository,
     private val packetManager: PacketManager,
     private val eventManager: EventManager,

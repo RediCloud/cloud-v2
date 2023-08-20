@@ -1,5 +1,6 @@
 package dev.redicloud.server.factory.utils
 
+import dev.redicloud.api.utils.factory.StartResultType
 import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.server.factory.ServerProcess
@@ -24,20 +25,3 @@ class UnknownServerVersionHandlerResult(val serverVersionTypeId: UUID?) : StartR
 class StoppedStartResult() : StartResult(StartResultType.STOPPED)
 
 class UnknownConfigurationTemplateStartResult(val uniqueId: UUID) : StartResult(StartResultType.UNKNOWN_CONFIGURATION_TEMPLATE)
-
-enum class StartResultType {
-    SUCCESS,
-    ALREADY_RUNNING,
-    RAM_USAGE_TOO_HIGH,
-    TOO_MUCH_SERVICES_OF_TEMPLATE,
-    NODE_IS_NOT_ALLOWED,
-    NODE_NOT_CONNECTED,
-    UNKNOWN_SERVER_VERSION,
-    UNKNOWN_SERVER_TYPE_VERSION,
-    UNKNOWN_SERVER_VERSION_HANDLER,
-    UNKNOWN_JAVA_VERSION,
-    UNKNOWN_CONFIGURATION_TEMPLATE,
-    UNKNOWN_ERROR,
-    STOPPED,
-    JAVA_VERSION_NOT_INSTALLED
-}

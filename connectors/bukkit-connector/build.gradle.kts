@@ -38,6 +38,7 @@ dependencies {
     shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
     shade(project(":connectors:bukkit-legacy"))
     shade(project(":modules:module-handler"))
+    shade(project(":server-factories:remote-server-factory"))
 
     compileOnly("org.spigotmc:spigot-api:${Versions.minecraftVersion}")
 }

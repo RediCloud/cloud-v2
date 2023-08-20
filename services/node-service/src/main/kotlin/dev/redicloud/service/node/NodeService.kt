@@ -17,6 +17,7 @@ import dev.redicloud.service.base.BaseService
 import dev.redicloud.api.events.impl.node.NodeConnectEvent
 import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
 import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
+import dev.redicloud.api.service.server.factory.ICloudRemoteServerFactory
 import dev.redicloud.repository.server.version.handler.defaults.URLServerVersionHandler
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.repository.node.connect
@@ -238,6 +239,7 @@ class NodeService(
         super.configure()
         bind(ICommandManager::class).toInstance(console.commandManager)
         bind(Console::class).toInstance(console)
+        bind(ICloudRemoteServerFactory::class).toInstance(serverFactory)
     }
 
 }

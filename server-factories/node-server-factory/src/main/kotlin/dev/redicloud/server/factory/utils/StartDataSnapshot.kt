@@ -1,6 +1,7 @@
 package dev.redicloud.server.factory.utils
 
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
@@ -9,19 +10,18 @@ import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.repository.node.NodeRepository
-import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.utils.EasyCache
 import kotlin.time.Duration.Companion.seconds
 
 class StartDataSnapshot private constructor(
-    val configurationTemplate: ConfigurationTemplate
+    val configurationTemplate: ICloudConfigurationTemplate
 ) {
 
     companion object {
-        private val easyCache = EasyCache<StartDataSnapshot, ConfigurationTemplate>(3.seconds) {
+        private val easyCache = EasyCache<StartDataSnapshot, ICloudConfigurationTemplate>(3.seconds) {
             StartDataSnapshot(it!!)
         }
-        fun of(configurationTemplate: ConfigurationTemplate) = easyCache.get(configurationTemplate)
+        fun of(configurationTemplate: ICloudConfigurationTemplate) = easyCache.get(configurationTemplate)
             ?: easyCache.get(configurationTemplate)!!
     }
 

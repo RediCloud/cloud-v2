@@ -15,10 +15,12 @@ import dev.redicloud.service.minecraft.repositories.connect
 import dev.redicloud.service.minecraft.tasks.CloudServerInfoTask
 import dev.redicloud.api.utils.DATABASE_JSON
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.server.factory.ICloudRemoteServerFactory
 import dev.redicloud.api.utils.ICurrentServerData
 import dev.redicloud.api.version.ICloudServerVersion
 import dev.redicloud.api.version.ICloudServerVersionType
 import dev.redicloud.modules.ModuleHandler
+import dev.redicloud.server.factory.RemoteServerFactory
 import dev.redicloud.service.minecraft.utils.CurrentServerData
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.milliseconds
@@ -40,6 +42,7 @@ abstract class MinecraftServerService<T> : BaseService(
     final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
     abstract val serverPlayerProvider: IServerPlayerProvider
     abstract val screenProvider: AbstractScreenProvider
+    val remoteServerFactory: RemoteServerFactory
 
     init {
         fileTemplateRepository = BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository, packetManager)
@@ -60,6 +63,7 @@ abstract class MinecraftServerService<T> : BaseService(
         }
         hostServiceId = runBlocking { serverRepository.connect(serviceId) }
         packetManager.registerCategoryChannel(currentServerData.configurationTemplateName)
+        remoteServerFactory = RemoteServerFactory(this.databaseConnection, this.nodeRepository, this.serverRepository)
         moduleHandler = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, runBlocking { getVersionType() })
         registerDefaults()
     }
@@ -116,5 +120,6 @@ abstract class MinecraftServerService<T> : BaseService(
         super.configure()
         bind(ServiceId::class).annotatedWith(Names.named("host")).toInstance(hostServiceId)
         bind(ICurrentServerData::class.java).toInstance(currentServerData)
+        bind(ICloudRemoteServerFactory::class.java).toInstance(remoteServerFactory)
     }
 }

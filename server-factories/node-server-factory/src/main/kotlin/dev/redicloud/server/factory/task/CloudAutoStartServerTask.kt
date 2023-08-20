@@ -5,7 +5,7 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.server.factory.ServerFactory
-import dev.redicloud.server.factory.utils.ServerQueueInformation
+import dev.redicloud.api.utils.factory.ServerQueueInformation
 import dev.redicloud.tasks.CloudTask
 import dev.redicloud.api.service.ServiceId
 import java.util.UUID
@@ -47,7 +47,7 @@ class CloudAutoStartServerTask(
                 if (t != null) {
                     if (queueInfo.nodeTarget != null) {
                         val count = nodeBasedStarts.getOrDefault(queueInfo.nodeTarget, 0)
-                        nodeBasedStarts[queueInfo.nodeTarget] = count + 1
+                        nodeBasedStarts[queueInfo.nodeTarget!!] = count + 1
                     } else {
                         val count = unassigned.getOrDefault(t.uniqueId, 0)
                         unassigned[t.uniqueId] = count + 1

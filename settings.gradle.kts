@@ -16,8 +16,11 @@ include("console")
 include("logging")
 include("tasks")
 include("file-cluster")
-include("server-factory")
 include("cache")
+
+
+include("server-factories:node-server-factory")
+findProject(":server-factories:node-server-factory")?.name = "node-server-factory"
 
 include("apis:base-api")
 findProject(":apis:base-api")?.name = "base-api"
@@ -90,3 +93,6 @@ findProject(":modules:papermc-updater")?.name = "papermc-updater"
 
 include("apis:node-api")
 findProject(":apis:node-api")?.name = "node-api"
+
+include("server-factories:remote-server-factory")
+findProject(":server-factories:remote-server-factory")?.name = "remote-server-factory"

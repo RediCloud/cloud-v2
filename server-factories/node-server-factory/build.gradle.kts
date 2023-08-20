@@ -2,6 +2,7 @@ group = "dev.redicloud"
 
 dependencies {
     compileOnly(project(":apis:base-api"))
+    compileOnly(project(":apis:node-api"))
     compileOnly(project(":utils"))
     compileOnly(project(":tasks"))
     compileOnly(project(":cache"))
@@ -21,6 +22,7 @@ dependencies {
     compileOnly(project(":repositories:java-version-repository"))
     compileOnly(project(":repositories:server-version-repository"))
     compileOnly(project(":repositories:service-repository"))
+    compileOnly(project(":server-factories:remote-server-factory"))
 
     dependency("com.jcraft:jsch:0.1.55")
 }

@@ -11,6 +11,7 @@ import dev.redicloud.api.events.impl.node.NodeConnectEvent
 import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
 import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
 import dev.redicloud.api.events.listen
+import dev.redicloud.api.utils.factory.*
 import dev.redicloud.tasks.CloudTask
 import dev.redicloud.utils.MultiAsyncAction
 import dev.redicloud.utils.coroutineExceptionHandler
@@ -74,13 +75,13 @@ class CloudServerStartTask(
         serverFactory.getStartList().forEach { info ->
             if (!info.isNextNode(serverFactory.hostingId)) return@forEach
 
-            val name = if (info.configurationTemplate != null) info.configurationTemplate.name else info.serviceId?.toName() ?: "unknown"
+            val name = if (info.configurationTemplate != null) info.configurationTemplate!!.name else info.serviceId?.toName() ?: "unknown"
 
             actions.add {
                 try {
                     serverFactory.startQueue.remove(info)
                     val result = if (info.configurationTemplate != null) {
-                        serverFactory.startServer(info.configurationTemplate)
+                        serverFactory.startServer(info.configurationTemplate!!, serverUniqueId = info.uniqueId)
                     }else if (info.serviceId != null) {
                         serverFactory.startServer(info.serviceId, null)
                     }else null
