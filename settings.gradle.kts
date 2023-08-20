@@ -87,3 +87,6 @@ findProject(":examples:example-module")?.name = "example-module"
 
 include("modules:papermc-updater")
 findProject(":modules:papermc-updater")?.name = "papermc-updater"
+
+include("apis:node-api")
+findProject(":apis:node-api")?.name = "node-api"
