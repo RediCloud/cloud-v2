@@ -2,8 +2,6 @@ package dev.redicloud.service.minecraft
 
 import com.google.inject.name.Names
 import dev.redicloud.api.service.server.CloudServerState
-import dev.redicloud.api.template.file.ICloudFileTemplateRepository
-import dev.redicloud.api.version.ICloudServerVersionTypeRepository
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.CloudServer

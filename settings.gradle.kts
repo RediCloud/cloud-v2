@@ -8,7 +8,6 @@ pluginManagement {
     }
 }
 
-include("api")
 include("database")
 include("packets")
 include("utils")
@@ -19,6 +18,9 @@ include("tasks")
 include("file-cluster")
 include("server-factory")
 include("cache")
+
+include("apis:base-api")
+findProject(":apis:base-api")?.name = "base-api"
 
 include("services:base-service")
 findProject(":services:base-service")?.name = "base-service"

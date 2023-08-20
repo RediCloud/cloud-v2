@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    shade(project(":api"))
+    shade(project(":apis:base-api"))
     shade(project(":cache"))
     shade(project(":services:base-service"))
     shade(project(":services:minecraft-server-service"))

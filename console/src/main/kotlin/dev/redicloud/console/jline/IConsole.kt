@@ -1,6 +1,5 @@
 package dev.redicloud.console.jline
 
-import dev.redicloud.api.events.IEventManager
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.commands.ConsoleCommandManager

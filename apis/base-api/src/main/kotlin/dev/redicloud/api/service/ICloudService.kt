@@ -1,8 +1,5 @@
 package dev.redicloud.api.service
 
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.api.service.ServiceType
-
 interface ICloudService {
 
     val serviceId: ServiceId

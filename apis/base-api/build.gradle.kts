@@ -2,7 +2,7 @@ plugins {
     `maven-publish`
 }
 
-group = "dev.redicloud"
+group = "dev.redicloud.api"
 
 val publishToRepository by extra(true)
 

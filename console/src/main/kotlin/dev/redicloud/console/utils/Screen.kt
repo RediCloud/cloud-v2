@@ -1,7 +1,6 @@
 package dev.redicloud.console.utils
 
 import dev.redicloud.api.commands.IRegisteredCommand
-import dev.redicloud.commands.api.CommandBase
 import dev.redicloud.console.Console
 import dev.redicloud.console.events.screen.ScreenChangedEvent
 import dev.redicloud.utils.History

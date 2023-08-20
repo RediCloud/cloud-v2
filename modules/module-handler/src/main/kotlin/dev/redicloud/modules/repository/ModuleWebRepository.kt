@@ -2,13 +2,10 @@ package dev.redicloud.modules.repository
 
 import com.google.gson.reflect.TypeToken
 import dev.redicloud.api.utils.MODULE_FOLDER
-import dev.redicloud.modules.ModuleDescription
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.utils.SingleCache
 import dev.redicloud.utils.gson.gson
-import dev.redicloud.utils.isValidUrl
 import khttp.get
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.ArrayList
 import kotlin.time.Duration.Companion.seconds
