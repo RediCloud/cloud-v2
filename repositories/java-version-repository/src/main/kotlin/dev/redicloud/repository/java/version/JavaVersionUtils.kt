@@ -48,9 +48,14 @@ suspend fun parseVersionInfo(path: String): JavaVersionInfo? {
 fun locateAllJavaVersions(): List<File> {
     val versionFolders = mutableListOf<File>()
 
+    val homePathSplit = System.getenv("JAVA_HOME").split(File.separator)
+    val homePath = homePathSplit.subList(0, homePathSplit.size - 2).joinToString(File.separator)
+
     when (getOperatingSystemType()) {
+
         OSType.WINDOWS -> {
-            mutableListOf<String>(
+            mutableListOf(
+               homePath,
                 "\\Program Files\\Java",
                 "\\Program Files (x86)\\Java"
             ).filter {
@@ -64,7 +69,8 @@ fun locateAllJavaVersions(): List<File> {
                 .forEach { versionFolders.addAll(it.listFiles()!!.toList()) }
         }
         OSType.LINUX -> {
-            mutableListOf<String>(
+            mutableListOf(
+                homePath,
                 "/usr/lib/jvm",
                 "/usr/lib64/jvm"
             ).filter { it.isNotEmpty() }.map { File(it) }.filter { it.exists() }.filter { it.isDirectory }
