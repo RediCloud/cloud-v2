@@ -32,7 +32,7 @@ class JavaVersionRepository(
 ), ICloudJavaVersionRepository {
 
     companion object {
-        val ONLINE_VERSION_CACHE = EasyCache<List<CloudJavaVersion>, Unit> (1.minutes) {
+        val ONLINE_VERSION_CACHE = EasyCache<List<CloudJavaVersion>, Unit>(1.minutes) {
             val json = getTextOfAPIWithFallback("api-files/java-versions.json")
             val type = object : TypeToken<ArrayList<CloudJavaVersion>>() {}.type
             gson.fromJson<List<CloudJavaVersion>?>(json, type)
@@ -45,13 +45,15 @@ class JavaVersionRepository(
 
     override suspend fun getVersion(uniqueId: UUID): CloudJavaVersion? = get(uniqueId.toString())
 
-    override suspend fun existsVersion(name: String): Boolean = getVersions().any { it.name.lowercase() == name.lowercase() }
+    override suspend fun existsVersion(name: String): Boolean =
+        getVersions().any { it.name.lowercase() == name.lowercase() }
 
     override suspend fun existsVersion(uniqueId: UUID): Boolean = exists(uniqueId.toString())
 
     override suspend fun getVersions(): List<CloudJavaVersion> = getAll()
 
-    override suspend fun updateVersion(javaVersion: ICloudJavaVersion) = set(javaVersion.uniqueId.toString(), javaVersion)
+    override suspend fun updateVersion(javaVersion: ICloudJavaVersion) =
+        set(javaVersion.uniqueId.toString(), javaVersion)
 
     override suspend fun deleteVersion(uniqueId: UUID): Boolean {
         return delete(uniqueId.toString())
@@ -65,9 +67,11 @@ class JavaVersionRepository(
         return set(javaVersion.uniqueId.toString(), javaVersion)
     }
 
-    override suspend fun getVersion(name: String) = getVersions().firstOrNull { it.name.lowercase() == name.lowercase() }
+    override suspend fun getVersion(name: String) =
+        getVersions().firstOrNull { it.name.lowercase() == name.lowercase() }
 
-    override suspend fun getOnlineVersions(): List<CloudJavaVersion> = ONLINE_VERSION_CACHE.get()?.toList() ?: emptyList()
+    override suspend fun getOnlineVersions(): List<CloudJavaVersion> =
+        ONLINE_VERSION_CACHE.get()?.toList() ?: emptyList()
 
     override suspend fun detectInstalledVersions(): List<CloudJavaVersion> {
         val created = getVersions()
@@ -83,18 +87,16 @@ class JavaVersionRepository(
                 val byName = file.name.lowercase() == javaVersion.name.lowercase()
                 if (byId || byName) return@map javaVersion
             }
+            val javaInfo = parseVersionInfo(file.absolutePath)
             return@map CloudJavaVersion(
                 name = file.name,
-                id = detectJavaId(file.name),
+                id = javaInfo?.versionId ?: -1,
                 located = mutableMapOf(
                     serviceId.id to file.absolutePath
                 ),
-                info = parseVersionInfo(file.name)
+                info = javaInfo
             )
         }
     }
 
-    private fun detectJavaId(fileName: String): Int {
-        return parseVersionInfo(fileName)?.versionId ?: -1
-    }
 }

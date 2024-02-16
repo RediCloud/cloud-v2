@@ -1,5 +1,6 @@
 package dev.redicloud.console.utils
 
+import dev.redicloud.api.utils.ProcessHandler
 import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.isOpen
 import java.io.BufferedReader
@@ -9,7 +10,7 @@ class ScreenProcessHandler(
     private val process: Process,
     private val screen: Screen,
     val filterSpam: Boolean = true
-) : Thread(screen.name) {
+) : Thread(screen.name), ProcessHandler {
 
     companion object {
         val LOGGER = LogManager.logger(ScreenProcessHandler::class)
@@ -19,11 +20,11 @@ class ScreenProcessHandler(
         start()
     }
 
-    private val inputStream = process.inputStream
-    private val errorStream = process.errorStream
+    override val inputStream = process.inputStream
+    override val errorStream = process.errorStream
     private val exits = mutableListOf<(Int) -> Unit>()
     private val lines = mutableListOf<(String) -> Unit>()
-    private val logged = mutableListOf<String>()
+    override val logged = mutableListOf<String>()
 
     override fun run() {
         var stopped = false
@@ -77,13 +78,13 @@ class ScreenProcessHandler(
         }
     }
 
-    suspend fun onExit(): Int = process.waitFor()
+    override suspend fun onExit(): Int = process.waitFor()
 
-    fun onExit(block: (Int) -> Unit) {
+    override fun onExit(block: (Int) -> Unit) {
         exits.add(block)
     }
 
-    fun onLine(block: (String) -> Unit) {
+    override fun onLine(block: (String) -> Unit) {
         lines.add(block)
     }
 

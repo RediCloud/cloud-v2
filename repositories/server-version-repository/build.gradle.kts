@@ -6,7 +6,7 @@ dependencies {
     runtimeOnly("com.github.jkcclemens:khttp:${Versions.khttp}")
     testRuntimeOnly("com.github.jkcclemens:khttp:${Versions.khttp}")
 
-    compileOnly(project(":api"))
+    compileOnly(project(":apis:base-api"))
     compileOnly(project(":utils"))
     compileOnly(project(":tasks"))
     compileOnly(project(":logging"))

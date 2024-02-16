@@ -1,7 +1,6 @@
 package dev.redicloud.repository.cache
 
 import dev.redicloud.cache.ClusterCache
-import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.packets.PacketManager

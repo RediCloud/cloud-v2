@@ -199,7 +199,7 @@ class InitializeConsole() : Console(
         } else if (isJavaVersionNotSupported(getJavaVersion())) {
             "§e§l~ §8(§eJava: ${System.getProperty("java.version")}§8| §enot tested§8)"
         } else {
-            "§4✘ §8(§cJava: %${System.getProperty("java.version")}§8| §cnot supported§8)"
+            "§4✘ §8(§cJava: ${System.getProperty("java.version")}§8| §cnot supported§8)"
         }
     }
 

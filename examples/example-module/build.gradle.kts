@@ -8,7 +8,7 @@ repositories {
 
 dependencies {
     // Internal usage, ignore it
-    compileOnly(project(":api"))
+    compileOnly(project(":apis:base-api"))
 
     // External usage, use it
     // compileOnly("dev.redicloud:api:${Versions.cloud}")

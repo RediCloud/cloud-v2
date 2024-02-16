@@ -6,9 +6,6 @@ class JavaVersionInfo(
     override val major: Int,
     override val minor: Int,
     override val patch: Int,
-    override val build: Int,
-    override val type: String,
-    override val arch: String,
     override val raw: String
 ) : ICloudJavaVersionInfo {
 

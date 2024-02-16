@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly(project(":api"))
+    compileOnly(project(":apis:base-api"))
     compileOnly(project(":utils"))
     compileOnly(project(":commands:command-api"))
     compileOnly(project(":logging"))

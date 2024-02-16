@@ -6,11 +6,12 @@ import dev.redicloud.repository.service.CloudService
 import dev.redicloud.repository.service.ServiceSessions
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import java.util.UUID
 
 abstract class CloudServer(
     serviceId: ServiceId,
-    override var configurationTemplate: ConfigurationTemplate,
+    override var configurationTemplate: ICloudConfigurationTemplate,
     override val id: Int,
     override var hostNodeId: ServiceId,
     serviceSessions: ServiceSessions,

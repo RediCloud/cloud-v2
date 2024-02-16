@@ -94,10 +94,10 @@ class ServerCommand(
     fun delete(
         actor: ConsoleActor,
         @CommandParameter("server", true, CloudServerSuggester::class) server: CloudServer
-    ) {
+    ) = runBlocking {
         if (server.state != CloudServerState.STOPPED) {
             actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is not stopped!")
-            return
+            return@runBlocking
         }
         actor.sendMessage("Queued deletion of static server ${server.identifyName()}...")
         actor.sendMessage("Note: If the hosted node is not connected to the cluster, the server will be deleted when the node connects to the cluster!")
@@ -110,14 +110,14 @@ class ServerCommand(
         actor: ConsoleActor,
         @CommandParameter("server", true, CloudServerSuggester::class) server: CloudServer,
         @CommandParameter("node", true, RegisteredCloudNodeSuggester::class) node: CloudNode
-    ) {
+    ) = runBlocking {
         if (server.state != CloudServerState.STOPPED) {
             actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is not stopped!")
-            return
+            return@runBlocking
         }
         if (server.hostNodeId == node.serviceId) {
             actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is already hosted on node ${toConsoleValue(node.name, false)}!")
-            return
+            return@runBlocking
         }
         actor.sendMessage("Queued transfer of static server ${server.identifyName()} to node ${toConsoleValue(node.name, false)}...")
         actor.sendMessage("Note: If the hosted node is not connected to the cluster, the server will be transferred when the node connects to the cluster!")
