@@ -1270,6 +1270,28 @@
     "fileEdits": {}
   },
   {
+    "uniqueId": "db9bfafd-dfff-fdff-0000-000000000000",
+    "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
+    "projectName": "paper",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.20.4/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "buildId": "424",
+    "version": {
+      "name": "1.20.4",
+      "protocolId": 765,
+      "versionTypes": []
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programmParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
     "uniqueId": "ddb3f3da-ff7f-a7ff-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
@@ -1315,7 +1337,6 @@
     "defaultFiles": {},
     "fileEdits": {}
   },
-
   {
     "uniqueId": "6bbf7ffb-cffe-7fff-0000-000000000000",
     "typeId": "e0982b0f-f27f-4206-a373-ce12ad8ea333",
@@ -1325,6 +1346,30 @@
     "version": {
       "name": "3.3.0-SNAPSHOT",
       "protocolId": 763,
+      "versionTypes": [
+        "VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": false,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programmParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
+    "uniqueId": "b9ffffa3-97f9-cff7-0000-000000000000",
+    "typeId": "e0982b0f-f27f-4206-a373-ce12ad8ea333",
+    "projectName": "velocity",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/velocity/versions/3.3.0-SNAPSHOT/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "buildId": "359",
+    "version": {
+      "name": "latest",
+      "protocolId": -1,
       "versionTypes": [
         "VELOCITY"
       ]

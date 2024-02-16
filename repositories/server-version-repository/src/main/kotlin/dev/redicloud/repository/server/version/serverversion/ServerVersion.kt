@@ -30,7 +30,7 @@ class ServerVersion(
         }
 
     override fun dynamicVersion(): ServerVersion {
-        return if (name.lowercase() == "latest") {
+        return if (latest) {
             val versions = VersionRepository.versions().toMutableList()
             versions.removeIf { !it.mcVersion }
             return versions.sortedWith(versionComparator).lastOrNull() ?: this

@@ -13,9 +13,6 @@ object VersionRepository : IVersionRepository {
     val cachedVersions = mutableListOf<ServerVersion>() //TODO private add
 
     val versionComparator = compareBy<IServerVersion> { if (it.latest) 1000 else it.protocolId }
-        .thenByDescending { it.name.substringBefore('.') }
-        .thenByDescending { it.name.substringAfter('.').substringBefore('.') }
-        .thenByDescending { it.name.substringAfterLast('.') }
     override fun versions(): MutableList<ServerVersion> = cachedVersions
 
     override suspend fun loadOnlineVersions() {

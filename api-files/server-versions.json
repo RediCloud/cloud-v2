@@ -360,8 +360,34 @@
     "versionTypes": ["!VELOCITY"]
   },
   {
+    "name": "1.20.2",
+    "protocolId": 764,
+    "supportedJavaVersion": [
+      "17"
+    ],
+    "versionTypes": ["!VELOCITY"]
+  },
+  {
+    "name": "1.20.4",
+    "protocolId": 765,
+    "supportedJavaVersion": [
+      "17"
+    ],
+    "versionTypes": ["!VELOCITY"]
+  },
+  {
     "name": "3.2.0-SNAPSHOT",
-    "protocolId": 763,
+    "protocolId": 765,
+    "supportedJavaVersion": [
+      "17",
+      "8",
+      "16"
+    ],
+    "versionTypes": ["VELOCITY"]
+  },
+  {
+    "name": "3.3.0-SNAPSHOT",
+    "protocolId": 765,
     "supportedJavaVersion": [
       "17",
       "8",
