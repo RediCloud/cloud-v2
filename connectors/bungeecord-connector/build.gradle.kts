@@ -6,7 +6,7 @@ repositories {
 
 dependencies {
     shade(project(":cache"))
-    shade(project(":api"))
+    shade(project(":apis:base-api"))
     shade(project(":services:base-service"))
     shade(project(":services:minecraft-server-service"))
     shade(project(":services:proxy-server-service"))
@@ -28,6 +28,7 @@ dependencies {
     shade(project(":console"))
     shade(project(":tasks"))
     shade(project(":modules:module-handler"))
+    shade(project(":server-factories:remote-server-factory"))
     shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
 
     compileOnly("net.md-5:bungeecord-api:1.19-R0.1-SNAPSHOT")

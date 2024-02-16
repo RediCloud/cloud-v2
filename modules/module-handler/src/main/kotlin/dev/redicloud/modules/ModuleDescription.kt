@@ -1,7 +1,6 @@
 package dev.redicloud.modules
 
 import com.google.gson.annotations.Expose
-import dev.redicloud.api.service.ServiceType
 import java.io.File
 
 data class ModuleDescription(

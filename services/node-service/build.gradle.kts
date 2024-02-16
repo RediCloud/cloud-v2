@@ -12,7 +12,8 @@ repositories {
 
 dependencies {
     shade(project(":cache"))
-    shade(project(":api"))
+    shade(project(":apis:base-api"))
+    shade(project(":apis:node-api"))
     shade(project(":services:base-service"))
     shade(project(":repositories:node-repository"))
     shade(project(":repositories:service-repository"))
@@ -31,7 +32,8 @@ dependencies {
     shade(project(":logging"))
     shade(project(":tasks"))
     shade(project(":file-cluster"))
-    shade(project(":server-factory"))
+    shade(project(":server-factories:node-server-factory"))
+    shade(project(":server-factories:remote-server-factory"))
     shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
     shade(project(":repositories:cache-repository"))
     shade(project(":modules:module-handler"))

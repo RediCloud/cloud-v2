@@ -1,7 +1,7 @@
 group = "dev.redicloud.module"
 
 dependencies {
-    compileOnly(project(":api"))
+    compileOnly(project(":apis:base-api"))
     compileOnly(project(":console"))
     compileOnly(project(":logging"))
     compileOnly(project(":utils"))

@@ -8,6 +8,6 @@ repositories {
 
 dependencies {
     compileOnly(project(":utils"))
-    compileOnly(project(":api"))
+    compileOnly(project(":apis:base-api"))
     compileOnly(project(":logging"))
 }

@@ -1,7 +1,6 @@
 package dev.redicloud.packets
 
 import com.google.gson.GsonBuilder
-import dev.redicloud.api.events.InlineEventCaller
 import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.api.packets.IPacketResponse
@@ -13,7 +12,6 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.utils.coroutineExceptionHandler
 import kotlinx.coroutines.*
-import org.redisson.api.RReliableTopic
 import org.redisson.api.RTopic
 import org.redisson.api.listener.MessageListener
 import kotlin.reflect.KClass
