@@ -70,6 +70,7 @@ fun locateAllJavaVersions(): List<File> {
         }
         else -> {}
     }
+
     paths.filter {
         it.isNotEmpty()
     }.map {
