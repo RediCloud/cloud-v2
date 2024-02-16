@@ -31,7 +31,7 @@ fun isJavaVersionUnsupported(version: CloudJavaVersion): Boolean {
 }
 
 suspend fun parseVersionInfo(path: String): JavaVersionInfo? {
-    val end = "bin" + File.separator + (if (getOperatingSystemType() == OSType.WINDOWS) "java.exe" else "java")
+    var end = "bin" + File.separator + (if (getOperatingSystemType() == OSType.WINDOWS) "java.exe" else "java")
     if (!path.endsWith(File.separator)) end = File.separator + end
     val processBuilder = ProcessBuilder(path + (end), "-version")
     processBuilder.redirectErrorStream(true)
