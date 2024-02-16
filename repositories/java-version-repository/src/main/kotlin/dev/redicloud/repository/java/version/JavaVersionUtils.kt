@@ -50,40 +50,35 @@ suspend fun parseVersionInfo(path: String): JavaVersionInfo? {
 fun locateAllJavaVersions(): List<File> {
     val versionFolders = mutableListOf<File>()
 
-    val homePathSplit = System.getenv("JAVA_HOME").split(File.separator)
-    val homePath = homePathSplit.subList(0, homePathSplit.size - 2).joinToString(File.separator)
+    val paths = mutableListOf<String>()
+    if (System.getProperty("redicloud.java.versions.path", "").isNotEmpty()) {
+        paths.add(System.getProperty("redicloud.java.versions.path", ""))
+    }
+    if (System.getenv().containsKey("JAVA_HOME")) {
+        val homePathSplit = System.getenv("JAVA_HOME").split(File.separator)
+        paths.add(homePathSplit.subList(0, homePathSplit.size - 2).joinToString(File.separator))
+    }
 
     when (getOperatingSystemType()) {
-
         OSType.WINDOWS -> {
-            mutableListOf(
-               homePath,
-                "\\Program Files\\Java",
-                "\\Program Files (x86)\\Java"
-            ).filter {
-                it.isNotEmpty()
-            }.map {
-                File(it)
-            }.filter {
-                val state = it.exists()
-                state
-            }.filter { it.isDirectory }
-                .forEach { versionFolders.addAll(it.listFiles()!!.toList()) }
+            paths.add("\\Program Files\\Java")
+            paths.add("\\Program Files (x86)\\Java")
         }
         OSType.LINUX -> {
-            mutableListOf(
-                homePath,
-                "/usr/lib/jvm",
-                "/usr/lib64/jvm"
-            ).filter { it.isNotEmpty() }.map { File(it) }.filter { it.exists() }.filter { it.isDirectory }
-                .forEach { versionFolders.addAll(it.listFiles()!!.toList()) }
+            paths.add("/usr/lib/jvm")
+            paths.add("/usr/lib64/jvm")
         }
         else -> {}
     }
-
-    if (System.getProperty("redicloud.java.versions.path", "").isNotEmpty()) {
-        File(System.getProperty("redicloud.java.versions.path")).listFiles()!!.toList().forEach { versionFolders.add(it) }
-    }
+    paths.filter {
+        it.isNotEmpty()
+    }.map {
+        File(it)
+    }.filter {
+        val state = it.exists()
+        state
+    }.filter { it.isDirectory }
+        .forEach { versionFolders.addAll(it.listFiles()!!.toList()) }
 
     return versionFolders
 }

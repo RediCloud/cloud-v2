@@ -1317,8 +1317,8 @@
   },
 
   {
-    "uniqueId": "377c7efd-fefd-bde6-0000-000000000000",
-    "typeId": "b43cdfff-cfff-3dda-0000-000000000000",
+    "uniqueId": "6bbf7ffb-cffe-7fff-0000-000000000000",
+    "typeId": "e0982b0f-f27f-4206-a373-ce12ad8ea333",
     "projectName": "velocity",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/velocity/versions/3.3.0-SNAPSHOT/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
     "buildId": "359",
