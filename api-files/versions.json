@@ -365,7 +365,7 @@
     "uniqueId": "fffffd7d-baeb-fbf7-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
-    "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.20.4.jar",
+    "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-%version_name%.jar",
     "buildId": null,
     "version": {
       "name": "latest",
@@ -1295,7 +1295,7 @@
     "uniqueId": "ddb3f3da-ff7f-a7ff-0000-000000000000",
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.20.4/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/%version_name%/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
     "buildId": "424",
     "version": {
       "name": "latest",
@@ -1317,7 +1317,7 @@
     "uniqueId": "377c7efd-fefd-bde6-0000-000000000000",
     "typeId": "e0982b0f-f27f-4206-a373-ce12ad8ea333",
     "projectName": "velocity",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/velocity/versions/3.2.0-SNAPSHOT/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/velocity/versions/3.2.0-SNAPSHOT/builds/%build_id%/downloads/velocity-%version_name%-%build_id%.jar",
     "buildId": "296",
     "version": {
       "name": "3.2.0-SNAPSHOT",
@@ -1341,7 +1341,7 @@
     "uniqueId": "6bbf7ffb-cffe-7fff-0000-000000000000",
     "typeId": "e0982b0f-f27f-4206-a373-ce12ad8ea333",
     "projectName": "velocity",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/velocity/versions/3.3.0-SNAPSHOT/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/velocity/versions/3.3.0-SNAPSHOT/builds/%build_id%/downloads/velocity-%version_name%-%build_id%.jar",
     "buildId": "359",
     "version": {
       "name": "3.3.0-SNAPSHOT",
@@ -1365,7 +1365,7 @@
     "uniqueId": "b9ffffa3-97f9-cff7-0000-000000000000",
     "typeId": "e0982b0f-f27f-4206-a373-ce12ad8ea333",
     "projectName": "velocity",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/velocity/versions/3.3.0-SNAPSHOT/builds/%build_id%/downloads/paper-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/velocity/versions/%version_name%/builds/%build_id%/downloads/velocity-%version_name%-%build_id%.jar",
     "buildId": "359",
     "version": {
       "name": "latest",
@@ -1677,7 +1677,7 @@
     "uniqueId": "be9efff6-7fac-fddf-0000-000000000000",
     "typeId": "6fa280a8-aaed-4ee7-99e4-c337b6985098",
     "projectName": "folia",
-    "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/1.20.4/builds/%build_id%/downloads/folia-%version_name%-%build_id%.jar",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/%version_name%/builds/%build_id%/downloads/folia-%version_name%-%build_id%.jar",
     "buildId": "10",
     "version": {
       "name": "latest",
