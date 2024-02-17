@@ -38,7 +38,7 @@ fun createVersionProps(): File {
         "version=2.0.1-SNAPSHOT\n" +
         "build_number=${System.getenv("BUILD_NUMBER") ?: "local"}\n" +
         "git=${System.getenv("BUILD_VCS_NUMBER") ?: "unknown"}\n" +
-        "project_info=${System.getenv("PROJECT_INFO") ?: "CloudV2_Build"}"
+        "project_info=${System.getenv("TEAMCITY_BUILDCONF_NAME") ?: "CloudV2_Build"}"
     )
     writer.close()
     return props
