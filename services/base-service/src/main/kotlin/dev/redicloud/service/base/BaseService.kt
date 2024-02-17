@@ -135,7 +135,7 @@ abstract class BaseService(
         nodeRepository = NodeRepository(databaseConnection, packetManager, eventManager)
         serverVersionRepository = CloudServerVersionRepository(databaseConnection, packetManager)
         configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager, packetManager)
-        serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager, configurationTemplateRepository)
+        serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager)
         this.registerPackets()
         this.registerPacketListeners()
     }
