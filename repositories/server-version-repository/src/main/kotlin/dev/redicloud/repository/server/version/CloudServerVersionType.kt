@@ -23,7 +23,7 @@ class CloudServerVersionType(
     override var libPattern: String? = null,
     override val jvmArguments: MutableList<String> = mutableListOf(),
     override val environmentVariables: MutableMap<String, String> = mutableMapOf(),
-    override val programmParameters: MutableList<String> = mutableListOf(),
+    override val programParameters: MutableList<String> = mutableListOf(),
     override val defaultFiles: MutableMap<String, String> = mutableMapOf(),
     override val fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf()
 ) : IClusterCacheObject, ICloudServerVersionType {

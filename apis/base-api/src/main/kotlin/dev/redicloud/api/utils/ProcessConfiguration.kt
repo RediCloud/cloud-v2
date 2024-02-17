@@ -6,7 +6,7 @@ interface ProcessConfiguration {
 
     val jvmArguments: MutableList<String>
     val environmentVariables: MutableMap<String, String>
-    val programmParameters: MutableList<String>
+    val programParameters: MutableList<String>
     // URL -> Path
     val defaultFiles: MutableMap<String, String>
     // Path -> (edit key -> edit value)
@@ -43,7 +43,7 @@ class CollectedProcessConfiguration(
 ) : ProcessConfiguration {
     override val jvmArguments: MutableList<String> = references.flatMap { it.jvmArguments }.toMutableList()
     override val environmentVariables: MutableMap<String, String> = references.flatMap { it.environmentVariables.toList() }.toMap().toMutableMap()
-    override val programmParameters: MutableList<String> = references.flatMap { it.programmParameters }.toMutableList()
+    override val programParameters: MutableList<String> = references.flatMap { it.programParameters }.toMutableList()
     override val defaultFiles: MutableMap<String, String> = references.flatMap { it.defaultFiles.toList() }.toMap().toMutableMap()
     override val fileEdits: MutableMap<String, MutableMap<String, String>> = references.flatMap { it.fileEdits.toList() }.toMap().toMutableMap()
 }

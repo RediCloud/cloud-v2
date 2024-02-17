@@ -146,8 +146,8 @@ class ConfigurationTemplateCommand(
         template.jvmArguments.forEach {
             actor.sendMessage("§8  - %hc%$it")
         }
-        actor.sendMessage("§8- %tc%Programm parameter§8:${if (template.programmParameters.isEmpty()) " %hc%None" else ""}")
-        template.programmParameters.forEach {
+        actor.sendMessage("§8- %tc%Program parameter§8:${if (template.programParameters.isEmpty()) " %hc%None" else ""}")
+        template.programParameters.forEach {
             actor.sendMessage("§8  - %hc%$it")
         }
         actor.sendMessage("§8- %tc%Environment variables§8:${if (template.environmentVariables.isEmpty()) " %hc%None" else ""}")
@@ -287,30 +287,30 @@ class ConfigurationTemplateCommand(
         actor.sendMessage("The name was changed to ${toConsoleValue(newName)}!")
     }
 
-    @CommandSubPath("edit <name> programmparameter add <parameter>")
-    @CommandDescription("Add a programm parameter to a configuration template")
-    fun editProgrammParameterAdd(
+    @CommandSubPath("edit <name> programparameter add <parameter>")
+    @CommandDescription("Add a program parameter to a configuration template")
+    fun editProgramParameterAdd(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("parameter") parameter: String
     ) = runBlocking {
-        template.programmParameters.add(parameter)
+        template.programParameters.add(parameter)
         configurationTemplateRepository.updateTemplate(template)
-        actor.sendMessage("The programm parameter ${toConsoleValue(parameter)} was added to the configuration template ${toConsoleValue(template.name)}!")
+        actor.sendMessage("The program parameter ${toConsoleValue(parameter)} was added to the configuration template ${toConsoleValue(template.name)}!")
     }
 
 
 
-    @CommandSubPath("edit <name> programmparameter remove <parameter>")
-    @CommandDescription("Remove a programm parameter from a configuration template")
-    fun editProgrammParameterRemove(
+    @CommandSubPath("edit <name> programparameter remove <parameter>")
+    @CommandDescription("Remove a program parameter from a configuration template")
+    fun editProgramParameterRemove(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("parameter") parameter: String
     ) = runBlocking {
-        template.programmParameters.remove(parameter)
+        template.programParameters.remove(parameter)
         configurationTemplateRepository.updateTemplate(template)
-        actor.sendMessage("The programm parameter ${toConsoleValue(parameter)} was removed from the configuration template ${toConsoleValue(template.name)}!")
+        actor.sendMessage("The program parameter ${toConsoleValue(parameter)} was removed from the configuration template ${toConsoleValue(template.name)}!")
     }
 
     @CommandSubPath("edit <name> jvmargument add <argument>")

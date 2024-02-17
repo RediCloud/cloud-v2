@@ -213,8 +213,8 @@ class ServerProcess(
         val versionHandler = IServerVersionHandler.getHandler(type)
         val jarToExecute = versionHandler.getJar(snapshotData.version)
         list.add(jarToExecute.absolutePath)
-        processConfiguration!!.programmParameters.forEach { list.add(replacePlaceholders(it, snapshotData)) }
-        list.addAll(processConfiguration!!.programmParameters)
+        processConfiguration!!.programParameters.forEach { list.add(replacePlaceholders(it, snapshotData)) }
+        list.addAll(processConfiguration!!.programParameters)
         return list
     }
 

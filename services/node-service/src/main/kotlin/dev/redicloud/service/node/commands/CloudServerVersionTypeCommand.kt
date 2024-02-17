@@ -104,8 +104,8 @@ class CloudServerVersionTypeCommand(
         type.jvmArguments.forEach {
             actor.sendMessage("\t§8- %hc%$it")
         }
-        actor.sendMessage("Programm parameters§8:${if (type.programmParameters.isEmpty()) " %hc%None" else ""}")
-        type.programmParameters.forEach {
+        actor.sendMessage("Program parameters§8:${if (type.programParameters.isEmpty()) " %hc%None" else ""}")
+        type.programParameters.forEach {
             actor.sendMessage("\t§8- %hc%$it")
         }
         actor.sendMessage("File edits§8:${if (type.fileEdits.isEmpty()) " %hc%not set" else ""}")
@@ -403,9 +403,9 @@ class CloudServerVersionTypeCommand(
         }
     }
 
-    @CommandSubPath("edit <name> programmparameter add <parameter>")
-    @CommandDescription("Add a programm parameter to a server version type")
-    fun addProgrammParameter(
+    @CommandSubPath("edit <name> programparameter add <parameter>")
+    @CommandDescription("Add a program parameter to a server version type")
+    fun addProgramParameter(
         actor: ConsoleActor,
         @CommandParameter("name", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
         @CommandParameter("parameter") parameter: String
@@ -415,15 +415,15 @@ class CloudServerVersionTypeCommand(
                 actor.sendMessage("§cYou can't edit the name of the default server version type!")
                 return@runBlocking
             }
-            type.programmParameters.add(parameter)
+            type.programParameters.add(parameter)
             serverVersionTypeRepository.updateType(type)
-            actor.sendMessage("Successfully added programm parameter to server version type!")
+            actor.sendMessage("Successfully added program parameter to server version type!")
         }
     }
 
-    @CommandSubPath("edit <name> programmparameter remove <parameter>")
-    @CommandDescription("Remove a programm parameter to a server version type")
-    fun removeProgrammParameter(
+    @CommandSubPath("edit <name> programparameter remove <parameter>")
+    @CommandDescription("Remove a program parameter to a server version type")
+    fun removeProgramParameter(
         actor: ConsoleActor,
         @CommandParameter("name", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
         @CommandParameter("parameter") parameter: String
@@ -433,9 +433,9 @@ class CloudServerVersionTypeCommand(
                 actor.sendMessage("§cYou can't edit the name of the default server version type!")
                 return@runBlocking
             }
-            type.programmParameters.remove(parameter)
+            type.programParameters.remove(parameter)
             serverVersionTypeRepository.updateType(type)
-            actor.sendMessage("Successfully removed the programm parameter from server version type!")
+            actor.sendMessage("Successfully removed the program parameter from server version type!")
         }
     }
 

@@ -9,7 +9,7 @@
       "-Dcom.mojang.eula.agree=true",
       "-Djline.terminal=jline.UnsupportedTerminal"
     ],
-    "programmParameters": [
+    "programParameters": [
       "nogui"
     ],
     "environmentVariables": {},
@@ -52,7 +52,7 @@
       "-Dcom.mojang.eula.agree=true",
       "-Djline.terminal=jline.UnsupportedTerminal"
     ],
-    "programmParameters": [
+    "programParameters": [
       "nogui"
     ],
     "environmentVariables": {},
@@ -87,7 +87,7 @@
     "versionHandlerName": "papermc",
     "proxy": true,
     "jvmArguments": [],
-    "programmParameters": [],
+    "programParameters": [],
     "environmentVariables": {},
     "defaultFiles": {
       "velocity.toml": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/velocity.toml",
@@ -114,7 +114,7 @@
     "versionHandlerName": "urldownloader",
     "proxy": true,
     "jvmArguments": [],
-    "programmParameters": [],
+    "programParameters": [],
     "environmentVariables": {},
     "defaultFiles": {
       "config.yml": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/config.yml"
@@ -137,7 +137,7 @@
     "versionHandlerName": "urldownloader",
     "proxy": true,
     "jvmArguments": [],
-    "programmParameters": [],
+    "programParameters": [],
     "environmentVariables": {},
     "defaultFiles": {
       "config.yml": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/config.yml"
@@ -164,7 +164,7 @@
       "-Dcom.mojang.eula.agree=true",
       "-Djline.terminal=jline.UnsupportedTerminal"
     ],
-    "programmParameters": [
+    "programParameters": [
       "nogui"
     ],
     "environmentVariables": {},
@@ -190,7 +190,7 @@
     "versionHandlerName": "urldownloader",
     "proxy": false,
     "jvmArguments": [],
-    "programmParameters": [],
+    "programParameters": [],
     "environmentVariables": {},
     "defaultFiles": [],
     "fileEdits": {},
@@ -206,7 +206,7 @@
     "versionHandlerName": "urldownloader",
     "proxy": false,
     "jvmArguments": [],
-    "programmParameters": [],
+    "programParameters": [],
     "environmentVariables": {},
     "defaultFiles": [],
     "fileEdits": {},

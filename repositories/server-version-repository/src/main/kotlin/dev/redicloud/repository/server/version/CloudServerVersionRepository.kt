@@ -94,8 +94,8 @@ class CloudServerVersionRepository(
                 version.fileEdits.putAll(it.fileEdits)
                 version.libPattern = it.libPattern
                 version.patch = it.patch
-                version.programmParameters.clear()
-                version.programmParameters.addAll(it.programmParameters)
+                version.programParameters.clear()
+                version.programParameters.addAll(it.programParameters)
                 version.jvmArguments.clear()
                 version.jvmArguments.addAll(it.jvmArguments)
                 updateVersion(version)
