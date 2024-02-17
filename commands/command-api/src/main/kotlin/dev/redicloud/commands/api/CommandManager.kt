@@ -10,6 +10,10 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
     private var allDisabled = false
     override var helpFormatter: ICommandHelpFormatter = DefaultHelpFormatter(this)
 
+    override fun registerHelpCommand(): IRegisteredCommand {
+        return registerCommand(HelpCommand(this))
+    }
+
     override fun registerCommand(command: ICommand): IRegisteredCommand {
         val registeredCommand = CommandBase(command, this)
         registeredCommands.add(registeredCommand)
