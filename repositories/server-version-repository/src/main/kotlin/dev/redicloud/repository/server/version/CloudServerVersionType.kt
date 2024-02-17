@@ -39,11 +39,13 @@ class CloudServerVersionType(
                 CONNECTORS_FOLDER.getFile(), connectorPluginName
                 .replace("%cloud_version%", CLOUD_VERSION)
                 .replace("%build_number%", buildNumber)
+                .replace("%project_info%", PROJECT_INFO)
             )
         }else {
             File(connectorFolder, connectorPluginName
                 .replace("%cloud_version%", CLOUD_VERSION)
                 .replace("%build_number%", buildNumber)
+                .replace("%project_info%", PROJECT_INFO)
             )
         }
     }
@@ -52,6 +54,7 @@ class CloudServerVersionType(
         return URL(connectorDownloadUrl
             ?.replace("%cloud_version%", CLOUD_VERSION)
             ?.replace("%build_number%", BUILD_NUMBER)
+            ?.replace("%project_info%", PROJECT_INFO)
             ?: throw IllegalStateException("Connector download url is null!")
         )
     }
