@@ -9,15 +9,15 @@
       "-Dcom.mojang.eula.agree=true",
       "-Djline.terminal=jline.UnsupportedTerminal"
     ],
-    "programmParameters": [
+    "programParameters": [
       "nogui"
     ],
     "environmentVariables": {},
     "defaultFiles": {
-      "config/paper-global.yml": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/paper-global.yml",
-      "server.properties": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/server.properties",
-      "bukkit.yml": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/bukkit.yml",
-      "spigot.yml": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/spigot.yml"
+      "config/paper-global.yml": "https://api.redicloud.dev/build/%project_info%/%build_number%/api-files/defaultFiles/paper-global.yml",
+      "server.properties": "https://api.redicloud.dev/build/%project_info%/%build_number%/api-files/defaultFiles/server.properties",
+      "bukkit.yml": "https://api.redicloud.dev/build/%project_info%/%build_number%/api-files/defaultFiles/bukkit.yml",
+      "spigot.yml": "https://api.redicloud.dev/build/%project_info%/%build_number%/api-files/defaultFiles/spigot.yml"
     },
     "fileEdits": {
       "server.properties": {
@@ -38,7 +38,7 @@
       }
     },
     "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%-%build_number%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/connectors/redicloud-bukkit-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://api.redicloud.dev/build/%project_info%/%build_number%/connectors/redicloud-bukkit-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
     "libPattern": "(cache|versions|libraries)"
   },
@@ -52,14 +52,14 @@
       "-Dcom.mojang.eula.agree=true",
       "-Djline.terminal=jline.UnsupportedTerminal"
     ],
-    "programmParameters": [
+    "programParameters": [
       "nogui"
     ],
     "environmentVariables": {},
     "defaultFiles": {
-      "server.properties": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/server.properties",
-      "bukkit.yml": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/bukkit.yml",
-      "spigot.yml": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/spigot.yml"
+      "server.properties": "https://api.redicloud.dev/build/%project_info%/%build_number%/api-files/defaultFiles/server.properties",
+      "bukkit.yml": "https://api.redicloud.dev/build/%project_info%/%build_number%/api-files/defaultFiles/bukkit.yml",
+      "spigot.yml": "https://api.redicloud.dev/build/%project_info%/%build_number%/api-files/defaultFiles/spigot.yml"
     },
     "fileEdits": {
       "server.properties": {
@@ -76,7 +76,7 @@
       }
     },
     "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%-%build_number.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/connectors/redicloud-bukkit-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://api.redicloud.dev/build/%project_info%/%build_number%/connectors/redicloud-bukkit-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
     "libPattern": "(bundler)"
   },
@@ -87,11 +87,11 @@
     "versionHandlerName": "papermc",
     "proxy": true,
     "jvmArguments": [],
-    "programmParameters": [],
+    "programParameters": [],
     "environmentVariables": {},
     "defaultFiles": {
-      "velocity.toml": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/velocity.toml",
-      "forwarding.secret": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/forwarding.secret"
+      "velocity.toml": "https://api.redicloud.dev/build/%project_info%/%build_number%/api-files/defaultFiles/velocity.toml",
+      "forwarding.secret": "https://api.redicloud.dev/build/%project_info%/%build_number%/api-files/defaultFiles/forwarding.secret"
     },
     "fileEdits": {
       "velocity.toml": {
@@ -103,7 +103,7 @@
       }
     },
     "connectorPluginName": "redicloud-velocity-connector-%cloud_version%-%build_number%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/connectors/redicloud-velocity-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://api.redicloud.dev/build/%project_info%/%build_number%/connectors/redicloud-velocity-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
     "libPattern": null
   },
@@ -114,10 +114,10 @@
     "versionHandlerName": "urldownloader",
     "proxy": true,
     "jvmArguments": [],
-    "programmParameters": [],
+    "programParameters": [],
     "environmentVariables": {},
     "defaultFiles": {
-      "config.yml": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/config.yml"
+      "config.yml": "https://api.redicloud.dev/build/%project_info%/%build_number%/api-files/defaultFiles/config.yml"
     },
     "fileEdits": {
       "config.yml": {
@@ -127,7 +127,7 @@
       }
     },
     "connectorPluginName": "redicloud-bungeecord-connector-%cloud_version%-%build_number%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/connectors/redicloud-bungeecord-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://api.redicloud.dev/build/%project_info%/%build_number%/connectors/redicloud-bungeecord-connector-%cloud_version%.jar",
     "connectorFolder": "plugins"
   },
   {
@@ -137,10 +137,10 @@
     "versionHandlerName": "urldownloader",
     "proxy": true,
     "jvmArguments": [],
-    "programmParameters": [],
+    "programParameters": [],
     "environmentVariables": {},
     "defaultFiles": {
-      "config.yml": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/config.yml"
+      "config.yml": "https://api.redicloud.dev/build/%project_info%/%build_number%/api-files/defaultFiles/config.yml"
     },
     "fileEdits": {
       "config.yml": {
@@ -150,7 +150,7 @@
       }
     },
     "connectorPluginName": "redicloud-bungeecord-connector-%cloud_version%-%build_number%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/connectors/redicloud-bungeecord-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://api.redicloud.dev/build/%project_info%/%build_number%/connectors/redicloud-bungeecord-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
     "libPattern": null
   },
@@ -164,12 +164,12 @@
       "-Dcom.mojang.eula.agree=true",
       "-Djline.terminal=jline.UnsupportedTerminal"
     ],
-    "programmParameters": [
+    "programParameters": [
       "nogui"
     ],
     "environmentVariables": {},
     "defaultFiles": {
-      "server.properties": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/api-files/defaultFiles/server.properties"
+      "server.properties": "https://api.redicloud.dev/build/%project_info%/%build_number%/api-files/defaultFiles/server.properties"
     },
     "fileEdits": {
       "server.properties": {
@@ -179,7 +179,7 @@
       }
     },
     "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%-%build_number%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/connectors/redicloud-bukkit-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://api.redicloud.dev/build/%project_info%/%build_number%/connectors/redicloud-bukkit-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
     "libPattern": "(cache|versions|libraries)"
   },
@@ -190,12 +190,12 @@
     "versionHandlerName": "urldownloader",
     "proxy": false,
     "jvmArguments": [],
-    "programmParameters": [],
+    "programParameters": [],
     "environmentVariables": {},
     "defaultFiles": [],
     "fileEdits": {},
     "connectorPluginName": "redicloud-minestom-connector-%cloud_version%-%build_number%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/connectors/redicloud-minestom-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://api.redicloud.dev/build/%project_info%/%build_number%/connectors/redicloud-minestom-connector-%cloud_version%.jar",
     "connectorFolder": "extensions",
     "libPattern": null
   },
@@ -206,12 +206,12 @@
     "versionHandlerName": "urldownloader",
     "proxy": false,
     "jvmArguments": [],
-    "programmParameters": [],
+    "programParameters": [],
     "environmentVariables": {},
     "defaultFiles": [],
     "fileEdits": {},
     "connectorPluginName": "redicloud-limbo-connector-%cloud_version%-%build_number%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/build/CloudV2_Build/%build_number%/connectors/redicloud-limbo-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://api.redicloud.dev/build/%project_info%/%build_number%/connectors/redicloud-limbo-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
     "libPattern": null
   }

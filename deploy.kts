@@ -34,11 +34,12 @@ fun createVersionProps(): File {
     if (props.exists()) props.delete()
     props.createNewFile()
     val writer = FileWriter(props)
+
     writer.write(
-        "version=2.0.1-SNAPSHOT\n" +
+        "version=2.0.2-SNAPSHOT\n" +
         "build_number=${System.getenv("BUILD_NUMBER") ?: "local"}\n" +
         "git=${System.getenv("BUILD_VCS_NUMBER") ?: "unknown"}\n" +
-        "project_info=${System.getenv("PROJECT_INFO") ?: "CloudV2_Build"}"
+        "project_info=${System.getenv("TEAMCITY_PROJECT_NAME") ?: "CloudV2"}_${System.getenv("TEAMCITY_BUILDCONF_NAME") ?: "DevBuild"}"
     )
     writer.close()
     return props

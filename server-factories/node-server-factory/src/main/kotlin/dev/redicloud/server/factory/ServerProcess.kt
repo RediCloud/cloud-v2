@@ -25,6 +25,8 @@ import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import dev.redicloud.api.utils.ProcessHandler
 import dev.redicloud.event.EventManager
+import dev.redicloud.utils.blockPort
+import dev.redicloud.utils.freePort
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.seconds
 
@@ -58,6 +60,7 @@ class ServerProcess(
         }else {
             findFreePort(configurationTemplate.startPort, false)
         }
+        blockPort(port)
     }
 
     /**
@@ -113,6 +116,7 @@ class ServerProcess(
      */
     suspend fun stop(force: Boolean = false, internalCall: Boolean = false) {
         if (stopped) return
+        freePort(port)
         stopped = true
         var unexpectedlyStop = false
         if (!serverRepository.existsServer<CloudServer>(serverId)) return
@@ -213,8 +217,7 @@ class ServerProcess(
         val versionHandler = IServerVersionHandler.getHandler(type)
         val jarToExecute = versionHandler.getJar(snapshotData.version)
         list.add(jarToExecute.absolutePath)
-        processConfiguration!!.programmParameters.forEach { list.add(replacePlaceholders(it, snapshotData)) }
-        list.addAll(processConfiguration!!.programmParameters)
+        processConfiguration!!.programParameters.forEach { list.add(replacePlaceholders(it, snapshotData)) }
         return list
     }
 

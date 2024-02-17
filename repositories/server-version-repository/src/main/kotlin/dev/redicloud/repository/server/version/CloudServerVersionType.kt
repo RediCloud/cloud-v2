@@ -23,7 +23,7 @@ class CloudServerVersionType(
     override var libPattern: String? = null,
     override val jvmArguments: MutableList<String> = mutableListOf(),
     override val environmentVariables: MutableMap<String, String> = mutableMapOf(),
-    override val programmParameters: MutableList<String> = mutableListOf(),
+    override val programParameters: MutableList<String> = mutableListOf(),
     override val defaultFiles: MutableMap<String, String> = mutableMapOf(),
     override val fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf()
 ) : IClusterCacheObject, ICloudServerVersionType {
@@ -33,16 +33,19 @@ class CloudServerVersionType(
     }
 
     override fun getParsedConnectorFile(nodeFolder: Boolean): File {
+        val buildNumber = if (DEV_BUILD) "$BUILD_NUMBER-dev" else BUILD_NUMBER
         return if (nodeFolder) {
             File(
                 CONNECTORS_FOLDER.getFile(), connectorPluginName
                 .replace("%cloud_version%", CLOUD_VERSION)
-                .replace("%build_number%", BUILD_NUMBER)
+                .replace("%build_number%", buildNumber)
+                .replace("%project_info%", PROJECT_INFO)
             )
         }else {
             File(connectorFolder, connectorPluginName
                 .replace("%cloud_version%", CLOUD_VERSION)
-                .replace("%build_number%", BUILD_NUMBER)
+                .replace("%build_number%", buildNumber)
+                .replace("%project_info%", PROJECT_INFO)
             )
         }
     }
@@ -51,6 +54,7 @@ class CloudServerVersionType(
         return URL(connectorDownloadUrl
             ?.replace("%cloud_version%", CLOUD_VERSION)
             ?.replace("%build_number%", BUILD_NUMBER)
+            ?.replace("%project_info%", PROJECT_INFO)
             ?: throw IllegalStateException("Connector download url is null!")
         )
     }

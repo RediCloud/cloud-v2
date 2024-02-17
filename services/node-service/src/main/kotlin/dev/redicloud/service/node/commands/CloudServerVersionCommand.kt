@@ -301,39 +301,39 @@ class CloudServerVersionCommand(
         }
     }
 
-    @CommandSubPath("edit <name> programmparameter add <parameter>")
-    @CommandDescription("Add a programm parameter to the version")
-    fun addProgrammParameter(
+    @CommandSubPath("edit <name> programparameter add <parameter>")
+    @CommandDescription("Add a program parameter to the version")
+    fun addProgramParameter(
         actor: ConsoleActor,
         @CommandParameter("name", true, CloudServerVersionSuggester::class) version: CloudServerVersion,
         @CommandParameter("parameter") parameter: String
     ) {
         defaultScope.launch {
-            if (version.programmParameters.contains(parameter)) {
-                actor.sendMessage("§cThe programm parameter '$parameter' is already added to the version ${toConsoleValue(version.displayName)}!")
+            if (version.programParameters.contains(parameter)) {
+                actor.sendMessage("§cThe program parameter '$parameter' is already added to the version ${toConsoleValue(version.displayName)}!")
                 return@launch
             }
-            version.programmParameters.add(parameter)
+            version.programParameters.add(parameter)
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Added programm parameter ${toConsoleValue(parameter)} to ${toConsoleValue(version.displayName)}")
+            actor.sendMessage("Added program parameter ${toConsoleValue(parameter)} to ${toConsoleValue(version.displayName)}")
         }
     }
 
-    @CommandSubPath("edit <name> programmparameter remove <parameter>")
-    @CommandDescription("Remove a programm parameter from the version")
-    fun removeProgrammParameter(
+    @CommandSubPath("edit <name> programparameter remove <parameter>")
+    @CommandDescription("Remove a program parameter from the version")
+    fun removeProgramParameter(
         actor: ConsoleActor,
         @CommandParameter("name", true, CloudServerVersionSuggester::class) version: CloudServerVersion,
         @CommandParameter("parameter") parameter: String
     ) {
         defaultScope.launch {
-            if (!version.programmParameters.contains(parameter)) {
-                actor.sendMessage("§cThe programm parameter '$parameter' is not added to the version ${toConsoleValue(version.displayName)}!")
+            if (!version.programParameters.contains(parameter)) {
+                actor.sendMessage("§cThe program parameter '$parameter' is not added to the version ${toConsoleValue(version.displayName)}!")
                 return@launch
             }
-            version.programmParameters.remove(parameter)
+            version.programParameters.remove(parameter)
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Removed programm parameter ${toConsoleValue(parameter)} from ${toConsoleValue(version.displayName)}")
+            actor.sendMessage("Removed program parameter ${toConsoleValue(parameter)} from ${toConsoleValue(version.displayName)}")
         }
     }
 
@@ -484,8 +484,8 @@ class CloudServerVersionCommand(
             version.jvmArguments.forEach {
                 actor.sendMessage("§8  - %hc%$it")
             }
-            actor.sendMessage("§8- %tc%Programm parameters§8:${if (version.programmParameters.isEmpty()) " %hc%not set" else ""}")
-            version.programmParameters.forEach {
+            actor.sendMessage("§8- %tc%Program parameters§8:${if (version.programParameters.isEmpty()) " %hc%not set" else ""}")
+            version.programParameters.forEach {
                 actor.sendMessage("§8  - %hc%$it")
             }
             actor.sendMessage("§8- %tc%File edits§8:${if (version.fileEdits.isEmpty()) " %hc%not set" else ""}")

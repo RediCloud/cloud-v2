@@ -6,6 +6,10 @@ import java.util.*
 
 class ConsoleCommandManager(val console: Console) : CommandManager<ConsoleActor>() {
 
+    init {
+        this.registerHelpCommand()
+    }
+
     val defaultActor = ConsoleActor(console, UUID.randomUUID())
 
     override fun getActor(identifier: Any): ConsoleActor = defaultActor

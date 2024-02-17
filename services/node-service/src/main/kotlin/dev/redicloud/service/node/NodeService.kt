@@ -30,6 +30,7 @@ import dev.redicloud.service.node.tasks.metrics.MetricsTask
 import dev.redicloud.api.utils.TEMP_FOLDER
 import dev.redicloud.console.Console
 import dev.redicloud.modules.ModuleHandler
+import dev.redicloud.service.node.listener.ConfigurationUpdateServerListener
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -80,10 +81,15 @@ class NodeService(
             this@NodeService.registerPackets()
             this@NodeService.registerCommands()
             this@NodeService.registerTasks()
+            this@NodeService.registerListeners()
 
             initApi()
             moduleHandler.loadModules()
         }
+    }
+
+    private fun registerListeners() {
+        ConfigurationUpdateServerListener(serviceId, eventManager, configurationTemplateRepository, serverRepository, nodeRepository)
     }
 
     override fun shutdown(force: Boolean) {
