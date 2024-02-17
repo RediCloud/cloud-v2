@@ -14,7 +14,7 @@ class MinestomConnectorBootstrap : Extension() {
     private var connector: MinestomConnector? = null
     lateinit var classLoader: ExtensionClassLoader
 
-    override fun initialize() {
+    override fun preInitialize() {
         try {
             classLoader = this.javaClass.classLoader as ExtensionClassLoader
             loadProperties(this::class.java.classLoader)
@@ -22,10 +22,13 @@ class MinestomConnectorBootstrap : Extension() {
                 classLoader.addURL(it)
             }, classLoader, JarResourceLoader("redicloud-connector", origin.originalJar))
             connector = MinestomConnector(this)
-            connector!!.onEnable()
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    override fun initialize() {
+        connector?.onEnable()
     }
 
     override fun terminate() {

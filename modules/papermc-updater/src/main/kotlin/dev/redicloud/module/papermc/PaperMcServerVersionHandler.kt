@@ -8,10 +8,7 @@ import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.Logger
-import dev.redicloud.utils.BUILD_NUMBER
-import dev.redicloud.utils.CLOUD_VERSION
-import dev.redicloud.utils.MultiAsyncAction
-import dev.redicloud.utils.isValidUrl
+import dev.redicloud.utils.*
 import khttp.get
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
@@ -84,8 +81,10 @@ class PaperMcServerVersionHandler(
             defaultFiles.putAll(type.defaultFiles)
             defaultFiles.forEach {
                 downloader.add {
-                    val url1 =
-                        it.value.replace("%build_number%", BUILD_NUMBER).replace("%cloud_version%", CLOUD_VERSION)
+                    val url1 = it.value
+                        .replace("%build_number%", BUILD_NUMBER)
+                        .replace("%cloud_version%", CLOUD_VERSION)
+                        .replace("%project_info%", PROJECT_INFO)
                     val path = it.key
                     try {
                         if (!isValidUrl(url1)) {
