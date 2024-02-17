@@ -4,6 +4,7 @@ import dev.redicloud.api.commands.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.utils.BUILD_NUMBER
 import dev.redicloud.utils.CLOUD_VERSION
+import dev.redicloud.utils.DEV_BUILD
 import dev.redicloud.utils.GIT
 
 @Command("version")
@@ -18,7 +19,7 @@ class VersionCommand : ICommand {
     ) {
         actor.sendHeader("Version")
         actor.sendMessage("Version§8: %hc%${CLOUD_VERSION}")
-        actor.sendMessage("Git§8: %hc%${GIT}")
+        actor.sendMessage("Git§8: %hc%${if (DEV_BUILD) "dev" else "master"}@${GIT}")
         actor.sendMessage("CI-Build§8: %hc%${BUILD_NUMBER}")
         actor.sendHeader("Version")
     }
