@@ -77,7 +77,7 @@ class CloudServerVersionCommand(
             }
             version.customDownloadUrl = if (url != "null") url else null
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Updated download url of ${toConsoleValue(version.displayName)} to ${toConsoleValue(version.customDownloadUrl)}")
+            actor.sendMessage("Updated download url of ${toConsoleValue(version.displayName)} to ${toConsoleValue(url)}")
         }
     }
 
