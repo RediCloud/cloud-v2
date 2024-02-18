@@ -8,6 +8,13 @@ import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
 
+val version = "2.0.2-SNAPSHOT"
+
+File("start-scripts").listFiles()?.filter { it.extension == "sh" || it.extension == "bat" }?.forEach {
+    val lines = it.readLines().map { line -> line.replace("%version%", version) }
+    it.writeText(lines.joinToString("\n"))
+}
+
 val outPutDirs = mutableListOf(
     File("services/node-service/src/main/resources"),
 )
@@ -36,10 +43,11 @@ fun createVersionProps(): File {
     val writer = FileWriter(props)
 
     writer.write(
-        "version=2.0.1-SNAPSHOT\n" +
-        "build_number=${System.getenv("BUILD_NUMBER") ?: "local"}\n" +
-        "git=${System.getenv("BUILD_VCS_NUMBER") ?: "unknown"}\n" +
-        "project_info=${System.getenv("TEAMCITY_PROJECT_NAME") ?: "CloudV2"}_${System.getenv("TEAMCITY_BUILDCONF_NAME") ?: "DevBuild"}"
+        "version=$version\n" + "build_number=${System.getenv("BUILD_NUMBER") ?: "local"}\n" + "git=${System.getenv("BUILD_VCS_NUMBER") ?: "unknown"}\n" + "project_info=${
+            System.getenv(
+                "TEAMCITY_PROJECT_NAME"
+            ) ?: "CloudV2"
+        }_${System.getenv("TEAMCITY_BUILDCONF_NAME") ?: "DevBuild"}"
     )
     writer.close()
     return props

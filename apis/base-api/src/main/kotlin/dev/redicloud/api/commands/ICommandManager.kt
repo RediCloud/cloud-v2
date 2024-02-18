@@ -6,6 +6,8 @@ interface ICommandManager<K : ICommandActor<*>> {
 
     var helpFormatter: ICommandHelpFormatter
 
+    fun registerHelpCommand(): IRegisteredCommand
+
     fun registerCommand(command: ICommand): IRegisteredCommand
 
     fun unregisterCommand(command: IRegisteredCommand)

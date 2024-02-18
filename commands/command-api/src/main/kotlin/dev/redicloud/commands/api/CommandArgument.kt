@@ -26,7 +26,7 @@ class CommandArgument(
         get() = name == "_actor"
 
     init {
-        if (parameter.type.kotlin.superclasses.any { it == ICommandActor::class }) {
+        if (parameter.type.kotlin.superclasses.any { it == ICommandActor::class } || parameter.type.kotlin == ICommandActor::class) {
             name = "_actor"
             required = false
             clazz = parameter.type.kotlin

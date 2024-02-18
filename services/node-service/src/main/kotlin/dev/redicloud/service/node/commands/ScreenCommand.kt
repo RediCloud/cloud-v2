@@ -45,7 +45,7 @@ class ScreenCommand(
             return
         }
         if (!console.getCurrentScreen().isDefault()) {
-            actor.sendMessage("§cYou are already in this screen session!")
+            actor.sendMessage("§cYou are already in a screen session!")
             return
         }
         console.switchScreen(screen, true)

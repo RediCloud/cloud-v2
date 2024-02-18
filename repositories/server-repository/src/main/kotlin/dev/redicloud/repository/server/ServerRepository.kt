@@ -20,8 +20,7 @@ class ServerRepository(
     databaseConnection: DatabaseConnection,
     private val serviceId: ServiceId,
     packetManager: PacketManager,
-    val eventManager: EventManager,
-    configurationTemplateRepository: ConfigurationTemplateRepository
+    val eventManager: EventManager
 ) : ServiceRepository (
     databaseConnection,
     packetManager
@@ -134,25 +133,6 @@ class ServerRepository(
             .filter { it.state == CloudServerState.RUNNING }
             .filter { it.connectedPlayers.size < it.maxPlayers || it.maxPlayers == -1 }
             .minByOrNull { it.connectedPlayers.size }
-    }
-
-    private val onConfigurationTemplateUpdateEvent = eventManager.listen<ConfigurationTemplateUpdateEvent> {
-        defaultScope.launch {
-            val configurationTemplate = configurationTemplateRepository.getTemplate(it.configurationTemplateId) ?: return@launch
-            getRegisteredServers()
-                .filter { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }.forEach {
-                    if (it.state == CloudServerState.STOPPED) {
-                        it.configurationTemplate = configurationTemplate
-                    }else {
-                        it.configurationTemplate.fallbackServer = configurationTemplate.fallbackServer
-                        it.configurationTemplate.joinPermission = configurationTemplate.joinPermission
-                        it.configurationTemplate.maxPlayers = configurationTemplate.maxPlayers
-                        it.configurationTemplate.percentToStartNewService = configurationTemplate.percentToStartNewService
-                        it.configurationTemplate.startPriority = configurationTemplate.startPriority
-                    }
-                    updateServer(it)
-                }
-        }
     }
 
 }
