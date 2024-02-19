@@ -84,6 +84,7 @@ class ServerProcess(
         processBuilder.environment()["RC_PORT"] = port.toString()
         processBuilder.environment()["RC_LOG_LEVEL"] = getDefaultLogLevel().localizedName
         processBuilder.environment()["LIBRARY_FOLDER"] = LIB_FOLDER.getFile().absolutePath
+        processBuilder.environment()["PROXY_SECRET"] = clusterConfiguration.get("proxy-secret") ?: "redicloud_secret"
         processBuilder.environment().putAll(processConfiguration!!.environmentVariables)
 
         val javaPath = snapshotData.javaVersion.located[hostServiceId.id]
