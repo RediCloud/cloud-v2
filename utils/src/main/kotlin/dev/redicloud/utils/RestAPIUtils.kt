@@ -1,7 +1,11 @@
 package dev.redicloud.utils
 
 fun getAPIUrl(): String {
-    return "https://api.redicloud.dev/build/$PROJECT_INFO/$BUILD_NUMBER"
+    return "${getRootAPIUrl()}/build/$PROJECT_INFO/$BUILD_NUMBER"
+}
+
+fun getRootAPIUrl(): String {
+    return "https://api.redicloud.dev"
 }
 
 suspend fun getAPIUrlOrFallback(): String {
