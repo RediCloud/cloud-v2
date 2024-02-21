@@ -11,7 +11,7 @@ import java.util.jar.JarOutputStream
 val version = "2.1.0-SNAPSHOT"
 val build = System.getenv("BUILD_NUMBER") ?: "local"
 val git = System.getenv("BUILD_VCS_NUMBER") ?: "unknown"
-val branch = System.getenv("BRANCH".split("/").last()) ?: "local"
+val branch = System.getenv("BRANCH")?.split("/")?.last() ?: "local"
 
 File("start-scripts").listFiles()?.filter { it.extension == "sh" || it.extension == "bat" }?.forEach {
     val lines = it.readLines()
