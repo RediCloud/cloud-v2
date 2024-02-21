@@ -7,14 +7,8 @@ import java.io.File
 
 object Updater {
 
-    val project = "CloudV2"
-    val projectInfos = mapOf(
-        "master" to "Build",
-        "dev" to "DevBuild"
-    )
-
     fun download(branch: String, build: Int): File {
-        val response = get(getAPIUrl() + "/build/${parseBranchToProjectInfo(branch)}/$build/redicloud.zip")
+        val response = get(getAPIUrl() + "/build/$branch/$build/redicloud.zip")
         if (response.statusCode != 200) {
             throw IllegalStateException("Failed to download the latest build")
         }
@@ -61,34 +55,30 @@ object Updater {
         return result
     }
 
-    suspend fun updateAvailable(branch: String): Boolean {
-        val projectInfo = getProjectInfo(branch) ?: return false
-        if (BUILD_NUMBER == "local") return true
-        return projectInfo.latest_build > (BUILD_NUMBER.toIntOrNull() ?: -1)
-    }
-
-    fun parseBranchToProjectInfo(branch: String): String? {
-        return projectInfos.filter { it.key.lowercase() == branch.lowercase() }.values.firstOrNull()
-    }
-
-    fun parseProjectInfoToBranch(projectInfo: String): String? {
-        return projectInfos.filter { it.value.lowercase() == project + "_" + projectInfo.lowercase() }.keys.firstOrNull()
+    suspend fun updateAvailable(): Pair<Boolean, Int?> {
+        if (BUILD == "local" || BRANCH == "local") return false to null
+        val projectInfo = getProjectInfo(BRANCH) ?: return false to null
+        val updateAvailable = (projectInfo.builds.maxOrNull() ?: Int.MAX_VALUE) > (BUILD.toIntOrNull()?: -1)
+        return updateAvailable to projectInfo.builds.maxOrNull()
     }
 
     suspend fun getProjectInfo(branch: String?): ProjectInfo? {
         if (branch == null) return null
-        val response = get(getRootAPIUrl() + "/project-info/${project}_${parseBranchToProjectInfo(branch)}/")
+        val response = get(getRootAPIUrl() + "/project-info/$branch/")
         if (response.statusCode != 200) return null
         val projects = gson.fromJson(response.text, ProjectInfo::class.java)
         return projects
     }
 
-    suspend fun getProjectInfoFromName(name: String): ProjectInfo? {
-        return getProjectInfo(parseProjectInfoToBranch(name))
-    }
-
     suspend fun getBuilds(branch: String): List<Int>? {
         return getProjectInfo(branch)?.builds
+    }
+
+    suspend fun getBranches(): List<String> {
+        val response = get(getRootAPIUrl() + "/project-info/list")
+        if (response.statusCode != 200) return emptyList()
+        val projects = gson.fromJson(response.text, Array<String>::class.java)
+        return projects.toList()
     }
 
 }

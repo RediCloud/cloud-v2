@@ -1,7 +1,7 @@
 package dev.redicloud.utils
 
 fun getAPIUrl(): String {
-    return "${getRootAPIUrl()}/build/$PROJECT_INFO/$BUILD_NUMBER"
+    return "${getRootAPIUrl()}/build/$BRANCH/$BUILD"
 }
 
 fun getRootAPIUrl(): String {

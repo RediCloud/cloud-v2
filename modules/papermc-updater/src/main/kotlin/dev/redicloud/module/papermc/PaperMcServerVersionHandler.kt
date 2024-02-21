@@ -82,9 +82,9 @@ class PaperMcServerVersionHandler(
             defaultFiles.forEach {
                 downloader.add {
                     val url1 = it.value
-                        .replace("%build_number%", BUILD_NUMBER)
+                        .replace("%build%", BUILD)
                         .replace("%cloud_version%", CLOUD_VERSION)
-                        .replace("%project_info%", PROJECT_INFO)
+                        .replace("%branch%", BRANCH)
                     val path = it.key
                     try {
                         if (!isValidUrl(url1)) {

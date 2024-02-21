@@ -43,10 +43,10 @@ fun createVersionProps(): File {
     val writer = FileWriter(props)
 
     writer.write(
-        "version=$version\n" + "build_number=${System.getenv("BUILD_NUMBER") ?: "local"}\n"
-            + "git=${System.getenv("BUILD_VCS_NUMBER") ?: "unknown"}\n"
-            + "project_info=${
-            System.getenv("TEAMCITY_PROJECT_NAME") ?: "CloudV2"}_${System.getenv("TEAMCITY_BUILDCONF_NAME") ?: "DevBuild"}"
+        "version=$version\n"
+                + "build=${System.getenv("BUILD_NUMBER") ?: "local"}\n"
+                + "git=${System.getenv("BUILD_VCS_NUMBER") ?: "unknown"}\n"
+                + "branch=${System.getProperty("teamcity.build.branch") ?: "local"}"
     )
     writer.close()
     return props
