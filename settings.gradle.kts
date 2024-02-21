@@ -96,5 +96,10 @@ findProject(":apis:node-api")?.name = "node-api"
 
 include("server-factories:remote-server-factory")
 findProject(":server-factories:remote-server-factory")?.name = "remote-server-factory"
+
 include("connectors:minestom-connector")
 findProject(":connectors:minestom-connector")?.name = "minestom-connector"
+
+
+include("updater")
+findProject(":updater")?.name = "updater"

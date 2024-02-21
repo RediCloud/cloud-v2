@@ -37,6 +37,7 @@ dependencies {
     shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
     shade(project(":repositories:cache-repository"))
     shade(project(":modules:module-handler"))
+    shade(project(":updater"))
 
     compileOnly("org.jline:jline-terminal-jansi:3.23.0")
     compileOnly("com.jcraft:jsch:0.1.55")
