@@ -46,7 +46,7 @@ fun createVersionProps(): File {
         "version=$version\n"
                 + "build=${System.getenv("BUILD_NUMBER") ?: "local"}\n"
                 + "git=${System.getenv("BUILD_VCS_NUMBER") ?: "unknown"}\n"
-                + "branch=${System.getenv("teamcity.build.branch".split("/").last()) ?: "local"}"
+                + "branch=${System.getenv("BRANCH".split("/").last()) ?: "local"}"
     )
     writer.close()
     return props
