@@ -4,6 +4,8 @@ import dev.redicloud.api.commands.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.updater.Updater
+import dev.redicloud.updater.suggest.BranchSuggester
+import dev.redicloud.updater.suggest.BuildsSuggester
 import dev.redicloud.utils.*
 import kotlinx.coroutines.runBlocking
 
@@ -18,9 +20,10 @@ class VersionCommand : ICommand {
         actor: ConsoleActor
     ) {
         actor.sendHeader("Version")
-        actor.sendMessage("Version§8: %hc%${CLOUD_VERSION}")
-        actor.sendMessage("Git§8: %hc%${if (DEV_BUILD) "dev" else "master"}@${GIT}")
-        actor.sendMessage("CI-Build§8: %hc%${BUILD}")
+        actor.sendMessage("Version§8: %hc%$CLOUD_VERSION")
+        actor.sendMessage("Git§8: %hc%$GIT")
+        actor.sendMessage("Branch§8: %hc%$BRANCH")
+        actor.sendMessage("CI-Build§8: %hc%$BUILD")
         actor.sendHeader("Version")
     }
 
@@ -31,12 +34,13 @@ class VersionCommand : ICommand {
     ) = runBlocking {
         if (BUILD == "local") {
             actor.sendMessage("You are running a local build, updates are not available!")
+            return@runBlocking
         }
         val updateInfo = Updater.updateAvailable()
         if (updateInfo.first && updateInfo.second != null) {
             actor.sendMessage("An update is available: %hc%${updateInfo.second}")
             actor.sendMessage("You can download the update with the command: %hc%version download $BRANCH ${updateInfo.second}")
-            actor.sendMessage("And active the update with the command: %hc%version switch $BRANCH ${updateInfo.second}")
+            actor.sendMessage("And switch the update with the command: %hc%version switch $BRANCH ${updateInfo.second}")
         } else {
             actor.sendMessage("You are running the latest version!")
         }
@@ -46,8 +50,8 @@ class VersionCommand : ICommand {
     @CommandDescription("Downloads a version")
     fun download(
         actor: ConsoleActor,
-        @CommandParameter("branch", false) _branch: String?,
-        @CommandParameter("build", false) _build: String?
+        @CommandParameter("branch", false, BranchSuggester::class) _branch: String?,
+        @CommandParameter("build", false, BuildsSuggester::class) _build: String?
     ) = runBlocking {
         val branch = _branch ?: BRANCH
         val build = _build ?: "latest"
@@ -76,8 +80,8 @@ class VersionCommand : ICommand {
     @CommandDescription("Switch to a downloaded version")
     fun switch(
         actor: ConsoleActor,
-        @CommandParameter("branch", false) _branch: String?,
-        @CommandParameter("build", false) _build: String?
+        @CommandParameter("branch", false, BranchSuggester::class) _branch: String?,
+        @CommandParameter("build", false, BuildsSuggester::class) _build: String?
     ) = runBlocking {
         val branch = _branch ?: BRANCH
         val build = _build ?: "latest"
@@ -107,7 +111,7 @@ class VersionCommand : ICommand {
             actor.sendMessage("§cYou can download the version with the command: %hc%version download <branch> <build>")
             return@runBlocking
         }
-        val file = Updater.activateVersion(branch, buildId)
+        val file = Updater.switchVersion(branch, buildId)
         actor.sendMessage("Activated the version: %hc%$branch#$buildId")
         actor.sendMessage("§cYou have to restart the node service to apply the changes!")
     }
@@ -139,7 +143,7 @@ class VersionCommand : ICommand {
     @CommandDescription("Displays all available builds for a branch")
     fun builds(
         actor: ConsoleActor,
-        @CommandParameter("branch", false) _branch: String?
+        @CommandParameter("branch", false, BranchSuggester::class) _branch: String?
     ) = runBlocking {
         val branch = _branch ?: BRANCH
         val projectInfo = Updater.getProjectInfo(branch)
