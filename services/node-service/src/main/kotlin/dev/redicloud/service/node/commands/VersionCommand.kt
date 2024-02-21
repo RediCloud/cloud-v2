@@ -58,7 +58,7 @@ class VersionCommand : ICommand {
                 return@runBlocking
             }
             projectInfo.builds.maxOrNull() ?: run {
-                actor.sendMessage("§cNo builds found for the branch $branch!")
+                actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
                 return@runBlocking
             }
         }else if (build.toIntOrNull() == null) {
@@ -68,8 +68,8 @@ class VersionCommand : ICommand {
             build.toInt()
         }
         val file = Updater.download(branch, buildId)
-        actor.sendMessage("Downloaded the version: %hc%$branch#$buildId")
-        actor.sendMessage("You can activate the version with the command: %hc%version activate $branch $buildId")
+        actor.sendMessage("Downloaded the version: %hc%$branch§8#%tc%$buildId")
+        actor.sendMessage("You can activate the version with the command: %hc%version switch $branch $buildId")
     }
 
     @CommandSubPath("switch [branch] [build]")
@@ -92,7 +92,7 @@ class VersionCommand : ICommand {
                 return@runBlocking
             }
             projectInfo.builds.maxOrNull() ?: run {
-                actor.sendMessage("§cNo builds found for the branch $branch!")
+                actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
                 return@runBlocking
             }
         }else if (build.toIntOrNull() == null) {
@@ -148,16 +148,16 @@ class VersionCommand : ICommand {
             return@runBlocking
         }
         val builds = projectInfo.builds.map { it.toString() }.toMutableList()
-        if (branch == "local" && BUILD == "local") {
+        if (BRANCH == "local" && BUILD == "local") {
             builds.add("local")
         }
         if (builds.isEmpty()) {
-            actor.sendMessage("§cNo builds found for the branch $branch!")
+            actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch)}!")
             return@runBlocking
         }
-        actor.sendMessage("Available builds for branch %hc%$branch:")
+        actor.sendMessage("Available builds for branch ${toConsoleValue(branch)}:")
         builds.forEach {
-            if (it.toString() == BUILD) {
+            if (it == BUILD) {
                 actor.sendMessage("§8- %hc%$it §7(§acurrent§7)")
             }else {
                 actor.sendMessage("§8- %hc%$it")

@@ -8,7 +8,7 @@ import java.io.File
 object Updater {
 
     fun download(branch: String, build: Int): File {
-        val response = get(getAPIUrl() + "/build/$branch/$build/redicloud.zip")
+        val response = get(getRootAPIUrl() + "/build/$branch/$build/redicloud.zip")
         if (response.statusCode != 200) {
             throw IllegalStateException("Failed to download the latest build")
         }
@@ -62,11 +62,11 @@ object Updater {
         return updateAvailable to projectInfo.builds.maxOrNull()
     }
 
-    suspend fun getProjectInfo(branch: String?): ProjectInfo? {
+    suspend fun getProjectInfo(branch: String?): BranchInfo? {
         if (branch == null) return null
-        val response = get(getRootAPIUrl() + "/project-info/$branch/")
+        val response = get(getRootAPIUrl() + "/branch-info/$branch/")
         if (response.statusCode != 200) return null
-        val projects = gson.fromJson(response.text, ProjectInfo::class.java)
+        val projects = gson.fromJson(response.text, BranchInfo::class.java)
         return projects
     }
 
@@ -75,10 +75,10 @@ object Updater {
     }
 
     suspend fun getBranches(): List<String> {
-        val response = get(getRootAPIUrl() + "/project-info/list")
+        val response = get(getRootAPIUrl() + "/branch-info/list")
         if (response.statusCode != 200) return emptyList()
-        val projects = gson.fromJson(response.text, Array<String>::class.java)
-        return projects.toList()
+        val info = gson.fromJson(response.text, BranchList::class.java)
+        return info.branches
     }
 
 }

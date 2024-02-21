@@ -9,9 +9,17 @@ import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
 
 val version = "2.0.2-SNAPSHOT"
+val build = System.getenv("BUILD_NUMBER") ?: "local"
+val git = System.getenv("BUILD_VCS_NUMBER") ?: "unknown"
+val branch = System.getenv("BRANCH".split("/").last()) ?: "local"
 
 File("start-scripts").listFiles()?.filter { it.extension == "sh" || it.extension == "bat" }?.forEach {
-    val lines = it.readLines().map { line -> line.replace("%version%", version) }
+    val lines = it.readLines()
+        .map { line ->
+            line.replace("%version%", version)
+                .replace("%branch%", branch)
+                .replace("%build%", build)
+        }
     it.writeText(lines.joinToString("\n"))
 }
 
@@ -44,9 +52,9 @@ fun createVersionProps(): File {
 
     writer.write(
         "version=$version\n"
-                + "build=${System.getenv("BUILD_NUMBER") ?: "local"}\n"
-                + "git=${System.getenv("BUILD_VCS_NUMBER") ?: "unknown"}\n"
-                + "branch=${System.getenv("BRANCH".split("/").last()) ?: "local"}"
+                + "build=$build\n"
+                + "git=$git\n"
+                + "branch=$branch"
     )
     writer.close()
     return props
