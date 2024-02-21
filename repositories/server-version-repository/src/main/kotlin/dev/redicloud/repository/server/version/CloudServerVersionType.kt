@@ -33,19 +33,19 @@ class CloudServerVersionType(
     }
 
     override fun getParsedConnectorFile(nodeFolder: Boolean): File {
-        val buildNumber = if (DEV_BUILD) "$BUILD_NUMBER-dev" else BUILD_NUMBER
+        val buildNumber = if (DEV_BUILD) "$BUILD-$BRANCH" else BUILD
         return if (nodeFolder) {
             File(
                 CONNECTORS_FOLDER.getFile(), connectorPluginName
                 .replace("%cloud_version%", CLOUD_VERSION)
-                .replace("%build_number%", buildNumber)
-                .replace("%project_info%", PROJECT_INFO)
+                .replace("%build%", buildNumber)
+                .replace("%branch%", BRANCH)
             )
         }else {
             File(connectorFolder, connectorPluginName
                 .replace("%cloud_version%", CLOUD_VERSION)
-                .replace("%build_number%", buildNumber)
-                .replace("%project_info%", PROJECT_INFO)
+                .replace("%build%", buildNumber)
+                .replace("%branch%", BRANCH)
             )
         }
     }
@@ -53,8 +53,8 @@ class CloudServerVersionType(
     override fun getParsedConnectorURL(): URL {
         return URL(connectorDownloadUrl
             ?.replace("%cloud_version%", CLOUD_VERSION)
-            ?.replace("%build_number%", BUILD_NUMBER)
-            ?.replace("%project_info%", PROJECT_INFO)
+            ?.replace("%build%", BUILD)
+            ?.replace("%branch%", BRANCH)
             ?: throw IllegalStateException("Connector download url is null!")
         )
     }

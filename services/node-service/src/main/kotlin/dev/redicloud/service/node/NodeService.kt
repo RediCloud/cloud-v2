@@ -31,6 +31,7 @@ import dev.redicloud.api.utils.TEMP_FOLDER
 import dev.redicloud.console.Console
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.service.node.listener.ConfigurationUpdateServerListener
+import dev.redicloud.updater.Updater
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -63,6 +64,8 @@ class NodeService(
             registerDefaults()
             this@NodeService.initShutdownHook()
 
+            Updater.check()
+
             nodeRepository.connect(this@NodeService)
             try { memoryCheck() } catch (e: Exception) {
                 LOGGER.severe("Error while checking memory", e)
@@ -73,6 +76,8 @@ class NodeService(
             try { this@NodeService.checkJavaVersions() } catch (e: Exception) {
                 LOGGER.warning("Error while checking java versions", e)
             }
+
+            Updater.registerSuggesters(console.commandManager)
 
             IServerVersionHandler.registerHandler(URLServerVersionHandler(serviceId, serverVersionRepository, serverVersionTypeRepository, nodeRepository, console, javaVersionRepository))
 
@@ -107,6 +112,7 @@ class NodeService(
             TEMP_FOLDER.getFile().deleteRecursively()
         }
     }
+
 
     private fun registerTasks() {
         taskManager.builder()

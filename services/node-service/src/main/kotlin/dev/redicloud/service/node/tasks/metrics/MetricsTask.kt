@@ -25,7 +25,7 @@ class MetricsTask(
     override suspend fun execute(): Boolean {
         if (System.getProperty("dev.redicloud.metrics", "true").lowercase() == "false") return true
         try {
-            val url = "https://api.redicloud.dev/metrics/$PROJECT_INFO"
+            val url = "https://api.redicloud.dev/metrics"
             if (khttp.post(url, data = "ping").statusCode != 200) {
                 logger.fine("Failed to send metrics to redicloud api: invalid response to ping")
                 return false
@@ -33,7 +33,8 @@ class MetricsTask(
             val metric = Metric(
                 UUID.fromString(clusterConfiguration.get("id")),
                 nodeId.id,
-                BUILD_NUMBER,
+                BUILD,
+                BRANCH,
                 GIT,
                 CLOUD_VERSION,
                 getJavaVersion().id,
@@ -59,7 +60,8 @@ class MetricsTask(
 data class Metric(
     val clusterId: UUID,
     val nodeId: UUID,
-    val buildNumber: String,
+    val build: String,
+    val branch: String,
     val git: String,
     val version: String,
     val javaLevel: Int,

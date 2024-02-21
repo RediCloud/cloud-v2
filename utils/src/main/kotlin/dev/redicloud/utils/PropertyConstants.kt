@@ -6,22 +6,22 @@ val CLOUD_VERSION: String
     get() {
         return cachedProperties?.getProperty("version", "unknown") ?: "unknown"
     }
-val BUILD_NUMBER: String
+val BUILD: String
     get() {
-        return cachedProperties?.getProperty("build_number", "local") ?: "local"
+        return cachedProperties?.getProperty("build", "local") ?: "local"
     }
 val GIT: String
     get() {
         return cachedProperties?.getProperty("git", "unknown") ?: "unknown"
     }
-val PROJECT_INFO: String
+val BRANCH: String
     get() {
-        return cachedProperties?.getProperty("project_info", "CloudV2_Build") ?: "CloudV2_DevBuild"
+        return cachedProperties?.getProperty("branch", "dev") ?: "dev"
     }
 
 val DEV_BUILD: Boolean
     get() {
-        return PROJECT_INFO == "CloudV2_DevBuild"
+        return BRANCH != "master"
     }
 
 val USER_NAME: String = System.getProperty("user.name")

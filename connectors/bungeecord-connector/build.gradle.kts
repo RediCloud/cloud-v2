@@ -2,6 +2,7 @@ group = "dev.redicloud.connector"
 
 repositories {
     maven("https://oss.sonatype.org/content/repositories/snapshots")
+    maven("https://libraries.minecraft.net")
 }
 
 dependencies {
@@ -31,7 +32,7 @@ dependencies {
     shade(project(":server-factories:remote-server-factory"))
     shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
 
-    compileOnly("net.md-5:bungeecord-api:1.19-R0.1-SNAPSHOT")
+    compileOnly("net.md-5:bungeecord-api:1.20-R0.3-SNAPSHOT")
 }
 
 tasks.register("buildAndCopy") {

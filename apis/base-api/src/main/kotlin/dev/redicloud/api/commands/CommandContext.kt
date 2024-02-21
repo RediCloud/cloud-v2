@@ -8,7 +8,7 @@ package dev.redicloud.api.commands
 class CommandContext(val input: String, val annotationArguments: Array<String>) {
 
     /**
-     * Gets a annotation argument by index or returns the default value if the index is out of bounds.
+     * Gets an annotation argument by index or returns the default value if the index is out of bounds.
      */
     fun <T> getOr(index: Int, default: T): T =
         if (annotationArguments.size > index) annotationArguments[index] as T else default

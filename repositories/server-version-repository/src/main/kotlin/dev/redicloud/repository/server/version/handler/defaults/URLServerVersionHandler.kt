@@ -73,9 +73,9 @@ open class URLServerVersionHandler(
 
             val targetVersion = if (version.version.latest) version.version.dynamicVersion() else version.version
             val downloadUrl = version.customDownloadUrl!!
-                .replace("%build_id%", version.buildId ?: "-1")
+                .replace("%build%", version.buildId ?: "-1")
                 .replace("%version_name%", targetVersion.name)
-                .replace("%project_info%", PROJECT_INFO)
+                .replace("%branch%", BRANCH)
 
             val response = get(downloadUrl)
             if (response.statusCode != 200) throw IllegalStateException(
@@ -96,9 +96,9 @@ open class URLServerVersionHandler(
             defaultFiles.forEach {
                 downloader.add {
                     val url1 = it.value
-                        .replace("%build_number%", BUILD_NUMBER)
+                        .replace("%build%", BUILD)
                         .replace("%cloud_version%", CLOUD_VERSION)
-                        .replace("%project_info%", PROJECT_INFO)
+                        .replace("%branch%", BRANCH)
                     val path = it.key
                     try {
                         if (!isValidUrl(url1)) {
@@ -134,9 +134,9 @@ open class URLServerVersionHandler(
     override suspend fun canDownload(version: ICloudServerVersion): Boolean {
         val targetVersion = if (version.version.latest) version.version.dynamicVersion() else version.version
         val downloadUrl = version.customDownloadUrl!!
-            .replace("%build_id%", version.buildId ?: "-1")
+            .replace("%build%", version.buildId ?: "-1")
             .replace("%version_name%", targetVersion.name)
-            .replace("%project_info%", PROJECT_INFO)
+            .replace("%branch%", BRANCH)
         return version.customDownloadUrl != null && get(downloadUrl).statusCode == 200
     }
 

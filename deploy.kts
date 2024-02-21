@@ -8,6 +8,21 @@ import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
 
+val version = "2.1.0-SNAPSHOT"
+val build = System.getenv("BUILD_NUMBER") ?: "local"
+val git = System.getenv("BUILD_VCS_NUMBER") ?: "unknown"
+val branch = System.getenv("BRANCH".split("/").last()) ?: "local"
+
+File("start-scripts").listFiles()?.filter { it.extension == "sh" || it.extension == "bat" }?.forEach {
+    val lines = it.readLines()
+        .map { line ->
+            line.replace("%version%", version)
+                .replace("%branch%", branch)
+                .replace("%build%", build)
+        }
+    it.writeText(lines.joinToString("\n"))
+}
+
 val outPutDirs = mutableListOf(
     File("services/node-service/src/main/resources"),
 )
@@ -36,10 +51,10 @@ fun createVersionProps(): File {
     val writer = FileWriter(props)
 
     writer.write(
-        "version=2.0.2-SNAPSHOT\n" +
-        "build_number=${System.getenv("BUILD_NUMBER") ?: "local"}\n" +
-        "git=${System.getenv("BUILD_VCS_NUMBER") ?: "unknown"}\n" +
-        "project_info=${System.getenv("TEAMCITY_PROJECT_NAME") ?: "CloudV2"}_${System.getenv("TEAMCITY_BUILDCONF_NAME") ?: "DevBuild"}"
+        "version=$version\n"
+                + "build=$build\n"
+                + "git=$git\n"
+                + "branch=$branch"
     )
     writer.close()
     return props
