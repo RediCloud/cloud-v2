@@ -150,7 +150,7 @@ class VersionCommand(
         if (branch.lowercase() != BRANCH.lowercase()
             && switchConfirms.getOrDefault(confirmIdentifier, 0) + 30000 < System.currentTimeMillis()) {
             actor.sendMessage("§cYou are trying to switch to a different branch!")
-            actor.sendMessage("§cAre you sure you want to switch to the branch ${toConsoleValue("$branch§8#%tc%$build", false)}?")
+            actor.sendMessage("§cAre you sure you want to switch to the branch ${toConsoleValue("$branch#$build", false)}?")
             actor.sendMessage("§cThis can cause issues and data loss! Backup your data before switching is recommended!")
             actor.sendMessage("§cType the command again to confirm!")
             switchConfirms[confirmIdentifier] = System.currentTimeMillis()
@@ -159,7 +159,7 @@ class VersionCommand(
         if (branch == BRANCH && build < BUILD
             && switchConfirms.getOrDefault(confirmIdentifier, 0) + 30000 < System.currentTimeMillis()) {
             actor.sendMessage("§cYou are trying to switch to an older version!")
-            actor.sendMessage("§cAre you sure you want to switch to the version ${toConsoleValue("$branch§8#%tc%$build", false)}?")
+            actor.sendMessage("§cAre you sure you want to switch to the version ${toConsoleValue("$branch#%$build", false)}?")
             actor.sendMessage("§cThis can cause issues and data loss! Backup your data before switching is recommended!")
             actor.sendMessage("§cType the command again to confirm!")
             switchConfirms[confirmIdentifier] = System.currentTimeMillis()
