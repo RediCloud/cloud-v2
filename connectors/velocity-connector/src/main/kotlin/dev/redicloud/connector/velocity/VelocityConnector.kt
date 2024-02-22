@@ -18,11 +18,10 @@ import java.net.InetSocketAddress
 class VelocityConnector(
     private val bootstrap: VelocityConnectorBootstrap,
     val proxyServer: ProxyServer
-) : ProxyServerService<PluginContainer>() {
+) : ProxyServerService<PluginContainer, ServerInfo>() {
 
 
     private var velocityShuttingDown: Boolean = false
-    private val registered: MutableMap<ServiceId, ServerInfo> = mutableMapOf()
     override val serverPlayerProvider: IServerPlayerProvider = VelocityServerPlayerProvider(proxyServer)
     override val screenProvider: AbstractScreenProvider = VelocityScreenProvider(this.packetManager, this.proxyServer)
 
@@ -45,12 +44,12 @@ class VelocityConnector(
                 server.port
             ),
         )
-        this.registered[server.serviceId] = serverInfo
+        this.registeredServers[server.serviceId] = serverInfo
         this.proxyServer.registerServer(serverInfo)
     }
 
     override fun unregisterServer(serviceId: ServiceId) {
-        val serverInfo = registered.remove(serviceId) ?: return
+        val serverInfo = registeredServers.remove(serviceId) ?: return
         this.proxyServer.unregisterServer(serverInfo)
     }
 

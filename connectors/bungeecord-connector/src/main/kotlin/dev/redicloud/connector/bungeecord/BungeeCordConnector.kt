@@ -17,12 +17,11 @@ import java.net.InetSocketAddress
 
 class BungeeCordConnector(
     private val plugin: Plugin
-) : ProxyServerService<Plugin>() {
+) : ProxyServerService<Plugin, ServerInfo>() {
 
     internal var bungeecordShuttingDown: Boolean = false
     override val serverPlayerProvider: IServerPlayerProvider = BungeeCordServerPlayerProvider()
     override val screenProvider: AbstractScreenProvider = BungeeCordScreenProvider(this.packetManager)
-    private val registered: MutableMap<ServiceId, ServerInfo> = mutableMapOf()
 
     init {
         initApi()
@@ -45,13 +44,13 @@ class BungeeCordConnector(
             "RediCloud Server",
             false
         )
-        registered[server.serviceId] = serverInfo
+        registeredServers[server.serviceId] = serverInfo
         ProxyServer.getInstance().servers[server.name] = serverInfo
     }
 
     override fun unregisterServer(serviceId: ServiceId) {
         if (ProxyServer.getInstance().servers == null) return
-        val serverInfo = registered.remove(serviceId) ?: return
+        val serverInfo = this.registeredServers.remove(serviceId) ?: return
         ProxyServer.getInstance().servers.remove(serverInfo.name, serverInfo)
     }
 
