@@ -9,7 +9,7 @@ import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.launch
 
 class CloudServerListener(
-    private val proxyServerService: ProxyServerService<*>
+    private val proxyServerService: ProxyServerService<*, *>
 ) {
 
     private val onServerConnectEvent = proxyServerService.eventManager.listen<CloudServerConnectedEvent> {
