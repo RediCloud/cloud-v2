@@ -112,7 +112,7 @@ class CloudServerVersionTypeRepository(
                     null
                 } else if (downloaded) {
                     canceled = true
-                    "Downloading connector ${toConsoleValue(connectorFile.name)}§8: ${if (error) "§4✘" else "§2✓"}"
+                    "Downloaded connector ${toConsoleValue(connectorFile.name)}§8: ${if (error) "§4✘" else "§2✓"}"
                 } else {
                     "Downloading connector ${toConsoleValue(connectorFile.name)}§8: %tc%%loading%"
                 }

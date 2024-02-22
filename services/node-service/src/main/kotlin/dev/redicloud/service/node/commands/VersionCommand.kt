@@ -1,8 +1,11 @@
 package dev.redicloud.service.node.commands
 
 import dev.redicloud.api.commands.*
+import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
+import dev.redicloud.service.node.console.NodeConsole
+import dev.redicloud.service.node.repository.node.LOGGER
 import dev.redicloud.updater.Updater
 import dev.redicloud.updater.suggest.BranchSuggester
 import dev.redicloud.updater.suggest.BuildsSuggester
@@ -13,7 +16,9 @@ import kotlinx.coroutines.runBlocking
 @Command("version")
 @CommandAlias(["ver"])
 @CommandDescription("Displays the current version of the node service")
-class VersionCommand : ICommand {
+class VersionCommand(
+    val console: NodeConsole
+) : ICommand {
 
     @CommandSubPath("")
     @CommandDescription("Displays the current version of the node service")
@@ -72,9 +77,32 @@ class VersionCommand : ICommand {
         }else {
             build.toInt()
         }
-        val file = Updater.download(branch, buildId)
-        actor.sendMessage("Downloaded the version: %hc%$branch§8#%tc%$buildId")
-        actor.sendMessage("You can activate the version with the command: %hc%version switch $branch $buildId")
+        var canceled = false
+        var error = false
+        var downloaded = false
+        val animation = AnimatedLineAnimation(
+            console,
+            200
+        ) {
+            if (canceled) {
+                null
+            } else if (downloaded) {
+                canceled = true
+                "Downloaded version ${toConsoleValue("$branch§8#%tc%$buildId")}§8: ${if (error) "§4✘" else "§2✓"}"
+            } else {
+                "Downloading version ${toConsoleValue("$branch§8#%tc%$buildId")}§8: %loading%"
+            }
+        }
+        console.startAnimation(animation)
+        try {
+            val file = Updater.download(branch, buildId)
+            downloaded = true
+            actor.sendMessage("You can switch the version with the command: %hc%version switch $branch $buildId")
+        }catch (e: Exception) {
+            error = true
+            actor.sendMessage("§cFailed to download the version!")
+            LOGGER.severe("Failed to download the version", e)
+        }
     }
 
     private val switchConfirms = mutableMapOf<Pair<String, String>, Long>()
