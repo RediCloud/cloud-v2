@@ -76,6 +76,8 @@ class VersionCommand : ICommand {
         actor.sendMessage("You can activate the version with the command: %hc%version switch $branch $buildId")
     }
 
+    private val switchConfirms = mutableMapOf<Pair<String, String>, Long>()
+
     @CommandSubPath("switch [branch] [build]")
     @CommandDescription("Switch to a downloaded version")
     fun switch(
@@ -83,6 +85,10 @@ class VersionCommand : ICommand {
         @CommandParameter("branch", false, BranchSuggester::class) _branch: String?,
         @CommandParameter("build", false, BuildsSuggester::class) _build: String?
     ) = runBlocking {
+        if (Updater.updateToVersion != null) {
+            actor.sendMessage("§cAn update was already installed! Restart the node service to apply the changes!")
+            return@runBlocking
+        }
         val branch = _branch ?: BRANCH
         val build = _build ?: "latest"
         if (BUILD == build && BRANCH == branch) {
@@ -111,6 +117,26 @@ class VersionCommand : ICommand {
             actor.sendMessage("§cYou can download the version with the command: %hc%version download <branch> <build>")
             return@runBlocking
         }
+        val confirmIdentifier = Pair(branch, build)
+        if (branch.lowercase() != BRANCH.lowercase()
+            && switchConfirms.getOrDefault(confirmIdentifier, 0) + 30000 < System.currentTimeMillis()) {
+            actor.sendMessage("§cYou are trying to switch to a different branch!")
+            actor.sendMessage("§cAre you sure you want to switch to the branch ${toConsoleValue("$branch§8#%tc%$build", false)}?")
+            actor.sendMessage("§cThis can cause issues and data loss! Backup your data before switching is recommended!")
+            actor.sendMessage("§cType the command again to confirm!")
+            switchConfirms[confirmIdentifier] = System.currentTimeMillis()
+            return@runBlocking
+        }
+        if (branch == BRANCH && build < BUILD
+            && switchConfirms.getOrDefault(confirmIdentifier, 0) + 30000 < System.currentTimeMillis()) {
+            actor.sendMessage("§cYou are trying to switch to an older version!")
+            actor.sendMessage("§cAre you sure you want to switch to the version ${toConsoleValue("$branch§8#%tc%$build", false)}?")
+            actor.sendMessage("§cThis can cause issues and data loss! Backup your data before switching is recommended!")
+            actor.sendMessage("§cType the command again to confirm!")
+            switchConfirms[confirmIdentifier] = System.currentTimeMillis()
+            return@runBlocking
+        }
+        switchConfirms.remove(confirmIdentifier)
         val file = Updater.switchVersion(branch, buildId)
         actor.sendMessage("Activated the version: %hc%$branch#$buildId")
         actor.sendMessage("§cYou have to restart the node service to apply the changes!")
