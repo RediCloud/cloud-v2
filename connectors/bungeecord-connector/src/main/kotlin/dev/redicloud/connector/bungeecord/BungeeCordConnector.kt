@@ -19,16 +19,13 @@ class BungeeCordConnector(
     private val plugin: Plugin
 ) : ProxyServerService<Plugin>() {
 
-    internal var bungeecordShuttingDown: Boolean
-    override val serverPlayerProvider: IServerPlayerProvider
+    internal var bungeecordShuttingDown: Boolean = false
+    override val serverPlayerProvider: IServerPlayerProvider = BungeeCordServerPlayerProvider()
     override val screenProvider: AbstractScreenProvider = BungeeCordScreenProvider(this.packetManager)
-    private val registered: MutableMap<ServiceId, ServerInfo>
+    private val registered: MutableMap<ServiceId, ServerInfo> = mutableMapOf()
 
     init {
         initApi()
-        this.bungeecordShuttingDown = false
-        this.serverPlayerProvider = BungeeCordServerPlayerProvider()
-        this.registered = mutableMapOf()
         runBlocking {
             registerTasks()
         }

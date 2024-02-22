@@ -43,9 +43,9 @@ class NodeService(
     val firstStart: Boolean = false
 ) : BaseService(databaseConfiguration, databaseConnection, configuration.toServiceId()) {
 
-    override val fileTemplateRepository: NodeFileTemplateRepository
-    override val serverVersionTypeRepository: CloudServerVersionTypeRepository
-    override val moduleHandler: ModuleHandler
+    final override val fileTemplateRepository: NodeFileTemplateRepository
+    final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
+    final override val moduleHandler: ModuleHandler
     val console: NodeConsole
     val fileNodeRepository: FileNodeRepository
     val fileCluster: FileCluster

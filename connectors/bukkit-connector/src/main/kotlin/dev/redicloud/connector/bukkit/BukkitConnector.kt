@@ -12,8 +12,8 @@ import org.bukkit.plugin.java.JavaPlugin
 class BukkitConnector(val plugin: JavaPlugin) : MinecraftServerService<JavaPlugin>() {
 
     internal var bukkitShuttingDown = false
-    override val serverPlayerProvider: IServerPlayerProvider
-    override val screenProvider: AbstractScreenProvider
+    final override val serverPlayerProvider: IServerPlayerProvider
+    final override val screenProvider: AbstractScreenProvider
 
     init {
         initApi()
