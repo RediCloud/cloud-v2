@@ -70,7 +70,7 @@ object Updater {
             versionInfoFile.delete()
         }
         versionInfoFile.createNewFile()
-        versionInfoFile.writeText(gson.toJson(UpdateInfo(branch, build.toString(), updateToVersion!!.name)))
+        versionInfoFile.writeText(gson.toJson(UpdateInfo(branch, build.toString(), updateToVersion!!.name, BRANCH, BUILD, CLOUD_VERSION)))
     }
 
     private fun getJarProperties(file: File): Map<String, String> {
