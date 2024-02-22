@@ -157,14 +157,12 @@ class ServerFactory(
         try {
 
             val thisNode = nodeRepository.getNode(hostingId)!!
+            val ramUsage = hostedProcesses.toList().sumOf { configurationTemplate.maxMemory }
             if (!force) {
                 // check if the node is allowed to start the server
                 if (configurationTemplate.nodeIds.contains(thisNode.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
 
-                // check if the node has enough ram
-                val ramUsage = hostedProcesses.sumOf { configurationTemplate.maxMemory }
-                val calculatedRamUsage = ramUsage + configurationTemplate.maxMemory
-                if (calculatedRamUsage > thisNode.maxMemory) return NotEnoughRamOnNodeStartResult()
+                if (ramUsage > thisNode.maxMemory) return NotEnoughRamOnNodeStartResult()
 
                 val servers = serverRepository.getRegisteredServers()
 
@@ -221,7 +219,7 @@ class ServerFactory(
             }
 
             // Change memory usage on node
-            thisNode.currentMemoryUsage = thisNode.currentMemoryUsage + configurationTemplate.maxMemory
+            thisNode.currentMemoryUsage = ramUsage
             thisNode.hostedServers.add(cloudServer.serviceId)
             nodeRepository.updateNode(thisNode)
 
@@ -245,6 +243,8 @@ class ServerFactory(
             // start the server
             return serverProcess.start(cloudServer, serverScreen, snapshotData)
         } catch (e: Exception) {
+            // Make sure to remove the server process from the hosted processes so no memory will be blocked
+            hostedProcesses.remove(serverProcess)
             // delete the server if it is created and not static
             try {
                 stopServer(serviceId, true, true)
@@ -296,14 +296,13 @@ class ServerFactory(
             try {
 
                 val thisNode = nodeRepository.getNode(hostingId)!!
+                val ramUsage = hostedProcesses.toList().sumOf { newConfigurationTemplate.maxMemory }
                 if (!force) {
                     // check if the node is allowed to start the server
                     if (newConfigurationTemplate.nodeIds.contains(thisNode.serviceId) && newConfigurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
 
                     // check if the node has enough ram
-                    val ramUsage = hostedProcesses.sumOf { newConfigurationTemplate.maxMemory }
-                    val calculatedRamUsage = ramUsage + newConfigurationTemplate.maxMemory
-                    if (calculatedRamUsage > thisNode.maxMemory) return NotEnoughRamOnNodeStartResult()
+                    if (ramUsage > thisNode.maxMemory) return NotEnoughRamOnNodeStartResult()
 
                     val servers = serverRepository.getRegisteredServers()
 
@@ -335,7 +334,7 @@ class ServerFactory(
                 console.createScreen(serverScreen)
 
                 // Change memory usage on node
-                thisNode.currentMemoryUsage = thisNode.currentMemoryUsage + newConfigurationTemplate.maxMemory
+                thisNode.currentMemoryUsage = ramUsage
                 thisNode.hostedServers.add(server.serviceId)
                 nodeRepository.updateNode(thisNode)
 
@@ -359,6 +358,8 @@ class ServerFactory(
                 // start the server
                 return serverProcess.start(server, serverScreen, snapshotData)
             } catch (e: Exception) {
+                // Make sure to remove the server process from the hosted processes so no memory will be blocked
+                hostedProcesses.remove(serverProcess)
                 // delete the server if it is created and not static
                 try {
                     stopServer(serviceId, true, true)
