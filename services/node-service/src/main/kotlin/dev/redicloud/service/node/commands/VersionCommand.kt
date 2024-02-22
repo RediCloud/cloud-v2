@@ -138,7 +138,7 @@ class VersionCommand : ICommand {
         }
         switchConfirms.remove(confirmIdentifier)
         val file = Updater.switchVersion(branch, buildId)
-        actor.sendMessage("Activated the version: %hc%$branch#$buildId")
+        actor.sendMessage("Activated the version: %hc%$branch§8#%tc%$buildId")
         actor.sendMessage("§cYou have to restart the node service to apply the changes!")
     }
 
