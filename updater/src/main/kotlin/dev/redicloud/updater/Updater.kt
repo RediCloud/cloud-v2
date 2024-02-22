@@ -20,7 +20,7 @@ object Updater {
         if (versionInfoFile.exists()) {
             val info = gson.fromJson(versionInfoFile.readText(charset("UTF-8")), UpdateInfo::class.java)
             mainFolderJars().map { it to getJarProperties(it) }.filter {
-                it.second["branch"] != info.branch && it.second["build"] != info.build
+                it.second["branch"] != info.branch || it.second["build"] != info.build
             }.map { it.first }.forEach {
                 it.delete()
             }
@@ -64,15 +64,19 @@ object Updater {
             throw IllegalArgumentException("File must be a zip file")
         }
         unzipFile(file.absolutePath, File(".").absolutePath)
+        var version: String = "unknown"
         updateToVersion = mainFolderJars().map { it to getJarProperties(it) }.filter {
             it.second["branch"] == branch && it.second["build"] == build.toString()
-        }.map { it.first }.firstOrNull() ?: throw IllegalStateException("Failed to find the version in the main folder")
+        }.map {
+            version = it.second["version"] ?: "unknown"
+            it.first
+        }.firstOrNull() ?: throw IllegalStateException("Failed to find the version in the main folder")
         if (versionInfoFile.exists()) {
             versionInfoFile.delete()
         }
         versionInfoFile.createNewFile()
-        versionInfoFile.writeText(gson.toJson(UpdateInfo(branch, build.toString(), updateToVersion!!.name, BRANCH, BUILD, CLOUD_VERSION)))
-    }
+        versionInfoFile.writeText(gson.toJson(UpdateInfo(branch, build.toString(), updateToVersion!!.name, branch, build.toString(), version)))
+}
 
     private fun getJarProperties(file: File): Map<String, String> {
         if (!file.exists() || file.extension != "jar") {
