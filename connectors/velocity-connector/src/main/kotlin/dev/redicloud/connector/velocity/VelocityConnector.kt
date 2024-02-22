@@ -44,8 +44,19 @@ class VelocityConnector(
                 server.port
             ),
         )
+        var registerServer = true
+        if (this.proxyServer.allServers.any { it.serverInfo.name == server.name }) {
+            if (this.proxyServer.allServers.filter { it.serverInfo.name == server.name }.any { it.serverInfo.address == serverInfo.address }) {
+                registerServer = false
+            }else {
+                this.proxyServer.allServers.filter { it.serverInfo.name == server.name }
+                    .forEach { this.proxyServer.unregisterServer(it.serverInfo) }
+            }
+        }
         this.registeredServers[server.serviceId] = serverInfo
-        this.proxyServer.registerServer(serverInfo)
+        if (registerServer) {
+            this.proxyServer.registerServer(serverInfo)
+        }
     }
 
     override fun unregisterServer(serviceId: ServiceId) {
