@@ -1,6 +1,7 @@
 package dev.redicloud.updater
 
 import dev.redicloud.api.commands.ICommandManager
+import dev.redicloud.logging.LogManager
 import dev.redicloud.updater.suggest.BranchSuggester
 import dev.redicloud.updater.suggest.BuildsSuggester
 import dev.redicloud.utils.*
@@ -27,11 +28,11 @@ object Updater {
         }
         val updateInfo = updateAvailable()
         if (updateInfo.first && updateInfo.second != null) {
-            println("An update is available: ${updateInfo.second}")
-            println("You can download the update with the command: version download $BRANCH ${updateInfo.second}")
-            println("And switch the update with the command: version switch $BRANCH ${updateInfo.second}")
+            LogManager.rootLogger().info("An update is available: ${updateInfo.second}")
+            LogManager.rootLogger().info("You can download the update with the command: version download $BRANCH ${updateInfo.second}")
+            LogManager.rootLogger().info("And switch the update with the command: version switch $BRANCH ${updateInfo.second}")
         } else {
-            println("You are running the latest version!")
+            LogManager.rootLogger().info("You are running the latest version!")
         }
     }
 
@@ -63,15 +64,19 @@ object Updater {
             throw IllegalArgumentException("File must be a zip file")
         }
         unzipFile(file.absolutePath, File(".").absolutePath)
+        var version: String = "unknown"
         updateToVersion = mainFolderJars().map { it to getJarProperties(it) }.filter {
             it.second["branch"] == branch && it.second["build"] == build.toString()
-        }.map { it.first }.firstOrNull() ?: throw IllegalStateException("Failed to find the version in the main folder")
+        }.map {
+            version = it.second["version"] ?: "unknown"
+            it.first
+        }.firstOrNull() ?: throw IllegalStateException("Failed to find the version in the main folder")
         if (versionInfoFile.exists()) {
             versionInfoFile.delete()
         }
         versionInfoFile.createNewFile()
-        versionInfoFile.writeText(gson.toJson(UpdateInfo(branch, build.toString(), updateToVersion!!.name)))
-    }
+        versionInfoFile.writeText(gson.toJson(UpdateInfo(branch, build.toString(), updateToVersion!!.name, branch, build.toString(), version)))
+}
 
     private fun getJarProperties(file: File): Map<String, String> {
         if (!file.exists() || file.extension != "jar") {

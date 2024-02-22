@@ -33,18 +33,17 @@ class CloudServerVersionType(
     }
 
     override fun getParsedConnectorFile(nodeFolder: Boolean): File {
-        val buildNumber = if (DEV_BUILD) "$BUILD-$BRANCH" else BUILD
         return if (nodeFolder) {
             File(
                 CONNECTORS_FOLDER.getFile(), connectorPluginName
                 .replace("%cloud_version%", CLOUD_VERSION)
-                .replace("%build%", buildNumber)
+                .replace("%build%", BUILD)
                 .replace("%branch%", BRANCH)
             )
         }else {
             File(connectorFolder, connectorPluginName
                 .replace("%cloud_version%", CLOUD_VERSION)
-                .replace("%build%", buildNumber)
+                .replace("%build%", BUILD)
                 .replace("%branch%", BRANCH)
             )
         }

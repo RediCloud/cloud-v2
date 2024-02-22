@@ -55,7 +55,7 @@ open class URLServerVersionHandler(
                 null
             } else if (downloaded) {
                 canceled = true
-                "Downloading version %hc%${version.displayName}§8: ${if (error) "§4✘" else "§2✓"}"
+                "Downloaded version %hc%${version.displayName}§8: ${if (error) "§4✘" else "§2✓"}"
             } else {
                 "Downloading version %hc%${version.displayName}§8: %tc%%loading%"
             }

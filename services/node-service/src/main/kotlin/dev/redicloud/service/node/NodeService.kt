@@ -33,6 +33,7 @@ import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.service.node.listener.ConfigurationUpdateServerListener
 import dev.redicloud.updater.Updater
 import kotlinx.coroutines.runBlocking
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -43,9 +44,9 @@ class NodeService(
     val firstStart: Boolean = false
 ) : BaseService(databaseConfiguration, databaseConnection, configuration.toServiceId()) {
 
-    override val fileTemplateRepository: NodeFileTemplateRepository
-    override val serverVersionTypeRepository: CloudServerVersionTypeRepository
-    override val moduleHandler: ModuleHandler
+    final override val fileTemplateRepository: NodeFileTemplateRepository
+    final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
+    final override val moduleHandler: ModuleHandler
     val console: NodeConsole
     val fileNodeRepository: FileNodeRepository
     val fileCluster: FileCluster
@@ -166,6 +167,11 @@ class NodeService(
             .delay(55.seconds)
             .period(5.minutes)
             .register()
+        taskManager.builder()
+            .task(CloudNodeMemoryUsageTask(this.serverFactory, this.nodeRepository, this.serviceId))
+            .instant()
+            .period(1500.milliseconds)
+            .register()
     }
 
     private fun registerPreTasks() {
@@ -230,7 +236,7 @@ class NodeService(
             console.commandManager.registerCommand(command)
         }
         register(ExitCommand(this))
-        register(VersionCommand())
+        register(VersionCommand(console))
         register(ClusterCommand(this))
         register(CloudServerVersionCommand(this.serverVersionRepository, this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverRepository, this.javaVersionRepository, this.console))
         register(CloudServerVersionTypeCommand(this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverVersionRepository))

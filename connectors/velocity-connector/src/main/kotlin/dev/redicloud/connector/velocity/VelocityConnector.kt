@@ -18,20 +18,15 @@ import java.net.InetSocketAddress
 class VelocityConnector(
     private val bootstrap: VelocityConnectorBootstrap,
     val proxyServer: ProxyServer
-) : ProxyServerService<PluginContainer>() {
+) : ProxyServerService<PluginContainer, ServerInfo>() {
 
 
-    private var velocityShuttingDown: Boolean
-    private val registered: MutableMap<ServiceId, ServerInfo>
-    override val serverPlayerProvider: IServerPlayerProvider
-    override val screenProvider: AbstractScreenProvider
+    private var velocityShuttingDown: Boolean = false
+    override val serverPlayerProvider: IServerPlayerProvider = VelocityServerPlayerProvider(proxyServer)
+    override val screenProvider: AbstractScreenProvider = VelocityScreenProvider(this.packetManager, this.proxyServer)
 
     init {
         initApi()
-        this.velocityShuttingDown = false
-        this.registered = mutableMapOf()
-        this.serverPlayerProvider = VelocityServerPlayerProvider(proxyServer)
-        screenProvider = VelocityScreenProvider(this.packetManager, this.proxyServer)
         runBlocking {
             registerTasks()
             registerStartedServers()
@@ -49,12 +44,19 @@ class VelocityConnector(
                 server.port
             ),
         )
-        this.registered[server.serviceId] = serverInfo
+        this.registeredServers[server.serviceId] = serverInfo
+        if (this.proxyServer.allServers.any { it.serverInfo.name == server.name }) {
+            if (this.proxyServer.allServers.any { it.serverInfo == serverInfo }) {
+                return
+            }
+            this.proxyServer.allServers.filter { it.serverInfo.name == server.name }
+                .forEach { this.proxyServer.unregisterServer(it.serverInfo) }
+        }
         this.proxyServer.registerServer(serverInfo)
     }
 
     override fun unregisterServer(serviceId: ServiceId) {
-        val serverInfo = registered.remove(serviceId) ?: return
+        val serverInfo = registeredServers.remove(serviceId) ?: return
         this.proxyServer.unregisterServer(serverInfo)
     }
 

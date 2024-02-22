@@ -15,13 +15,16 @@ import dev.redicloud.service.minecraft.repositories.connect
 import dev.redicloud.service.minecraft.tasks.CloudServerInfoTask
 import dev.redicloud.api.utils.DATABASE_JSON
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.service.server.factory.ICloudRemoteServerFactory
 import dev.redicloud.api.utils.ICurrentServerData
 import dev.redicloud.api.version.ICloudServerVersion
 import dev.redicloud.api.version.ICloudServerVersionType
 import dev.redicloud.modules.ModuleHandler
+import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.server.factory.RemoteServerFactory
 import dev.redicloud.service.minecraft.utils.CurrentServerData
+import khttp.get
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -35,36 +38,32 @@ abstract class MinecraftServerService<T> : BaseService(
         private val logger = LogManager.logger(MinecraftServerService::class)
     }
 
-    private val hostServiceId: ServiceId
-    val currentServerData: CurrentServerData
-    final override val fileTemplateRepository: AbstractFileTemplateRepository
-    final override val moduleHandler: ModuleHandler
-    final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
+    override val fileTemplateRepository: AbstractFileTemplateRepository
+            = BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository, packetManager)
+    override val serverVersionTypeRepository: CloudServerVersionTypeRepository
+            = CloudServerVersionTypeRepository(this.databaseConnection, null, packetManager)
+    val currentServerData: CurrentServerData = runBlocking {
+        CurrentServerData(
+            getServer().serviceId,
+            getServer().name,
+            getServer().id,
+            getServer().maxPlayers,
+            getServer().connectedPlayers,
+            getServer().state,
+            getServer().configurationTemplate.name,
+            getVersion().displayName
+        )
+    }
+    private val hostServiceId: ServiceId = runBlocking { serverRepository.connect(serviceId) }
+    override val moduleHandler: ModuleHandler
+        = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, runBlocking { getVersionType() })
     abstract val serverPlayerProvider: IServerPlayerProvider
     abstract val screenProvider: AbstractScreenProvider
     val remoteServerFactory: RemoteServerFactory
+        = RemoteServerFactory(this.databaseConnection, this.nodeRepository, this.serverRepository)
 
     init {
-        fileTemplateRepository = BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository, packetManager)
-        serverVersionTypeRepository = CloudServerVersionTypeRepository(this.databaseConnection, null, packetManager)
-        val server = runBlocking { getServer() }
-        val version = runBlocking { getVersion() }
-        currentServerData = runBlocking {
-            CurrentServerData(
-                server.serviceId,
-                server.name,
-                server.id,
-                server.maxPlayers,
-                server.connectedPlayers,
-                server.state,
-                server.configurationTemplate.name,
-                version.displayName
-            )
-        }
-        hostServiceId = runBlocking { serverRepository.connect(serviceId) }
         packetManager.registerCategoryChannel(currentServerData.configurationTemplateName)
-        remoteServerFactory = RemoteServerFactory(this.databaseConnection, this.nodeRepository, this.serverRepository)
-        moduleHandler = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, runBlocking { getVersionType() })
         registerDefaults()
     }
 
@@ -77,7 +76,7 @@ abstract class MinecraftServerService<T> : BaseService(
     }
 
     private suspend fun getServer(): CloudServer {
-        return serverRepository.getServer<CloudServer>(serviceId) ?: throw IllegalStateException("Server not found!")
+        return serverRepository.getServer(serviceId) ?: throw IllegalStateException("Server not found!")
     }
 
     open fun onEnable() = runBlocking {

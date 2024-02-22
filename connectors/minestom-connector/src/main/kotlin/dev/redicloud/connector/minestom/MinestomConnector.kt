@@ -12,13 +12,12 @@ class MinestomConnector(val extension: Extension) : MinecraftServerService<Exten
 
     internal var minestomShuttingDown = false
     override val screenProvider: AbstractScreenProvider
+        = MinestomScreenProvider(this.packetManager, this.extension)
     override val serverPlayerProvider: IServerPlayerProvider
+        = MinestomServerPlayerProvider()
 
     init {
         initApi()
-        minestomShuttingDown = false
-        serverPlayerProvider = MinestomServerPlayerProvider()
-        screenProvider = MinestomScreenProvider(this.packetManager, this.extension)
         registerTasks()
         runBlocking { moduleHandler.loadModules() }
     }
