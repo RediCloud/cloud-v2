@@ -157,7 +157,7 @@ class ServerFactory(
         try {
 
             val thisNode = nodeRepository.getNode(hostingId)!!
-            val ramUsage = hostedProcesses.toList().sumOf { configurationTemplate.maxMemory }
+            val ramUsage = hostedProcesses.toList().sumOf { it.configurationTemplate.maxMemory }
             if (!force) {
                 // check if the node is allowed to start the server
                 if (configurationTemplate.nodeIds.contains(thisNode.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
@@ -296,7 +296,7 @@ class ServerFactory(
             try {
 
                 val thisNode = nodeRepository.getNode(hostingId)!!
-                val ramUsage = hostedProcesses.toList().sumOf { newConfigurationTemplate.maxMemory }
+                val ramUsage = hostedProcesses.toList().sumOf { it.configurationTemplate.maxMemory }
                 if (!force) {
                     // check if the node is allowed to start the server
                     if (newConfigurationTemplate.nodeIds.contains(thisNode.serviceId) && newConfigurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
@@ -379,14 +379,17 @@ class ServerFactory(
         val server = serverRepository.getServer<CloudServer>(serviceId) ?: throw NullPointerException("Server not found")
         if (server.hostNodeId != hostingId) throw IllegalArgumentException("Server is not on this node")
         if (server.state == CloudServerState.STOPPED && !force || server.state == CloudServerState.STOPPING && !force) return
+
+        val process = hostedProcesses.firstOrNull { it.serverId == serviceId }
         val thisNode = nodeRepository.getNode(hostingId)
         if (thisNode != null) {
-            thisNode.currentMemoryUsage = thisNode.currentMemoryUsage - server.configurationTemplate.maxMemory
+            thisNode.currentMemoryUsage = hostedProcesses.toList()
+                .filter { it.serverId != serviceId }
+                .sumOf { it.configurationTemplate.maxMemory }
             if (thisNode.currentMemoryUsage < 0) thisNode.currentMemoryUsage = 0
             thisNode.hostedServers.remove(hostingId)
             nodeRepository.updateNode(thisNode)
         }
-        val process = hostedProcesses.firstOrNull { it.serverId == serviceId }
         if (process != null) {
             process.stop(force, internalCall)
             hostedProcesses.remove(process)
