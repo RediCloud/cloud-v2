@@ -20,7 +20,7 @@ object Updater {
         if (versionInfoFile.exists()) {
             val info = gson.fromJson(versionInfoFile.readText(charset("UTF-8")), UpdateInfo::class.java)
             mainFolderJars().map { it to getJarProperties(it) }.filter {
-                it.second["branch"] != info.branch || it.second["build"] != info.build
+                it.second["branch"] != info.branch && it.second["build"] != info.build
             }.map { it.first }.forEach {
                 it.delete()
             }
