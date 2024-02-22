@@ -1,6 +1,7 @@
 package dev.redicloud.updater
 
 import dev.redicloud.api.commands.ICommandManager
+import dev.redicloud.logging.LogManager
 import dev.redicloud.updater.suggest.BranchSuggester
 import dev.redicloud.updater.suggest.BuildsSuggester
 import dev.redicloud.utils.*
@@ -27,11 +28,11 @@ object Updater {
         }
         val updateInfo = updateAvailable()
         if (updateInfo.first && updateInfo.second != null) {
-            println("An update is available: ${updateInfo.second}")
-            println("You can download the update with the command: version download $BRANCH ${updateInfo.second}")
-            println("And switch the update with the command: version switch $BRANCH ${updateInfo.second}")
+            LogManager.rootLogger().info("An update is available: ${updateInfo.second}")
+            LogManager.rootLogger().info("You can download the update with the command: version download $BRANCH ${updateInfo.second}")
+            LogManager.rootLogger().info("And switch the update with the command: version switch $BRANCH ${updateInfo.second}")
         } else {
-            println("You are running the latest version!")
+            LogManager.rootLogger().info("You are running the latest version!")
         }
     }
 
