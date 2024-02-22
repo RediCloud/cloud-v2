@@ -157,12 +157,12 @@ class ServerFactory(
         try {
 
             val thisNode = nodeRepository.getNode(hostingId)!!
-            val ramUsage = hostedProcesses.toList().sumOf { it.configurationTemplate.maxMemory }
+            val ramUsage = thisNode.currentMemoryUsage
             if (!force) {
                 // check if the node is allowed to start the server
                 if (configurationTemplate.nodeIds.contains(thisNode.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
 
-                if (ramUsage > thisNode.maxMemory) return NotEnoughRamOnNodeStartResult()
+                if (ramUsage + configurationTemplate.maxMemory > thisNode.maxMemory) return NotEnoughRamOnNodeStartResult()
 
                 val servers = serverRepository.getRegisteredServers()
 
@@ -218,8 +218,7 @@ class ServerFactory(
                 snapshotData.versionHandler.patch(snapshotData.version)
             }
 
-            // Change memory usage on node
-            thisNode.currentMemoryUsage = ramUsage
+            // Add service to node database object
             thisNode.hostedServers.add(cloudServer.serviceId)
             nodeRepository.updateNode(thisNode)
 
@@ -296,13 +295,13 @@ class ServerFactory(
             try {
 
                 val thisNode = nodeRepository.getNode(hostingId)!!
-                val ramUsage = hostedProcesses.toList().sumOf { it.configurationTemplate.maxMemory }
+                val ramUsage = thisNode.currentMemoryUsage
                 if (!force) {
                     // check if the node is allowed to start the server
                     if (newConfigurationTemplate.nodeIds.contains(thisNode.serviceId) && newConfigurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
 
                     // check if the node has enough ram
-                    if (ramUsage > thisNode.maxMemory) return NotEnoughRamOnNodeStartResult()
+                    if (ramUsage + newConfigurationTemplate.maxMemory > thisNode.maxMemory) return NotEnoughRamOnNodeStartResult()
 
                     val servers = serverRepository.getRegisteredServers()
 
@@ -333,8 +332,7 @@ class ServerFactory(
                 val serverScreen = ServerScreen(server.serviceId, server.name, this.console, this.packetManager)
                 console.createScreen(serverScreen)
 
-                // Change memory usage on node
-                thisNode.currentMemoryUsage = ramUsage
+                // Add service to node database object
                 thisNode.hostedServers.add(server.serviceId)
                 nodeRepository.updateNode(thisNode)
 

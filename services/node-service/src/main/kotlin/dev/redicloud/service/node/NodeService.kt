@@ -33,6 +33,7 @@ import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.service.node.listener.ConfigurationUpdateServerListener
 import dev.redicloud.updater.Updater
 import kotlinx.coroutines.runBlocking
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -165,6 +166,11 @@ class NodeService(
             .instant()
             .delay(55.seconds)
             .period(5.minutes)
+            .register()
+        taskManager.builder()
+            .task(CloudNodeMemoryUsageTask(this.serverFactory, this.nodeRepository, this.serviceId))
+            .instant()
+            .period(1500.milliseconds)
             .register()
     }
 
