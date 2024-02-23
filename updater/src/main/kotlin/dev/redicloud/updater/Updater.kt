@@ -19,8 +19,8 @@ object Updater {
     suspend fun check() {
         if (versionInfoFile.exists()) {
             val info = gson.fromJson(versionInfoFile.readText(charset("UTF-8")), UpdateInfo::class.java)
-            mainFolderJars().map { it to getJarProperties(it) }.filter {
-                it.second["branch"] != info.branch || it.second["build"] != info.build
+            mainFolderJars().map { it to getJarProperties(it) }.filter { it.second.isNotEmpty() }.filterNot {
+                it.second["branch"] == BRANCH && it.second["build"] == BUILD && it.second["version"] == CLOUD_VERSION
             }.map { it.first }.forEach {
                 it.delete()
             }
@@ -75,7 +75,7 @@ object Updater {
             versionInfoFile.delete()
         }
         versionInfoFile.createNewFile()
-        versionInfoFile.writeText(gson.toJson(UpdateInfo(branch, build.toString(), updateToVersion!!.name, branch, build.toString(), version)))
+        versionInfoFile.writeText(gson.toJson(UpdateInfo(version, build.toString(), branch, BRANCH, BUILD, CLOUD_VERSION)))
 }
 
     private fun getJarProperties(file: File): Map<String, String> {
