@@ -8,7 +8,7 @@ import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
 
-val version = "2.1.1-SNAPSHOT"
+val version = "2.1.2-SNAPSHOT"
 val build = System.getenv("BUILD_NUMBER") ?: "local"
 val git = System.getenv("BUILD_VCS_NUMBER") ?: "unknown"
 val branch = System.getenv("BRANCH")?.split("/")?.last() ?: "local"
