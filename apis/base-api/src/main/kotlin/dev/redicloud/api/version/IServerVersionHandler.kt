@@ -52,7 +52,7 @@ interface IServerVersionHandler {
                     lock.lock()
                     lock.unlock()
                 }else {
-                    LOGGER.warning("Server version ${it.displayName} currently updating, forcing shutdown...")
+                    LOGGER.warning("Server version ${it.displayName} currently updating, but forcing shutdown...")
                 }
             }
         }

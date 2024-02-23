@@ -10,6 +10,8 @@ interface ICloudNodeRepository {
 
     suspend fun updateNode(cloudNode: ICloudNode): ICloudNode
 
+    suspend fun deleteNode(serviceId: ServiceId): Boolean
+
     suspend fun getMasterNode(): ICloudNode?
 
     suspend fun getConnectedNodes(): List<ICloudNode>

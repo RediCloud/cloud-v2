@@ -10,12 +10,15 @@ import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.repository.service.ServiceRepository
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.repository.server.CloudServer
+import dev.redicloud.repository.server.ServerRepository
 import kotlin.time.Duration.Companion.minutes
 
 class NodeRepository(
     databaseConnection: DatabaseConnection,
     packetManager: PacketManager,
     private val eventManager: EventManager,
+    private val serverRepository: ServerRepository
 ) : ServiceRepository (
     databaseConnection,
     packetManager
@@ -55,6 +58,17 @@ class NodeRepository(
 
     suspend fun createNode(cloudNode: ICloudNode): CloudNode {
         return internalRepo.createService(cloudNode)
+    }
+
+    override suspend fun deleteNode(serviceId: ServiceId): Boolean {
+        val node = getNode(serviceId) ?: return false
+        if (node.connected) return false
+        node.hostedServers.forEach {
+            val server = serverRepository.getServer<CloudServer>(it) ?: return@forEach
+            serverRepository.deleteServer(server)
+        }
+        internalRepo.deleteService(node)
+        return true
     }
 
     override suspend fun getMasterNode(): CloudNode? {

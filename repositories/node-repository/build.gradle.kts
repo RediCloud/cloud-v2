@@ -5,6 +5,7 @@ repositories {
 }
 
 dependencies {
+    compileOnly(project(":repositories:server-repository"))
     compileOnly(project(":apis:base-api"))
     compileOnly(project(":repositories:service-repository"))
     compileOnly(project(":utils"))
