@@ -134,6 +134,11 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
             actor.sendMessage("§cPlease disconnect the node before deleting it!")
             return@launch
         }
+        if (node.hostedServers.isNotEmpty()) {
+            actor.sendMessage("§cThe node ${node.identifyName()} has still hosted servers on it!")
+            actor.sendMessage("§cPlease stop/delete all servers hosted on the node before deleting it!")
+            return@launch
+        }
         if (deleteConfirm.contains(node.serviceId) && System.currentTimeMillis() - deleteConfirm[node.serviceId]!! < 15000) {
             actor.sendMessage("Deleting node ${node.identifyName()}...")
             nodeService.nodeRepository.deleteNode(node.serviceId)
