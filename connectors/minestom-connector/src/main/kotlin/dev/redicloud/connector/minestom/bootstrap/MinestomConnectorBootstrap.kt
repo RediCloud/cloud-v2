@@ -38,9 +38,9 @@ class MinestomConnectorBootstrap : Extension() {
     override fun terminate() {
         if (connector == null) {
             exitProcess(0)
-        } else {
-            MinecraftServer.LOGGER.info("Disabling cloud connector...")
+            return
         }
+        MinecraftServer.LOGGER.info("Disabling cloud connector...")
         connector?.minestomShuttingDown = true
         connector?.onDisable()
     }

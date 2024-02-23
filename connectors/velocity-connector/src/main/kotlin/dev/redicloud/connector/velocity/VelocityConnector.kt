@@ -21,7 +21,7 @@ class VelocityConnector(
 ) : ProxyServerService<PluginContainer, ServerInfo>() {
 
 
-    private var velocityShuttingDown: Boolean = false
+    internal var velocityShuttingDown: Boolean = false
     override val serverPlayerProvider: IServerPlayerProvider = VelocityServerPlayerProvider(proxyServer)
     override val screenProvider: AbstractScreenProvider = VelocityScreenProvider(this.packetManager, this.proxyServer)
 

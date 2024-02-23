@@ -47,10 +47,11 @@ class VelocityConnectorBootstrap @Inject constructor(val proxyServer: ProxyServe
     fun onShutdown(event: ProxyShutdownEvent) {
         if (connector == null) {
             exitProcess(0)
-        } else {
-            Logger.getGlobal().info("Disabling cloud connector...")
+
         }
-        connector?.onDisable()
+        Logger.getGlobal().info("Disabling cloud connector...")
+        connector!!.velocityShuttingDown = true
+        connector!!.onDisable()
     }
 
 }

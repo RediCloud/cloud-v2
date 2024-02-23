@@ -30,11 +30,10 @@ class BungeeCordConnectorBootstrap : Plugin() {
     override fun onDisable() {
         if (connector == null) {
             exitProcess(0)
-        }else {
-            ProxyServer.getInstance().logger.info("Disabling cloud connector...")
         }
-        connector?.bungeecordShuttingDown = true
-        connector?.onDisable()
+        ProxyServer.getInstance().logger.info("Disabling cloud connector...")
+        connector!!.bungeecordShuttingDown = true
+        connector!!.onDisable()
     }
 
 }
