@@ -85,30 +85,28 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
 
     suspend fun createService(cloudService: I): K {
         if (cloudService.serviceId.type != targetServiceType) throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})")
-        return set(cloudService.serviceId.id.toString(), cloudService).also {
-            if (it.connected && !connectedServices.contains(it.serviceId)) {
-                connectedServices.add(it.serviceId)
-            }else if(!it.connected) {
-                connectedServices.remove(it.serviceId)
-            }
-            if (!registeredServices.contains(it.serviceId)) {
-                registeredServices.add(it.serviceId)
-            }
+        if (cloudService.connected && !connectedServices.contains(cloudService.serviceId)) {
+            connectedServices.add(cloudService.serviceId)
+        }else if(!cloudService.connected) {
+            connectedServices.remove(cloudService.serviceId)
         }
+        if (!registeredServices.contains(cloudService.serviceId)) {
+            registeredServices.add(cloudService.serviceId)
+        }
+        return set(cloudService.serviceId.id.toString(), cloudService)
     }
 
     suspend fun updateService(cloudService: I): K {
         if (cloudService.serviceId.type != targetServiceType) throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})")
-        return set(cloudService.serviceId.id.toString(), cloudService).also {
-            if (it.connected && !connectedServices.contains(it.serviceId)) {
-                connectedServices.add(it.serviceId)
-            }else if(!it.connected) {
-                connectedServices.remove(it.serviceId)
-            }
-            if (!registeredServices.contains(it.serviceId)) {
-                registeredServices.add(it.serviceId)
-            }
+        if (cloudService.connected && !connectedServices.contains(cloudService.serviceId)) {
+            connectedServices.add(cloudService.serviceId)
+        }else if(!cloudService.connected) {
+            connectedServices.remove(cloudService.serviceId)
         }
+        if (!registeredServices.contains(cloudService.serviceId)) {
+            registeredServices.add(cloudService.serviceId)
+        }
+        return set(cloudService.serviceId.id.toString(), cloudService)
     }
 
     suspend fun deleteService(cloudService: I): Boolean {

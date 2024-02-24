@@ -95,7 +95,7 @@ class ServerFactory(
             startQueue.add(queueInformation)
         }
 
-    suspend internal fun deleteServer(serviceId: ServiceId): Boolean {
+    internal suspend fun deleteServer(serviceId: ServiceId): Boolean {
         if (!serviceId.type.isServer()) throw IllegalArgumentException("Service id that was queued for deletion is not a server: ${serviceId.toName()}")
         val server = serverRepository.getServer<CloudServer>(serviceId) ?: return false
         if (server.hostNodeId != serviceId) return false
@@ -253,7 +253,7 @@ class ServerFactory(
     }
 
 
-    suspend internal fun startServer(
+    internal suspend fun startServer(
         serviceId: ServiceId?,
         configurationTemplate: ConfigurationTemplate?,
         force: Boolean = false
@@ -369,7 +369,7 @@ class ServerFactory(
         }
     }
 
-    suspend internal fun stopServer(
+    internal suspend fun stopServer(
         serviceId: ServiceId,
         force: Boolean = true,
         internalCall: Boolean = false
@@ -406,7 +406,7 @@ class ServerFactory(
         }
     }
 
-    suspend internal fun transferServer(
+    internal suspend fun transferServer(
         serverId: ServiceId,
         nodeId: ServiceId
     ): Boolean {
