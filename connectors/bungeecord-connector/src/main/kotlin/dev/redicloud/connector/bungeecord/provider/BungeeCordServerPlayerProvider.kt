@@ -1,6 +1,6 @@
 package dev.redicloud.connector.bungeecord.provider
 
-import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
+import dev.redicloud.api.provider.IServerPlayerProvider
 import net.md_5.bungee.api.ProxyServer
 import java.util.*
 

@@ -39,6 +39,7 @@ dependencies {
     shade(project(":connectors:bukkit-legacy"))
     shade(project(":modules:module-handler"))
     shade(project(":server-factories:remote-server-factory"))
+    shade(project(":apis:connector-api"))
 
     compileOnly("org.spigotmc:spigot-api:${Versions.minecraftVersion}")
 }

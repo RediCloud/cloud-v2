@@ -3,6 +3,7 @@ package dev.redicloud.connector.velocity
 import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.proxy.ProxyServer
 import com.velocitypowered.api.proxy.server.ServerInfo
+import dev.redicloud.api.provider.IServerPlayerProvider
 import dev.redicloud.connector.velocity.bootstrap.VelocityConnectorBootstrap
 import dev.redicloud.connector.velocity.listener.CloudPlayerListener
 import dev.redicloud.connector.velocity.provider.VelocityScreenProvider
@@ -10,7 +11,6 @@ import dev.redicloud.connector.velocity.provider.VelocityServerPlayerProvider
 import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.service.minecraft.ProxyServerService
 import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
-import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
 import dev.redicloud.api.service.ServiceId
 import kotlinx.coroutines.runBlocking
 import java.net.InetSocketAddress
@@ -22,7 +22,7 @@ class VelocityConnector(
 
 
     internal var velocityShuttingDown: Boolean = false
-    override val serverPlayerProvider: IServerPlayerProvider = VelocityServerPlayerProvider(proxyServer)
+    override var playerProvider: IServerPlayerProvider = VelocityServerPlayerProvider(proxyServer)
     override val screenProvider: AbstractScreenProvider = VelocityScreenProvider(this.packetManager, this.proxyServer)
 
     init {

@@ -100,6 +100,8 @@ findProject(":server-factories:remote-server-factory")?.name = "remote-server-fa
 include("connectors:minestom-connector")
 findProject(":connectors:minestom-connector")?.name = "minestom-connector"
 
-
 include("updater")
 findProject(":updater")?.name = "updater"
+
+include("apis:connector-api")
+findProject(":apis:connector-api")?.name = "connector-api"

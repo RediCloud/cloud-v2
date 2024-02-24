@@ -24,4 +24,5 @@ dependencies {
     compileOnly(project(":logging"))
     compileOnly(project(":commands:command-api"))
     compileOnly(project(":services:base-service"))
+    compileOnly(project(":apis:connector-api"))
 }

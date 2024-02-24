@@ -1,6 +1,6 @@
 package dev.redicloud.connector.minestom.provider
 
-import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
+import dev.redicloud.api.provider.IServerPlayerProvider
 import net.minestom.server.MinecraftServer
 import java.util.*
 

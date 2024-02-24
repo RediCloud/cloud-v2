@@ -20,4 +20,5 @@ dependencies {
     compileOnly(project(":commands:command-api"))
     compileOnly(project(":services:base-service"))
     compileOnly(project(":services:minecraft-server-service"))
+    compileOnly(project(":apis:connector-api"))
 }

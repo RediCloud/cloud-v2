@@ -44,6 +44,7 @@ dependencies {
     shade(project(":tasks"))
     shade(project(":modules:module-handler"))
     shade(project(":server-factories:remote-server-factory"))
+    shade(project(":apis:connector-api"))
     shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
 
     compileOnly("dev.hollowcube:minestom-ce:1619cedc53")

@@ -34,6 +34,7 @@ dependencies {
     shade(project(":tasks"))
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":modules:module-handler"))
+    shade(project(":apis:connector-api"))
     shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
 
     compileOnly("com.velocitypowered:velocity-api:3.1.1")

@@ -1,10 +1,10 @@
 package dev.redicloud.connector.minestom
 
+import dev.redicloud.api.provider.IServerPlayerProvider
 import dev.redicloud.connector.minestom.provider.MinestomScreenProvider
 import dev.redicloud.connector.minestom.provider.MinestomServerPlayerProvider
 import dev.redicloud.service.minecraft.MinecraftServerService
 import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
-import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
 import kotlinx.coroutines.runBlocking
 import net.minestom.server.extensions.Extension
 
@@ -13,7 +13,7 @@ class MinestomConnector(val extension: Extension) : MinecraftServerService<Exten
     internal var minestomShuttingDown = false
     override val screenProvider: AbstractScreenProvider
         = MinestomScreenProvider(this.packetManager, this.extension)
-    override val serverPlayerProvider: IServerPlayerProvider
+    override var playerProvider: IServerPlayerProvider
         = MinestomServerPlayerProvider()
 
     init {

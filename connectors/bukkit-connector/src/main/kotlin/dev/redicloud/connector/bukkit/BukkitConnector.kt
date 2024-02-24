@@ -1,10 +1,10 @@
 package dev.redicloud.connector.bukkit
 
+import dev.redicloud.api.provider.IServerPlayerProvider
 import dev.redicloud.connector.bukkit.provider.BukkitScreenProvider
 import dev.redicloud.connector.bukkit.provider.BukkitServerPlayerProvider
 import dev.redicloud.service.minecraft.MinecraftServerService
 import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
-import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
 import kotlinx.coroutines.runBlocking
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
@@ -12,14 +12,11 @@ import org.bukkit.plugin.java.JavaPlugin
 class BukkitConnector(val plugin: JavaPlugin) : MinecraftServerService<JavaPlugin>() {
 
     internal var bukkitShuttingDown = false
-    final override val serverPlayerProvider: IServerPlayerProvider
-    final override val screenProvider: AbstractScreenProvider
+    override var playerProvider: IServerPlayerProvider = BukkitServerPlayerProvider()
+    override val screenProvider: AbstractScreenProvider = BukkitScreenProvider(this.packetManager, this.plugin)
 
     init {
         initApi()
-        bukkitShuttingDown = false
-        serverPlayerProvider = BukkitServerPlayerProvider()
-        screenProvider = BukkitScreenProvider(this.packetManager, this.plugin)
         registerTasks()
         runBlocking { moduleHandler.loadModules() }
     }

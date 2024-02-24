@@ -1,7 +1,7 @@
 package dev.redicloud.connector.velocity.provider
 
 import com.velocitypowered.api.proxy.ProxyServer
-import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
+import dev.redicloud.api.provider.IServerPlayerProvider
 import java.util.*
 
 class VelocityServerPlayerProvider(
