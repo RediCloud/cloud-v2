@@ -1,8 +1,8 @@
 package dev.redicloud.service.minecraft.tasks
 
+import dev.redicloud.api.provider.IServerPlayerProvider
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
-import dev.redicloud.service.minecraft.provider.IServerPlayerProvider
 import dev.redicloud.tasks.CloudTask
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.service.minecraft.utils.CurrentServerData
@@ -10,7 +10,7 @@ import dev.redicloud.service.minecraft.utils.CurrentServerData
 class CloudServerInfoTask(
     private val serviceId: ServiceId,
     private val serverRepository: ServerRepository,
-    private val playerCountProvider: IServerPlayerProvider,
+    private val playerProvider: IServerPlayerProvider,
     private val currentServerData: CurrentServerData
 ) : CloudTask() {
 
@@ -25,9 +25,9 @@ class CloudServerInfoTask(
         currentServerData.configurationTemplateName = cloudServer.configurationTemplate.name
 
         var update = false
-        if (cloudServer.maxPlayers != playerCountProvider.getMaxPlayerCount()) update = true
-        cloudServer.maxPlayers = playerCountProvider.getMaxPlayerCount()
-        val players = playerCountProvider.getConnectedPlayers()
+        if (cloudServer.maxPlayers != playerProvider.getMaxPlayerCount()) update = true
+        cloudServer.maxPlayers = playerProvider.getMaxPlayerCount()
+        val players = playerProvider.getConnectedPlayers()
         if (cloudServer.connectedPlayers.toList() != players) update = true
         cloudServer.connectedPlayers = players.toMutableList()
         if (update) serverRepository.updateServer(cloudServer)

@@ -1,4 +1,4 @@
-package dev.redicloud.service.minecraft.provider
+package dev.redicloud.api.provider
 
 import java.util.UUID
 

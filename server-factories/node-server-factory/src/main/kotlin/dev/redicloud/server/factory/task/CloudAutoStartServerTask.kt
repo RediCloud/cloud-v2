@@ -32,7 +32,7 @@ class CloudAutoStartServerTask(
                 nodeBasedStarts[node.serviceId] = 0 }
             registeredServers
                 .filter { it.configurationTemplate.uniqueId == template.uniqueId }
-                .filter { it.state != CloudServerState.STOPPED && it.state != CloudServerState.STOPPING }
+                .filter { it.state != CloudServerState.STOPPED }
                 .filter { !it.hidden }
                 .forEach {
                     val count = nodeBasedStarts.getOrDefault(it.hostNodeId, 0)

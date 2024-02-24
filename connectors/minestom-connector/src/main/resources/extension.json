@@ -1,7 +1,7 @@
 {
   "entrypoint": "dev.redicloud.connector.minestom.bootstrap.MinestomConnectorBootstrap",
   "name": "redicloud_connector",
-  "version": "2.1.3-SNAPSHOT",
+  "version": "2.1.4-SNAPSHOT",
   "dependencies": [],
   "externalDependencies": {
     "repositories": [],
