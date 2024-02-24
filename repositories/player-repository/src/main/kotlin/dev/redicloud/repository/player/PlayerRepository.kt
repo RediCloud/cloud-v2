@@ -76,7 +76,7 @@ class PlayerRepository(
     }
 
     override suspend fun getConnectedPlayers(): List<CloudPlayer> {
-        return getAll().filter { it.proxyId != null && it.serverId != null || it.serverId != null}
+        return getAll().filter { it.proxyId != null && it.serverId != null || it.serverId != null }
     }
 
     override suspend fun getRegisteredPlayers(): List<CloudPlayer> {

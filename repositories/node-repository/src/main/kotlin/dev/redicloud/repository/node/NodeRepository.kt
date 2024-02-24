@@ -15,7 +15,7 @@ import kotlin.time.Duration.Companion.minutes
 class NodeRepository(
     databaseConnection: DatabaseConnection,
     packetManager: PacketManager,
-    private val eventManager: EventManager,
+    private val eventManager: EventManager
 ) : ServiceRepository (
     databaseConnection,
     packetManager
@@ -55,6 +55,13 @@ class NodeRepository(
 
     suspend fun createNode(cloudNode: ICloudNode): CloudNode {
         return internalRepo.createService(cloudNode)
+    }
+
+    override suspend fun deleteNode(serviceId: ServiceId): Boolean {
+        val node = getNode(serviceId) ?: return false
+        if (node.connected || node.hostedServers.isNotEmpty()) return false
+        internalRepo.deleteService(node)
+        return true
     }
 
     override suspend fun getMasterNode(): CloudNode? {

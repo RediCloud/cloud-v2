@@ -19,7 +19,7 @@ import kotlin.system.exitProcess
 @Plugin(
     id = "redicloud-connector",
     name = "redicloud-connector-velocity",
-    version = "2.1.2-SNAPSHOT",
+    version = "2.1.3-SNAPSHOT",
     url = "https://redicloud.dev",
     authors = ["RediCloud"]
 )
@@ -47,10 +47,10 @@ class VelocityConnectorBootstrap @Inject constructor(val proxyServer: ProxyServe
     fun onShutdown(event: ProxyShutdownEvent) {
         if (connector == null) {
             exitProcess(0)
-        } else {
-            Logger.getGlobal().info("Disabling cloud connector...")
         }
-        connector?.onDisable()
+        Logger.getGlobal().info("Disabling cloud connector...")
+        connector!!.velocityShuttingDown = true
+        connector!!.onDisable()
     }
 
 }

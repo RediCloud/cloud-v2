@@ -31,6 +31,7 @@ import dev.redicloud.api.utils.TEMP_FOLDER
 import dev.redicloud.console.Console
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.service.node.listener.ConfigurationUpdateServerListener
+import dev.redicloud.service.node.tasks.player.PlayerProxyConnectionStateTask
 import dev.redicloud.updater.Updater
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.milliseconds
@@ -171,6 +172,10 @@ class NodeService(
             .task(CloudNodeMemoryUsageTask(this.serverFactory, this.nodeRepository, this.serviceId))
             .instant()
             .period(1500.milliseconds)
+            .register()
+        taskManager.builder()
+            .task(PlayerProxyConnectionStateTask(this.playerRepository, this.serverRepository, this.nodeRepository, this.serviceId))
+            .event(CloudServerDisconnectedEvent::class)
             .register()
     }
 

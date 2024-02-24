@@ -21,7 +21,7 @@ class VelocityConnector(
 ) : ProxyServerService<PluginContainer, ServerInfo>() {
 
 
-    private var velocityShuttingDown: Boolean = false
+    internal var velocityShuttingDown: Boolean = false
     override val serverPlayerProvider: IServerPlayerProvider = VelocityServerPlayerProvider(proxyServer)
     override val screenProvider: AbstractScreenProvider = VelocityScreenProvider(this.packetManager, this.proxyServer)
 
@@ -66,19 +66,20 @@ class VelocityConnector(
     }
 
     override fun onDisable() {
-        if (!this.velocityShuttingDown) {
-            this.proxyServer.shutdown()
-            return
-        }
         runBlocking {
             proxyServer.allPlayers.forEach { player ->
                 playerRepository.getPlayer(player.uniqueId)?.let {
                     it.connected = false
                     it.proxyId = null
                     it.serverId = null
+                    it.lastDisconnect = System.currentTimeMillis()
                     playerRepository.updatePlayer(it)
                 }
             }
+        }
+        if (!this.velocityShuttingDown) {
+            this.proxyServer.shutdown()
+            return
         }
         super.onDisable()
     }
