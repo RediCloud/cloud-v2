@@ -66,19 +66,20 @@ class VelocityConnector(
     }
 
     override fun onDisable() {
-        if (!this.velocityShuttingDown) {
-            this.proxyServer.shutdown()
-            return
-        }
         runBlocking {
             proxyServer.allPlayers.forEach { player ->
                 playerRepository.getPlayer(player.uniqueId)?.let {
                     it.connected = false
                     it.proxyId = null
                     it.serverId = null
+                    it.lastDisconnect = System.currentTimeMillis()
                     playerRepository.updatePlayer(it)
                 }
             }
+        }
+        if (!this.velocityShuttingDown) {
+            this.proxyServer.shutdown()
+            return
         }
         super.onDisable()
     }

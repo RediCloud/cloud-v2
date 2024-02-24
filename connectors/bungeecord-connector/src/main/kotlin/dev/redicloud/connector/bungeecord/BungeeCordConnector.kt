@@ -61,19 +61,20 @@ class BungeeCordConnector(
     }
 
     override fun onDisable() {
-        if (!this.bungeecordShuttingDown) {
-            ProxyServer.getInstance().stop()
-            return
-        }
         runBlocking {
             ProxyServer.getInstance().players.forEach { proxiedPlayer ->
                 playerRepository.getPlayer(proxiedPlayer.uniqueId)?.let {
                     it.connected = false
                     it.proxyId = null
                     it.serverId = null
+                    it.lastDisconnect = System.currentTimeMillis()
                     playerRepository.updatePlayer(it)
                 }
             }
+        }
+        if (!this.bungeecordShuttingDown) {
+            ProxyServer.getInstance().stop()
+            return
         }
         super.onDisable()
     }
