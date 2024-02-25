@@ -75,7 +75,7 @@ class ServerFactory(
     }
 
     suspend fun getStartList(): List<ServerQueueInformation> {
-        return startQueue.toMutableList().sortedWith(compareBy<ServerQueueInformation>
+        return startQueue.toMutableList().sortedWith(compareByDescending<ServerQueueInformation>
         {
             if (it.configurationTemplate != null) {
                 it.configurationTemplate!!.startPriority
