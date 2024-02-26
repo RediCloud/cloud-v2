@@ -31,6 +31,10 @@ class NodeFileTemplateRepository(
             FileCluster.LOGGER.info("Skipping pushing templates to ${node.identifyName()} because it is the current node!")
             return
         }
+        if (!node.connected) {
+            FileCluster.LOGGER.info("Skipping pushing templates to ${node.identifyName()} because it is not connected!")
+            return
+        }
         FileCluster.LOGGER.info("Pushing templates to ${node.identifyName()}...")
         var session: Session? = null
         var sftpChannel: ChannelSftp? = null
