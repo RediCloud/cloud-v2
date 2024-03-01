@@ -91,6 +91,11 @@ class VelocityConnector(
         super.onDisable()
     }
 
+    override fun plattformShutdown() {
+        this.velocityShuttingDown = true
+        this.proxyServer.shutdown()
+    }
+
     private fun registerListeners() {
         this.proxyServer.eventManager.register(getConnectorPlugin(), CloudPlayerListener(this.serviceId, this.playerRepository, this.serverRepository, this.proxyServer))
     }

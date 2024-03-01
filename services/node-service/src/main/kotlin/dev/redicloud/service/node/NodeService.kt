@@ -99,6 +99,11 @@ class NodeService(
         ConfigurationUpdateServerListener(serviceId, eventManager, configurationTemplateRepository, serverRepository, nodeRepository)
     }
 
+    override fun plattformShutdown() {
+        super.plattformShutdown()
+        shutdown(false)
+    }
+
     override fun shutdown(force: Boolean) {
         if (SHUTTINGDOWN && !force) return
         SHUTTINGDOWN = true

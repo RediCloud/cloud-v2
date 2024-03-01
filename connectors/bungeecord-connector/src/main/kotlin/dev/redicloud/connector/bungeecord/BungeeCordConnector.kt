@@ -86,6 +86,11 @@ class BungeeCordConnector(
         super.onDisable()
     }
 
+    override fun plattformShutdown() {
+        this.bungeecordShuttingDown = true
+        ProxyServer.getInstance().stop()
+    }
+
     private fun registerListeners() {
         fun register(listener: Listener) {
             ProxyServer.getInstance().pluginManager.registerListener(plugin, listener)

@@ -160,6 +160,8 @@ abstract class BaseService(
         this.registerDefaultSuggesters()
     }
 
+    open fun plattformShutdown(){}
+
     open fun shutdown(force: Boolean = false) {
         SHUTTINGDOWN = true
         runBlocking {
