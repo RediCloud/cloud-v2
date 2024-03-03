@@ -6,6 +6,7 @@ import dev.redicloud.connector.minestom.provider.MinestomServerPlayerProvider
 import dev.redicloud.service.minecraft.MinecraftServerService
 import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
 import kotlinx.coroutines.runBlocking
+import net.minestom.server.MinecraftServer
 import net.minestom.server.extensions.Extension
 
 class MinestomConnector(val extension: Extension) : MinecraftServerService<Extension>() {
@@ -20,6 +21,19 @@ class MinestomConnector(val extension: Extension) : MinecraftServerService<Exten
         initApi()
         registerTasks()
         runBlocking { moduleHandler.loadModules() }
+    }
+
+    override fun onDisable() {
+        if (!this.minestomShuttingDown) {
+            MinecraftServer.getServer().stop()
+            return
+        }
+        super.onDisable()
+    }
+
+    override fun plattformShutdown() {
+        this.minestomShuttingDown = true
+        MinecraftServer.getServer().stop()
     }
 
     override fun getConnectorPlugin(): Extension = this.extension
