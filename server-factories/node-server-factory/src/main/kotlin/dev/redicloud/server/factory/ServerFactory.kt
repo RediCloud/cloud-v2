@@ -162,7 +162,10 @@ class ServerFactory(
                 // check if the node is allowed to start the server
                 if (configurationTemplate.nodeIds.contains(thisNode.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
 
-                if (ramUsage + configurationTemplate.maxMemory > thisNode.maxMemory) return NotEnoughRamOnNodeStartResult()
+                if (ramUsage + configurationTemplate.maxMemory > thisNode.maxMemory) {
+                    hostedProcesses.remove(serverProcess)
+                    return NotEnoughRamOnNodeStartResult()
+                }
 
                 val servers = serverRepository.getRegisteredServers()
 
@@ -301,7 +304,10 @@ class ServerFactory(
                     if (newConfigurationTemplate.nodeIds.contains(thisNode.serviceId) && newConfigurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
 
                     // check if the node has enough ram
-                    if (ramUsage + newConfigurationTemplate.maxMemory > thisNode.maxMemory) return NotEnoughRamOnNodeStartResult()
+                    if (ramUsage + newConfigurationTemplate.maxMemory > thisNode.maxMemory) {
+                        hostedProcesses.remove(serverProcess)
+                        return NotEnoughRamOnNodeStartResult()
+                    }
 
                     val servers = serverRepository.getRegisteredServers()
 
