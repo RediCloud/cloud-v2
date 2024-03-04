@@ -294,7 +294,7 @@ class CloudServerVersionTypeCommand(
         }
     }
 
-    @CommandSubPath("edit <name> connector <file>")
+    @CommandSubPath("edit <name> connector file <file>")
     @CommandDescription("Edit the file name of the connector of a server version type")
     fun editConnector(
         actor: ConsoleActor,
@@ -317,7 +317,7 @@ class CloudServerVersionTypeCommand(
         }
     }
 
-    @CommandSubPath("edit <name> connectorurl <url>")
+    @CommandSubPath("edit <name> connector url <url>")
     @CommandDescription("Edit the connector download url of a server version type")
     fun editConnectorUrl(
         actor: ConsoleActor,
@@ -346,7 +346,7 @@ class CloudServerVersionTypeCommand(
         }
     }
 
-    @CommandSubPath("edit <name> connector <folder>")
+    @CommandSubPath("edit <name> connector folder <folder>")
     @CommandDescription("Edit the connector folder of a server version type. E.g. 'plugins' or 'extensions'")
     fun editConnectorFolder(
         actor: ConsoleActor,

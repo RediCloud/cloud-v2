@@ -156,10 +156,10 @@ class VersionCommand(
             switchConfirms[confirmIdentifier] = System.currentTimeMillis()
             return@launch
         }
-        if (branch == BRANCH && build < BUILD
+        if (branch == BRANCH && buildId < (BUILD.toIntOrNull() ?: -1)
             && switchConfirms.getOrDefault(confirmIdentifier, 0) + 30000 < System.currentTimeMillis()) {
             actor.sendMessage("§cYou are trying to switch to an older version!")
-            actor.sendMessage("§cAre you sure you want to switch to the version ${toConsoleValue("$branch#%$build", false)}?")
+            actor.sendMessage("§cAre you sure you want to switch to the version ${toConsoleValue("$branch#$build", false)}?")
             actor.sendMessage("§cThis can cause issues and data loss! Backup your data before switching is recommended!")
             actor.sendMessage("§cType the command again to confirm!")
             switchConfirms[confirmIdentifier] = System.currentTimeMillis()

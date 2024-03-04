@@ -34,7 +34,14 @@ class BungeeCordConnector(
     override fun registerServer(server: CloudMinecraftServer) {
         if (ProxyServer.getInstance().servers == null) return
         val session = server.currentSession
-            ?: throw IllegalStateException("Server ${serviceId.toName()} is connected but has no active session?")
+            ?: run {
+                LOGGER.severe("Server ${server.serviceId.toName()} has no session set!")
+                return
+            }
+        if (server.port == -1) {
+            LOGGER.severe("Server ${server.serviceId.toName()} has no port set!")
+            return
+        }
         val serverInfo = ProxyServer.getInstance().constructServerInfo(
             server.name,
             InetSocketAddress(
@@ -77,6 +84,11 @@ class BungeeCordConnector(
             return
         }
         super.onDisable()
+    }
+
+    override fun plattformShutdown() {
+        this.bungeecordShuttingDown = true
+        ProxyServer.getInstance().stop()
     }
 
     private fun registerListeners() {

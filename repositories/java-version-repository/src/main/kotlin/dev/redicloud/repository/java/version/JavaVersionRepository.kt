@@ -76,8 +76,8 @@ class JavaVersionRepository(
     override suspend fun detectInstalledVersions(): List<CloudJavaVersion> {
         val created = getVersions()
         val versions = locateAllJavaVersions().filter {
-            when (OSType.WINDOWS) {
-                getOperatingSystemType() -> File(it, "bin/java.exe")
+            when (getOperatingSystemType()) {
+                OSType.WINDOWS -> File(it, "bin/java.exe")
                 else -> File(it, "bin/java")
             }.exists()
         }
@@ -87,7 +87,7 @@ class JavaVersionRepository(
                 val byName = file.name.lowercase() == javaVersion.name.lowercase()
                 if (byId || byName) return@map javaVersion
             }
-            val javaInfo = parseVersionInfo(file.absolutePath)
+            val javaInfo = getVersionInfo(file.absolutePath)
             return@map CloudJavaVersion(
                 name = file.name,
                 id = javaInfo?.versionId ?: -1,

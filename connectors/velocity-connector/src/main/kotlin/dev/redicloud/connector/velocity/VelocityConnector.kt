@@ -36,7 +36,14 @@ class VelocityConnector(
 
     override fun registerServer(server: CloudMinecraftServer) {
         val session = server.currentSession
-            ?: throw IllegalStateException("Server ${serviceId.toName()} is connected but has no active session?")
+            ?: run {
+                LOGGER.severe("Server ${server.serviceId.toName()} has no session set!")
+                return
+            }
+        if (server.port == -1) {
+            LOGGER.severe("Server ${server.serviceId.toName()} has no port set!")
+            return
+        }
         val serverInfo = ServerInfo(
             server.name,
             InetSocketAddress(
@@ -82,6 +89,11 @@ class VelocityConnector(
             return
         }
         super.onDisable()
+    }
+
+    override fun plattformShutdown() {
+        this.velocityShuttingDown = true
+        this.proxyServer.shutdown()
     }
 
     private fun registerListeners() {

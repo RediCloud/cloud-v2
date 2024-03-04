@@ -13,6 +13,6 @@ class CloudServiceShutdownPacketListener(baseService: BaseService) : PacketListe
     logger.fine("Received shutdown packet from ${packet.sender}")
     runBlocking {
         packet.respond(CloudServiceShutdownResponse())
-        baseService.shutdown()
+        baseService.plattformShutdown()
     }
 })

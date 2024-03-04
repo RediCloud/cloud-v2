@@ -1,5 +1,5 @@
 object Versions {
-    const val cloud = "2.1.4-SNAPSHOT"
+    const val cloud = "2.1.5-SNAPSHOT"
     const val kotlin = "1.8.21"
     const val gson = "2.10.1"
     const val libloader = "1.6.7"

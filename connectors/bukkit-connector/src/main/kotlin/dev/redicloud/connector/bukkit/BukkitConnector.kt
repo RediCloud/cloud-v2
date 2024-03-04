@@ -33,4 +33,9 @@ class BukkitConnector(val plugin: JavaPlugin) : MinecraftServerService<JavaPlugi
         super.onDisable()
     }
 
+    override fun plattformShutdown() {
+        this.bukkitShuttingDown = true
+        Bukkit.shutdown()
+    }
+
 }

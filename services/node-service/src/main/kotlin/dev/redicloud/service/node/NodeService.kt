@@ -99,6 +99,11 @@ class NodeService(
         ConfigurationUpdateServerListener(serviceId, eventManager, configurationTemplateRepository, serverRepository, nodeRepository)
     }
 
+    override fun plattformShutdown() {
+        super.plattformShutdown()
+        shutdown(false)
+    }
+
     override fun shutdown(force: Boolean) {
         if (SHUTTINGDOWN && !force) return
         SHUTTINGDOWN = true
@@ -111,7 +116,9 @@ class NodeService(
             fileCluster.disconnect(true)
             nodeRepository.shutdownAction.run()
             super.shutdown(force)
-            TEMP_FOLDER.getFile().deleteRecursively()
+            if (System.getProperty("redicloud.server.delete-directory", "true").toBooleanStrictOrNull() == true) {
+                TEMP_FOLDER.getFile().deleteRecursively()
+            }
         }
     }
 
