@@ -116,7 +116,9 @@ class NodeService(
             fileCluster.disconnect(true)
             nodeRepository.shutdownAction.run()
             super.shutdown(force)
-            TEMP_FOLDER.getFile().deleteRecursively()
+            if (System.getProperty("redicloud.server.delete-directory", "true").toBooleanStrictOrNull() == true) {
+                TEMP_FOLDER.getFile().deleteRecursively()
+            }
         }
     }
 

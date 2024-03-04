@@ -172,10 +172,12 @@ class ServerProcess(
             }
         }
 
-        if (!configurationTemplate.static && !unexpectedlyStop) {
-            fileCopier.workDirectory.deleteRecursively()
-        }else if (unexpectedlyStop && !configurationTemplate.static) {
-            fileCopier.workDirectory.deleteOnExit()
+        if (System.getProperty("redicloud.server.delete-directory", "true").toBooleanStrictOrNull() == true) {
+            if (!configurationTemplate.static && !unexpectedlyStop) {
+                fileCopier.workDirectory.deleteRecursively()
+            }else if (unexpectedlyStop && !configurationTemplate.static) {
+                fileCopier.workDirectory.deleteOnExit()
+            }
         }
 
 
