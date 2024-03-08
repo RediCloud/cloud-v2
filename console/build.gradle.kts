@@ -19,5 +19,5 @@ dependencies {
     testImplementation(project(":commands:command-api"))
 
     dependency("org.jline:jline-console:3.23.0")
-    dependency("org.jline:jline-terminal-jansi:3.23.0")
+    dependency("org.jline:jline-terminal-jansi:3.25.1")
 }
