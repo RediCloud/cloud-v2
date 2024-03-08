@@ -1,10 +1,6 @@
----
-description: >-
-  It is possible to set a separate Java version for each server version. The
-  cloud supports java versions between 8 & 21.
----
-
 # Java versions
+
+It is possible to set a separate Java version for each server version. The cloud supports java versions between 8 & 21.
 
 
 

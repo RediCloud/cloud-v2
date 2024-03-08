@@ -1,10 +1,6 @@
----
-description: >-
-  The server version type is part of a server version. This represents the type
-  of software. So e.g. paper, velocity, bukkit etc
----
-
 # Server version types
+
+The server version type is part of a server version. This represents the type of software. So e.g. paper, velocity, bukkit etc
 
 ## Create a version type
 

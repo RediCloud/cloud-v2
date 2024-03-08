@@ -1,13 +1,6 @@
----
-description: >-
-  A configuration template is what is usually known as a group in other clouds.
-  You can find everything important there, such as: Set the max memory of a
-  server.
----
-
 # Configuration template
 
-
+A configuration template is what is usually known as a group in other clouds. You can find everything important there, such as: Set the max memory of a server.
 
 ## Stop time
 
