@@ -12,5 +12,5 @@ dependencies {
     shade("io.netty:netty-transport:4.1.94.Final")
     shade("io.netty:netty-buffer:4.1.94.Final")
     shade("io.netty:netty-codec:4.1.94.Final")
-    shade("io.netty:netty-common:4.1.94.Final")
+    shade("io.netty:netty-common:4.1.107.Final")
 }
