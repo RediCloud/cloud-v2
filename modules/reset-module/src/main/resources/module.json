@@ -1,0 +1,13 @@
+{
+  "id": "rest-api",
+  "name": "RestAPI",
+  "description": "A Rest-API server with endpoints for the RediCloud API",
+  "version": "2.1.5-SNAPSHOT",
+  "website": "https://docs.redicloud.dev/modules/rest-api",
+  "authors": [
+    "Suqatri"
+  ],
+  "mainClasses": {
+    "NODE": "dev.redicloud.module.rest.RestModule"
+  }
+}

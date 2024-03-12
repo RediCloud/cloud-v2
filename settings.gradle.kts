@@ -105,3 +105,6 @@ findProject(":updater")?.name = "updater"
 
 include("apis:connector-api")
 findProject(":apis:connector-api")?.name = "connector-api"
+
+include("modules:reset-module")
+findProject(":modules:reset-module")?.name = "reset-module"
