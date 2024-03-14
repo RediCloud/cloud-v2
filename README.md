@@ -1,7 +1,7 @@
 # RediCloud
 
 A redis based cluster cloud system for minecraft. 
-**[[Discord](https://discord.gg/g2HV52VV4G)]**
+**[[Discord](https://discord.gg/g2HV52VV4G)] [[Wiki](https://docs.redicloud.dev)]**
 <br>
 
 ### Overview
