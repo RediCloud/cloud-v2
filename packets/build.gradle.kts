@@ -10,6 +10,6 @@ dependencies {
     compileOnly(project(":utils"))
     compileOnly(project(":logging"))
 
-    dependency("org.redisson:redisson:3.27.1")
+    dependency("org.redisson:redisson:${Versions.redisson}")
     dependency("com.google.code.gson:gson:${Versions.gson}")
 }
