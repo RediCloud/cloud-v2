@@ -36,12 +36,12 @@ dependencies {
     shade(project(":console"))
     shade(project(":tasks"))
     shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
-    shade(project(":connectors:bukkit-legacy"))
     shade(project(":modules:module-handler"))
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":apis:connector-api"))
 
     compileOnly("org.spigotmc:spigot-api:${Versions.minecraftVersion}")
+    shade(project(":connectors:bukkit-legacy"))
 }
 
 tasks.register("buildAndCopy") {

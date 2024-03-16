@@ -4,6 +4,7 @@ import dev.redicloud.utils.gson.gson
 import java.io.File
 
 data class DatabaseConfiguration(
+    val username: String? = "",
     val password: String = "",
     val nodes: List<DatabaseNode>,
     val databaseId: Int = 0
@@ -15,11 +16,12 @@ data class DatabaseConfiguration(
         fun fromEnv(): DatabaseConfiguration {
             val password = System.getenv("RC_DATABASE_PASSWORD") ?: ""
             val databaseId = System.getenv("RC_DATABASE_ID")?.toInt() ?: 0
+            val username = System.getenv("RC_DATABASE_USERNAME") ?: ""
             val nodes = System.getenv("RC_DATABASE_NODES")?.split(";")?.map {
                 val split = it.split(":")
                 DatabaseNode(split[0], split[1].toInt())
             } ?: listOf(DatabaseNode("127.0.0.1", 6379))
-            return DatabaseConfiguration(password, nodes, databaseId)
+            return DatabaseConfiguration(username, password, nodes, databaseId)
         }
 
         fun fromFile(file: File): DatabaseConfiguration {
@@ -34,6 +36,7 @@ fun DatabaseConfiguration.toEnv(processBuilder: ProcessBuilder) {
     processBuilder.environment()["RC_DATABASE_PASSWORD"] = password
     processBuilder.environment()["RC_DATABASE_ID"] = databaseId.toString()
     processBuilder.environment()["RC_DATABASE_NODES"] = nodes.joinToString(";") { "${it.hostname}:${it.port}" }
+    processBuilder.environment()["RC_DATABASE_USERNAME"] = username
 }
 
 fun DatabaseConfiguration.toFile(file: File) {

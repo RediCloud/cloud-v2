@@ -7,6 +7,6 @@ repositories {
 }
 
 dependencies {
-    compileOnly(kotlin("gradle-plugin", "1.8.21"))
-    runtimeOnly(kotlin("gradle-plugin", "1.8.21"))
+    compileOnly(kotlin("gradle-plugin", "1.8.22"))
+    runtimeOnly(kotlin("gradle-plugin", "1.8.22"))
 }

@@ -156,12 +156,12 @@ class FileTemplateCommand(
         actor.sendMessage("File template ${toConsoleValue(template.displayName)} was renamed to ${toConsoleValue(newName)}!")
     }
 
-    @CommandSubPath("edit <name> prefix <newPrefix>")
+    @CommandSubPath("edit <name> prefix <new-prefix>")
     @CommandDescription("Change the prefix of a file template")
     fun editPrefix(
         actor: ConsoleActor,
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate,
-        @CommandParameter("newPrefix") newPrefix: String
+        @CommandParameter("new-prefix") newPrefix: String
     ) = defaultScope.launch {
         if (fileTemplateRepository.existsTemplate(template.name, newPrefix)) {
             actor.sendMessage("§cA file template with the name ${toConsoleValue(template.name)} and prefix ${toConsoleValue(newPrefix)} already exists!")

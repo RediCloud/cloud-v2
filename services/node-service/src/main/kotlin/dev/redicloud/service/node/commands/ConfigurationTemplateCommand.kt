@@ -381,7 +381,7 @@ class ConfigurationTemplateCommand(
     }
 
     @CommandSubPath("edit <name> filetemplate add <template>")
-    @CommandAlias(["edit <name> ft add <name>"])
+    @CommandAlias(["edit <name> ft add <template>"])
     @CommandDescription("Add a file template to a configuration template")
     fun editFileTemplateAdd(
         actor: ConsoleActor,
@@ -394,7 +394,7 @@ class ConfigurationTemplateCommand(
     }
 
     @CommandSubPath("edit <name> filetemplate remove <template>")
-    @CommandAlias(["edit <name> ft remove <name>"])
+    @CommandAlias(["edit <name> ft remove <template>"])
     @CommandDescription("Remove a file template from a configuration template")
     fun editFileTemplateRemove(
         actor: ConsoleActor,
@@ -542,6 +542,10 @@ class ConfigurationTemplateCommand(
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("percent", true) percent: Double
     ) = runBlocking {
+        if (percent < 0 || percent > 100) {
+            actor.sendMessage("§cThe percent must be between 0 and 100!")
+            return@runBlocking
+        }
         template.percentToStartNewService = percent
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage("If the percent of players, on a server of ${toConsoleValue(template.name)}, is higher than ${toConsoleValue(percent)}% a new service will be started!")
