@@ -3,6 +3,7 @@ package dev.redicloud.service.node.commands
 import dev.redicloud.api.commands.*
 import dev.redicloud.api.modules.ModuleLifeCycle
 import dev.redicloud.console.commands.ConsoleActor
+import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.modules.repository.ModuleWebRepository
 import dev.redicloud.modules.suggesters.*
@@ -205,13 +206,14 @@ class ModuleCommand(
             return@launch
         }
         actor.sendMessage("Updating module %hc%$id%tc%...")
-        val file = moduleHandler.getModuleData(id)?.mapTo {
+        var file = moduleHandler.getModuleData(id)?.mapTo {
             if (it.loaded) it.file else null
         }
         if (file != null) moduleHandler.unloadModule(id)
         val latest = targetRepository.getLatestVersion(id)!!
-        targetRepository.download(id, latest)
-        actor.sendMessage("Module with id $id updated!")
+        file?.delete()
+        file = targetRepository.download(id, latest)
+        actor.sendMessage("Module with id ${toConsoleValue(id)} updated!")
         if (file != null) {
             moduleHandler.loadModule(file)
         }else {

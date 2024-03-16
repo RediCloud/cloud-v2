@@ -123,8 +123,9 @@ class ModuleHandler(
             loaders.remove(moduleId)?.close()
             logger.info("Module with id %hc%$moduleId %tc%uninstalled!")
         } else {
-            logger.warning("§cFailed to uninstall module with id $moduleId!")
-            logger.warning("§cStop the node and delete the file manually: ${file.absolutePath}")
+            file.deleteOnExit()
+            logger.warning("§cFailed to uninstall module with id $moduleId instantly!")
+            logger.warning("§cThe module file will be deleted on the next node stop!")
         }
     }
 

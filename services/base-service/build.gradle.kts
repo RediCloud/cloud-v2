@@ -28,6 +28,6 @@ dependencies {
     compileOnly(project(":commands:command-api"))
 
 
-    dependency("org.redisson:redisson:3.21.3")
+    dependency("org.redisson:redisson:${Versions.redisson}")
     dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
 }

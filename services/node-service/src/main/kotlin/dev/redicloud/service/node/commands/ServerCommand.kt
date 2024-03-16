@@ -59,7 +59,6 @@ class ServerCommand(
     }
 
     @CommandSubPath("startstatic <name> <id>")
-    @CommandAlias(["ss <name> <id>"])
     @CommandDescription("Queue a registered static server with the given name and id")
     fun startStatic(
         actor: ConsoleActor,

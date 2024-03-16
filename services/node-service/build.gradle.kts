@@ -39,7 +39,7 @@ dependencies {
     shade(project(":modules:module-handler"))
     shade(project(":updater"))
 
-    compileOnly("org.jline:jline-terminal-jansi:3.23.0")
+    compileOnly("org.jline:jline-terminal-jansi:${Versions.jline}")
     compileOnly("com.jcraft:jsch:0.1.55")
 }
 
