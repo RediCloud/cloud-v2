@@ -14,4 +14,5 @@ object Versions {
     const val sshd = "2.10.0"
     const val jsch = "0.1.55"
     const val bcprov = "1.70"
+    const val logback = "1.4.14"
 }
