@@ -11,7 +11,6 @@ object Versions {
     const val minecraftVersion = "1.20.1-R0.1-SNAPSHOT"
     const val netty = "4.1.107.Final" //Check compatibility with redission
     const val jline = "3.25.1"
-    const val netty = "4.1.107.Final" //Check compatibility with redission
     const val guice = "7.0.0"
     const val sshd = "2.10.0"
     const val jsch = "0.1.55"
