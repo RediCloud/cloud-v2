@@ -29,5 +29,5 @@ dependencies {
 
 
     dependency("org.redisson:redisson:${Versions.redisson}")
-    dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinxCoroutines}")
 }
