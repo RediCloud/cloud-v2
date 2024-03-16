@@ -46,7 +46,6 @@ allprojects {
         withType<JavaCompile> {
             options.release.set(8)
             options.encoding = "UTF-8"
-
         }
     }
 
