@@ -74,6 +74,7 @@ open class Console(
     private var logRecordDispatcher: ThreadRecordDispatcher? = null
 
     init {
+        CURRENT_CONSOLE?.close(false)
         CURRENT_CONSOLE = this
         if (FIRST_INIT) {
             TERMINAL = TerminalBuilder.builder()
