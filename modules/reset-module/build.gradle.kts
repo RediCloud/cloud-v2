@@ -5,8 +5,10 @@ dependencies {
     compileOnly(project(":console"))
     compileOnly(project(":logging"))
     compileOnly(project(":utils"))
+    compileOnly(project(":database"))
 
     dependency("io.javalin:javalin:6.1.3")
+    compileOnly("org.redisson:redisson:${Versions.redisson}")
 }
 
 tasks.register("buildAndCopy") {
