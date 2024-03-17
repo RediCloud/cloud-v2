@@ -113,18 +113,18 @@ class InitializeConsole() : Console(
         question = "What is the address and port of the node? (e.g. 127.0.0.1:6379)",
         condition = object : ConsoleQuestionCondition {
             override fun fail(input: String): Boolean {
-                if (input.split(":").size != 2) {
+                if (!input.contains(":")) {
                     writeLine("§cThe address and port of the node must be in the format of 'host:port'")
                     return true
                 }
-                val ip = input.split(":")[0]
-                val port = input.split(":")[1].toIntOrNull()
-                if (port == null) {
-                    writeLine("§cThe port of the node must be a number!")
+                val hostname = input.split(":").subList(0, input.split(":").size - 1).joinToString(":", "")
+                if (!isIpv6(hostname) && !isIpv4(hostname)) {
+                    writeLine("§cThe address and port of the node must be in the format of 'host:port'")
                     return true
                 }
-                if (!isIpv4(ip)) {
-                    writeLine("§cThe host address of the node must be a valid ip address!")
+                val port = input.split(":").last().toIntOrNull()
+                if (port == null) {
+                    writeLine("§cThe port of the node must be a number!")
                     return true
                 }
                 return false
