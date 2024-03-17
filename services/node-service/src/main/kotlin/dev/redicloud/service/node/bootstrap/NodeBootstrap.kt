@@ -21,7 +21,6 @@ fun main(args: Array<String>) {
             val databaseConnection = preConsole.databaseConnection!!
             val databaseConfiguration = preConsole.databaseConfiguration!!
             val nodeConfiguration = preConsole.nodeConfiguration!!
-            preConsole.close()
             NodeService(databaseConfiguration, databaseConnection, nodeConfiguration, preConsole.firstStartDetected)
         }.onFailure {
             LogManager.rootLogger().severe("Failed to start node service!", it)

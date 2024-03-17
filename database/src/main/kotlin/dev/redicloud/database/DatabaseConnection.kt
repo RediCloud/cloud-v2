@@ -36,6 +36,9 @@ class DatabaseConnection(
             val clusterConfig = redissonConfig.useClusterServers()
                 .setClientName(serviceId.toName())
                 .setPassword(config.password)
+            if (!config.username.isNullOrEmpty()) {
+                clusterConfig.setUsername(config.username)
+            }
             config.nodes.forEach { node ->
                 clusterConfig.addNodeAddress(node.toConnectionString())
             }
@@ -45,7 +48,7 @@ class DatabaseConnection(
                 .setSubscriptionConnectionPoolSize(subscriptionConnectionPoolSize)
                 .setSubscriptionConnectionMinimumIdleSize(subscriptionConnectionMinimumIdleSize)
         }else {
-            redissonConfig.useSingleServer()
+            val singleConfig = redissonConfig.useSingleServer()
                 .setAddress(config.nodes.first().toConnectionString())
                 .setDatabase(config.databaseId)
                 .setClientName(serviceId.toName())
@@ -54,6 +57,9 @@ class DatabaseConnection(
                 .setSubscriptionConnectionPoolSize(subscriptionConnectionPoolSize)
                 .setConnectionMinimumIdleSize(connectionMinimumIdleSize)
                 .setSubscriptionConnectionMinimumIdleSize(subscriptionConnectionMinimumIdleSize)
+            if (!config.username.isNullOrEmpty()) {
+                singleConfig.setUsername(config.username)
+            }
         }
     }
 

@@ -3,7 +3,7 @@ package dev.redicloud.service.base.utils
 import com.google.gson.reflect.TypeToken
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.utils.gson.gson
-import org.redisson.api.LocalCachedMapOptions
+import org.redisson.api.options.LocalCachedMapOptions
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -12,8 +12,7 @@ class ClusterConfiguration(
 ) {
 
     val map = databaseConnection.getClient()
-        .getLocalCachedMap(
-            "cloud:cluster-configuration", LocalCachedMapOptions.defaults<String, String>()
+        .getLocalCachedMap(LocalCachedMapOptions.name<String, String>("cloud:cluster-configuration")
                 .storeMode(LocalCachedMapOptions.StoreMode.LOCALCACHE_REDIS)
                 .syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
         )

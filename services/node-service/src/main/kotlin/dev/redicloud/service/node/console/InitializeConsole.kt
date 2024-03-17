@@ -75,6 +75,18 @@ class InitializeConsole() : Console(
         completer = getAllIpV4()
     )
 
+    private val databaseUsernameQuestion = ConsoleQuestion(
+        question = "What is the username of the database? (leave empty for none)",
+        condition = object : ConsoleQuestionCondition {
+            override fun fail(input: String): Boolean {
+                val fail = input.contains(" ")
+                if (fail) writeLine("§cThe password of the database can't contain spaces!")
+                return fail
+            }
+        },
+        default = ""
+    )
+
     private val databasePasswordQuestion = ConsoleQuestion(
         question = "What is the password of the database?",
         condition = object : ConsoleQuestionCondition {
@@ -326,6 +338,7 @@ class InitializeConsole() : Console(
             writeLine("Please enter your redis credentials manually!")
             Thread.sleep(2000)
         }
+        val username: String = databaseUsernameQuestion.ask(this)
         val password: String = databasePasswordQuestion.ask(this)
         val nodes = mutableListOf<String>(databaseNodeQuestion.ask(this))
         while (databaseAddNodeQuestion.ask(this)) {
@@ -338,7 +351,7 @@ class InitializeConsole() : Console(
         val ssl = databaseSSLQuestion.ask<Boolean>(this)
         writeLine("")
         writeLine("")
-        val config = DatabaseConfiguration(password, nodes.map {
+        val config = DatabaseConfiguration(username, password, nodes.map {
             DatabaseNode(it.split(":")[0], it.split(":")[1].toInt(), ssl)
         }, databaseId)
         DATABASE_JSON.create()
