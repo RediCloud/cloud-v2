@@ -47,7 +47,7 @@ dependencies {
     shade(project(":apis:connector-api"))
     shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
 
-    compileOnly("dev.hollowcube:minestom-ce:1619cedc53")
+    compileOnly("dev.hollowcube:minestom-ce:1554487748")
     compileOnly("dev.hollowcube:minestom-ce-extensions:1.2.0")
 }
 
