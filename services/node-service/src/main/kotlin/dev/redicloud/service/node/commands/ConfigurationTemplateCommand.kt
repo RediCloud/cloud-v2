@@ -44,6 +44,22 @@ class ConfigurationTemplateCommand(
             "com7", "com8", "com9", "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9")
     }
 
+    @CommandSubPath("duplicate <name> [new-name]")
+    @CommandDescription("Duplicate a configuration template")
+    fun duplicate(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
+        @CommandParameter("new-name", false) newName: String?
+    ) = runBlocking {
+        val newTemplate = template.copy(newName ?: "${template.name}-copy")
+        if (configurationTemplateRepository.existsTemplate(newTemplate.name)) {
+            actor.sendMessage("§cA configuration template with this name already exists!")
+            return@runBlocking
+        }
+        configurationTemplateRepository.createTemplate(newTemplate)
+        actor.sendMessage("Duplicated the configuration template ${toConsoleValue(template.name)} to ${toConsoleValue(newTemplate.name)}!")
+    }
+
     @CommandSubPath("create <name>")
     @CommandDescription("Create a new configuration template")
     fun create(
