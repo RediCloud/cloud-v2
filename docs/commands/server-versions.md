@@ -81,4 +81,5 @@ Which files should be stored in the `storage/versions/` folder after the patchin
 ## More commands
 
 * `sv list`
-* `sv delete <version>`
+* `sv delete <name>`
+* `sv duplicate <name> [new-name]`
