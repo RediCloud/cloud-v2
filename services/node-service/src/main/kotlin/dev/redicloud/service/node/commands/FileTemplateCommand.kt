@@ -25,7 +25,7 @@ class FileTemplateCommand(
     fun duplicate(
         actor: ConsoleActor,
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate,
-        @CommandParameter("new-name") newName: String?
+        @CommandParameter("new-name", false) newName: String?
     ) = defaultScope.launch {
         val newTemplate = template.copy(newName ?: "${template.name}_copy")
         if (fileTemplateRepository.existsTemplate(newTemplate.name, newTemplate.prefix)) {
