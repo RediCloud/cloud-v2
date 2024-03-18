@@ -1,0 +1,22 @@
+name: Feature Request
+description: Suggest a feature to be added
+labels: [enhancement]
+
+body:
+  - type: textarea
+    attributes:
+      label: Problem Description
+      description: |
+        Describe the issue you are facing or why you need the feature to be added.
+      placeholder: |
+        I am always frustrated with...
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Solution Description
+      description: |
+        Describe the solution you would like to see.
+    validations:
+      required: true
