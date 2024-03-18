@@ -27,12 +27,12 @@ class CloudServerVersionTypeCommand(
     private val serverVersionRepository: CloudServerVersionRepository
 ) : ICommand {
 
-    @CommandSubPath("duplicate <name> <new-name>")
+    @CommandSubPath("duplicate <name> [new-name]")
     @CommandDescription("Duplicate a server version type")
     fun duplicate(
         actor: ConsoleActor,
         @CommandParameter("name", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
-        @CommandParameter("new-name") newName: String?
+        @CommandParameter("new-name", false) newName: String?
     ) {
         runBlocking {
             val newType = type.copy(newName ?: "${type.name}-copy")

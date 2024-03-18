@@ -112,11 +112,11 @@ class CloudServerVersionType(
 
     fun copy(name: String): CloudServerVersionType {
         return CloudServerVersionType(
-            uniqueId = uniqueId,
+            uniqueId = UUID.randomUUID(),
             name = name,
             versionHandlerName = versionHandlerName,
             proxy = proxy,
-            defaultType = defaultType,
+            defaultType = false,
             connectorPluginName = connectorPluginName,
             connectorDownloadUrl = connectorDownloadUrl,
             connectorFolder = connectorFolder,

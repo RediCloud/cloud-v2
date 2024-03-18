@@ -37,7 +37,7 @@ class CloudServerVersionCommand(
 ) : ICommand {
 
 
-    @CommandSubPath("duplicate <version> [newName]")
+    @CommandSubPath("duplicate <version> [new-name]")
     @CommandDescription("Duplicate a server version")
     fun duplicate(
         actor: ConsoleActor,
