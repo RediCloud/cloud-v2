@@ -27,6 +27,24 @@ class CloudServerVersionTypeCommand(
     private val serverVersionRepository: CloudServerVersionRepository
 ) : ICommand {
 
+    @CommandSubPath("duplicate <name> <new-name>")
+    @CommandDescription("Duplicate a server version type")
+    fun duplicate(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
+        @CommandParameter("new-name") newName: String?
+    ) {
+        runBlocking {
+            val newType = type.copy(newName ?: "${type.name}-copy")
+            if (serverVersionTypeRepository.existsType(newType.name)) {
+                actor.sendMessage("§cA server version type with this name already exists!")
+                return@runBlocking
+            }
+            serverVersionTypeRepository.createType(newType)
+            actor.sendMessage("Successfully duplicated server version type ${toConsoleValue(type.name)} to ${toConsoleValue(newType.name)}")
+        }
+    }
+
     @CommandSubPath("list")
     @CommandDescription("List all server version types")
     fun list(
