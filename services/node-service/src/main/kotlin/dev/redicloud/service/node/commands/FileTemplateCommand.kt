@@ -20,6 +20,26 @@ class FileTemplateCommand(
     private val fileTemplateRepository: AbstractFileTemplateRepository
 ) : ICommand {
 
+    @CommandSubPath("duplicate <name> [new-name]")
+    @CommandDescription("Duplicate a file template")
+    fun duplicate(
+        actor: ConsoleActor,
+        @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate,
+        @CommandParameter("new-name") newName: String?
+    ) = defaultScope.launch {
+        val newTemplate = template.copy(newName ?: "${template.name}_copy")
+        if (fileTemplateRepository.existsTemplate(newTemplate.name, newTemplate.prefix)) {
+            actor.sendMessage("§cA file template with the name ${toConsoleValue(newTemplate.name)} and prefix ${toConsoleValue(newTemplate.prefix)} already exists!")
+            return@launch
+        }
+        actor.sendMessage("File template ${toConsoleValue(template.displayName)} will be duplicated to ${toConsoleValue(newTemplate.displayName)}...")
+        if (!newTemplate.folder.exists() && template.folder.exists()) {
+            template.folder.copyRecursively(newTemplate.folder)
+        }
+        fileTemplateRepository.createTemplate(newTemplate)
+        actor.sendMessage("File template ${toConsoleValue(template.displayName)} was duplicated to ${toConsoleValue(newTemplate.displayName)}!")
+    }
+
     @CommandSubPath("list")
     @CommandDescription("List all file templates")
     fun list(

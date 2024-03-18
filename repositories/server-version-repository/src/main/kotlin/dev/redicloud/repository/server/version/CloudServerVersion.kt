@@ -79,4 +79,25 @@ class CloudServerVersion(
         return version.compareTo(other.version)
     }
 
+    fun copy(name: String): CloudServerVersion {
+        return CloudServerVersion(
+            UUID.randomUUID(),
+            typeId,
+            name,
+            customDownloadUrl,
+            buildId,
+            version,
+            javaVersionId,
+            libPattern,
+            patch,
+            false,
+            used,
+            jvmArguments.toMutableList(),
+            environmentVariables.toMutableMap(),
+            programParameters.toMutableList(),
+            defaultFiles.toMutableMap(),
+            fileEdits.toMutableMap()
+        )
+    }
+
 }
