@@ -62,7 +62,7 @@ class VersionCommand(
         val branch = _branch ?: BRANCH
         val build = _build ?: "latest"
         val buildId = if (build == "latest") {
-            val projectInfo = Updater.getProjectInfo(BRANCH)
+            val projectInfo = Updater.getProjectInfo(branch)
             if (projectInfo == null) {
                 actor.sendMessage("§cFailed to check for updates")
                 return@launch
@@ -125,7 +125,7 @@ class VersionCommand(
             return@launch
         }
         val buildId = if (build == "latest") {
-            val projectInfo = Updater.getProjectInfo(BRANCH)
+            val projectInfo = Updater.getProjectInfo(branch)
             if (projectInfo == null) {
                 actor.sendMessage("§cFailed to check for latest build! Make sure the branch exists!")
                 return@launch
