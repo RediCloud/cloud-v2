@@ -14,6 +14,6 @@ dependencies {
     shade("io.netty:netty-codec:${Versions.netty}")
     shade("io.netty:netty-common:${Versions.netty}")
 
-    shade("ch.qos.logback:logback-core:1.3.14")
+    shade("ch.qos.logback:logback-core:1.5.3")
     shade("ch.qos.logback:logback-classic:1.3.14")
 }
