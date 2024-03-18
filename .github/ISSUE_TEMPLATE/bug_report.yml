@@ -1,0 +1,88 @@
+name: Bug Report
+description: Report a bug or console error
+labels:
+  - need confirm
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Report a bug or console error
+  - type: textarea
+    attributes:
+      label: Console Error
+      description: >
+        If you encounter warnings/errors in your console, **paste them with
+        https://haste.redicloud.dev/ and put the paste link here**.
+
+        If the error is small/less than 10 lines, you may put it directly into
+        this field.
+      value: |
+        ```
+        Put the haste.redicloud.dev link or text here.
+        ```
+      placeholder: >-
+        Please do not remove the grave accents; simply replace the line of text
+        in the middle.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Bug Description
+      description: >
+        Describe the unexpected behavior.
+
+        If you want to attach screenshots, use the comment field at the bottom
+        of the page.
+      placeholder: |
+        Example: "Can´t change the version of a configuration template"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to Reproduce
+      description: >
+        List the steps on how we can reproduce the issue. Make sure we can
+        easily understand what you mean with each step.
+      placeholder: |
+        Example:
+        1. Start the cloud
+        2. run following command: `server stop Proxy-1`
+        3. Nothing happens
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: |
+        Describe what exactly you expected to happen.
+      placeholder: |
+        Example: "Server should stopped"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Software/Hardware
+      description: |
+        What software/hardware is used?
+      placeholder: |
+        Example:
+        Java Version: 1.8.0_151
+        OS: Debian 10
+        RAM: 8 GB
+        CPU: Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Cloud-Version
+      description: |
+        What version of the cloud is used? Use `version` command in node console
+      placeholder: |
+        Example:
+        Version: 2.1.6-SNAPSHOT
+        Git: 517dc44f457e255ec05a06662398f81ed66256c6
+        Branch: master
+        CI-Build: 121
+    validations:
+      required: true
