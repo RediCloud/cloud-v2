@@ -4,6 +4,8 @@ import dev.redicloud.api.service.ICloudService
 import dev.redicloud.api.service.ICloudServiceSession
 import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.utils.isIpv4
+import dev.redicloud.utils.isIpv6
 
 abstract class CloudService(
     override val serviceId: ServiceId,
@@ -49,6 +51,13 @@ abstract class CloudService(
         }
 
     override fun startSession(ipAddress: String): ServiceSession {
+        var parsedHostname = ipAddress
+        if (isIpv6(ipAddress) && !ipAddress.startsWith("[")) {
+            parsedHostname = "[$ipAddress]"
+        }
+        if (!isIpv4(ipAddress) && !isIpv6(ipAddress)) {
+            throw IllegalArgumentException("Invalid IP address: $ipAddress")
+        }
         val session = ServiceSession(this.serviceId, System.currentTimeMillis(), ipAddress)
         sessions.currentSession = session
         if (registrationSession == null) {
