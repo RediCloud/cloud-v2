@@ -91,7 +91,7 @@ class FileCluster(
         this.port = generatePort(thisNode)
 
         sshd = SshServer.setUpDefaultServer()
-        sshd!!.host = hostname
+        sshd!!.host = if (hostname.startsWith("[") && hostname.endsWith("]")) hostname.substring(1, hostname.length - 1) else hostname
         sshd!!.port = port
 
         val cloudPath = Paths.get(CLOUD_PATH)
