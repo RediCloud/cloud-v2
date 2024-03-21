@@ -6,6 +6,7 @@ import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.repository.node.LOGGER
+import dev.redicloud.updater.BuildInfo
 import dev.redicloud.updater.Updater
 import dev.redicloud.updater.suggest.BranchSuggester
 import dev.redicloud.updater.suggest.BuildsSuggester
@@ -62,12 +63,12 @@ class VersionCommand(
         val branch = _branch ?: BRANCH
         val build = _build ?: "latest"
         val buildId = if (build == "latest") {
-            val projectInfo = Updater.getProjectInfo(branch)
-            if (projectInfo == null) {
-                actor.sendMessage("§cFailed to check for updates")
+            val builds = Updater.getBuilds(branch)
+            if (builds.isEmpty()) {
+                actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
                 return@launch
             }
-            projectInfo.builds.maxOrNull() ?: run {
+            builds.filter { it.stored }.maxOfOrNull { it.build } ?: run {
                 actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
                 return@launch
             }
@@ -125,12 +126,12 @@ class VersionCommand(
             return@launch
         }
         val buildId = if (build == "latest") {
-            val projectInfo = Updater.getProjectInfo(branch)
-            if (projectInfo == null) {
-                actor.sendMessage("§cFailed to check for latest build! Make sure the branch exists!")
+            val builds = Updater.getBuilds(branch)
+            if (builds.isEmpty()) {
+                actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
                 return@launch
             }
-            projectInfo.builds.maxOrNull() ?: run {
+            builds.filter { it.stored }.maxOfOrNull { it.build } ?: run {
                 actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
                 return@launch
             }
@@ -201,14 +202,14 @@ class VersionCommand(
         @CommandParameter("branch", false, BranchSuggester::class) _branch: String?
     ) = defaultScope.launch {
         val branch = _branch ?: BRANCH
-        val projectInfo = Updater.getProjectInfo(branch)
-        if (projectInfo == null) {
+        val builds = mutableListOf<BuildInfo>()
+        builds.addAll(Updater.getBuilds(branch))
+        if (builds.isEmpty()) {
             actor.sendMessage("§cFailed to get the builds! Make sure the branch exists!")
             return@launch
         }
-        val builds = projectInfo.builds.map { it.toString() }.toMutableList()
         if (BRANCH == "local" && BUILD == "local") {
-            builds.add("local")
+            builds.add(BuildInfo(BRANCH, BUILD.toIntOrNull() ?: -1, CLOUD_VERSION, -1, false))
         }
         if (builds.isEmpty()) {
             actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch)}!")
@@ -216,8 +217,8 @@ class VersionCommand(
         }
         actor.sendMessage("Available builds for branch ${toConsoleValue(branch)}:")
         builds.forEach {
-            if (it == BUILD) {
-                actor.sendMessage("§8- %hc%$it §7(§acurrent§7)")
+            if (it.build.toString() == BUILD) {
+                actor.sendMessage("§8- %hc%${if (it.build == -1) "local" else it.build} §7(§acurrent§7)")
             }else {
                 actor.sendMessage("§8- %hc%$it")
             }

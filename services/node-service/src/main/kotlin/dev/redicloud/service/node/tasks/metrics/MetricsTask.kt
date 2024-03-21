@@ -25,7 +25,7 @@ class MetricsTask(
     override suspend fun execute(): Boolean {
         if (System.getProperty("dev.redicloud.metrics", "true").lowercase() == "false") return true
         try {
-            val url = "https://api.redicloud.dev/metrics"
+            val url = "https://api.redicloud.dev/v2/metrics"
             if (khttp.post(url, data = "ping").statusCode != 200) {
                 logger.fine("Failed to send metrics to redicloud api: invalid response to ping")
                 return false
