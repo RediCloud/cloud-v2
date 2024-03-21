@@ -69,30 +69,21 @@ allprojects {
         }
         val publishToRepository = runCatching { extra.get("publishToRepository").toString().toBoolean() }.getOrNull() ?: return@afterEvaluate
         if (!publishToRepository) return@afterEvaluate
-        val snapshotVersion = version.toString().endsWith("-SNAPSHOT")
-        val repositorySnapshotUrl = findConfigurationValue("RC_REPOSITORY_SNAPSHOT_URL") ?: return@afterEvaluate
-        val repositoryReleaseUrl = findConfigurationValue("RC_REPOSITORY_RELEASE_URL") ?: return@afterEvaluate
-        val repositoryUsername = findConfigurationValue("RC_REPOSITORY_USERNAME") ?: return@afterEvaluate
-        val repositoryPassword = findConfigurationValue("RC_REPOSITORY_PASSWORD") ?: return@afterEvaluate
-        val repositoryUrl = if (snapshotVersion) repositorySnapshotUrl else repositoryReleaseUrl
+        val repositoryUsername = project.findProperty("gpr.user") as String? ?: System.getenv("username")
+        val repositoryPassword = project.findProperty("gpr.key") as String? ?: System.getenv("token")
+        val repositoryUrl = project.findProperty("gpr.url") as String? ?: ("https://maven.pkg.github.com/" + System.getenv("repository"))
         (extensions["publishing"] as PublishingExtension).apply {
             repositories {
                 maven {
-                    name = "redicloud"
+                    name = "GitHubPackages"
                     url = uri(repositoryUrl)
                     credentials {
                         username = repositoryUsername
                         password = repositoryPassword
                     }
-                    authentication {
-                        create<BasicAuthentication>("basic")
-                    }
                 }
                 publications {
-                    create<MavenPublication>(project.name.replace("-", "_")) {
-                        groupId = project.group.toString()
-                        artifactId = project.name
-                        version = Versions.cloud
+                    register<MavenPublication>("gpr") {
                         from(components["java"])
                     }
                 }
