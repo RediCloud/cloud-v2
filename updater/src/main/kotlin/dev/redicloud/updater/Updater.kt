@@ -135,14 +135,14 @@ object Updater {
 
     suspend fun getBuilds(branch: String?): List<BuildInfo> {
         if (branch == null) return emptyList()
-        val response = get(getRootAPIUrl() + "/builds/$branch/")
+        val response = get(getRootAPIUrl() + "/builds/?branch=$branch/")
         if (response.statusCode != 200) return emptyList()
         val type = object : TypeToken<ArrayList<BuildInfo>>() {}.type
         return gson.fromJson(response.text, type)
     }
 
     suspend fun getBranches(): List<String> {
-        val response = get(getRootAPIUrl() + "/builds/list")
+        val response = get(getRootAPIUrl() + "/builds/")
         if (response.statusCode != 200) return emptyList()
         val info = gson.fromJson(response.text, BranchList::class.java)
         return info.branches

@@ -218,9 +218,9 @@ class VersionCommand(
         actor.sendMessage("Available builds for branch ${toConsoleValue(branch)}:")
         builds.forEach {
             if (it.build.toString() == BUILD) {
-                actor.sendMessage("§8- %hc%${if (it.build == -1) "local" else it.build} §7(§acurrent§7)")
+                actor.sendMessage("§8- %hc%${if (it.build == -1) "local" else it.build} §8| %tc%${it.version} §7(§acurrent§7)")
             }else {
-                actor.sendMessage("§8- %hc%$it")
+                actor.sendMessage("§8- %hc%$it §8| %tc%${it.version}")
             }
         }
     }
@@ -241,7 +241,7 @@ class VersionCommand(
             actor.sendMessage("§8- %hc%$branch:")
             builds.forEach {
                 if (it.toString() == BUILD && branch == BRANCH) {
-                    actor.sendMessage("  §8➥ %tc%$it §7(§acurrent§7)")
+                    actor.sendMessage("  §8➥ %tc%$it§7(§acurrent§7)")
                 }else {
                     actor.sendMessage("  §8➥ %tc%$it")
                 }
