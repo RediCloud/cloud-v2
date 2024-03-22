@@ -220,7 +220,7 @@ class VersionCommand(
             if (it.build.toString() == BUILD) {
                 actor.sendMessage("§8- %hc%${if (it.build == -1) "local" else it.build} §8| %tc%${it.version} §7(§acurrent§7)")
             }else {
-                actor.sendMessage("§8- %hc%$it §8| %tc%${it.version}")
+                actor.sendMessage("§8- %hc%${it.build} §8| %tc%${it.version}")
             }
         }
     }
