@@ -6,9 +6,6 @@ on:
       - $default-branch
     paths-ignore:
       - "docs/**"
-  pull_request:
-    branches:
-      - $default-branch
 
 jobs:
   build:
