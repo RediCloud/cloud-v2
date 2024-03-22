@@ -1,5 +1,6 @@
 package dev.redicloud.updater
 
+import com.google.gson.reflect.TypeToken
 import dev.redicloud.api.commands.ICommandManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.updater.suggest.BranchSuggester
@@ -28,9 +29,9 @@ object Updater {
         }
         val updateInfo = updateAvailable()
         if (updateInfo.first && updateInfo.second != null) {
-            LogManager.rootLogger().info("An update is available: ${updateInfo.second}")
-            LogManager.rootLogger().info("You can download the update with the command: version download $BRANCH ${updateInfo.second}")
-            LogManager.rootLogger().info("And switch the update with the command: version switch $BRANCH ${updateInfo.second}")
+            LogManager.rootLogger().info("An update is available: ${updateInfo.second!!.branch}#${updateInfo.second!!.build}")
+            LogManager.rootLogger().info("You can download the update with the command: version download $BRANCH ${updateInfo.second!!.build}")
+            LogManager.rootLogger().info("And switch the update with the command: version switch $BRANCH ${updateInfo.second!!.build}")
         } else {
             LogManager.rootLogger().info("You are running the latest version!")
         }
@@ -41,7 +42,7 @@ object Updater {
     }
 
     fun download(branch: String, build: Int): File {
-        val response = get(getRootAPIUrl() + "/build/$branch/$build/redicloud.zip")
+        val response = get(getRootAPIUrl() + "/files/$branch/$build/redicloud.zip")
         if (response.statusCode != 200) {
             throw IllegalStateException("Failed to download the latest build")
         }
@@ -120,27 +121,28 @@ object Updater {
         return result
     }
 
-    suspend fun updateAvailable(): Pair<Boolean, Int?> {
+    suspend fun updateAvailable(): Pair<Boolean, BuildInfo?> {
         if (BUILD == "local" || BRANCH == "local") return false to null
-        val projectInfo = getProjectInfo(BRANCH) ?: return false to null
-        val updateAvailable = (projectInfo.builds.maxOrNull() ?: Int.MAX_VALUE) > (BUILD.toIntOrNull() ?: -1)
-        return updateAvailable to projectInfo.builds.maxOrNull()
+        val builds = getBuilds(BRANCH).filter { it.stored }
+        val latestBuild = builds.filter { it.stored }.filter { it.branch == BRANCH }.maxByOrNull { it.build }
+        if (latestBuild == null) {
+            LogManager.rootLogger().warning("Failed to get the latest build for branch $BRANCH")
+            return false to null
+        }
+        val updateAvailable = latestBuild.build > (BUILD.toIntOrNull() ?: -1)
+        return updateAvailable to latestBuild
     }
 
-    suspend fun getProjectInfo(branch: String?): BranchInfo? {
-        if (branch == null) return null
-        val response = get(getRootAPIUrl() + "/branch-info/$branch/")
-        if (response.statusCode != 200) return null
-        val projects = gson.fromJson(response.text, BranchInfo::class.java)
-        return projects
-    }
-
-    suspend fun getBuilds(branch: String): List<Int>? {
-        return getProjectInfo(branch)?.builds
+    suspend fun getBuilds(branch: String?): List<BuildInfo> {
+        if (branch == null) return emptyList()
+        val response = get(getRootAPIUrl() + "/builds/$branch/")
+        if (response.statusCode != 200) return emptyList()
+        val type = object : TypeToken<ArrayList<BuildInfo>>() {}.type
+        return gson.fromJson(response.text, type)
     }
 
     suspend fun getBranches(): List<String> {
-        val response = get(getRootAPIUrl() + "/branch-info/list")
+        val response = get(getRootAPIUrl() + "/builds/list")
         if (response.statusCode != 200) return emptyList()
         val info = gson.fromJson(response.text, BranchList::class.java)
         return info.branches
