@@ -217,7 +217,7 @@ class VersionCommand(
         }
         actor.sendMessage("Available builds for branch ${toConsoleValue(branch)}:")
         builds.forEach {
-            if (it.build.toString() == BUILD) {
+            if (it.build.toString() == BUILD && it.branch == BRANCH) {
                 actor.sendMessage("§8- %hc%${if (it.build == -1) "local" else it.build} §8| %tc%${it.version} §7(§acurrent§7)")
             }else {
                 actor.sendMessage("§8- %hc%${it.build} §8| %tc%${it.version}")
