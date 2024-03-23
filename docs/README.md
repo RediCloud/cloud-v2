@@ -38,4 +38,5 @@
 * print server error directly to node console (loop, spam protection) ✅
 * clean console design ✅
 * Small further details (designs, small functions) can be changed per property, no code editing needed!
+* updater command ✅
 * ...
