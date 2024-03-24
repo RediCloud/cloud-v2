@@ -35,10 +35,10 @@ dependencies {
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":modules:module-handler"))
     shade(project(":apis:connector-api"))
-    shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
+    shade(BuildDependencies.cloudLibloaderBootstrap)
 
-    compileOnly("com.velocitypowered:velocity-api:3.1.1")
-    kapt("com.velocitypowered:velocity-api:3.1.1")
+    compileOnly(BuildDependencies.velocityApi)
+    kapt(BuildDependencies.velocityApi)
 }
 
 tasks.register("buildAndCopy") {

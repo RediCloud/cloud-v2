@@ -6,8 +6,8 @@ dependencies {
     compileOnly(project(":logging"))
     compileOnly(project(":utils"))
 
-    dependency("com.github.jkcclemens:khttp:${Versions.khttp}")
-    dependency("com.google.code.gson:gson:${Versions.gson}")
+    dependency(BuildDependencies.khttp)
+    dependency(BuildDependencies.gson)
 }
 tasks.register("buildAndCopy") {
     dependsOn(tasks.named("build"))

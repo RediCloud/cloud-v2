@@ -9,6 +9,6 @@ dependencies {
     compileOnly(project(":apis:base-api"))
     compileOnly(project(":logging"))
 
-    dependency("org.redisson:redisson:${Versions.redisson}")
-    dependency("com.google.code.gson:gson:${Versions.gson}")
+    dependency(BuildDependencies.redisson)
+    dependency(BuildDependencies.gson)
 }
