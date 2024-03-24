@@ -7,9 +7,11 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import org.redisson.Redisson
+import org.redisson.api.RLock
 import org.redisson.api.RedissonClient
 import org.redisson.client.codec.BaseCodec
 import org.redisson.config.Config
+import java.util.concurrent.TimeUnit
 
 class DatabaseConnection(
     config: DatabaseConfiguration,
@@ -28,6 +30,7 @@ class DatabaseConnection(
     private val redissonConfig = Config()
     private var client: RedissonClient? = null
     private val repositories = mutableListOf<DatabaseRepository<*>>()
+    var lock: RLock? = null
 
     init {
         redissonConfig
@@ -65,11 +68,20 @@ class DatabaseConnection(
 
     suspend fun connect() {
         client = Redisson.create(redissonConfig)
+        lock = client!!.getLock("cloud:locks:${serviceId.toName()}")
+        if (lock!!.isLocked) {
+            throw IllegalStateException("Service is already started (${serviceId.toName()}) !")
+        }
         LOGGER.fine("Successfully connected to redis")
     }
 
     fun disconnect() {
-        if (isConnected()) client!!.shutdown()
+        if (isConnected()) {
+            if (lock?.isLocked == true) {
+                lock?.forceUnlock()
+            }
+            client!!.shutdown()
+        }
         LOGGER.fine("Successfully disconnected from redis")
     }
 
