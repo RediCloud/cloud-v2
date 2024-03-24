@@ -13,8 +13,8 @@ dependencies {
     compileOnly(project(":repositories:service-repository"))
     compileOnly(project(":repositories:cache-repository"))
 
-    dependency(BuildDependencies.sshd)
-    dependency(BuildDependencies.jsch)
-    dependency(BuildDependencies.bcprov)
-    dependency(BuildDependencies.bcpkix)
+    dependency("org.apache.sshd:sshd-sftp:${Versions.sshd}")
+    dependency("com.jcraft:jsch:${Versions.jsch}")
+    dependency("org.bouncycastle:bcprov-jdk15on:${Versions.bcprov}")
+    dependency("org.bouncycastle:bcpkix-jdk15on:${Versions.bcprov}")
 }
