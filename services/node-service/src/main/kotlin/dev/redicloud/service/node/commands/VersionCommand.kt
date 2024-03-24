@@ -186,12 +186,9 @@ class VersionCommand(
             return@launch
         }
         actor.sendMessage("Available branches:")
-        branches.forEach {
-            if (it == BRANCH) {
-                actor.sendMessage("§8- %hc%$it §7(§acurrent§7)")
-            }else {
-                actor.sendMessage("§8- %hc%$it")
-            }
+        branches.forEach { branch ->
+            val tags = Updater.getTags(branch)
+            actor.sendMessage("§8- %hc%$branch ${tags.joinToString(" "){ "§8($it§8)" }}")
         }
     }
 
@@ -238,7 +235,8 @@ class VersionCommand(
         }
         actor.sendMessage("Downloaded versions:")
         installedVersions.forEach { (branch, builds) ->
-            actor.sendMessage("§8- %hc%$branch:")
+            val tags = Updater.getTags(branch)
+            actor.sendMessage("§8- %hc%$branch ${tags.joinToString(" ") { "§8($it§8)" }}:")
             builds.forEach {
                 if (it.toString() == BUILD && branch == BRANCH) {
                     actor.sendMessage("  §8➥ %tc%$it§7(§acurrent§7)")
