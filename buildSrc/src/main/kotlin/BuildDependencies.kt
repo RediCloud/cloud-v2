@@ -34,6 +34,8 @@ object BuildDependencies {
 
     const val bcprov = "org.bouncycastle:bcprov-jdk15on:1.70"
     const val bcpkix = "org.bouncycastle:bcpkix-jdk15on:1.70"
+
+    const val dockerTestContainers = "org.testcontainers:testcontainers:1.19.7"
 }
 
 fun String.withVersion(version: String): String {
