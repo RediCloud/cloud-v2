@@ -29,9 +29,12 @@ object Updater {
         }
         val updateInfo = updateAvailable()
         if (updateInfo.first && updateInfo.second != null) {
-            LogManager.rootLogger().info("An update is available: ${updateInfo.second!!.branch}#${updateInfo.second!!.build}")
-            LogManager.rootLogger().info("You can download the update with the command: version download $BRANCH ${updateInfo.second!!.build}")
-            LogManager.rootLogger().info("And switch the update with the command: version switch $BRANCH ${updateInfo.second!!.build}")
+            LogManager.rootLogger()
+                .info("An update is available: ${updateInfo.second!!.branch}#${updateInfo.second!!.build}")
+            LogManager.rootLogger()
+                .info("You can download the update with the command: version download $BRANCH ${updateInfo.second!!.build}")
+            LogManager.rootLogger()
+                .info("And switch the update with the command: version switch $BRANCH ${updateInfo.second!!.build}")
         } else {
             LogManager.rootLogger().info("You are running the latest version!")
         }
@@ -42,7 +45,7 @@ object Updater {
     }
 
     fun download(branch: String, build: Int): File {
-        val response = get(getRootAPIUrl() + "/files/$branch/$build/redicloud.zip")
+        val response = get(getRootAPIUrl() + "/files/${branch.replace("/", "+")}/$build/redicloud.zip")
         if (response.statusCode != 200) {
             throw IllegalStateException("Failed to download the latest build")
         }
@@ -50,7 +53,7 @@ object Updater {
         if (!versionsFolder.exists()) {
             versionsFolder.mkdir()
         }
-        val file = File("versions/redicloud-$branch#$build.zip")
+        val file = File("versions/redicloud-${branch.replace("/", "+")}#$build.zip")
         file.writeBytes(response.content)
         return file
     }
@@ -60,7 +63,7 @@ object Updater {
         if (!versionsFolder.exists()) {
             throw IllegalStateException("Version is not located in the versions folder")
         }
-        val file = File("versions/redicloud-$branch#$build.zip")
+        val file = File("versions/redicloud-${branch.replace("/", "+")}#$build.zip")
         if (file.extension != "zip") {
             throw IllegalArgumentException("File must be a zip file")
         }
@@ -76,8 +79,19 @@ object Updater {
             versionInfoFile.delete()
         }
         versionInfoFile.createNewFile()
-        versionInfoFile.writeText(gson.toJson(UpdateInfo(version, build.toString(), branch, BRANCH, BUILD, CLOUD_VERSION)))
-}
+        versionInfoFile.writeText(
+            gson.toJson(
+                UpdateInfo(
+                    version,
+                    build.toString(),
+                    branch,
+                    BRANCH,
+                    BUILD,
+                    CLOUD_VERSION
+                )
+            )
+        )
+    }
 
     private fun getJarProperties(file: File): Map<String, String> {
         if (!file.exists() || file.extension != "jar") {
@@ -110,7 +124,7 @@ object Updater {
             .map { it.split("#") }
             .filter { it.size == 2 }
             .forEach {
-                val branch = it[0]
+                val branch = it[0].replace("+", "/")
                 val build = it[1].toInt()
                 if (result.containsKey(branch)) {
                     result[branch]!!.add(build)
@@ -135,7 +149,7 @@ object Updater {
 
     suspend fun getBuilds(branch: String?): List<BuildInfo> {
         if (branch == null) return emptyList()
-        val response = get(getRootAPIUrl() + "/builds/?branch=$branch")
+        val response = get(getRootAPIUrl() + "/builds/?branch=${branch.replace("/", "+")}")
         if (response.statusCode != 200) return emptyList()
         val type = object : TypeToken<ArrayList<BuildInfo>>() {}.type
         return gson.fromJson(response.text, type)
@@ -146,6 +160,19 @@ object Updater {
         if (response.statusCode != 200) return emptyList()
         val info = gson.fromJson(response.text, BranchList::class.java)
         return info.branches
+    }
+
+    fun getTags(branch: String): List<String> {
+        val tags = mutableListOf<String>()
+        if (branch == "master" || branch == "root" || branch == "main") {
+            tags.add("§crecommended")
+        }else {
+            tags.add("§bunstable")
+        }
+        if (branch == BRANCH) {
+            tags.add("§acurrent")
+        }
+        return tags
     }
 
 }

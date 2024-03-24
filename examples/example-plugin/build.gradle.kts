@@ -13,7 +13,7 @@ dependencies {
     // External usage, use it
     // compileOnly("dev.redicloud:api:${Versions.cloud}")
 
-    compileOnly("org.spigotmc:spigot-api:${Versions.minecraftVersion}")
+    compileOnly(BuildDependencies.spigotApi)
 }
 
 tasks.register("buildAndCopy") {
