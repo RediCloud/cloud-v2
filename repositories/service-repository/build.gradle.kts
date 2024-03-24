@@ -11,8 +11,8 @@ dependencies {
     compileOnly(project(":packets"))
     compileOnly(project(":logging"))
 
-    dependency(BuildDependencies.redisson)
-    dependency(BuildDependencies.kotlinxCoroutines)
+    dependency("org.redisson:redisson:${Versions.redisson}")
+    dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinxCoroutines}")
     compileOnly(project(":repositories:cache-repository"))
     compileOnly(project(":cache"))
 }

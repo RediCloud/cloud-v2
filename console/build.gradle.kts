@@ -18,6 +18,6 @@ dependencies {
 
     testImplementation(project(":commands:command-api"))
 
-    dependency(BuildDependencies.jlineConsole)
-    dependency(BuildDependencies.jlineJansi)
+    dependency("org.jline:jline-console:${Versions.jline}")
+    dependency("org.jline:jline-terminal-jansi:${Versions.jline}")
 }

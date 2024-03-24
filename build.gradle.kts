@@ -2,7 +2,7 @@ import org.gradle.kotlin.dsl.extra
 
 plugins {
     kotlin("jvm")
-    id("dev.redicloud.libloader") version BuildDependencies.cloudLibloaderVersion apply false
+    id("dev.redicloud.libloader") version Versions.libloader apply false
 }
 
 allprojects {
@@ -19,7 +19,7 @@ allprojects {
     the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).configurationName.set("dependency")
     the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).doBootstrapShade.set(false)
 
-    version = BuildDependencies.cloudVersion
+    version = Versions.cloud
 
     repositories {
         maven("https://repo.redicloud.dev/releases")
@@ -29,13 +29,13 @@ allprojects {
     }
 
     dependencies {
-        compileOnly(BuildDependencies.gson)
-        dependency(BuildDependencies.cloudLibloaderBootstrap)
-        dependency(BuildDependencies.kotlinxCoroutines)
-        compileOnly(BuildDependencies.redisson)
-        dependency(BuildDependencies.khttp)
-        dependency(BuildDependencies.kotlinReflect)
-        dependency(BuildDependencies.guice)
+        compileOnly("com.google.code.gson:gson:${Versions.gson}")
+        dependency("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
+        dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinxCoroutines}")
+        compileOnly("org.redisson:redisson:${Versions.redisson}")
+        dependency("com.github.jkcclemens:khttp:${Versions.khttp}")
+        dependency("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
+        dependency("com.google.inject:guice:${Versions.guice}")
     }
 
     tasks {
