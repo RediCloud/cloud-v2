@@ -68,7 +68,7 @@ class DatabaseConnection(
 
     suspend fun connect() {
         client = Redisson.create(redissonConfig)
-        lock = client!!.getLock("cloud:locks:${serviceId.toName()}")
+        lock = client!!.getLock("cloud:locks:${serviceId.toDatabaseIdentifier()}")
         if (lock!!.isLocked) {
             throw IllegalStateException("Service is already started (${serviceId.toName()}) !")
         }
