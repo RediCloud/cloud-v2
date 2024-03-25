@@ -241,18 +241,18 @@ class ModuleHandler(
         }
 
         val moduleClass = loader.loadClass(matchedMain).kotlin
-        if (!moduleClass.isSubclassOf(ICloudModule::class)) {
+        if (!moduleClass.isSubclassOf(CloudModule::class)) {
             logger.warning("§cMain class of module ${description.id} is not a subclass of ICloudModule!")
             return@withLock
         }
         loaders[description.id] = loader
-        val moduleInstance: ICloudModule?
+        val moduleInstance: CloudModule?
         try {
             moduleInstance = if (moduleClass.isSubclassOf(CloudInjectable::class)) {
                 injector.getInstance(moduleClass.java)
             }else {
                 moduleClass.createInstance()
-            } as ICloudModule
+            } as CloudModule
         }catch (e: Exception) {
             logger.warning("§cFailed to load module ${description.id}!", e)
             return@withLock

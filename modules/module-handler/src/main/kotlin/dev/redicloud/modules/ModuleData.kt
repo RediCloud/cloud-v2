@@ -1,6 +1,6 @@
 package dev.redicloud.modules
 
-import dev.redicloud.api.modules.ICloudModule
+import dev.redicloud.api.modules.CloudModule
 import dev.redicloud.api.modules.ModuleLifeCycle
 import java.io.File
 
@@ -12,9 +12,9 @@ data class ModuleData(
     var loaded: Boolean
 ) {
 
-    lateinit var instance: ICloudModule
+    lateinit var instance: CloudModule
 
-    fun init(instance: ICloudModule) {
+    fun init(instance: CloudModule) {
         this.instance = instance
     }
 

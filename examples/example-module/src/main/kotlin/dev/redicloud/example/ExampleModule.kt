@@ -2,7 +2,7 @@ package dev.redicloud.example
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import dev.redicloud.api.modules.ICloudModule
+import dev.redicloud.api.modules.CloudModule
 import dev.redicloud.api.modules.ModuleLifeCycle
 import dev.redicloud.api.modules.ModuleTask
 import dev.redicloud.api.modules.ModuleTaskOrder
@@ -13,7 +13,7 @@ import java.util.logging.Logger
 
 class ExampleModule @Inject constructor(
     @Named("service") val logger: Logger
-) : ICloudModule, CloudInjectable {
+) : CloudModule(), CloudInjectable {
 
     @ModuleTask(ModuleLifeCycle.LOAD, ModuleTaskOrder.EARLY)
     fun early(@Named("this") serviceId: ServiceId) {

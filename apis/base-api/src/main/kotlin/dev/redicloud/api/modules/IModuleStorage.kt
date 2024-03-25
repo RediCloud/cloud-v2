@@ -31,4 +31,4 @@ interface IModuleStorage {
 
 inline fun <reified T> IModuleStorage.get(key: String): T? = get(key, T::class.java)
 
-inline fun <reified T> IModuleStorage.getOrDefault(key: String, defaultValue: T): T = getOrDefault(key, defaultValue, T::class.java)
+inline fun <reified T> IModuleStorage.getOrDefault(key: String, noinline defaultValue: () -> T): T = getOrDefault(key, defaultValue, T::class.java)
