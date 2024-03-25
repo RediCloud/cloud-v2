@@ -5,30 +5,30 @@ interface IModuleStorage {
     val moduleId: String
     val name: String
 
-    fun remove(key: String)
+    suspend fun remove(key: String)
 
-    fun clear()
+    suspend fun clear()
 
-    fun keys(): Set<String>
+    suspend fun keys(): Set<String>
 
-    fun values(): Collection<String>
+    suspend fun values(): Collection<String>
 
-    fun size(): Int
+    suspend fun size(): Int
 
-    fun isEmpty(): Boolean
+    suspend fun isEmpty(): Boolean
 
-    fun isNotEmpty(): Boolean
+    suspend fun isNotEmpty(): Boolean
 
-    fun containsKey(key: String): Boolean
+    suspend fun containsKey(key: String): Boolean
 
-    fun <T> get(key: String, clazz: Class<T>): T?
+    suspend fun <T> get(key: String, clazz: Class<T>): T?
 
-    fun <T> getOrDefault(key: String, defaultValue: () -> T, clazz: Class<T>): T
+    suspend fun <T> getOrDefault(key: String, defaultValue: () -> T, clazz: Class<T>): T
 
-    fun <T> set(key: String, value: T)
+    suspend fun <T> set(key: String, value: T)
 
 }
 
-inline fun <reified T> IModuleStorage.get(key: String): T? = get(key, T::class.java)
+suspend inline fun <reified T> IModuleStorage.get(key: String): T? = get(key, T::class.java)
 
-inline fun <reified T> IModuleStorage.getOrDefault(key: String, noinline defaultValue: () -> T): T = getOrDefault(key, defaultValue, T::class.java)
+suspend inline fun <reified T> IModuleStorage.getOrDefault(key: String, noinline defaultValue: () -> T): T = getOrDefault(key, defaultValue, T::class.java)

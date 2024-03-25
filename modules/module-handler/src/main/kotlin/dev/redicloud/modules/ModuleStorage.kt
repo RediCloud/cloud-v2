@@ -15,39 +15,39 @@ class ModuleStorage(
         LocalCachedMapOptions.name("module-storage:$moduleId:$name")
     )
 
-    override fun remove(key: String) {
+    override suspend fun remove(key: String) {
         map.remove(key)
     }
 
-    override fun clear() {
+    override suspend fun clear() {
         map.clear()
     }
 
-    override fun keys(): Set<String> {
+    override suspend fun keys(): Set<String> {
         return map.keys
     }
 
-    override fun values(): Collection<String> {
+    override suspend fun values(): Collection<String> {
         return map.values
     }
 
-    override fun size(): Int {
+    override suspend fun size(): Int {
         return map.size
     }
 
-    override fun isEmpty(): Boolean {
+    override suspend fun isEmpty(): Boolean {
         return map.isEmpty()
     }
 
-    override fun isNotEmpty(): Boolean {
+    override suspend fun isNotEmpty(): Boolean {
         return map.isNotEmpty()
     }
 
-    override fun containsKey(key: String): Boolean {
+    override suspend fun containsKey(key: String): Boolean {
         return map.containsKey(key)
     }
 
-    override fun <T> getOrDefault(key: String, defaultValue: () -> T, clazz: Class<T>): T {
+    override suspend fun <T> getOrDefault(key: String, defaultValue: () -> T, clazz: Class<T>): T {
         val value = map[key] ?: return run {
             val value = defaultValue()
             set(key, value)
@@ -56,12 +56,12 @@ class ModuleStorage(
         return gson.fromJson(value, clazz)
     }
 
-    override fun <T> get(key: String, clazz: Class<T>): T? {
+    override suspend fun <T> get(key: String, clazz: Class<T>): T? {
         val value = map[key] ?: return null
         return gson.fromJson(value, clazz)
     }
 
-    override fun <T> set(key: String, value: T) {
+    override suspend fun <T> set(key: String, value: T) {
         map[key] = gson.toJson(value)
     }
 
