@@ -17,8 +17,8 @@ File("start-scripts").listFiles()?.filter { it.extension == "sh" || it.extension
     val lines = it.readLines()
         .map { line ->
             line.replace("%version%", version)
-                .replace("%branch%", branch)
-                .replace("%build%", build.replace("/", "+"))
+                .replace("%branch%", branch.replace("/", "+"))
+                .replace("%build%", build)
         }
     it.writeText(lines.joinToString("\n"))
 }
