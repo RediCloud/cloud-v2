@@ -2,16 +2,14 @@ package dev.redicloud.modules
 
 import com.google.inject.Key
 import com.google.inject.name.Named
-import dev.redicloud.api.modules.ICloudModule
-import dev.redicloud.api.modules.IModuleHandler
-import dev.redicloud.api.modules.ModuleLifeCycle
-import dev.redicloud.api.modules.ModuleTask
+import dev.redicloud.api.modules.*
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.utils.CloudInjectable
 import dev.redicloud.api.utils.MODULE_FOLDER
 import dev.redicloud.api.utils.injector
 import dev.redicloud.api.version.ICloudServerVersionType
 import dev.redicloud.commands.api.SUGGESTERS
+import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.apply.impl.JarResourceLoader
@@ -33,7 +31,8 @@ class ModuleHandler(
     repoUrls: List<String>,
     private val eventManager: EventManager,
     private val packetManager: PacketManager,
-    private val serverVersionType: ICloudServerVersionType?
+    private val serverVersionType: ICloudServerVersionType?,
+    private val databaseConnection: DatabaseConnection
 ) : IModuleHandler {
 
     companion object {
@@ -45,6 +44,7 @@ class ModuleHandler(
     private val moduleFiles = mutableListOf<File>()
     private val cachedDescriptions = mutableListOf<ModuleDescription>()
     val repositories = mutableListOf<ModuleWebRepository>()
+    private val storages = mutableListOf<ModuleStorage>()
 
     init {
         repoUrls.forEach { url ->
@@ -379,6 +379,10 @@ class ModuleHandler(
 
     override fun loadModule(moduleId: String) {
         loadModule(cachedDescriptions.firstOrNull { it.id == moduleId }?.cachedFile ?: return)
+    }
+
+    override fun getStorage(moduleId: String, name: String): ModuleStorage {
+        return storages.firstOrNull { it.moduleId == moduleId } ?: ModuleStorage(moduleId, name, databaseConnection)
     }
 
     fun getModuleDatas(): List<ModuleData> {
