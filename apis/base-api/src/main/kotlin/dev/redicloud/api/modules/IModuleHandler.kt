@@ -14,4 +14,6 @@ interface IModuleHandler {
 
     fun loadModule(moduleId: String)
 
+    fun getStorage(moduleId: String, name: String): IModuleStorage
+
 }
