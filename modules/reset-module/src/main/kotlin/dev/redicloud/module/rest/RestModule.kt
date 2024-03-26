@@ -32,7 +32,7 @@ class RestModule : CloudModule(), CloudInjectable {
         private val logger = LogManager.logger(RestModule::class)
     }
 
-    lateinit var app: Javalin
+    var app: Javalin? = null
     val port: Int = System.getProperty("redicloud.rest.port", "8787").toIntOrNull() ?: 8787
 
     lateinit var config: IModuleStorage
@@ -76,11 +76,16 @@ class RestModule : CloudModule(), CloudInjectable {
         register(ServerVersionInfoHandler(serverVersionRepository, serverVersionFetcher, config))
         register(ServerVersionTypeInfoHandler(serverVersionTypeRepository, serverVersionTypeFetcher, config))
 
-        app.start(port)
+        app!!.start(port)
+    }
+
+    @ModuleTask(ModuleLifeCycle.UNLOAD)
+    fun unload() {
+        app?.stop()
     }
 
     private fun register(handler: RestHandler) {
-        app.get(handler.path, handler)
+        app!!.get(handler.path, handler)
     }
 
 }
