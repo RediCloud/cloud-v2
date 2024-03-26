@@ -13,4 +13,5 @@ dependencies {
     compileOnly(project(":commands:command-api"))
     compileOnly(project(":database"))
     compileOnly(BuildDependencies.redisson)
+    compileOnly(BuildDependencies.kotlinReflect)
 }

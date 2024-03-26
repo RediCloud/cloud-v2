@@ -24,6 +24,7 @@ import dev.redicloud.module.rest.handler.server.ProxyServerInfoHandler
 import dev.redicloud.module.rest.handler.version.ServerVersionInfoHandler
 import dev.redicloud.module.rest.handler.version.type.ServerVersionTypeInfoHandler
 import io.javalin.Javalin
+import kotlinx.coroutines.runBlocking
 
 class RestModule : CloudModule(), CloudInjectable {
 
@@ -45,7 +46,7 @@ class RestModule : CloudModule(), CloudInjectable {
     lateinit var configurationTemplateFetcher: ConfigurationTemplateFetcher
 
     @ModuleTask(ModuleLifeCycle.LOAD)
-    suspend fun load(
+    fun load(
         @Named("this") nodeId: ServiceId,
         nodeRepository: ICloudNodeRepository,
         serverRepository: ICloudServerRepository,
@@ -58,7 +59,7 @@ class RestModule : CloudModule(), CloudInjectable {
         logger.info("Starting rest module on port $port...")
         app = Javalin.create()
         config = getStorage("rest-server")
-        val node = nodeRepository.getNode(nodeId)!!
+        val node = runBlocking { nodeRepository.getNode(nodeId)!! }
 
         playerFetcher = PlayerFetcher(playerRepository)
         nodeFetcher = NodeFetcher(nodeRepository)

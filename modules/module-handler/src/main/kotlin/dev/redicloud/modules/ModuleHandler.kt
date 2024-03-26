@@ -24,6 +24,8 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.jar.JarFile
 import kotlin.concurrent.withLock
 import kotlin.reflect.full.*
+import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.javaMethod
 
 class ModuleHandler(
@@ -253,6 +255,13 @@ class ModuleHandler(
             }else {
                 moduleClass.createInstance()
             } as CloudModule
+            val moduleHandlerProperty = moduleInstance::class.memberProperties.find { it.name == "moduleHandler" }
+            if (moduleHandlerProperty == null) {
+                logger.warning("§cModule ${description.id} has no moduleHandler property!")
+            }else {
+                moduleHandlerProperty.isAccessible = true
+                moduleHandlerProperty.javaField?.set(moduleInstance, this)
+            }
         }catch (e: Exception) {
             logger.warning("§cFailed to load module ${description.id}!", e)
             return@withLock
