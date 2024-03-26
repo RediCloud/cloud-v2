@@ -56,8 +56,7 @@ class RestModule : CloudModule(), CloudInjectable {
         serverVersionRepository: ICloudServerVersionRepository,
         serverVersionTypeRepository: ICloudServerVersionTypeRepository,
         fileTemplateRepository: ICloudFileTemplateRepository,
-        configurationTemplateRepository: ICloudConfigurationTemplateRepository,
-        commandManager: ICommandManager<*>
+        configurationTemplateRepository: ICloudConfigurationTemplateRepository
     ) {
         logger.info("Starting rest module on port $port...")
         app = Javalin.create()
@@ -78,11 +77,6 @@ class RestModule : CloudModule(), CloudInjectable {
         register(ProxyServerInfoHandler(serverRepository, serverFetcher, config))
         register(ServerVersionInfoHandler(serverVersionRepository, serverVersionFetcher, config))
         register(ServerVersionTypeInfoHandler(serverVersionTypeRepository, serverVersionTypeFetcher, config))
-        register(NodeAuthenticationHandler(config, node.serviceId.id))
-
-        commandManager.registerCommand(
-            AuthenticationTokenCommand(node.serviceId.id, node.currentSession!!.ipAddress, port, config, nodeRepository)
-        )
 
         app.start(port)
     }
