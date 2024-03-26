@@ -26,3 +26,11 @@ fun String.toUUID(): UUID {
     val bigInt = bytes.foldIndexed(0L) { index, acc, byte -> acc or ((byte.toLong() and 0xff) shl (index * 8)) }
     return UUID(bigInt, 0)
 }
+
+fun String.toBase64(): String {
+    return Base64.getEncoder().encodeToString(toByteArray())
+}
+
+fun String.fromBase64(): String {
+    return String(Base64.getDecoder().decode(this))
+}

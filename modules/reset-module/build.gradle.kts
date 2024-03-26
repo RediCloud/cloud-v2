@@ -5,9 +5,9 @@ dependencies {
     compileOnly(project(":console"))
     compileOnly(project(":logging"))
     compileOnly(project(":utils"))
+    compileOnly(project(":database"))
 
-    dependency(BuildDependencies.khttp)
-    dependency(BuildDependencies.gson)
+    dependency("io.javalin:javalin:6.1.3")
 }
 
 tasks.register("buildAndCopy") {

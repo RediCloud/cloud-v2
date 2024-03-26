@@ -65,4 +65,18 @@ class ModuleStorage(
         map[key] = gson.toJson(value)
     }
 
+    override suspend fun <T> getList(key: String, clazz: Class<T>): List<T> {
+        val value = map[key] ?: return emptyList()
+        return gson.fromJson(value, List::class.java).map { gson.fromJson(it.toString(), clazz) }
+    }
+
+    override suspend fun <T> getListOrDefault(key: String, clazz: Class<T>, defaultValue: () -> List<T>): List<T> {
+        val value = map[key] ?: return run {
+            val value = defaultValue()
+            set(key, value)
+            value
+        }
+        return gson.fromJson(value, List::class.java).map { gson.fromJson(it.toString(), clazz) }
+    }
+
 }
