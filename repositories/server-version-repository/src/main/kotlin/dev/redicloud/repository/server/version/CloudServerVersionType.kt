@@ -110,4 +110,23 @@ class CloudServerVersionType(
         return result
     }
 
+    fun copy(name: String): CloudServerVersionType {
+        return CloudServerVersionType(
+            uniqueId = UUID.randomUUID(),
+            name = name,
+            versionHandlerName = versionHandlerName,
+            proxy = proxy,
+            defaultType = false,
+            connectorPluginName = connectorPluginName,
+            connectorDownloadUrl = connectorDownloadUrl,
+            connectorFolder = connectorFolder,
+            libPattern = libPattern,
+            jvmArguments = jvmArguments.toMutableList(),
+            environmentVariables = environmentVariables.toMutableMap(),
+            programParameters = programParameters.toMutableList(),
+            defaultFiles = defaultFiles.toMutableMap(),
+            fileEdits = fileEdits.toMutableMap()
+        )
+    }
+
 }

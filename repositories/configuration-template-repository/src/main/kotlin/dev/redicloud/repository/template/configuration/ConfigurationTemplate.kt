@@ -35,4 +35,33 @@ class ConfigurationTemplate(
 
     override fun compareTo(other: ICloudConfigurationTemplate): Int = startPriority.compareTo(other.startPriority)
 
+    fun copy(name: String): ICloudConfigurationTemplate {
+        return ConfigurationTemplate(
+            uniqueId = UUID.randomUUID(),
+            name = name,
+            maxMemory = maxMemory,
+            fileTemplateIds = fileTemplateIds,
+            nodeIds = nodeIds,
+            minStartedServices = minStartedServices,
+            maxStartedServices = maxStartedServices,
+            minStartedServicesPerNode = minStartedServicesPerNode,
+            maxStartedServicesPerNode = maxStartedServicesPerNode,
+            percentToStartNewService = percentToStartNewService,
+            serverSplitter = serverSplitter,
+            fallbackServer = fallbackServer,
+            startPriority = startPriority,
+            serverVersionId = serverVersionId,
+            static = static,
+            startPort = startPort,
+            joinPermission = joinPermission,
+            maxPlayers = maxPlayers,
+            timeAfterStopUselessServer = timeAfterStopUselessServer,
+            jvmArguments = jvmArguments,
+            environmentVariables = environmentVariables,
+            programParameters = programParameters,
+            defaultFiles = defaultFiles,
+            fileEdits = fileEdits
+        )
+    }
+
 }

@@ -8,16 +8,16 @@ import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
 
-val version = "2.1.6-SNAPSHOT"
-val build = System.getenv("BUILD_NUMBER") ?: "local"
-val git = System.getenv("BUILD_VCS_NUMBER") ?: "unknown"
-val branch = System.getenv("BRANCH".split("/").last()) ?: "local"
+val version = "2.2.1-SNAPSHOT"
+val build = System.getenv("build_number") ?: "local"
+val git = System.getenv("build_vcs_number") ?: "unknown"
+val branch = System.getenv("branch") ?: "local"
 
 File("start-scripts").listFiles()?.filter { it.extension == "sh" || it.extension == "bat" }?.forEach {
     val lines = it.readLines()
         .map { line ->
             line.replace("%version%", version)
-                .replace("%branch%", branch)
+                .replace("%branch%", branch.replace("/", "+"))
                 .replace("%build%", build)
         }
     it.writeText(lines.joinToString("\n"))

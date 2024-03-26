@@ -35,12 +35,12 @@ dependencies {
     shade(project(":logging"))
     shade(project(":console"))
     shade(project(":tasks"))
-    shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
+    shade(BuildDependencies.cloudLibloaderBootstrap)
     shade(project(":modules:module-handler"))
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":apis:connector-api"))
 
-    compileOnly("org.spigotmc:spigot-api:${Versions.minecraftVersion}")
+    compileOnly(BuildDependencies.spigotApi)
     shade(project(":connectors:bukkit-legacy"))
 }
 

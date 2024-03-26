@@ -1,7 +1,7 @@
 # RediCloud
 
 A redis based cluster cloud system for minecraft. 
-**[[Discord](https://discord.gg/g2HV52VV4G)]**
+**[[Discord](https://discord.gg/g2HV52VV4G)] [[Wiki](https://docs.redicloud.dev)]**
 <br>
 
 ### Overview
@@ -21,7 +21,7 @@ A redis based cluster cloud system for minecraft.
   , [bukkit](https://getbukkit.org/download/craftbukkit), [paper](https://papermc.io) based forks) ✅
 - start proxy services ([bungeecord](https://www.spigotmc.org/wiki/bungeecord/)
   , [waterfall](https://github.com/PaperMC/Waterfall), [velocity](https://github.com/PaperMC/Velocity)) ✅
-- minestom impl also usable
+- [minestom](https://github.com/hollow-cube/minestom-ce) impl also usable✅
 - version handler api (auto update) ✅
 - mods support 
 - online files / version (live update without cloud restart) ✅

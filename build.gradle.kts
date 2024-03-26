@@ -2,7 +2,7 @@ import org.gradle.kotlin.dsl.extra
 
 plugins {
     kotlin("jvm")
-    id("dev.redicloud.libloader") version Versions.libloader apply false
+    id("dev.redicloud.libloader") version BuildDependencies.cloudLibloaderVersion apply false
 }
 
 allprojects {
@@ -19,7 +19,7 @@ allprojects {
     the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).configurationName.set("dependency")
     the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).doBootstrapShade.set(false)
 
-    version = Versions.cloud
+    version = BuildDependencies.cloudVersion
 
     repositories {
         maven("https://repo.redicloud.dev/releases")
@@ -29,13 +29,13 @@ allprojects {
     }
 
     dependencies {
-        compileOnly("com.google.code.gson:gson:${Versions.gson}")
-        dependency("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
-        dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinxCoroutines}")
-        compileOnly("org.redisson:redisson:${Versions.redisson}")
-        dependency("com.github.jkcclemens:khttp:${Versions.khttp}")
-        dependency("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
-        dependency("com.google.inject:guice:${Versions.guice}")
+        compileOnly(BuildDependencies.gson)
+        dependency(BuildDependencies.cloudLibloaderBootstrap)
+        dependency(BuildDependencies.kotlinxCoroutines)
+        compileOnly(BuildDependencies.redisson)
+        dependency(BuildDependencies.khttp)
+        dependency(BuildDependencies.kotlinReflect)
+        dependency(BuildDependencies.guice)
     }
 
     tasks {
@@ -69,30 +69,21 @@ allprojects {
         }
         val publishToRepository = runCatching { extra.get("publishToRepository").toString().toBoolean() }.getOrNull() ?: return@afterEvaluate
         if (!publishToRepository) return@afterEvaluate
-        val snapshotVersion = version.toString().endsWith("-SNAPSHOT")
-        val repositorySnapshotUrl = findConfigurationValue("RC_REPOSITORY_SNAPSHOT_URL") ?: return@afterEvaluate
-        val repositoryReleaseUrl = findConfigurationValue("RC_REPOSITORY_RELEASE_URL") ?: return@afterEvaluate
-        val repositoryUsername = findConfigurationValue("RC_REPOSITORY_USERNAME") ?: return@afterEvaluate
-        val repositoryPassword = findConfigurationValue("RC_REPOSITORY_PASSWORD") ?: return@afterEvaluate
-        val repositoryUrl = if (snapshotVersion) repositorySnapshotUrl else repositoryReleaseUrl
+        val repositoryUsername = project.findProperty("gpr.user") as String? ?: System.getenv("username")
+        val repositoryPassword = project.findProperty("gpr.key") as String? ?: System.getenv("token")
+        val repositoryUrl = project.findProperty("gpr.url") as String? ?: ("https://maven.pkg.github.com/" + System.getenv("repository"))
         (extensions["publishing"] as PublishingExtension).apply {
             repositories {
                 maven {
-                    name = "redicloud"
+                    name = "GitHubPackages"
                     url = uri(repositoryUrl)
                     credentials {
                         username = repositoryUsername
                         password = repositoryPassword
                     }
-                    authentication {
-                        create<BasicAuthentication>("basic")
-                    }
                 }
                 publications {
-                    create<MavenPublication>(project.name.replace("-", "_")) {
-                        groupId = project.group.toString()
-                        artifactId = project.name
-                        version = Versions.cloud
+                    register<MavenPublication>("gpr") {
                         from(components["java"])
                     }
                 }

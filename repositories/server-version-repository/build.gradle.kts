@@ -1,10 +1,10 @@
 group = "dev.redicloud.repository"
 
 dependencies {
-    testImplementation("com.github.jkcclemens:khttp:${Versions.khttp}")
-    implementation("com.github.jkcclemens:khttp:${Versions.khttp}")
-    runtimeOnly("com.github.jkcclemens:khttp:${Versions.khttp}")
-    testRuntimeOnly("com.github.jkcclemens:khttp:${Versions.khttp}")
+    testImplementation(BuildDependencies.khttp)
+    implementation(BuildDependencies.khttp)
+    runtimeOnly(BuildDependencies.khttp)
+    testRuntimeOnly(BuildDependencies.khttp)
 
     compileOnly(project(":apis:base-api"))
     compileOnly(project(":utils"))

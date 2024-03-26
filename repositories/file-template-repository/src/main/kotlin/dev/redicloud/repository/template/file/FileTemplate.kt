@@ -28,4 +28,13 @@ data class FileTemplate(
             return File(TEMPLATE_FOLDER.getFile().absolutePath, prefix)
         }
 
+    fun copy(name: String): ICloudFileTemplate {
+        return FileTemplate(
+            uniqueId = UUID.randomUUID(),
+            prefix = prefix,
+            name = name,
+            inherited = inherited
+        )
+    }
+
 }

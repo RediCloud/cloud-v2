@@ -1,7 +1,7 @@
 package dev.redicloud.module.papermc
 
 import com.google.inject.name.Named
-import dev.redicloud.api.modules.ICloudModule
+import dev.redicloud.api.modules.CloudModule
 import dev.redicloud.api.modules.ModuleLifeCycle
 import dev.redicloud.api.modules.ModuleTask
 import dev.redicloud.api.service.ServiceId
@@ -14,7 +14,7 @@ import dev.redicloud.api.version.IVersionRepository
 import dev.redicloud.console.Console
 import dev.redicloud.logging.LogManager
 
-class PaperMcUpdaterModule : ICloudModule, CloudInjectable {
+class PaperMcUpdaterModule : CloudModule(), CloudInjectable {
 
     companion object {
         private val logger = LogManager.logger(PaperMcServerVersionHandler::class)
