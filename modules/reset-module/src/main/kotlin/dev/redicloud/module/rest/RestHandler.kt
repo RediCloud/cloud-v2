@@ -1,14 +1,22 @@
 package dev.redicloud.module.rest
 
+import dev.redicloud.api.modules.IModuleStorage
+import dev.redicloud.api.modules.getList
+import dev.redicloud.api.modules.getListOrDefault
+import dev.redicloud.utils.EasyCache
+import dev.redicloud.utils.SingleCache
 import io.javalin.http.Context
 import io.javalin.http.Handler
 import kotlinx.coroutines.runBlocking
+import kotlin.time.Duration.Companion.seconds
 
 abstract class RestHandler(
-    val restConfiguration: RestConfiguration,
+    val config: IModuleStorage,
     val path: String,
     val auth: Boolean = true
 ) : Handler {
+
+    private val tokensCache = SingleCache<List<String>>(5.seconds) { config.getListOrDefault("tokens") { emptyList() } }
 
     override fun handle(ctx: Context) {
         runBlocking {
@@ -20,7 +28,7 @@ abstract class RestHandler(
                         ctx.status(401)
                         return@runBlocking
                     }
-                    if (restConfiguration.getList<String>("tokens").none { it == token }) {
+                    if (tokensCache.get()!!.none { it == token }) {
                         ctx.json(mapOf("error" to "Invalid token"))
                         ctx.status(401)
                         return@runBlocking

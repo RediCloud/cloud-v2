@@ -1,30 +1,44 @@
 package dev.redicloud.module.rest.handler.player
 
+import dev.redicloud.api.modules.IModuleStorage
 import dev.redicloud.api.player.ICloudPlayerRepository
-import dev.redicloud.module.rest.RestConfiguration
 import dev.redicloud.module.rest.RestHandler
-import dev.redicloud.module.rest.parser.PlayerRestParser
+import dev.redicloud.module.rest.fetcher.PlayerFetcher
 import io.javalin.http.Context
 
 class PlayerInfoHandler(
-    restConfiguration: RestConfiguration,
-    private val playerParser: PlayerRestParser
-) : RestHandler(restConfiguration, "/player/info") {
+    private val playerRepository: ICloudPlayerRepository,
+    private val playerParser: PlayerFetcher,
+    config: IModuleStorage,
+) : RestHandler(config, "/player/info") {
 
     override suspend fun handleRequest(ctx: Context) {
-        val player = if (ctx.queryParam("name") != null) {
-            playerParser.parseNameToPlayer { ctx.queryParam("name") }
-        }else if (ctx.queryParam("uuid") != null) {
-            playerParser.parseUUIDToPlayer { ctx.queryParam("uuid") }
-        }else{
-            null
-        }
-        if (player == null) {
-            ctx.status(404)
-            ctx.json(mapOf("error" to "Player not found"))
+        if (ctx.queryParam("name") != null) {
+            val player = playerParser.fetchPlayerByName(ctx.queryParam("name"))
+            if (player == null) {
+                ctx.status(404)
+                ctx.json(mapOf("error" to "Player not found"))
+                return
+            }
+            ctx.json(player)
             return
         }
-        ctx.json(player)
+        if (ctx.queryParam("uuid") != null) {
+            val player = playerParser.fetchPlayerByUniqueId(ctx.queryParam("uuid"))
+            if (player == null) {
+                ctx.status(404)
+                ctx.json(mapOf("error" to "Player not found"))
+                return
+            }
+            ctx.json(player)
+            return
+        }
+        val players = if (ctx.queryParam("online")?.toBooleanStrictOrNull() == true) {
+            playerRepository.getConnectedPlayers()
+        } else {
+            playerRepository.getRegisteredPlayers()
+        }
+        ctx.json(players)
     }
 
 }
