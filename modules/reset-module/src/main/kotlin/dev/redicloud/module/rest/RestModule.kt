@@ -16,9 +16,7 @@ import dev.redicloud.api.utils.CloudInjectable
 import dev.redicloud.api.version.ICloudServerVersionRepository
 import dev.redicloud.api.version.ICloudServerVersionTypeRepository
 import dev.redicloud.logging.LogManager
-import dev.redicloud.module.rest.commands.AuthenticationTokenCommand
 import dev.redicloud.module.rest.fetcher.*
-import dev.redicloud.module.rest.handler.cluster.NodeAuthenticationHandler
 import dev.redicloud.module.rest.handler.node.NodeInfoHandler
 import dev.redicloud.module.rest.handler.player.PlayerInfoHandler
 import dev.redicloud.module.rest.handler.server.MinecraftServerInfoHandler
@@ -26,7 +24,6 @@ import dev.redicloud.module.rest.handler.server.ProxyServerInfoHandler
 import dev.redicloud.module.rest.handler.version.ServerVersionInfoHandler
 import dev.redicloud.module.rest.handler.version.type.ServerVersionTypeInfoHandler
 import io.javalin.Javalin
-import org.redisson.api.RedissonClient
 
 class RestModule : CloudModule(), CloudInjectable {
 
