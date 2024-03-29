@@ -253,6 +253,22 @@ class ModuleHandler(
             }else {
                 moduleClass.createInstance()
             } as CloudModule
+            val moduleHandlerField = CloudModule::class.java.declaredFields.firstOrNull { it.type == IModuleHandler::class.java}
+            if (moduleHandlerField == null) {
+                logger.warning("§cModule ${description.id} has no moduleHandler property!")
+            }else {
+                moduleHandlerField.isAccessible = true
+                moduleHandlerField.set(moduleInstance, this)
+                moduleHandlerField.isAccessible = false
+            }
+            val moduleIdField = CloudModule::class.java.declaredFields.firstOrNull { it.name == "moduleId" }
+            if (moduleIdField == null) {
+                logger.warning("§cModule ${description.id} has no moduleId property!")
+            }else {
+                moduleIdField.isAccessible = true
+                moduleIdField.set(moduleInstance, description.id)
+                moduleIdField.isAccessible = false
+            }
         }catch (e: Exception) {
             logger.warning("§cFailed to load module ${description.id}!", e)
             return@withLock

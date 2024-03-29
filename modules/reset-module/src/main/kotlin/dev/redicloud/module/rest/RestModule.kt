@@ -16,9 +16,7 @@ import dev.redicloud.api.utils.CloudInjectable
 import dev.redicloud.api.version.ICloudServerVersionRepository
 import dev.redicloud.api.version.ICloudServerVersionTypeRepository
 import dev.redicloud.logging.LogManager
-import dev.redicloud.module.rest.commands.AuthenticationTokenCommand
 import dev.redicloud.module.rest.fetcher.*
-import dev.redicloud.module.rest.handler.cluster.NodeAuthenticationHandler
 import dev.redicloud.module.rest.handler.node.NodeInfoHandler
 import dev.redicloud.module.rest.handler.player.PlayerInfoHandler
 import dev.redicloud.module.rest.handler.server.MinecraftServerInfoHandler
@@ -26,7 +24,7 @@ import dev.redicloud.module.rest.handler.server.ProxyServerInfoHandler
 import dev.redicloud.module.rest.handler.version.ServerVersionInfoHandler
 import dev.redicloud.module.rest.handler.version.type.ServerVersionTypeInfoHandler
 import io.javalin.Javalin
-import org.redisson.api.RedissonClient
+import kotlinx.coroutines.runBlocking
 
 class RestModule : CloudModule(), CloudInjectable {
 
@@ -34,7 +32,7 @@ class RestModule : CloudModule(), CloudInjectable {
         private val logger = LogManager.logger(RestModule::class)
     }
 
-    lateinit var app: Javalin
+    var app: Javalin? = null
     val port: Int = System.getProperty("redicloud.rest.port", "8787").toIntOrNull() ?: 8787
 
     lateinit var config: IModuleStorage
@@ -48,7 +46,7 @@ class RestModule : CloudModule(), CloudInjectable {
     lateinit var configurationTemplateFetcher: ConfigurationTemplateFetcher
 
     @ModuleTask(ModuleLifeCycle.LOAD)
-    suspend fun load(
+    fun load(
         @Named("this") nodeId: ServiceId,
         nodeRepository: ICloudNodeRepository,
         serverRepository: ICloudServerRepository,
@@ -62,7 +60,7 @@ class RestModule : CloudModule(), CloudInjectable {
         logger.info("Starting rest module on port $port...")
         app = Javalin.create()
         config = getStorage("rest-server")
-        val node = nodeRepository.getNode(nodeId)!!
+        val node = runBlocking { nodeRepository.getNode(nodeId)!! }
 
         playerFetcher = PlayerFetcher(playerRepository)
         nodeFetcher = NodeFetcher(nodeRepository)
@@ -84,11 +82,16 @@ class RestModule : CloudModule(), CloudInjectable {
             AuthenticationTokenCommand(node.serviceId.id, node.currentSession!!.ipAddress, port, config, nodeRepository)
         )
 
-        app.start(port)
+        app!!.start(port)
+    }
+
+    @ModuleTask(ModuleLifeCycle.UNLOAD)
+    fun unload() {
+        app?.stop()
     }
 
     private fun register(handler: RestHandler) {
-        app.get(handler.path, handler)
+        app!!.get(handler.path, handler)
     }
 
 }

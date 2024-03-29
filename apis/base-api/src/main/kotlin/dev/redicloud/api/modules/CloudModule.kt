@@ -2,9 +2,9 @@ package dev.redicloud.api.modules
 
 abstract class CloudModule {
     private lateinit var moduleId: String
-    private lateinit var moduleHandler: IModuleHandler
+    private val moduleHandler: IModuleHandler? = null
 
     fun getStorage(name: String): IModuleStorage {
-        return moduleHandler.getStorage(moduleId, name)
+        return moduleHandler!!.getStorage(moduleId, name)
     }
 }
