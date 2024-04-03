@@ -45,10 +45,10 @@ dependencies {
     shade(project(":modules:module-handler"))
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":apis:connector-api"))
-    shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
+    shade(BuildDependencies.cloudLibloaderBootstrap)
 
-    compileOnly("dev.hollowcube:minestom-ce:1619cedc53")
-    compileOnly("dev.hollowcube:minestom-ce-extensions:1.2.0")
+    compileOnly(BuildDependencies.minestomApi)
+    compileOnly(BuildDependencies.minestomExtensions)
 }
 
 tasks.register("buildAndCopy") {

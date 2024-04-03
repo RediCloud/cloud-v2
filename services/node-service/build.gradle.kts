@@ -34,13 +34,13 @@ dependencies {
     shade(project(":file-cluster"))
     shade(project(":server-factories:node-server-factory"))
     shade(project(":server-factories:remote-server-factory"))
-    shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
+    shade(BuildDependencies.cloudLibloaderBootstrap)
     shade(project(":repositories:cache-repository"))
     shade(project(":modules:module-handler"))
     shade(project(":updater"))
 
-    compileOnly("org.jline:jline-terminal-jansi:${Versions.jline}")
-    compileOnly("com.jcraft:jsch:0.1.55")
+    compileOnly(BuildDependencies.jlineJansi)
+    compileOnly(BuildDependencies.jsch)
 }
 
 tasks.register("buildAndCopy") {
