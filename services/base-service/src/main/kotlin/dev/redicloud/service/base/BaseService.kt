@@ -251,6 +251,7 @@ abstract class BaseService(
         if (System.getProperty("redicloud.inject.database", "true").toBooleanStrictOrNull() == true) {
             bind(RedissonClient::class).toInstance(databaseConnection.getClient())
         }
+        bind(ClusterConfiguration::class).toInstance(clusterConfiguration)
     }
 
 }

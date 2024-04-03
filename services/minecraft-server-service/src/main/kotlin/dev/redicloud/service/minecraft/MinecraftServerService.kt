@@ -54,7 +54,7 @@ abstract class MinecraftServerService<T> : BaseService(
     }
     private val hostServiceId: ServiceId = runBlocking { serverRepository.connect(serviceId) }
     override val moduleHandler: ModuleHandler
-        = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, runBlocking { getVersionType() })
+        = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, runBlocking { getVersionType() }, databaseConnection)
     abstract val screenProvider: AbstractScreenProvider
     val remoteServerFactory: RemoteServerFactory
         = RemoteServerFactory(this.databaseConnection, this.nodeRepository, this.serverRepository)
