@@ -86,3 +86,4 @@ To use specific java arguments you can use the following commands:
 * `svt list`
 * `svt info <name>`
 * `svt delete <name>`
+* `svt duplicate <name> [new-name]`

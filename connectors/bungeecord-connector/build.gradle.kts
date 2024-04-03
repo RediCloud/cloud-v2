@@ -31,9 +31,9 @@ dependencies {
     shade(project(":modules:module-handler"))
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":apis:connector-api"))
-    shade(BuildDependencies.cloudLibloaderBootstrap)
+    shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
 
-    compileOnly(BuildDependencies.bungeeCordApi)
+    compileOnly("net.md-5:bungeecord-api:1.20-R0.3-SNAPSHOT")
 }
 
 tasks.register("buildAndCopy") {

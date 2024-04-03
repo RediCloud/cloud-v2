@@ -7,11 +7,9 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import org.redisson.Redisson
-import org.redisson.api.RLock
 import org.redisson.api.RedissonClient
 import org.redisson.client.codec.BaseCodec
 import org.redisson.config.Config
-import java.util.concurrent.TimeUnit
 
 class DatabaseConnection(
     config: DatabaseConfiguration,
@@ -30,15 +28,15 @@ class DatabaseConnection(
     private val redissonConfig = Config()
     private var client: RedissonClient? = null
     private val repositories = mutableListOf<DatabaseRepository<*>>()
-    var lock: RLock? = null
 
     init {
         redissonConfig
             .setCodec(codec)
         if (config.isCluster()) {
             val clusterConfig = redissonConfig.useClusterServers()
-                .setClientName(serviceId.toName())
-                .setPassword(config.password)
+                .setClientName(serviceId.toName()).also {
+                    if(config.password.isNotEmpty()) it.setPassword(config.password)
+                }
             if (!config.username.isNullOrEmpty()) {
                 clusterConfig.setUsername(config.username)
             }
@@ -55,11 +53,12 @@ class DatabaseConnection(
                 .setAddress(config.nodes.first().toConnectionString())
                 .setDatabase(config.databaseId)
                 .setClientName(serviceId.toName())
-                .setPassword(config.password)
                 .setConnectionPoolSize(connectionPoolSize)
                 .setSubscriptionConnectionPoolSize(subscriptionConnectionPoolSize)
                 .setConnectionMinimumIdleSize(connectionMinimumIdleSize)
-                .setSubscriptionConnectionMinimumIdleSize(subscriptionConnectionMinimumIdleSize)
+                .setSubscriptionConnectionMinimumIdleSize(subscriptionConnectionMinimumIdleSize).also {
+                    if(config.password.isNotEmpty()) it.setPassword(config.password)
+                }
             if (!config.username.isNullOrEmpty()) {
                 singleConfig.setUsername(config.username)
             }
@@ -68,20 +67,11 @@ class DatabaseConnection(
 
     suspend fun connect() {
         client = Redisson.create(redissonConfig)
-        lock = client!!.getLock("cloud:locks:${serviceId.toDatabaseIdentifier()}")
-        if (lock!!.isLocked) {
-            throw IllegalStateException("Service is already started (${serviceId.toName()}) !")
-        }
         LOGGER.fine("Successfully connected to redis")
     }
 
     fun disconnect() {
-        if (isConnected()) {
-            if (lock?.isLocked == true) {
-                lock?.forceUnlock()
-            }
-            client!!.shutdown()
-        }
+        if (isConnected()) client!!.shutdown()
         LOGGER.fine("Successfully disconnected from redis")
     }
 

@@ -88,15 +88,14 @@ class InitializeConsole() : Console(
     )
 
     private val databasePasswordQuestion = ConsoleQuestion(
-        question = "What is the password of the database?",
+        question = "What is the password of the database? (leave empty for none)",
         condition = object : ConsoleQuestionCondition {
             override fun fail(input: String): Boolean {
                 val fail = input.contains(" ")
                 if (fail) writeLine("§cThe password of the database can't contain spaces!")
                 return fail
             }
-        }
-    )
+        }, default = "")
 
     private val databaseIdQuestion = ConsoleQuestion(
         question = "What is the id of the database?",

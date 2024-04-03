@@ -12,10 +12,10 @@ repositories {
 }
 
 dependencies {
-    implementation(BuildDependencies.gson)
-    implementation(BuildDependencies.cloudLibloaderBootstrap)
-    implementation(BuildDependencies.kotlinxCoroutines)
-    implementation(BuildDependencies.redisson)
+    implementation("com.google.code.gson:gson:${Versions.gson}")
+    implementation("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinxCoroutines}")
+    implementation("org.redisson:redisson:${Versions.redisson}")
 }
 
 tasks {

@@ -12,7 +12,7 @@ repositories {
 
 dependencies {
     compileOnly(project(":logging"))
-    dependency(BuildDependencies.gson)
-    testRuntimeOnly(BuildDependencies.gson)
-    implementation(BuildDependencies.gson)
+    dependency("com.google.code.gson:gson:${Versions.gson}")
+    testRuntimeOnly("com.google.code.gson:gson:${Versions.gson}")
+    implementation("com.google.code.gson:gson:${Versions.gson}")
 }
