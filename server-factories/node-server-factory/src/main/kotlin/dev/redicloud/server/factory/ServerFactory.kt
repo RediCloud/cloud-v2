@@ -65,7 +65,7 @@ class ServerFactory(
         private val logger = LogManager.logger(ServerFactory::class)
     }
     override val hostedProcesses: MutableList<ServerProcess> = mutableListOf()
-    private val idLock = databaseConnection.getClient().getLock("server-factory:id-lock")
+    private val idLock = databaseConnection.getLock("server-factory:id-lock")
 
     init {
         console.commandManager.registerParser(ServerScreen::class.java, ServerScreenParser(console))

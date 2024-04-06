@@ -35,10 +35,10 @@ dependencies {
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":modules:module-handler"))
     shade(project(":apis:connector-api"))
-    shade(BuildDependencies.cloudLibloaderBootstrap)
+    shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
 
-    compileOnly(BuildDependencies.velocityApi)
-    kapt(BuildDependencies.velocityApi)
+    compileOnly(BuildDependencies.VELOCITY_API)
+    kapt(BuildDependencies.VELOCITY_API)
 }
 
 tasks.register("buildAndCopy") {

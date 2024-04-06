@@ -12,10 +12,9 @@ import kotlin.reflect.full.isSubclassOf
 open class DatabaseBucketRepository<I : Any, K: Any>(
     connection: DatabaseConnection,
     name: String,
-    codec: BaseCodec? = null,
     private val interfaceClass: KClass<I>,
     private val implementationClass: KClass<K>
-) : DatabaseRepository<K>(connection, name, codec) {
+) : DatabaseRepository<K>(connection, name) {
 
     init {
         if (!implementationClass.isSubclassOf(interfaceClass)) {
@@ -42,7 +41,7 @@ open class DatabaseBucketRepository<I : Any, K: Any>(
     protected open suspend fun delete(identifier: String): Boolean = getHandle(identifier).delete()
 
     protected open suspend fun getAll(customPattern: String? = null): List<K> =
-        connection.getClient().keys.getKeysByPattern(customPattern ?: "$name:*")
+        connection.client.keys.getKeysByPattern(customPattern ?: "$name:*")
             .mapNotNull { getUnsafeHandle<K>(it, true).get() }
 
     protected open suspend fun exists(identifier: String): Boolean = getHandle(identifier).isExists
@@ -50,15 +49,13 @@ open class DatabaseBucketRepository<I : Any, K: Any>(
     private fun getHandle(identifier: String, customIdentifier: Boolean = false): RBucket<I> {
         if (!connection.connected) throw IllegalStateException("Not connected to database")
         val databaseIdentifier = "cloud:" + (if (customIdentifier) identifier else toDatabaseIdentifier(identifier))
-        return if (codec != null) connection.getClient().getBucket(databaseIdentifier, codec)
-        else connection.getClient().getBucket(databaseIdentifier)
+        return connection.client.getBucket(databaseIdentifier)
     }
 
     private fun <X> getUnsafeHandle(identifier: String, customIdentifier: Boolean): RBucket<X> {
         if (!connection.connected) throw IllegalStateException("Not connected to database")
         val databaseIdentifier = "cloud:" + (if (customIdentifier) identifier else toDatabaseIdentifier(identifier))
-        return if (codec != null) connection.getClient().getBucket(databaseIdentifier, codec)
-        else connection.getClient().getBucket(databaseIdentifier)
+        return connection.client.getBucket(databaseIdentifier)
     }
 
     class UnsafeDatabaseBucketRepository<I : Any, K: Any>(

@@ -45,10 +45,10 @@ dependencies {
     shade(project(":modules:module-handler"))
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":apis:connector-api"))
-    shade(BuildDependencies.cloudLibloaderBootstrap)
+    shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
 
-    compileOnly(BuildDependencies.minestomApi)
-    compileOnly(BuildDependencies.minestomExtensions)
+    compileOnly(BuildDependencies.MINESTOM_API)
+    compileOnly(BuildDependencies.MINESTOM_EXTENSIONS)
 }
 
 tasks.register("buildAndCopy") {

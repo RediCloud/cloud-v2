@@ -10,6 +10,6 @@ dependencies {
     compileOnly(project(":logging"))
     compileOnly(project(":tasks"))
 
-    dependency(BuildDependencies.redisson)
-    dependency(BuildDependencies.gson)
+    dependency(BuildDependencies.REDISSON)
+    dependency(BuildDependencies.GSON)
 }

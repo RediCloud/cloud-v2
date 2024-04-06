@@ -6,8 +6,8 @@ dependencies {
     compileOnly(project(":logging"))
     compileOnly(project(":utils"))
 
-    dependency(BuildDependencies.khttp)
-    dependency(BuildDependencies.gson)
+    dependency(BuildDependencies.KHTTP)
+    dependency(BuildDependencies.GSON)
 }
 
 tasks.register("buildAndCopy") {

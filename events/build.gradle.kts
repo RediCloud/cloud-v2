@@ -10,6 +10,6 @@ dependencies {
     compileOnly(project(":packets"))
     compileOnly(project(":logging"))
 
-    dependency(BuildDependencies.kotlinxCoroutines)
-    dependency(BuildDependencies.gson)
+    dependency(BuildDependencies.KOTLINX_COROUTINES)
+    dependency(BuildDependencies.GSON)
 }

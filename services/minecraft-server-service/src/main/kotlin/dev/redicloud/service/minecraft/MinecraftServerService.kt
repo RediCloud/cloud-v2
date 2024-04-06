@@ -60,7 +60,7 @@ abstract class MinecraftServerService<T> : BaseService(
         = RemoteServerFactory(this.databaseConnection, this.nodeRepository, this.serverRepository)
 
     init {
-        packetManager.registerCategoryChannel(currentServerData.configurationTemplateName)
+        runBlocking { packetManager.registerCategoryChannel(currentServerData.configurationTemplateName) }
         registerDefaults()
     }
 

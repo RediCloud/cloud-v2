@@ -1,5 +1,6 @@
 package dev.redicloud.repository.service
 
+import dev.redicloud.api.database.grid.list.ISyncedMutableList
 import dev.redicloud.api.service.ICloudService
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
@@ -7,7 +8,6 @@ import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.runBlocking
-import org.redisson.api.RList
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 import kotlin.time.Duration
@@ -24,7 +24,6 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
 ) : CachedDatabaseBucketRepository<I, K>(
     databaseConnection,
     "service:${targetServiceType.name.lowercase()}",
-    null,
     interfaceClass,
     implClass,
     cacheDuration,
@@ -59,12 +58,12 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
         }
     }
 
-    val connectedServices: RList<ServiceId>
+    val connectedServices: ISyncedMutableList<ServiceId>
         get() {
             return targetRepository.connectedServices
         }
 
-    val registeredServices: RList<ServiceId>
+    val registeredServices: ISyncedMutableList<ServiceId>
         get() {
             return targetRepository.registeredServices
         }
@@ -79,12 +78,16 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
     }
 
     suspend fun existsService(serviceId: ServiceId): Boolean {
-        if (serviceId.type != targetServiceType) throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${serviceId.type.name})")
+        if (serviceId.type != targetServiceType) {
+            throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${serviceId.type.name})")
+        }
         return exists(serviceId.id.toString())
     }
 
     suspend fun createService(cloudService: I): K {
-        if (cloudService.serviceId.type != targetServiceType) throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})")
+        if (cloudService.serviceId.type != targetServiceType) {
+            throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})")
+        }
         if (cloudService.connected && !connectedServices.contains(cloudService.serviceId)) {
             connectedServices.add(cloudService.serviceId)
         }else if(!cloudService.connected) {
@@ -97,7 +100,9 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
     }
 
     suspend fun updateService(cloudService: I): K {
-        if (cloudService.serviceId.type != targetServiceType) throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})")
+        if (cloudService.serviceId.type != targetServiceType) {
+            throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})")
+        }
         if (cloudService.connected && !connectedServices.contains(cloudService.serviceId)) {
             connectedServices.add(cloudService.serviceId)
         }else if(!cloudService.connected) {

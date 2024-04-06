@@ -104,8 +104,7 @@ abstract class BaseService(
         } else {
             DatabaseConnection(
                 databaseConfiguration,
-                serviceId,
-                GsonCodec()
+                serviceId
             )
         }
         try {
@@ -250,7 +249,7 @@ abstract class BaseService(
         bind(java.util.logging.Logger::class).annotatedWith(Names.named("service")).toInstance(LOGGER)
         bind(CloudTaskManager::class).toInstance(taskManager)
         if (System.getProperty("redicloud.inject.redisson", "true").toBooleanStrictOrNull() == true) {
-            bind(RedissonClient::class).toInstance(databaseConnection.getClient())
+            bind(RedissonClient::class).toInstance(databaseConnection.client)
         }
         bind(ClusterConfiguration::class).toInstance(clusterConfiguration)
         bind(IDatabaseConnection::class).toInstance(databaseConnection)

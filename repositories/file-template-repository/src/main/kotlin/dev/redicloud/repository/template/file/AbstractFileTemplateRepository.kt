@@ -17,7 +17,6 @@ abstract class AbstractFileTemplateRepository(
 ) : CachedDatabaseBucketRepository<ICloudFileTemplate, FileTemplate>(
     databaseConnection,
     "file-template",
-    null,
     ICloudFileTemplate::class,
     FileTemplate::class,
     5.minutes,

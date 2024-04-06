@@ -3,7 +3,6 @@ package dev.redicloud.modules
 import dev.redicloud.api.modules.IModuleStorage
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.utils.gson.gson
-import org.redisson.api.options.LocalCachedMapOptions
 
 class ModuleStorage(
     override val moduleId: String,
@@ -11,9 +10,7 @@ class ModuleStorage(
     databaseConnection: DatabaseConnection
 ) : IModuleStorage {
 
-    private val map = databaseConnection.getClient().getLocalCachedMap<String, String>(
-        LocalCachedMapOptions.name("module-storage:$moduleId:$name")
-    )
+    private val map = databaseConnection.getCacheMutableMap<String, String>("module-storage:$moduleId:$name")
 
     override suspend fun remove(key: String) {
         map.remove(key)

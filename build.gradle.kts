@@ -2,7 +2,7 @@ import org.gradle.kotlin.dsl.extra
 
 plugins {
     kotlin("jvm")
-    id("dev.redicloud.libloader") version BuildDependencies.cloudLibloaderVersion apply false
+    id("dev.redicloud.libloader") version BuildDependencies.CLOUD_LIBLOADER_VERSION apply false
 }
 
 allprojects {
@@ -19,7 +19,7 @@ allprojects {
     the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).configurationName.set("dependency")
     the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).doBootstrapShade.set(false)
 
-    version = BuildDependencies.cloudVersion
+    version = BuildDependencies.CLOUD_VERSION
 
     repositories {
         maven("https://repo.redicloud.dev/releases")
@@ -29,13 +29,12 @@ allprojects {
     }
 
     dependencies {
-        compileOnly(BuildDependencies.gson)
-        dependency(BuildDependencies.cloudLibloaderBootstrap)
-        dependency(BuildDependencies.kotlinxCoroutines)
-        compileOnly(BuildDependencies.redisson)
-        dependency(BuildDependencies.khttp)
-        dependency(BuildDependencies.kotlinReflect)
-        dependency(BuildDependencies.guice)
+        compileOnly(BuildDependencies.GSON)
+        dependency(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
+        dependency(BuildDependencies.KOTLINX_COROUTINES)
+        dependency(BuildDependencies.KHTTP)
+        dependency(BuildDependencies.KOTLIN_REFLECT)
+        dependency(BuildDependencies.GUICE)
     }
 
     tasks {
