@@ -19,7 +19,7 @@ val MINECRAFT_VERSIONS_FOLDER = CloudFile("versions", "storage", folder = true)
 val TEMPLATE_FOLDER = CloudFile("templates", "storage", folder = true)
 val DATABASE_JSON = CloudFile("database.json", "storage")
 val CONNECTORS_FOLDER = CloudFile("connectors", "storage", folder = true)
-val MODULE_FOLDER = CloudFile("modules", "storage", folder = true)
+val MODULES_FOLDER = CloudFile("modules", "storage", folder = true)
 
 fun toCloudFile(universalPath: String): File {
     return File(CLOUD_PATH, universalPath)
@@ -32,20 +32,21 @@ fun toUniversalPath(file: File): String {
 
 class CloudFile(val name: String, val parent: String = "", val folder: Boolean = false) {
 
-    fun getCloudPath(): String {
+    fun getCloudPath(cloudFolder: File? = null): String {
+        val prefixPath = cloudFolder?.absolutePath ?: CLOUD_PATH
         return if (parent.isEmpty()) {
-            CLOUD_PATH + File.separator + name
+            prefixPath + File.separator + name
         }else {
-            CLOUD_PATH + File.separator + parent + File.separator + name
+            prefixPath + File.separator + parent + File.separator + name
         }
     }
 
-    fun getFile(): File {
-        return File(getCloudPath())
+    fun getFile(cloudFolder: File? = null): File {
+        return File(getCloudPath(cloudFolder))
     }
 
-    fun createIfNotExists(): File {
-        val file = getFile()
+    fun createIfNotExists(cloudFolder: File? = null): File {
+        val file = getFile(cloudFolder)
         if (file.exists()) return file
         if (!file.parentFile.exists()) file.parentFile.mkdirs()
         if (folder) {

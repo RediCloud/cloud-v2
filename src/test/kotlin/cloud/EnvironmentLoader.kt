@@ -1,11 +1,9 @@
 package cloud
 
-import java.io.File
-
 class EnvironmentLoader {
 
     private val environments = mutableMapOf(
-        "LIBRARY_FOLDER" to File(".libs", RediCloud.cloudWorkingDirectory.absolutePath).absolutePath,
+        "LIBRARY_FOLDER" to "/libs"
     )
 
     fun environments(): Map<String, String> {

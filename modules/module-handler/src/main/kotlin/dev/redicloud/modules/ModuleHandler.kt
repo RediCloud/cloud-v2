@@ -5,7 +5,7 @@ import com.google.inject.name.Named
 import dev.redicloud.api.modules.*
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.utils.CloudInjectable
-import dev.redicloud.api.utils.MODULE_FOLDER
+import dev.redicloud.api.utils.MODULES_FOLDER
 import dev.redicloud.api.utils.injector
 import dev.redicloud.api.version.ICloudServerVersionType
 import dev.redicloud.commands.api.SUGGESTERS
@@ -176,7 +176,7 @@ class ModuleHandler(
 
     fun detectModules() = lock.withLock {
         moduleFiles.clear()
-        MODULE_FOLDER.getFile().listFiles()?.filter {
+        MODULES_FOLDER.getFile().listFiles()?.filter {
             it.isFile && it.extension == "jar"
         }?.filter {
             val jarFile = JarFile(it)

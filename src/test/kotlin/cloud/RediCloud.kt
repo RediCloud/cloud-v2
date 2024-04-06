@@ -1,45 +1,65 @@
 package cloud
 
 import dev.redicloud.utils.findFreePort
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import redis.RedisInstance
 import java.io.File
 
 class RediCloud(
     val name: String,
     val nodesCount: Int = 1,
-    val temp: Boolean = true
+    val temp: Boolean = true,
+    val version: String
 ) {
 
     companion object {
         val cloudWorkingDirectory = File("test-cloud")
+        val logger: Logger = LoggerFactory.getLogger(RediCloud::class.java)
     }
 
-    val redis = RedisInstance()
+    val redis = RedisInstance(name)
     val nodes = mutableListOf<RediCloudNode>()
+    var shuttingdown: Boolean = false
+        private set
 
     init {
+        logger.info("Starting cloud $name...")
         addShutdownHook()
         cloudWorkingDirectory.mkdirs()
-        println("Starting redis at port ${redis.port}...")
         redis.start()
+        logger.info("Started redis at port ${redis.port}...")
 
-        for (i in 0 until nodesCount) {
-            println("Starting node-$i at debug port ${findFreePort(5000)}...")
+        for (i in 1 until nodesCount+1) {
             createNode("node-$i", name, findFreePort(5000)).start()
         }
     }
 
     fun createNode(name: String, cloudName: String, debugPort: Int?): RediCloudNode {
-        val node = RediCloudNode(name, cloudName, debugPort, temp, cloudWorkingDirectory, redis)
+        logger.info("Creating $name in cloud $cloudName...")
+        val node = runCatching { RediCloudNode(name, cloudName, temp, cloudWorkingDirectory, redis, version) }
+            .getOrElse {
+                throw it
+            }
         nodes.add(node)
         return node
     }
 
-    fun addShutdownHook() {
+    private fun addShutdownHook() {
         Runtime.getRuntime().addShutdownHook(Thread {
-            nodes.forEach { it.stop() }
-            redis.stop()
+            stop()
         })
+    }
+
+    fun stop() {
+        if (shuttingdown) {
+            return
+        }
+        shuttingdown = true
+        logger.info("Shutting down cloud $name...")
+        nodes.forEach { it.stop() }
+        nodes.clear()
+        redis.stop()
     }
 
 }

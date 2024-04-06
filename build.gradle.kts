@@ -35,6 +35,15 @@ allprojects {
         dependency(BuildDependencies.KHTTP)
         dependency(BuildDependencies.KOTLIN_REFLECT)
         dependency(BuildDependencies.GUICE)
+
+        testImplementation(BuildDependencies.DOCKER_TEST_CONTAINERS)
+        testImplementation(BuildDependencies.GSON)
+        testImplementation(BuildDependencies.LOGBACK_CORE)
+        testImplementation(BuildDependencies.LOGBACK_CLASSIC)
+        testImplementation(project(":utils"))
+        testImplementation(project(":apis:base-api"))
+        testImplementation(project(":database"))
+        testImplementation(project(":services:node-service"))
     }
 
     tasks {
