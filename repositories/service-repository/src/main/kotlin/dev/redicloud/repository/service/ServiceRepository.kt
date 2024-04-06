@@ -25,7 +25,7 @@ abstract class ServiceRepository(
             if (shutdownCalled) return@Runnable
             shutdownCalled = true
             runBlocking {
-                if (!databaseConnection.isConnected()) {
+                if (!databaseConnection.connected) {
                     throw Exception("Database connection is not connected! Cannot remove service from cluster")
                 }
                 internalRepositories.forEach { it.shutdownAction.run() }

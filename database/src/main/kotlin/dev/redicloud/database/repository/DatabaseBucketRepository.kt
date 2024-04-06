@@ -48,14 +48,14 @@ open class DatabaseBucketRepository<I : Any, K: Any>(
     protected open suspend fun exists(identifier: String): Boolean = getHandle(identifier).isExists
 
     private fun getHandle(identifier: String, customIdentifier: Boolean = false): RBucket<I> {
-        if (!connection.isConnected()) throw IllegalStateException("Not connected to database")
+        if (!connection.connected) throw IllegalStateException("Not connected to database")
         val databaseIdentifier = "cloud:" + (if (customIdentifier) identifier else toDatabaseIdentifier(identifier))
         return if (codec != null) connection.getClient().getBucket(databaseIdentifier, codec)
         else connection.getClient().getBucket(databaseIdentifier)
     }
 
     private fun <X> getUnsafeHandle(identifier: String, customIdentifier: Boolean): RBucket<X> {
-        if (!connection.isConnected()) throw IllegalStateException("Not connected to database")
+        if (!connection.connected) throw IllegalStateException("Not connected to database")
         val databaseIdentifier = "cloud:" + (if (customIdentifier) identifier else toDatabaseIdentifier(identifier))
         return if (codec != null) connection.getClient().getBucket(databaseIdentifier, codec)
         else connection.getClient().getBucket(databaseIdentifier)

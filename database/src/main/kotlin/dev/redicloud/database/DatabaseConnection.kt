@@ -1,5 +1,6 @@
 package dev.redicloud.database
 
+import dev.redicloud.api.database.IDatabaseConnection
 import dev.redicloud.database.codec.GsonCodec
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.database.repository.DatabaseRepository
@@ -14,12 +15,12 @@ import org.redisson.config.Config
 class DatabaseConnection(
     config: DatabaseConfiguration,
     val serviceId: ServiceId,
-    val codec: BaseCodec = GsonCodec(),
-    var connectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 64/2 else 64,
-    var connectionMinimumIdleSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 24/2 else 24,
-    var subscriptionConnectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 50/2 else 50,
-    var subscriptionConnectionMinimumIdleSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 2/2 else 2
-) {
+    codec: BaseCodec = GsonCodec(),
+    connectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 64/2 else 64,
+    connectionMinimumIdleSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 24/2 else 24,
+    subscriptionConnectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 50/2 else 50,
+    subscriptionConnectionMinimumIdleSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 2/2 else 2
+) : IDatabaseConnection {
 
     companion object {
         private val LOGGER = LogManager.logger(DatabaseConnection::class)
@@ -27,7 +28,6 @@ class DatabaseConnection(
 
     private val redissonConfig = Config()
     private var client: RedissonClient? = null
-    private val repositories = mutableListOf<DatabaseRepository<*>>()
 
     init {
         redissonConfig
@@ -65,20 +65,22 @@ class DatabaseConnection(
         }
     }
 
-    suspend fun connect() {
+    override suspend fun connect() {
         client = Redisson.create(redissonConfig)
         LOGGER.fine("Successfully connected to redis")
     }
 
-    fun disconnect() {
-        if (isConnected()) client!!.shutdown()
+    override suspend fun disconnect() {
+        if (connected) client!!.shutdown()
         LOGGER.fine("Successfully disconnected from redis")
     }
 
-    fun isConnected(): Boolean {
-        if (client == null) return false
-        return !client!!.isShuttingDown
-    }
+    override val connected: Boolean
+        get() {
+            return client.takeIf { it != null }?.let {
+                !it.isShuttingDown
+            } ?: false
+        }
 
     fun getClient(): RedissonClient = client!!
 

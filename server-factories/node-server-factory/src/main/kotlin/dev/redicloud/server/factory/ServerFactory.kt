@@ -344,7 +344,7 @@ class ServerFactory(
         force: Boolean = true,
         internalCall: Boolean = false
     ) {
-        if (!serverRepository.databaseConnection.isConnected()) {
+        if (!serverRepository.databaseConnection.connected) {
             return
         }
         val server = serverRepository.getServer<CloudServer>(serviceId)
@@ -390,7 +390,7 @@ class ServerFactory(
         serverId: ServiceId,
         nodeId: ServiceId
     ): Boolean {
-        if (!serverRepository.databaseConnection.isConnected()) return false
+        if (!serverRepository.databaseConnection.connected) return false
         val server = serverRepository.getServer<CloudServer>(serverId) ?: return false
         if (!server.configurationTemplate.static) return false
         if (server.state != CloudServerState.STOPPED) return false

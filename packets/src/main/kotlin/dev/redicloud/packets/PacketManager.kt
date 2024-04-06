@@ -40,7 +40,7 @@ class PacketManager(
     private val messageListener = createMessageListener()
 
     init {
-        if (!databaseConnection.isConnected()) throw IllegalStateException("Database connection is not connected!")
+        if (!databaseConnection.connected) throw IllegalStateException("Database connection is not connected!")
 
         serviceTopic = databaseConnection.getClient().getTopic(serviceId.toName())
         broadcastTopic = databaseConnection.getClient().getTopic("broadcast")
