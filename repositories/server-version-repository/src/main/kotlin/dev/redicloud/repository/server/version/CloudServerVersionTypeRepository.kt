@@ -26,7 +26,6 @@ class CloudServerVersionTypeRepository(
 ) : CachedDatabaseBucketRepository<ICloudServerVersionType, CloudServerVersionType>(
     databaseConnection,
     "server-version-types",
-    null,
     ICloudServerVersionType::class,
     CloudServerVersionType::class,
     5.minutes,

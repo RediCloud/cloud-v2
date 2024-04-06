@@ -45,8 +45,7 @@ dependencies {
     shade(project(":modules:module-handler"))
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":apis:connector-api"))
-    shade(BuildDependencies.cloudLibloaderBootstrap)
-
-    compileOnly(BuildDependencies.minestomApi)
-    compileOnly(BuildDependencies.minestomExtensions)
+    shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
+    compileOnly(BuildDependencies.MINESTOM_API)
+    compileOnly(BuildDependencies.MINESTOM_EXTENSIONS)
 }

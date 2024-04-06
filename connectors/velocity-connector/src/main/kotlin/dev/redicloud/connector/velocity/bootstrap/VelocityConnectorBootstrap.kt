@@ -19,7 +19,7 @@ import kotlin.system.exitProcess
 @Plugin(
     id = "redicloud-connector",
     name = "redicloud-connector-velocity",
-    version = "2.2.1-SNAPSHOT",
+    version = "2.2.0-RELEASE",
     url = "https://redicloud.dev",
     authors = ["RediCloud"]
 )

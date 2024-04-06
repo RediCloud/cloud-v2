@@ -10,6 +10,5 @@ dependencies {
     compileOnly(project(":utils"))
     compileOnly(project(":logging"))
 
-    dependency(BuildDependencies.redisson)
-    dependency(BuildDependencies.gson)
+    dependency(BuildDependencies.GSON)
 }

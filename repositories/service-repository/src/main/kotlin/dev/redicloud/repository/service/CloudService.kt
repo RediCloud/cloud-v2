@@ -51,14 +51,14 @@ abstract class CloudService(
         }
 
     override fun startSession(ipAddress: String): ServiceSession {
-        var parsedHostname = ipAddress
-        if (isIpv6(ipAddress) && !ipAddress.startsWith("[")) {
-            parsedHostname = "[$ipAddress]"
-        }
         if (!isIpv4(ipAddress) && !isIpv6(ipAddress)) {
             throw IllegalArgumentException("Invalid IP address: $ipAddress")
         }
-        val session = ServiceSession(this.serviceId, System.currentTimeMillis(), ipAddress)
+        var hostname = ipAddress
+        if (isIpv6(ipAddress) && !ipAddress.startsWith("[")) {
+            hostname = "[$ipAddress]"
+        }
+        val session = ServiceSession(this.serviceId, System.currentTimeMillis(), hostname)
         sessions.currentSession = session
         if (registrationSession == null) {
             sessions.registrationSession = session

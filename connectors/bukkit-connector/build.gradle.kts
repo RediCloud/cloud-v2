@@ -35,12 +35,12 @@ dependencies {
     shade(project(":logging"))
     shade(project(":console"))
     shade(project(":tasks"))
-    shade(BuildDependencies.cloudLibloaderBootstrap)
+    shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
     shade(project(":modules:module-handler"))
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":apis:connector-api"))
 
-    compileOnly(BuildDependencies.spigotApi)
+    compileOnly(BuildDependencies.SPIGOT_API)
     shade(project(":connectors:bukkit-legacy"))
 }
 

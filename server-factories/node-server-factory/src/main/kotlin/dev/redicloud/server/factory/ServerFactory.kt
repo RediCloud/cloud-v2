@@ -38,11 +38,9 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import dev.redicloud.api.utils.factory.ServerQueueInformation
-import dev.redicloud.api.utils.factory.TransferServerQueueInformation
-import dev.redicloud.api.utils.factory.calculateStartOrder
+import dev.redicloud.repository.node.CloudNode
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.redisson.api.RList
 import java.io.File
 import java.util.*
 
@@ -67,7 +65,7 @@ class ServerFactory(
         private val logger = LogManager.logger(ServerFactory::class)
     }
     override val hostedProcesses: MutableList<ServerProcess> = mutableListOf()
-    private val idLock = databaseConnection.getClient().getLock("server-factory:id-lock")
+    private val idLock = databaseConnection.getLock("server-factory:id-lock")
 
     init {
         console.commandManager.registerParser(ServerScreen::class.java, ServerScreenParser(console))
@@ -96,14 +94,26 @@ class ServerFactory(
         }
 
     internal suspend fun deleteServer(serviceId: ServiceId): Boolean {
-        if (!serviceId.type.isServer()) throw IllegalArgumentException("Service id that was queued for deletion is not a server: ${serviceId.toName()}")
+        if (!serviceId.type.isServer()) {
+            throw IllegalArgumentException("Service id that was queued for deletion is not a server: ${serviceId.toName()}")
+        }
         val server = serverRepository.getServer<CloudServer>(serviceId) ?: return false
-        if (server.hostNodeId != serviceId) return false
-        if (server.state != CloudServerState.STOPPED) return false
-        if (!server.configurationTemplate.static) throw IllegalArgumentException("Service id that was queued for deletion is not static: ${serviceId.toName()}")
+        if (server.hostNodeId != serviceId) {
+            return false
+        }
+        if (server.state != CloudServerState.STOPPED) {
+            return false
+        }
+        if (!server.configurationTemplate.static) {
+            throw IllegalArgumentException("Service id that was queued for deletion is not static: ${serviceId.toName()}")
+        }
         serverRepository.deleteServer(server)
         val workDir = File(STATIC_FOLDER.getFile(), "${server.name}-${server.serviceId.id}")
-        if (workDir.exists() && workDir.isDirectory) workDir.deleteRecursively()
+        if (workDir.exists() && workDir.isDirectory) {
+            if (!workDir.deleteRecursively()) {
+                workDir.deleteOnExit()
+            }
+        }
         eventManager.fireEvent(CloudServerDeleteEvent(server.serviceId, server.name))
         return true
     }
@@ -114,26 +124,16 @@ class ServerFactory(
      * @param force if the server should be started even if the configuration template does not allow it (e.g. max memory)
      * @return the result of the start
      */
-    suspend internal fun startServer(
+    internal suspend fun startServer(
         configurationTemplate: ICloudConfigurationTemplate,
         force: Boolean = false,
         serverUniqueId: UUID? = null
     ): StartResult {
         logger.fine("Prepare server ${configurationTemplate.uniqueId}...")
 
-        val snapshotData = StartDataSnapshot.of(configurationTemplate)
-        val dataResult = snapshotData.loadData(
-            serverVersionRepository,
-            serverVersionTypeRepository,
-            javaVersionRepository,
-            nodeRepository,
-            hostingId
-        )
-        if (dataResult != null) return dataResult
-        if (!snapshotData.version.used) {
-            snapshotData.version.used = true
-            serverVersionRepository.updateVersion(snapshotData.version)
-        }
+        val serverDataLoadResult = loadServerData(configurationTemplate)
+        if (serverDataLoadResult.second != null) return serverDataLoadResult.second!!
+        val snapshotData: StartDataSnapshot = serverDataLoadResult.first
 
         val serviceId = ServiceId(
             serverUniqueId ?: UUID.randomUUID(),
@@ -157,27 +157,13 @@ class ServerFactory(
         try {
 
             val thisNode = nodeRepository.getNode(hostingId)!!
-            val ramUsage = thisNode.currentMemoryUsage
             if (!force) {
-                // check if the node is allowed to start the server
-                if (configurationTemplate.nodeIds.contains(thisNode.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
-
-                if (ramUsage + configurationTemplate.maxMemory > thisNode.maxMemory) {
-                    hostedProcesses.remove(serverProcess)
-                    return NotEnoughRamOnNodeStartResult()
+                canStartOnNode(thisNode, configurationTemplate).let {
+                    if (it != null) {
+                        hostedProcesses.remove(serverProcess)
+                        return it
+                    }
                 }
-
-                val servers = serverRepository.getRegisteredServers()
-
-                // Check how many servers of the template are already started and cancel if the configured globally total amount is reached
-                val startAmountOfTemplate =
-                    servers.count { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }
-                if (startAmountOfTemplate >= configurationTemplate.maxStartedServices && configurationTemplate.maxStartedServices != -1) return TooMuchServicesOfTemplateStartResult()
-
-                // Check how many servers of the template are already started on this node and cancel if the configured node total amount is reached
-                val startedAmountOfTemplateOnNode =
-                    servers.count { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId && it.hostNodeId == thisNode.serviceId }
-                if (startedAmountOfTemplateOnNode >= configurationTemplate.maxStartedServicesPerNode && configurationTemplate.maxStartedServicesPerNode != -1) return TooMuchServicesOfTemplateOnNodeStartResult()
             }
 
             // get the next id for the server and create it
@@ -249,7 +235,7 @@ class ServerFactory(
             hostedProcesses.remove(serverProcess)
             // delete the server if it is created and not static
             try {
-                stopServer(serviceId, true, true)
+                stopServer(serviceId, internalCall = true)
             }catch (_: NullPointerException) {}
             return UnknownErrorStartResult(e)
         }
@@ -261,117 +247,95 @@ class ServerFactory(
         configurationTemplate: ConfigurationTemplate?,
         force: Boolean = false
     ): StartResult {
-        if (serviceId == null && configurationTemplate == null) throw NullPointerException("serviceId and configurationTemplate are null")
-        if (serviceId != null) {
-            if (!serviceId.type.isServer()) throw IllegalArgumentException("Queued service id to start a server must be a server!")
-            if (!serverRepository.existsServer<CloudServer>(serviceId)) throw NullPointerException("Static server ${serviceId.toName()} not found")
-            logger.fine("Prepare static server ${serviceId.toName()}...")
-            val server = serverRepository.getServer<CloudServer>(serviceId)!!
-            val newConfigurationTemplate = configurationTemplateRepository.getTemplate(server.configurationTemplate.uniqueId)
-            if (newConfigurationTemplate == null) return UnknownConfigurationTemplateStartResult(server.configurationTemplate.uniqueId)
-            val snapshotData = StartDataSnapshot.of(newConfigurationTemplate)
-            val dataResult = snapshotData.loadData(
-                serverVersionRepository,
-                serverVersionTypeRepository,
-                javaVersionRepository,
-                nodeRepository,
-                hostingId
-            )
-            if (dataResult != null) return dataResult
-            if (!snapshotData.version.used) {
-                snapshotData.version.used = true
-                serverVersionRepository.updateVersion(snapshotData.version)
-            }
-
-            // create the server process
-            val serverProcess = ServerProcess(
-                newConfigurationTemplate,
-                serverRepository,
-                packetManager,
-                eventManager,
-                bindHost,
-                clusterConfiguration,
-                serviceId,
-                hostingId
-            )
-            hostedProcesses.add(serverProcess)
-            try {
-
-                val thisNode = nodeRepository.getNode(hostingId)!!
-                val ramUsage = thisNode.currentMemoryUsage
-                if (!force) {
-                    // check if the node is allowed to start the server
-                    if (newConfigurationTemplate.nodeIds.contains(thisNode.serviceId) && newConfigurationTemplate.nodeIds.isNotEmpty()) return NodeIsNotAllowedStartResult()
-
-                    // check if the node has enough ram
-                    if (ramUsage + newConfigurationTemplate.maxMemory > thisNode.maxMemory) {
-                        hostedProcesses.remove(serverProcess)
-                        return NotEnoughRamOnNodeStartResult()
-                    }
-
-                    val servers = serverRepository.getRegisteredServers()
-
-                    // Check how many servers of the template are already started and cancel if the configured globally total amount is reached
-                    val startAmountOfTemplate =
-                        servers.count { it.configurationTemplate.uniqueId == newConfigurationTemplate.uniqueId }
-                    if (startAmountOfTemplate >= newConfigurationTemplate.maxStartedServices && newConfigurationTemplate.maxStartedServices != -1) return TooMuchServicesOfTemplateStartResult()
-
-                    // Check how many servers of the template are already started on this node and cancel if the configured node total amount is reached
-                    val startedAmountOfTemplateOnNode =
-                        servers.count { it.configurationTemplate.uniqueId == newConfigurationTemplate.uniqueId && it.hostNodeId == thisNode.serviceId }
-                    if (startedAmountOfTemplateOnNode >= newConfigurationTemplate.maxStartedServicesPerNode && newConfigurationTemplate.maxStartedServicesPerNode != -1) return TooMuchServicesOfTemplateOnNodeStartResult()
-                }
-
-                server.configurationTemplate = newConfigurationTemplate
-                server.hostNodeId = thisNode.serviceId
-                server.state = CloudServerState.PREPARING
-                server.maxPlayers = newConfigurationTemplate.maxPlayers
-                server.port = -1
-                serverRepository.updateServer(server)
-
-                if (!snapshotData.versionHandler.isPatched(snapshotData.version)
-                    && snapshotData.versionHandler.isPatchVersion(snapshotData.version)) {
-                    snapshotData.versionHandler.patch(snapshotData.version)
-                }
-
-                // Create server screen
-                val serverScreen = ServerScreen(server.serviceId, server.name, this.console, this.packetManager)
-                console.createScreen(serverScreen)
-
-                // Add service to node database object
-                thisNode.hostedServers.add(server.serviceId)
-                nodeRepository.updateNode(thisNode)
-
-                // copy the files to copy server necessary files
-                val copier = FileCopier(
-                    serverProcess,
-                    server,
-                    serverVersionTypeRepository,
-                    fileTemplateRepository,
-                    snapshotData
-                )
-                serverProcess.fileCopier = copier
-
-                // copy all templates
-                copier.copyTemplates(false)
-                // copy all version files
-                copier.copyVersionFiles(false) { serverProcess.replacePlaceholders(it, snapshotData) }
-                // copy connector
-                copier.copyConnector()
-
-                // start the server
-                return serverProcess.start(server, serverScreen, snapshotData)
-            } catch (e: Exception) {
-                // Make sure to remove the server process from the hosted processes so no memory will be blocked
-                hostedProcesses.remove(serverProcess)
-                // delete the server if it is created and not static
-                try {
-                    stopServer(serviceId, true, true)
-                }catch (_: NullPointerException) {}
-                return UnknownErrorStartResult(e)
-            }
-        }else {
+        if (serviceId == null && configurationTemplate == null) {
+            throw NullPointerException("serviceId and configurationTemplate are null")
+        }
+        if (serviceId == null) {
             return startServer(configurationTemplate!!, force)
+        }
+        if (!serviceId.type.isServer()) {
+            throw IllegalArgumentException("Queued service id to start a server must be a server!")
+        }
+        logger.fine("Prepare static server ${serviceId.toName()}...")
+        val server = serverRepository.getServer<CloudServer>(serviceId)
+            ?: throw NullPointerException("Static server ${serviceId.toName()} not found")
+        val newConfigurationTemplate = configurationTemplateRepository.getTemplate(server.configurationTemplate.uniqueId)
+            ?: return UnknownConfigurationTemplateStartResult(server.configurationTemplate.uniqueId)
+
+        val serverDataLoadResult = loadServerData(newConfigurationTemplate)
+        if (serverDataLoadResult.second != null) return serverDataLoadResult.second!!
+        val snapshotData: StartDataSnapshot = serverDataLoadResult.first
+
+        // create the server process
+        val serverProcess = ServerProcess(
+            newConfigurationTemplate,
+            serverRepository,
+            packetManager,
+            eventManager,
+            bindHost,
+            clusterConfiguration,
+            serviceId,
+            hostingId
+        )
+        hostedProcesses.add(serverProcess)
+        try {
+            val thisNode = nodeRepository.getNode(hostingId)!!
+            if (!force) {
+                canStartOnNode(thisNode, newConfigurationTemplate).let {
+                    if (it != null) {
+                        hostedProcesses.remove(serverProcess)
+                        return it
+                    }
+                }
+            }
+
+            server.configurationTemplate = newConfigurationTemplate
+            server.hostNodeId = thisNode.serviceId
+            server.state = CloudServerState.PREPARING
+            server.maxPlayers = newConfigurationTemplate.maxPlayers
+            server.port = -1
+            serverRepository.updateServer(server)
+
+            if (!snapshotData.versionHandler.isPatched(snapshotData.version)
+                && snapshotData.versionHandler.isPatchVersion(snapshotData.version)) {
+                snapshotData.versionHandler.patch(snapshotData.version)
+            }
+
+            // Create server screen
+            val serverScreen = ServerScreen(server.serviceId, server.name, this.console, this.packetManager)
+            console.createScreen(serverScreen)
+
+            // Add service to node database object
+            thisNode.hostedServers.add(server.serviceId)
+            nodeRepository.updateNode(thisNode)
+
+            // copy the files to copy server necessary files
+            val copier = FileCopier(
+                serverProcess,
+                server,
+                serverVersionTypeRepository,
+                fileTemplateRepository,
+                snapshotData
+            )
+            serverProcess.fileCopier = copier
+
+            // copy all templates
+            copier.copyTemplates(false)
+            // copy all version files
+            copier.copyVersionFiles(false) { serverProcess.replacePlaceholders(it, snapshotData) }
+            // copy connector
+            copier.copyConnector()
+
+            // start the server
+            return serverProcess.start(server, serverScreen, snapshotData)
+        } catch (e: Exception) {
+            // Make sure to remove the server process from the hosted processes so no memory will be blocked
+            hostedProcesses.remove(serverProcess)
+            // delete the server if it is created and not static
+            try {
+                stopServer(serviceId, true, true)
+            }catch (_: NullPointerException) {}
+            return UnknownErrorStartResult(e)
         }
     }
 
@@ -380,12 +344,18 @@ class ServerFactory(
         force: Boolean = true,
         internalCall: Boolean = false
     ) {
-        if (!serverRepository.databaseConnection.isConnected()) return
-        val server = serverRepository.getServer<CloudServer>(serviceId) ?: throw NullPointerException("Server not found")
-        if (server.hostNodeId != hostingId) throw IllegalArgumentException("Server is not on this node")
-        if (server.state == CloudServerState.STOPPED && !force || server.state == CloudServerState.STOPPING && !force) return
+        if (!serverRepository.databaseConnection.connected) {
+            return
+        }
+        val server = serverRepository.getServer<CloudServer>(serviceId)
+            ?: throw NullPointerException("Server not found")
+        if (server.hostNodeId != hostingId) {
+            throw IllegalArgumentException("Server is not on this node")
+        }
+        if (server.state == CloudServerState.STOPPED && !force || server.state == CloudServerState.STOPPING && !force) {
+            return
+        }
 
-        val process = hostedProcesses.firstOrNull { it.serverId == serviceId }
         val thisNode = nodeRepository.getNode(hostingId)
         if (thisNode != null) {
             thisNode.currentMemoryUsage = hostedProcesses.toList()
@@ -395,10 +365,13 @@ class ServerFactory(
             thisNode.hostedServers.remove(hostingId)
             nodeRepository.updateNode(thisNode)
         }
+
+        val process = hostedProcesses.firstOrNull { it.serverId == serviceId }
         if (process != null) {
             process.stop(force, internalCall)
             hostedProcesses.remove(process)
         }
+
         if (!internalCall) {
             server.state = CloudServerState.STOPPED
             server.port = -1
@@ -417,7 +390,7 @@ class ServerFactory(
         serverId: ServiceId,
         nodeId: ServiceId
     ): Boolean {
-        if (!serverRepository.databaseConnection.isConnected()) return false
+        if (!serverRepository.databaseConnection.connected) return false
         val server = serverRepository.getServer<CloudServer>(serverId) ?: return false
         if (!server.configurationTemplate.static) return false
         if (server.state != CloudServerState.STOPPED) return false
@@ -501,4 +474,49 @@ class ServerFactory(
         }
     }
 
+    private suspend fun loadServerData(configurationTemplate: ICloudConfigurationTemplate): Pair<StartDataSnapshot, StartResult?> {
+        val snapshotData = StartDataSnapshot.of(configurationTemplate)
+        val dataResult = snapshotData.loadData(
+            serverVersionRepository,
+            serverVersionTypeRepository,
+            javaVersionRepository,
+            nodeRepository,
+            hostingId
+        )
+        if (dataResult != null) return snapshotData to dataResult
+        if (!snapshotData.version.used) {
+            snapshotData.version.used = true
+            serverVersionRepository.updateVersion(snapshotData.version)
+        }
+        return snapshotData to null
+    }
+
+    private suspend fun canStartOnNode(node: CloudNode, configurationTemplate: ICloudConfigurationTemplate): StartResult? {
+        // check if the node is allowed to start the server
+        if (configurationTemplate.nodeIds.contains(node.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) {
+            return NodeIsNotAllowedStartResult()
+        }
+
+        // check if the node has enough ram
+        if (node.currentMemoryUsage + configurationTemplate.maxMemory > node.maxMemory) {
+            return NotEnoughRamOnNodeStartResult()
+        }
+
+        val servers = serverRepository.getRegisteredServers()
+
+        // Check how many servers of the template are already started and cancel if the configured globally total amount is reached
+        val startAmountOfTemplate =
+            servers.count { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }
+        if (startAmountOfTemplate >= configurationTemplate.maxStartedServices && configurationTemplate.maxStartedServices != -1) {
+            return TooMuchServicesOfTemplateStartResult()
+        }
+
+        // Check how many servers of the template are already started on this node and cancel if the configured node total amount is reached
+        val startedAmountOfTemplateOnNode =
+            servers.count { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId && it.hostNodeId == node.serviceId }
+        if (startedAmountOfTemplateOnNode >= configurationTemplate.maxStartedServicesPerNode && configurationTemplate.maxStartedServicesPerNode != -1) {
+            return TooMuchServicesOfTemplateOnNodeStartResult()
+        }
+        return null
+    }
 }

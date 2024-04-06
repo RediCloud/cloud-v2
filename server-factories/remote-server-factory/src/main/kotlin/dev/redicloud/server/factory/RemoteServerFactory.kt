@@ -1,5 +1,6 @@
 package dev.redicloud.server.factory
 
+import dev.redicloud.api.database.grid.list.ISyncedMutableList
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.api.service.server.factory.ICloudRemoteServerFactory
@@ -12,7 +13,6 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
-import org.redisson.api.RList
 import java.util.*
 
 open class RemoteServerFactory(
@@ -27,14 +27,14 @@ open class RemoteServerFactory(
 
     val hostingId = databaseConnection.serviceId
 
-    val startQueue: RList<ServerQueueInformation> =
-        databaseConnection.getClient().getList("server-factory:queue:start")
-    val stopQueue: RList<ServiceId> =
-        databaseConnection.getClient().getList("server-factory:queue:stop")
-    val deleteQueue: RList<ServiceId> =
-        databaseConnection.getClient().getList("server-factory:queue:delete")
-    val transferQueue: RList<TransferServerQueueInformation> =
-        databaseConnection.getClient().getList("server-factory:queue:transfer")
+    val startQueue: ISyncedMutableList<ServerQueueInformation> =
+        databaseConnection.getMutableList("server-factory:queue:start")
+    val stopQueue: ISyncedMutableList<ServiceId> =
+        databaseConnection.getMutableList("server-factory:queue:stop")
+    val deleteQueue: ISyncedMutableList<ServiceId> =
+        databaseConnection.getMutableList("server-factory:queue:delete")
+    val transferQueue: ISyncedMutableList<TransferServerQueueInformation> =
+        databaseConnection.getMutableList("server-factory:queue:transfer")
     var shutdown = false
 
     override suspend fun queueStart(configurationTemplate: ICloudConfigurationTemplate, count: Int): List<UUID> {

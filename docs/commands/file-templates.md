@@ -31,3 +31,4 @@ With this command you can send all templates to a specific node.
 * `ft create <name> <prefix>`
 * `ft edit <name> name <new-name>`
 * `ft edit <name> prefix <new-prefix>`
+* `ft duplicate <name> [new-name>`

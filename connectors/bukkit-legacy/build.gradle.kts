@@ -1,18 +1,18 @@
 group = "dev.redicloud.connector"
 
 dependencies {
-    shade(BuildDependencies.redisson) {
+    shade(BuildDependencies.REDISSON) {
         exclude("com.fasterxml.jackson.core")
     }
-    shade(BuildDependencies.gson)
-    shade(BuildDependencies.guice)
-    shade(BuildDependencies.nettyHandler)
-    shade(BuildDependencies.nettyResolverDns)
-    shade(BuildDependencies.nettyResolver)
-    shade(BuildDependencies.nettyTransport)
-    shade(BuildDependencies.nettyBuffer)
-    shade(BuildDependencies.nettyCodec)
-    shade(BuildDependencies.nettyCommon)
-    shade(BuildDependencies.logbackCore.withVersion("1.3.14"))
-    shade(BuildDependencies.logbackClassic.withVersion("1.3.14"))
+    shade(BuildDependencies.GSON)
+    shade(BuildDependencies.GUICE)
+    shade(BuildDependencies.NETTY_HANDLER)
+    shade(BuildDependencies.NETTY_RESOLVER_DNS)
+    shade(BuildDependencies.NETTY_RESOLVER)
+    shade(BuildDependencies.NETTY_TRANSPORT)
+    shade(BuildDependencies.NETTY_BUFFER)
+    shade(BuildDependencies.NETTY_CODEC)
+    shade(BuildDependencies.NETTY_COMMON)
+    shade(BuildDependencies.LOGBACK_CORE.withVersion("1.3.14"))
+    shade(BuildDependencies.LOGBACK_CLASSIC.withVersion("1.3.14"))
 }

@@ -34,11 +34,11 @@ dependencies {
     shade(project(":file-cluster"))
     shade(project(":server-factories:node-server-factory"))
     shade(project(":server-factories:remote-server-factory"))
-    shade(BuildDependencies.cloudLibloaderBootstrap)
+    shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
     shade(project(":repositories:cache-repository"))
     shade(project(":modules:module-handler"))
     shade(project(":updater"))
 
-    compileOnly(BuildDependencies.jlineJansi)
-    compileOnly(BuildDependencies.jsch)
+    compileOnly(BuildDependencies.JLINE_JANSI)
+    compileOnly(BuildDependencies.JSCH)
 }

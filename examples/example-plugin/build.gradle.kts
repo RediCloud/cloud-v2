@@ -11,7 +11,7 @@ dependencies {
     compileOnly(project(":apis:base-api"))
 
     // External usage, use it
-    // compileOnly("dev.redicloud:api:${Versions.cloud}")
+    // compileOnly("dev.redicloud:api:<cloud-version>")
 
-    compileOnly(BuildDependencies.spigotApi)
+    compileOnly(BuildDependencies.SPIGOT_API)
 }

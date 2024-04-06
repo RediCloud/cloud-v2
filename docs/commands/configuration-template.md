@@ -227,4 +227,5 @@ If no permission is required, set it to `null` .
 * `ct edit <name> name <new-name>`
 * `ct list`
 * `ct info <name>`
+* `ct duplicate <name> [new-name]`
 

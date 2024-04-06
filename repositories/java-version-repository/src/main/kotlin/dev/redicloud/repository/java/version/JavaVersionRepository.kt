@@ -23,7 +23,6 @@ class JavaVersionRepository(
 ) : CachedDatabaseBucketRepository<ICloudJavaVersion, CloudJavaVersion>(
     databaseConnection,
     "java-version",
-    null,
     ICloudJavaVersion::class,
     CloudJavaVersion::class,
     5.minutes,

@@ -3,7 +3,7 @@ name: Build and Publish (production builds)
 on:
   push:
     branches:
-      - $default-branch
+      - "master"
     paths-ignore:
       - "docs/**"
 
@@ -37,12 +37,12 @@ jobs:
         env:
           build_number: ${{ github.run_number }}
           build_vcs_number: ${{ github.sha }}
-          branch: ${{ github.ref_name }}
+          branch: ${{ github.head_ref }}
 
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v3
         with:
-          arguments: clean build
+          arguments: build
 
       - name: Copy files
         run: |

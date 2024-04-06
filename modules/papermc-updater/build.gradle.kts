@@ -5,7 +5,6 @@ dependencies {
     compileOnly(project(":console"))
     compileOnly(project(":logging"))
     compileOnly(project(":utils"))
-
-    dependency(BuildDependencies.khttp)
-    dependency(BuildDependencies.gson)
+    dependency(BuildDependencies.KHTTP)
+    dependency(BuildDependencies.GSON)
 }

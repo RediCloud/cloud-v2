@@ -18,7 +18,6 @@ class ConfigurationTemplateRepository(
 ) : CachedDatabaseBucketRepository<ICloudConfigurationTemplate, ConfigurationTemplate>(
     databaseConnection,
     "configuration-template",
-    null,
     ICloudConfigurationTemplate::class,
     ConfigurationTemplate::class,
     5.minutes,

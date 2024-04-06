@@ -20,7 +20,6 @@ class PlayerRepository(
 ) : CachedDatabaseBucketRepository<ICloudPlayer, CloudPlayer>(
     databaseConnection,
     "player",
-    null,
     ICloudPlayer::class,
     CloudPlayer::class,
     5.minutes,
