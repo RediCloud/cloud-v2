@@ -1,12 +1,12 @@
 package cloud
 
-import dev.redicloud.utils.findFreePort
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.testcontainers.containers.Network
 import redis.RedisInstance
 import java.io.File
 
-class RediCloud(
+class RediCloudCluster(
     val name: String,
     val nodesCount: Int = 1,
     val temp: Boolean = true,
@@ -15,10 +15,11 @@ class RediCloud(
 
     companion object {
         val cloudWorkingDirectory = File("test-cloud")
-        val logger: Logger = LoggerFactory.getLogger(RediCloud::class.java)
+        val logger: Logger = LoggerFactory.getLogger(RediCloudCluster::class.java)
     }
 
-    val redis = RedisInstance(name)
+    val network = Network.newNetwork()
+    val redis = RedisInstance(name, network)
     val nodes = mutableListOf<RediCloudNode>()
     var shuttingdown: Boolean = false
         private set
@@ -31,13 +32,13 @@ class RediCloud(
         logger.info("Started redis at port ${redis.port}...")
 
         for (i in 1 until nodesCount+1) {
-            createNode("node-$i", name, findFreePort(5000)).start()
+            createNode("node-$i", name).start()
         }
     }
 
-    fun createNode(name: String, cloudName: String, debugPort: Int?): RediCloudNode {
+    fun createNode(name: String, cloudName: String): RediCloudNode {
         logger.info("Creating $name in cloud $cloudName...")
-        val node = runCatching { RediCloudNode(name, cloudName, temp, cloudWorkingDirectory, redis, version) }
+        val node = runCatching { RediCloudNode(name, cloudName, temp, cloudWorkingDirectory, redis, version, network) }
             .getOrElse {
                 throw it
             }

@@ -48,12 +48,15 @@ class DatabaseConnection(
             .setCodec(GsonCodec)
         if (config.isCluster()) {
             val clusterConfig = redissonConfig.useClusterServers()
-                .setClientName(serviceId.toName()).also {
-                    if(config.password.isNotEmpty()) it.setPassword(config.password)
+                .setClientName(serviceId.toName())
+                .also {
+                    if(!config.password.isNullOrEmpty()) {
+                        it.setPassword(config.password)
+                    }
+                    if (!config.username.isNullOrEmpty()) {
+                        it.setUsername(config.username)
+                    }
                 }
-            if (!config.username.isNullOrEmpty()) {
-                clusterConfig.setUsername(config.username)
-            }
             config.nodes.forEach { node ->
                 clusterConfig.addNodeAddress(node.toConnectionString())
             }
@@ -70,8 +73,11 @@ class DatabaseConnection(
                 .setConnectionPoolSize(connectionPoolSize)
                 .setSubscriptionConnectionPoolSize(subscriptionConnectionPoolSize)
                 .setConnectionMinimumIdleSize(connectionMinimumIdleSize)
-                .setSubscriptionConnectionMinimumIdleSize(subscriptionConnectionMinimumIdleSize).also {
-                    if(config.password.isNotEmpty()) it.setPassword(config.password)
+                .setSubscriptionConnectionMinimumIdleSize(subscriptionConnectionMinimumIdleSize)
+                .also {
+                    if(!config.password.isNullOrEmpty()) {
+                        it.setPassword(config.password)
+                    }
                 }
             if (!config.username.isNullOrEmpty()) {
                 singleConfig.setUsername(config.username)

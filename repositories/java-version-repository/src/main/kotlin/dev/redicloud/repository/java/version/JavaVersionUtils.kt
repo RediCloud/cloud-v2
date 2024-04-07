@@ -11,6 +11,10 @@ fun getJavaVersionsBetween(javaVersion1: CloudJavaVersion, javaVersion2: CloudJa
 
 fun getJavaVersion(): CloudJavaVersion {
     val version = System.getProperty("java.version")
+    if (version.contains("-") && version.split(".").size < 2) {
+        return JavaVersionRepository.ONLINE_VERSION_CACHE.get()!!.find { it.name == version.split("-")[0] }
+            ?: JavaVersionRepository.ONLINE_VERSION_CACHE.get()!!.first { it.unknown }
+    }
     val versionParts = version.split(".")
     val major = versionParts[0].toInt()
     val minor = versionParts[1].toInt()

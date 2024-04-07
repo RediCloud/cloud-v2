@@ -1,24 +1,28 @@
 package cloud
+
 import org.slf4j.LoggerFactory
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.Network
 import org.testcontainers.utility.MountableFile
 import java.io.File
-import java.nio.file.Files
 
-class CloudProcess(
+class NodeProcess(
     cloudFileCopier: CloudFileCopier,
     environmentLoader: EnvironmentLoader,
     cloudName: String,
-    cloudNodeName: String
+    cloudNodeName: String,
+    network: Network
 ) {
 
     companion object {
-        val logger = LoggerFactory.getLogger(CloudProcess::class.java)
+        val logger = LoggerFactory.getLogger(NodeProcess::class.java)
     }
 
     private val container: GenericContainer<*>
     val debugPort: Int
         get() = container.getMappedPort(5000)
+
+    private val screenName = "redicloud-node"
 
     init {
         val java = System.getProperty("redicloud.java", "java")
@@ -28,15 +32,26 @@ class CloudProcess(
             .replace("%java%", java)
             .replace("%cloud_name%", cloudName)
             .replace("%cloud_node_name%", cloudNodeName)
-        container = GenericContainer("openjdk:17")
-            .withCopyFileToContainer(MountableFile.forHostPath(cloudFileCopier.workingDirectory.absolutePath), "/data")
-            .withCopyFileToContainer(MountableFile.forHostPath(cloudFileCopier.workingDirectory.parentFile.parentFile.absolutePath + File.separator + ".libs"), "/libs")
-            .withWorkingDirectory("/data")
+        command = "screen -S $screenName $command"
+        container = GenericContainer(NODE_IMAGE)
+            .withCopyFileToContainer(MountableFile.forHostPath(cloudFileCopier.workingDirectory.absolutePath), "/app")
+            .withCopyFileToContainer(
+                MountableFile.forHostPath(cloudFileCopier.workingDirectory.parentFile.parentFile.absolutePath + File.separator + ".libs"),
+                "/libs"
+            )
+            .withWorkingDirectory("/app")
             .withExposedPorts(5000)
-            .withCommand(*splitCommand(command).toTypedArray())
             .withCreateContainerCmdModifier {
                 it.withName("redicloud-$cloudName-$cloudNodeName")
+                it.withTty(true)
+                it.withStdinOpen(true)
+                it.withCmd(*splitCommand(command).toTypedArray())
+                it.withAttachStdin(true)
+                it.withAttachStdout(true)
+                it.withAttachStderr(true)
             }
+            .withNetwork(network)
+            .withNetworkAliases("cluster.redicloud.test")
         environmentLoader.environments().forEach { (key, value) ->
             container.withEnv(key, value)
         }
@@ -83,13 +98,21 @@ class CloudProcess(
         }
     }
 
-    fun execute(command: String): String{
+    fun execute(command: String): String {
         logger.info("Executing command: {}", command)
         if (!container.isRunning) {
             throw RuntimeException("Container is not running")
         }
-        val commands = command.split(" ")
+        val commands = mutableListOf(
+            "screen",
+            "-xr",
+            screenName,
+            "-X",
+            "stuff",
+            "$command\\r"
+        )
         try {
+            logger.info("Executing command: {}", commands)
             val result = container.execInContainer(*commands.toTypedArray())
             if (result.stderr.isNotEmpty()) {
                 throw RuntimeException("Failed to execute command: $commands")

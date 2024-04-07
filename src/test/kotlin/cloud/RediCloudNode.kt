@@ -1,7 +1,7 @@
 package cloud
 
-import dev.redicloud.utils.findFreePort
 import org.slf4j.LoggerFactory
+import org.testcontainers.containers.Network
 import redis.RedisInstance
 import java.io.File
 
@@ -10,8 +10,9 @@ class RediCloudNode(
     val cloudName: String,
     val temp: Boolean = true,
     cloudWorkingDirectory: File,
-    val redis: RedisInstance,
-    val version: String
+    redis: RedisInstance,
+    version: String,
+    network: Network
 ) {
 
     companion object {
@@ -21,7 +22,7 @@ class RediCloudNode(
     val workingDirectory = File(cloudWorkingDirectory, "$cloudName/$name")
     val environmentLoader = EnvironmentLoader()
     val fileCopier = CloudFileCopier(workingDirectory, version, cloudName, name)
-    val process = CloudProcess(fileCopier, environmentLoader, cloudName, name)
+    val process = NodeProcess(fileCopier, environmentLoader, cloudName, name, network)
 
     init {
         workingDirectory.mkdirs()

@@ -1,22 +1,26 @@
 package redis
 
-import dev.redicloud.utils.findFreePort
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.Network
 
 class RedisInstance(
-    val identifier: String,
-    val version: String = "7.2.4"
+    identifier: String,
+    network: Network,
+    version: String = "7.2.4"
 ) {
 
+    val port = 6379
+    val hostname = "redis.redicloud.test"
     private val container = GenericContainer("redis:$version")
-        .withExposedPorts(6379)
         .withCreateContainerCmdModifier {
             it.withName("redicloud-$identifier-redis")
         }
-    val port: Int
-        get() = container.getMappedPort(6379)
+        .withNetwork(network)
+        .withNetworkAliases(hostname)
     val uri: String
-        get() = "redis://127.0.0.1:$port"
+        get() {
+            return "redis://$hostname:$port"
+        }
 
     fun start() {
         container.start()

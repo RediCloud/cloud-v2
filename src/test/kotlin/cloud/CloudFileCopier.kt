@@ -8,6 +8,7 @@ import dev.redicloud.utils.OSType
 import dev.redicloud.utils.getOperatingSystemType
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.toUUID
+import org.testcontainers.containers.Network
 import redis.RedisInstance
 import java.io.File
 
@@ -80,7 +81,7 @@ class CloudFileCopier(
             null,
             "",
             mutableListOf(
-                DatabaseNode("127.0.0.1", redis.port)
+                DatabaseNode(redis.hostname, redis.port)
             )
         )
         databaseFile.writeText(gson.toJson(configuration))

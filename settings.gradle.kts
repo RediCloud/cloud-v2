@@ -108,3 +108,4 @@ findProject(":apis:connector-api")?.name = "connector-api"
 
 include("modules:reset-module")
 findProject(":modules:reset-module")?.name = "reset-module"
+include("test-framework")
