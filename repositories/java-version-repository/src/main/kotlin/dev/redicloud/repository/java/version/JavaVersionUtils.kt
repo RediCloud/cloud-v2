@@ -43,7 +43,11 @@ suspend fun getVersionInfo(path: String): JavaVersionInfo? {
     val reader = process.inputStream.bufferedReader()
     val output = reader.readLines()
     if (output.size >= 5) return null
-    val versionParts = output[1].split("(build ").last().split("+").first().split(".")
+    val version = output[1].split("(build ").last().split("+").first()
+    if (version.split(".").size < 3 && version.contains("-")) {
+        return JavaVersionInfo(version.split("-")[0].toInt(), 0, 0, output.joinToString("\n"))
+    }
+    val versionParts = version.split(".")
     val major = versionParts[0]
     val minor = versionParts[1]
     val patch = versionParts[2]
