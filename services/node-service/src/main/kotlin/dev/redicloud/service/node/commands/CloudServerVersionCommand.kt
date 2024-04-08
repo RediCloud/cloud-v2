@@ -203,7 +203,7 @@ class CloudServerVersionCommand(
     }
 
     @CommandSubPath("edit <version> javaversion <java>")
-    @CommandAlias(["edit <version> jv <java>"])
+    @CommandAlias(["edit <version> jv <java>", "edit <version> java <java>"])
     @CommandDescription("Edit the Java version of a server version")
     fun editJavaVersion(
         actor: ConsoleActor,
