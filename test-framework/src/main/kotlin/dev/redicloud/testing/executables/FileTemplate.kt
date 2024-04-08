@@ -5,7 +5,6 @@ import dev.redicloud.testing.RediCloudCluster
 import dev.redicloud.testing.utils.FileSelect
 import dev.redicloud.testing.utils.FileSelectStrategy
 import dev.redicloud.testing.utils.ProjectFileSelect
-import org.testcontainers.images.builder.Transferable
 import java.io.File
 
 data class FileTemplate(
@@ -24,7 +23,7 @@ data class FileTemplate(
         localFiles[select.file] = select.targetDirectory
     }
 
-    fun projectFile(block: ProjectFileSelect.() -> Unit) {
+    fun gradleBuildFile(block: ProjectFileSelect.() -> Unit) {
         val select = ProjectFileSelect("", null, "", FileSelectStrategy.LATEST_MODIFIED, false).apply(block)
         val project = File(select.projectName)
         if (!project.exists()) {
