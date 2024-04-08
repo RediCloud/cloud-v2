@@ -5,8 +5,10 @@ import java.io.File
 
 fun GenericContainer<*>.copyFolderContentFromContainer(containerPath: String, destinationPath: String) {
     // ls -p -1 -> -p adds a / to directories and -1 prints each file in a separate line
-    execInContainer("ls", "-p", "-1", containerPath).stdout
-        .lineSequence().filter { it.isNotBlank() }
+    execInContainer("ls", "-a", "-p", "-1", containerPath).stdout
+        .lineSequence()
+        .filter { it != "./" && it != "../" }
+        .filter { it.isNotBlank() }
         .forEach { fileName ->
             if (fileName.endsWith('/')) {
                 val folderName = fileName.substringBeforeLast('/')
