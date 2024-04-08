@@ -25,19 +25,22 @@ fun toCloudFile(universalPath: String): File {
     return File(CLOUD_PATH, universalPath)
 }
 
-fun toUniversalPath(file: File): String {
+fun toUniversalPath(file: File, forceSeperator: String = File.separator): String {
     val path = file.absolutePath.replace(CLOUD_PATH, "")
-    return if (path.startsWith(File.separator)) path.replaceFirst(File.separator, "") else path
+        .replace(File.separator, forceSeperator)
+    return if (path.startsWith(forceSeperator)) {
+        path.replaceFirst(forceSeperator, "")
+    } else path
 }
 
 class CloudFile(val name: String, val parent: String = "", val folder: Boolean = false) {
 
-    fun getCloudPath(cloudFolder: File? = null): String {
+    fun getCloudPath(cloudFolder: File? = null, separator: String = File.separator): String {
         val prefixPath = cloudFolder?.absolutePath ?: CLOUD_PATH
         return if (parent.isEmpty()) {
-            prefixPath + File.separator + name
+            prefixPath + separator + name
         }else {
-            prefixPath + File.separator + parent + File.separator + name
+            prefixPath + separator + parent + separator + name
         }
     }
 
