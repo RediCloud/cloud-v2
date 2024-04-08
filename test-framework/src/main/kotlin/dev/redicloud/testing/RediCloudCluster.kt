@@ -14,7 +14,6 @@ class RediCloudCluster(
 
     companion object {
         val WORKING_DIRECTORY = File("testing")
-        val LIB_FOLDER = File(WORKING_DIRECTORY, "libs")
     }
 
     val network = Network.newNetwork()

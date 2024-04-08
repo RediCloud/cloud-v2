@@ -1,9 +1,8 @@
 package dev.redicloud.testing
 
-import dev.redicloud.api.utils.DATABASE_JSON
-import dev.redicloud.api.utils.NODE_JSON
-import dev.redicloud.api.utils.STORAGE_FOLDER
+import dev.redicloud.api.utils.*
 import dev.redicloud.testing.utils.DockerUtils
+import dev.redicloud.testing.utils.copyFolderContentFromContainer
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.toUUID
 import org.slf4j.LoggerFactory
@@ -11,6 +10,9 @@ import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.MountableFile
 import java.io.File
+import java.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 class RediCloudNode(
     val name: String,
@@ -23,18 +25,20 @@ class RediCloudNode(
         private val logger = LoggerFactory.getLogger(RediCloudNode::class.java)
     }
 
-    val workingDirectory = File(cluster.workingDirectory, name)
-    val tempDirectory = File(RediCloudCluster.WORKING_DIRECTORY, "tmp/${cluster.config.name}/$name")
+    val localWorkingDirectory = File(cluster.workingDirectory, name)
+    val tempDirectory = File(RediCloudCluster.WORKING_DIRECTORY, "temp/${cluster.config.name}/$name")
     val id = "${cluster.config.name}_${name}".toUUID()
     var terminal: Process? = null
         private set
+    val localLibs = File(workingDirectory, "libs")
 
     init {
         tempDirectory.mkdirs()
-        workingDirectory.mkdirs()
+        localWorkingDirectory.mkdirs()
         createNodeFile()
         createDatabaseFile()
 
+        withWorkingDirectory("/app")
         withNetwork(cluster.network)
         withNetworkAliases(cluster.hostname)
         withCreateContainerCmdModifier {
@@ -46,20 +50,16 @@ class RediCloudNode(
             it.withAttachStderr(true)
         }
         dependsOn(cluster.redisInstance)
-        withCopyToContainer(MountableFile.forHostPath(workingDirectory.absolutePath), "/app")
-        if (RediCloudCluster.LIB_FOLDER.isDirectory) {
-            withCopyToContainer(
-                MountableFile.forHostPath(RediCloudCluster.LIB_FOLDER.absolutePath),
-                "/libs"
-            )
-        }
-        withEnv("LIBRARY_FOLDER", "/libs")
-        withEnv("JAVA_INSTALLATIONS_FOLDER", "/opt")
+        withCopyToContainer(MountableFile.forHostPath(localWorkingDirectory.absolutePath), workingDirectory)
         withEnv("REDICLOUD_TESTING", "true")
     }
 
+    fun exposeFixedPort(hostPort: Int, containerPort: Int) {
+        addFixedExposedPort(containerPort, hostPort)
+    }
+
     private fun createDatabaseFile() {
-        val databaseFile = DATABASE_JSON.getFile(workingDirectory)
+        val databaseFile = DATABASE_JSON.getFile(localWorkingDirectory)
         val config = mutableMapOf(
             "username" to "",
             "password" to "",
@@ -75,8 +75,8 @@ class RediCloudNode(
     }
 
     private fun createNodeFile() {
-        STORAGE_FOLDER.getFile(workingDirectory).mkdirs()
-        val nodeFile = NODE_JSON.getFile(workingDirectory)
+        STORAGE_FOLDER.getFile(localWorkingDirectory).mkdirs()
+        val nodeFile = NODE_JSON.getFile(localWorkingDirectory)
         val config = mutableMapOf(
             "nodeName" to name,
             "uniqueId" to id,
@@ -93,7 +93,11 @@ class RediCloudNode(
                 """cmd /c start "$name@${cluster.config.name} | Docker-Container: $containerId" cmd /c "docker attach $containerId""""
             )
         }
-        waitingFor(Wait.forLogMessage(".*${name}#$id: .*(connected to the cluster)*.", 1))
+        val timeout = if (localLibs.exists()) 45.seconds else 5.minutes
+        waitingFor(Wait
+            .forLogMessage(".*${name}#$id: .*(connected to the cluster)*.", 1)
+            .withStartupTimeout(Duration.ofMillis(timeout.inWholeMilliseconds))
+        )
         waitUntilContainerStarted()
         Thread.sleep(4000)
         logger.info("Node {} in cluster {} started", name, cluster.config.name)
@@ -102,22 +106,48 @@ class RediCloudNode(
 
     override fun stop() {
         logger.info("Stopping node {} in cluster {}", name, cluster.config.name)
+
+        if (cluster.config.cache.cacheLibs) {
+            val targetPath = "$workingDirectory/${toUniversalPath(LIB_FOLDER.getFile(), "/")}"
+            if (!execInContainer("ls", targetPath).stderr.contains("No such file or directory")) {
+                logger.info("Copying libs from container to local folder...")
+                val tempLibs = File(tempDirectory, "libs")
+                tempLibs.deleteRecursively()
+                copyFolderContentFromContainer(targetPath, tempLibs.absolutePath)
+                tempLibs.copyRecursively(LIB_FOLDER.getFile(localWorkingDirectory), true)
+            }
+        }
+
+        if (cluster.config.cache.cacheConnectorJars) {
+            val targetPath = "$workingDirectory/${toUniversalPath(CONNECTORS_FOLDER.getFile(), "/")}"
+            if (!execInContainer("ls", targetPath).stderr.contains("No such file or directory")) {
+                logger.info("Copying connector jars from container to local folder...")
+                val tempConnectors = File(tempDirectory, "connectors")
+                tempConnectors.deleteRecursively()
+                copyFolderContentFromContainer(targetPath, tempConnectors.absolutePath)
+                tempConnectors.copyRecursively(CONNECTORS_FOLDER.getFile(localWorkingDirectory), true)
+            }
+        }
+
+        if (cluster.config.cache.cacheServerVersionJars) {
+            val targetPath = "$workingDirectory/${toUniversalPath(MINECRAFT_VERSIONS_FOLDER.getFile(), "/")}"
+            if (!execInContainer("ls", targetPath).stderr.contains("No such file or directory")) {
+                logger.info("Copying server version jars from container to local folder...")
+                val tempServerVersions = File(tempDirectory, "server-versions")
+                tempServerVersions.deleteRecursively()
+                copyFolderContentFromContainer(targetPath, tempServerVersions.absolutePath)
+                tempServerVersions.copyRecursively(MINECRAFT_VERSIONS_FOLDER.getFile(localWorkingDirectory), true)
+            }
+        }
+
         execute("stop")
         Thread.sleep(500)
         execute("stop")
         Thread.sleep(2000)
         terminal?.destroy()
-        logger.info("Saving libs to {}", RediCloudCluster.LIB_FOLDER)
-        val tempLibs = File(tempDirectory, "libs")
-        copyFileFromContainer("/libs", tempLibs.absolutePath)
-        tempLibs.listFiles()?.forEach {
-            it.copyTo(File(RediCloudCluster.LIB_FOLDER, it.name), true)
-        }
+
         super.stop()
         cluster.registeredNodes.remove(this)
-        if (!workingDirectory.deleteRecursively()) {
-            workingDirectory.deleteOnExit()
-        }
         if (!tempDirectory.deleteRecursively()) {
             tempDirectory.deleteOnExit()
         }

@@ -88,7 +88,7 @@ data class FileTemplate(
 
     override fun preApply(cluster: RediCloudCluster) {
         cluster.nodes.forEach { node ->
-            val templates = TEMPLATE_FOLDER.getFile(node.workingDirectory)
+            val templates = TEMPLATE_FOLDER.getFile(node.localWorkingDirectory)
             localFiles.filter { it.key.exists() }.forEach { entry ->
                 val file = entry.key
                 val suffix = entry.value

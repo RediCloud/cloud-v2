@@ -20,6 +20,9 @@ class RedisInstance(
         }
         withNetwork(cluster.network)
         withNetworkAliases(cluster.hostname)
+        if (cluster.config.exposeRedis) {
+            withExposedPorts(port)
+        }
     }
 
 

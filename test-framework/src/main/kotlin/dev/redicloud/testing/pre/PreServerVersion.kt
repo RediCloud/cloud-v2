@@ -1,4 +1,4 @@
-package dev.redicloud.testing.utils
+package dev.redicloud.testing.pre
 
 enum class PreServerVersion(
     val versionName: String

@@ -1,15 +1,16 @@
 package dev.redicloud.testing.executables
 
 import dev.redicloud.testing.RediCloudCluster
+import dev.redicloud.testing.pre.PreServerVersion
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 data class ConfigurationTemplate(
     var name: String,
-    var serverVersion: String,
+    var serverVersion: PreServerVersion,
     var maxMemory: Long = 1024,
-    val fileTemplates: MutableList<String> = mutableListOf(),
-    val nodes: MutableList<String> = mutableListOf(),
+    private val fileTemplates: MutableList<String> = mutableListOf(),
+    private val nodes: MutableList<String> = mutableListOf(),
     var minStartedServices: Int = 1,
     var maxStartedServices: Int = -1,
     var minStartedServicesPerNode: Int = -1,
@@ -28,7 +29,16 @@ data class ConfigurationTemplate(
     val programParameters: MutableList<String> = mutableListOf(),
     val defaultFiles: MutableMap<String, String> = mutableMapOf(),
     val fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf(),
+    val exposedPorts: MutableMap<String, Int> = mutableMapOf()
 ) : ICloudExecutable {
+
+    override fun preApply(cluster: RediCloudCluster) {
+        cluster.nodes.forEach { node ->
+            exposedPorts.map { it.key.toInt() to it.value }.forEach { (hostPort, containerPort) ->
+                node.exposeFixedPort(hostPort, containerPort)
+            }
+        }
+    }
 
     override fun apply(cluster: RediCloudCluster) {
         val node = cluster.nodes.first()
@@ -42,13 +52,8 @@ data class ConfigurationTemplate(
             Thread.sleep(100)
         }
         execute("create $name")
-        executeEdit("version $serverVersion")
+        executeEdit("version ${serverVersion.versionName}")
         executeEdit("maxMemory $maxMemory")
-        executeEdit("minServices $minStartedServices")
-        executeEdit("maxServices $maxStartedServices")
-        executeEdit("minServicesPerNode $minStartedServicesPerNode")
-        executeEdit("maxServicesPerNode $maxStartedServicesPerNode")
-        executeEdit("percentToStartNew $percentToStartNewService")
         executeEdit("splitter $serverSplitter")
         executeEdit("fallback $fallbackServer")
         executeEdit("startPriority $startPriority")
@@ -68,6 +73,18 @@ data class ConfigurationTemplate(
         defaultFiles.forEach { (file, path) -> executeEdit("files add $file $path") }
         fileTemplates.forEach { executeEdit("filetemplates add $it") }
         nodes.forEach { executeEdit("nodes add $it") }
+
+        executeEdit("maxServices $maxStartedServices")
+        executeEdit("maxServicesPerNode $maxStartedServicesPerNode")
+        executeEdit("percentToStartNew $percentToStartNewService")
+        executeEdit("minServices $minStartedServices")
+        executeEdit("minServicesPerNode $minStartedServicesPerNode")
+    }
+
+    fun exposePortRange(hostStartPort: Int, range: Int) {
+        for (i in 0 until range) {
+            exposedPorts["${hostStartPort+range}"] = startPort + i
+        }
     }
 
 }
