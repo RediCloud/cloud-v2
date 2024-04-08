@@ -1,7 +1,6 @@
 import dev.redicloud.testing.RediCloud
 import dev.redicloud.testing.utils.FileSelectStrategy
 import dev.redicloud.testing.utils.PreServerVersion
-import java.io.File
 
 fun main() {
     RediCloud.startCluster {
@@ -10,13 +9,13 @@ fun main() {
 
         version {
             branch = "tests"
-            build = "31"
+            build = "32"
         }
 
         fileTemplate {
             prefix = "core"
             name = "spigot"
-            projectFile {
+            gradleBuildFile {
                 projectName = "examples/example-plugin"
                 targetDirectory = "plugins"
                 shadowJar = false

@@ -95,7 +95,7 @@ class RediCloudNode(
         }
         waitingFor(Wait.forLogMessage(".*${name}#$id: .*(connected to the cluster)*.", 1))
         waitUntilContainerStarted()
-        Thread.sleep(1500)
+        Thread.sleep(4000)
         logger.info("Node {} in cluster {} started", name, cluster.config.name)
 
     }
