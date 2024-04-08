@@ -4,7 +4,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 redicloud-version.properties
-testing/
+/testing/
 test-cloud/
 
 ### IntelliJ IDEA ###

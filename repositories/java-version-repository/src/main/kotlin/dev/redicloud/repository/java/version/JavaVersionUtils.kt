@@ -62,6 +62,9 @@ fun locateAllJavaVersions(): List<File> {
         val homePathSplit = System.getenv("JAVA_HOME").split(File.separator)
         paths.add(homePathSplit.subList(0, homePathSplit.size - 2).joinToString(File.separator))
     }
+    if (System.getenv().containsKey("JAVA_INSTALLATIONS_FOLDER")) {
+        paths.add(System.getenv("JAVA_INSTALLATIONS_FOLDER"))
+    }
 
     when (getOperatingSystemType()) {
         OSType.WINDOWS -> {
