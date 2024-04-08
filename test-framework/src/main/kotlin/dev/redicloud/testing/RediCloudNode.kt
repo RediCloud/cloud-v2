@@ -55,6 +55,7 @@ class RediCloudNode(
         }
         withEnv("LIBRARY_FOLDER", "/libs")
         withEnv("JAVA_INSTALLATIONS_FOLDER", "/opt")
+        withEnv("REDICLOUD_TESTING", "true")
     }
 
     private fun createDatabaseFile() {
@@ -136,7 +137,6 @@ class RediCloudNode(
             "$command\\r"
         )
         try {
-            logger.info("Executing command: {}", commands)
             val result = execInContainer(*commands.toTypedArray())
             if (result.stderr.isNotEmpty()) {
                 throw RuntimeException("Failed to execute command: $commands")
