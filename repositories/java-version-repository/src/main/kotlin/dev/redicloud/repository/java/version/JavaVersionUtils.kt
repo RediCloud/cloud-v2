@@ -35,9 +35,9 @@ fun isJavaVersionUnsupported(version: CloudJavaVersion): Boolean {
 }
 
 suspend fun getVersionInfo(path: String): JavaVersionInfo? {
-    var end = "bin" + File.separator + (if (getOperatingSystemType() == OSType.WINDOWS) "java.exe" else "java")
-    if (!path.endsWith(File.separator)) end = File.separator + end
-    val processBuilder = ProcessBuilder(path + (end), "-version")
+    var suffix = "bin" + File.separator + (if (getOperatingSystemType() == OSType.WINDOWS) "java.exe" else "java")
+    if (!path.endsWith(File.separator)) suffix = File.separator + suffix
+    val processBuilder = ProcessBuilder(path + (suffix), "-version")
     processBuilder.redirectErrorStream(true)
     val process = processBuilder.start()
     val reader = process.inputStream.bufferedReader()
@@ -90,9 +90,12 @@ fun locateAllJavaVersions(): List<File> {
         val state = it.exists()
         state
     }.filter { it.isDirectory }
-        .forEach { versionFolders.addAll(it.listFiles()!!.toList()) }
+    .forEach { it.listFiles()?.forEach { f -> versionFolders.add(f) } }
 
-    return versionFolders
+    val suffix = "bin" + File.separator + (if (getOperatingSystemType() == OSType.WINDOWS) "java.exe" else "java")
+    return versionFolders.filter {
+        File(it, suffix).exists()
+    }
 }
 
 fun toVersionId(versionNumber: Int): Int {
