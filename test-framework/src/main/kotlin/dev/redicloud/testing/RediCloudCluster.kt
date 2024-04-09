@@ -3,6 +3,7 @@ package dev.redicloud.testing
 import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.apply.impl.JarResourceLoader
 import dev.redicloud.testing.config.ClusterConfiguration
+import dev.redicloud.testing.config.NodeConfig
 import dev.redicloud.testing.redis.RedisInstance
 import org.testcontainers.containers.Network
 import java.io.File
@@ -25,19 +26,24 @@ class RediCloudCluster(
 
     init {
         workingDirectory.mkdirs()
+        shutdownHook()
 
-        for (i in 1 until config.nodes+1) {
-            registerNode("node-$i")
+        config.nodeConfigs.forEach {
+            registerNode(it)
         }
         config.preApply(this)
         registeredNodes.forEach { it.start() }
         config.apply(this)
     }
 
-    private fun registerNode(name: String): RediCloudNode {
-        return RediCloudNode(name, this).also {
+    private fun registerNode(nodeConfig: NodeConfig): RediCloudNode {
+        return RediCloudNode(nodeConfig, this).also {
             registeredNodes.add(it)
         }
+    }
+
+    fun execute(command: String): String {
+        return nodes.first().execute(command)
     }
 
     fun unregisterNode(node: RediCloudNode) {
@@ -50,9 +56,6 @@ class RediCloudCluster(
 
     private fun shutdownHook() {
         Runtime.getRuntime().addShutdownHook(Thread {
-            if (!workingDirectory.deleteRecursively()) {
-                workingDirectory.deleteOnExit()
-            }
             nodes.forEach {
                 if (!it.tempDirectory.deleteRecursively()) {
                     it.tempDirectory.deleteOnExit()

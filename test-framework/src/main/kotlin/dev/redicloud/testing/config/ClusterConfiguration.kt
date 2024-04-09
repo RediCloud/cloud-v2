@@ -14,14 +14,15 @@ import java.util.*
 
 data class ClusterConfiguration(
     var name: String = UUID.randomUUID().toString().substring(0, 4),
-    var nodes: Int = 1,
     var exposeRedis: Boolean = false,
     var attachWithWindowsTerminal: Boolean = getOperatingSystemType() == OSType.WINDOWS,
     var version: VersionInfo = VersionInfo.LATEST_STABLE,
     private val fileTemplates: MutableList<FileTemplate> = mutableListOf(),
     private val configurationTemplates: MutableList<ConfigurationTemplate> = mutableListOf(),
     private val serverVersions: MutableList<ServerVersion> = mutableListOf(),
-    var cache: CacheConfig = CacheConfig()
+    var cache: CacheConfig = CacheConfig(),
+    internal val nodeConfigs: MutableList<NodeConfig> = mutableListOf(),
+    internal val shortcuts: MutableMap<String, (RediCloudCluster) -> Unit> = mutableMapOf()
 ) : ICloudExecutable {
 
     override fun preApply(cluster: RediCloudCluster) {
@@ -44,9 +45,16 @@ data class ClusterConfiguration(
         cache.apply(block)
     }
 
-    fun fileTemplate(block: FileTemplate.() -> Unit) {
+    fun node(block: NodeConfig.() -> Unit): String {
+        val node = NodeConfig("node-${nodeConfigs.size+1}").apply(block)
+        nodeConfigs.add(node)
+        return node.name
+    }
+
+    fun fileTemplate(block: FileTemplate.() -> Unit): FileTemplate {
         val template = FileTemplate(UUID.randomUUID().toString(), UUID.randomUUID().toString()).apply(block)
         fileTemplates.add(template)
+        return template
     }
 
     fun configureServerVersion(block: ServerVersion.() -> Unit) {
@@ -58,6 +66,10 @@ data class ClusterConfiguration(
     fun configurationTemplate(block: ConfigurationTemplate.() -> Unit) {
         val template = ConfigurationTemplate(UUID.randomUUID().toString(), PreServerVersion.PAPER_LATEST).apply(block)
         configurationTemplates.add(template)
+    }
+
+    fun shortcut(name: String, block: (RediCloudCluster) -> Unit) {
+        shortcuts[name] = block
     }
 
 }

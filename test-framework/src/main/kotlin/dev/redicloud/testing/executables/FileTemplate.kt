@@ -1,7 +1,9 @@
 package dev.redicloud.testing.executables
 
 import dev.redicloud.api.utils.TEMPLATE_FOLDER
+import dev.redicloud.api.utils.toUniversalPath
 import dev.redicloud.testing.RediCloudCluster
+import dev.redicloud.testing.RediCloudNode
 import dev.redicloud.testing.utils.FileSelect
 import dev.redicloud.testing.utils.FileSelectStrategy
 import dev.redicloud.testing.utils.ProjectFileSelect
@@ -14,6 +16,11 @@ data class FileTemplate(
     private val localFiles: MutableMap<File, String> = mutableMapOf()
 ) : ICloudExecutable {
 
+    val displayName: String
+        get() = "$prefix-$name"
+    val path: String
+        get() = "${toUniversalPath(TEMPLATE_FOLDER.getFile())}/$prefix/$name"
+
     fun inherit(name: String) {
         inherited.add(name)
     }
@@ -23,64 +30,16 @@ data class FileTemplate(
         localFiles[select.file] = select.targetDirectory
     }
 
-    fun gradleBuildFile(block: ProjectFileSelect.() -> Unit) {
-        val select = ProjectFileSelect("", null, "", FileSelectStrategy.LATEST_MODIFIED, false).apply(block)
-        val project = File(select.projectName)
-        if (!project.exists()) {
-            throw IllegalArgumentException("Project $select.projectName does not exist")
-        }
-        val build = File(project, "build")
-        if (!build.exists()) {
-            throw IllegalArgumentException("Project $select.projectName does not have a build folder")
-        }
-        val libs = File(build, "libs")
-        if (!libs.exists()) {
-            throw IllegalArgumentException("Project $select.projectName does not have a libs folder")
-        }
-        val files =
-            libs.listFiles() ?: throw IllegalArgumentException("Project $select.projectName does not have any files")
-        val file = when (select.selectStrategy) {
-            FileSelectStrategy.LATEST_MODIFIED -> files.filter {
-                if (select.fileName != null) {
-                    it.name == select.fileName
-                } else {
-                    true
-                }
-            }.filter {
-                if (select.shadowJar) {
-                    it.name.contains("all")
-                } else {
-                    true
-                }
-            }.maxByOrNull { it.lastModified() }
-            FileSelectStrategy.OLDEST_MODIFIED -> files
-                .filter {
-                    if (select.fileName != null) {
-                        it.name == select.fileName
-                    } else {
-                        true
-                    }
-                }.filter {
-                if (select.shadowJar) {
-                    it.name.contains("all")
-                } else {
-                    true
-                }
-            }.minByOrNull { it.lastModified() }
-        } ?: throw IllegalArgumentException("Project $select.projectName does not have any files")
-        localFiles[file] = select.targetDirectory
-    }
-
     override fun apply(cluster: RediCloudCluster) {
         val node = cluster.nodes.first()
         fun execute(command: String) {
             node.execute("ft $command")
-            Thread.sleep(100)
+            Thread.sleep(RediCloudNode.CONSOLE_COMMAND_DELAY.inWholeMilliseconds)
         }
 
         fun executeEdit(command: String) {
             node.execute("ft edit $name $command")
-            Thread.sleep(100)
+            Thread.sleep(RediCloudNode.CONSOLE_COMMAND_DELAY.inWholeMilliseconds)
         }
         execute("create $name $prefix")
         inherited.forEach { executeEdit("inherit add $it") }
@@ -97,6 +56,11 @@ data class FileTemplate(
                 file.copyRecursively(File(targetDirectory, file.name), true)
             }
         }
+    }
+
+    fun gradleBuildFile(block: ProjectFileSelect.() -> Unit) {
+        val select = ProjectFileSelect("", null, "", FileSelectStrategy.LATEST_MODIFIED, false).apply(block)
+        localFiles[select.file] = select.targetDirectory
     }
 
 }

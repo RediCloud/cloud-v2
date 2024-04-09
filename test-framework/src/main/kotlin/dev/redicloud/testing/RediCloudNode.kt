@@ -1,6 +1,7 @@
 package dev.redicloud.testing
 
 import dev.redicloud.api.utils.*
+import dev.redicloud.testing.config.NodeConfig
 import dev.redicloud.testing.utils.DockerUtils
 import dev.redicloud.testing.utils.copyFolderContentFromContainer
 import dev.redicloud.utils.gson.gson
@@ -11,23 +12,26 @@ import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.MountableFile
 import java.io.File
 import java.time.Duration
+import java.util.*
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class RediCloudNode(
-    val name: String,
+    val config: NodeConfig,
     val cluster: RediCloudCluster
 ) : GenericContainer<RediCloudNode>(
     DockerUtils.getNodeImage(cluster.config.version.branch, cluster.config.version.build)
 ) {
 
     companion object {
-        private val logger = LoggerFactory.getLogger(RediCloudNode::class.java)
+        internal val LOGGER = LoggerFactory.getLogger(RediCloudNode::class.java)
+        val CONSOLE_COMMAND_DELAY = 20.milliseconds
     }
 
-    val localWorkingDirectory = File(cluster.workingDirectory, name)
-    val tempDirectory = File(RediCloudCluster.WORKING_DIRECTORY, "temp/${cluster.config.name}/$name")
-    val id = "${cluster.config.name}_${name}".toUUID()
+    val localWorkingDirectory = File(cluster.workingDirectory, config.name)
+    val tempDirectory = File(RediCloudCluster.WORKING_DIRECTORY, "temp/${cluster.config.name}/${config.name}")
+    val id = "${cluster.config.name}_${config.name}".toUUID()
     var terminal: Process? = null
         private set
     val localLibs = File(workingDirectory, "libs")
@@ -42,7 +46,7 @@ class RediCloudNode(
         withNetwork(cluster.network)
         withNetworkAliases(cluster.hostname)
         withCreateContainerCmdModifier {
-            it.withName("redicloud-${cluster.config.name}-$name")
+            it.withName("redicloud-${cluster.config.name}-${config.name}")
             it.withTty(true)
             it.withStdinOpen(true)
             it.withAttachStdin(true)
@@ -78,66 +82,48 @@ class RediCloudNode(
         STORAGE_FOLDER.getFile(localWorkingDirectory).mkdirs()
         val nodeFile = NODE_JSON.getFile(localWorkingDirectory)
         val config = mutableMapOf(
-            "nodeName" to name,
+            "nodeName" to config.name,
             "uniqueId" to id,
-            "hostAddress" to "127.0.0.1"
+            "hostAddress" to "0.0.0.0"
         )
         nodeFile.writeText(gson.toJson(config))
     }
 
     override fun start() {
-        logger.info("Starting node {} in cluster {}", name, cluster.config.name)
+        LOGGER.info("Starting node {} in cluster {}", config.name, cluster.config.name)
         super.start()
         if (cluster.config.attachWithWindowsTerminal) {
             terminal = Runtime.getRuntime().exec(
-                """cmd /c start "$name@${cluster.config.name} | Docker-Container: $containerId" cmd /c "docker attach $containerId""""
+                """cmd /c start "${config.name}@${cluster.config.name} | Docker-Container: $containerId" cmd /c "docker attach $containerId""""
             )
         }
         val timeout = if (localLibs.exists()) 45.seconds else 5.minutes
         waitingFor(Wait
-            .forLogMessage(".*${name}#$id: .*(connected to the cluster)*.", 1)
+            .forLogMessage(".*${config.name}#$id: .*(connected to the cluster)*.", 1)
             .withStartupTimeout(Duration.ofMillis(timeout.inWholeMilliseconds))
         )
         waitUntilContainerStarted()
         Thread.sleep(4000)
-        logger.info("Node {} in cluster {} started", name, cluster.config.name)
-
+        execute("cluster edit ${config.name} maxMemory ${config.maxMemory}")
+        config.startUpCommands.forEach { execute(it) }
+        LOGGER.info("Node {} in cluster {} started", config.name, cluster.config.name)
     }
 
     override fun stop() {
-        logger.info("Stopping node {} in cluster {}", name, cluster.config.name)
+        LOGGER.info("Stopping node {} in cluster {}", config.name, cluster.config.name)
+
+        config.shutdownCommands.forEach { execute(it) }
 
         if (cluster.config.cache.cacheLibs) {
-            val targetPath = "$workingDirectory/${toUniversalPath(LIB_FOLDER.getFile(), "/")}"
-            if (!execInContainer("ls", targetPath).stderr.contains("No such file or directory")) {
-                logger.info("Copying libs from container to local folder...")
-                val tempLibs = File(tempDirectory, "libs")
-                tempLibs.deleteRecursively()
-                copyFolderContentFromContainer(targetPath, tempLibs.absolutePath)
-                tempLibs.copyRecursively(LIB_FOLDER.getFile(localWorkingDirectory), true)
-            }
+            saveCloudFileToTemplate(LIB_FOLDER)
         }
 
         if (cluster.config.cache.cacheConnectorJars) {
-            val targetPath = "$workingDirectory/${toUniversalPath(CONNECTORS_FOLDER.getFile(), "/")}"
-            if (!execInContainer("ls", targetPath).stderr.contains("No such file or directory")) {
-                logger.info("Copying connector jars from container to local folder...")
-                val tempConnectors = File(tempDirectory, "connectors")
-                tempConnectors.deleteRecursively()
-                copyFolderContentFromContainer(targetPath, tempConnectors.absolutePath)
-                tempConnectors.copyRecursively(CONNECTORS_FOLDER.getFile(localWorkingDirectory), true)
-            }
+            saveCloudFileToTemplate(CONNECTORS_FOLDER)
         }
 
         if (cluster.config.cache.cacheServerVersionJars) {
-            val targetPath = "$workingDirectory/${toUniversalPath(MINECRAFT_VERSIONS_FOLDER.getFile(), "/")}"
-            if (!execInContainer("ls", targetPath).stderr.contains("No such file or directory")) {
-                logger.info("Copying server version jars from container to local folder...")
-                val tempServerVersions = File(tempDirectory, "server-versions")
-                tempServerVersions.deleteRecursively()
-                copyFolderContentFromContainer(targetPath, tempServerVersions.absolutePath)
-                tempServerVersions.copyRecursively(MINECRAFT_VERSIONS_FOLDER.getFile(localWorkingDirectory), true)
-            }
+            saveCloudFileToTemplate(MINECRAFT_VERSIONS_FOLDER)
         }
 
         execute("stop")
@@ -153,8 +139,36 @@ class RediCloudNode(
         }
     }
 
+    fun saveCloudFileToTemplate(cloudFile: CloudFile): Boolean {
+        val targetPath = "$workingDirectory/${toUniversalPath(cloudFile.getFile(), "/")}"
+        return saveFileToTemplate(targetPath, cloudFile.getFile(localWorkingDirectory), cloudFile.folder)
+    }
+
+    fun saveFileToTemplate(containerPath: String, destination: File, folder: Boolean): Boolean {
+        LOGGER.info("Saving folder $containerPath to template of node $config.name in cluster ${cluster.config.name}...")
+        if (!existsFolder(containerPath)) return false
+        LOGGER.info("Copying folder from container to local folder...")
+        var tempFolder = tempDirectory
+        tempFolder.mkdirs()
+        while (tempFolder.exists()) {
+            tempFolder = if (folder) {
+                File(tempDirectory, destination.name + UUID.randomUUID().toString().substring(0, 5))
+            } else {
+                File(tempDirectory, destination.parentFile.name + UUID.randomUUID().toString().substring(0, 5))
+            }
+        }
+        tempFolder.mkdirs()
+        copyFolderContentFromContainer(containerPath, tempFolder.absolutePath)
+        tempFolder.copyRecursively(destination, true)
+        return true
+    }
+
+    fun existsFolder(path: String): Boolean {
+        return !execInContainer("ls", path).stderr.contains("No such file or directory")
+    }
+
     fun execute(command: String): String {
-        logger.info("Executing command: {}", command)
+        LOGGER.info("Executing command: {}", command)
         if (!isRunning) {
             throw RuntimeException("Container is not running")
         }

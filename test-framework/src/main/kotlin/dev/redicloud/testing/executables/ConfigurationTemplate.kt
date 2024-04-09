@@ -1,6 +1,9 @@
 package dev.redicloud.testing.executables
 
+import dev.redicloud.api.utils.TEMPLATE_FOLDER
+import dev.redicloud.api.utils.toUniversalPath
 import dev.redicloud.testing.RediCloudCluster
+import dev.redicloud.testing.RediCloudNode
 import dev.redicloud.testing.pre.PreServerVersion
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -9,27 +12,27 @@ data class ConfigurationTemplate(
     var name: String,
     var serverVersion: PreServerVersion,
     var maxMemory: Long = 1024,
-    private val fileTemplates: MutableList<String> = mutableListOf(),
-    private val nodes: MutableList<String> = mutableListOf(),
+    var fileTemplates: MutableList<FileTemplate> = mutableListOf(),
+    var nodes: MutableList<String> = mutableListOf(),
     var minStartedServices: Int = 1,
     var maxStartedServices: Int = -1,
     var minStartedServicesPerNode: Int = -1,
     var maxStartedServicesPerNode: Int = -1,
     var percentToStartNewService: Double = 100.0,
     var serverSplitter: String = "-",
-    var fallbackServer: Boolean = false,
-    var startPriority: Int = if (fallbackServer) 0 else 50,
+    var fallback: Boolean = false,
+    var startPriority: Int = if (fallback) 0 else 50,
     var static: Boolean = false,
     var startPort: Int = 4000,
     var joinPermission: String? = null,
     var maxPlayers: Int = 100,
     var timeAfterStopUselessServer: Duration = 5.minutes,
-    val jvmArguments: MutableList<String> = mutableListOf(),
-    val environmentVariables: MutableMap<String, String> = mutableMapOf(),
-    val programParameters: MutableList<String> = mutableListOf(),
-    val defaultFiles: MutableMap<String, String> = mutableMapOf(),
-    val fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf(),
-    val exposedPorts: MutableMap<String, Int> = mutableMapOf()
+    var jvmArguments: MutableList<String> = mutableListOf(),
+    var environmentVariables: MutableMap<String, String> = mutableMapOf(),
+    var programParameters: MutableList<String> = mutableListOf(),
+    var defaultFiles: MutableMap<String, String> = mutableMapOf(),
+    var fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf(),
+    var exposedPorts: MutableMap<String, Int> = mutableMapOf()
 ) : ICloudExecutable {
 
     override fun preApply(cluster: RediCloudCluster) {
@@ -44,18 +47,18 @@ data class ConfigurationTemplate(
         val node = cluster.nodes.first()
         fun execute(command: String) {
             node.execute("ct $command")
-            Thread.sleep(100)
+            Thread.sleep(RediCloudNode.CONSOLE_COMMAND_DELAY.inWholeMilliseconds)
         }
 
         fun executeEdit(command: String) {
             node.execute("ct edit $name $command")
-            Thread.sleep(100)
+            Thread.sleep(RediCloudNode.CONSOLE_COMMAND_DELAY.inWholeMilliseconds)
         }
         execute("create $name")
         executeEdit("version ${serverVersion.versionName}")
         executeEdit("maxMemory $maxMemory")
         executeEdit("splitter $serverSplitter")
-        executeEdit("fallback $fallbackServer")
+        executeEdit("fallback $fallback")
         executeEdit("startPriority $startPriority")
         executeEdit("static $static")
         executeEdit("startPort $startPort")
@@ -71,7 +74,7 @@ data class ConfigurationTemplate(
             }
         }
         defaultFiles.forEach { (file, path) -> executeEdit("files add $file $path") }
-        fileTemplates.forEach { executeEdit("filetemplates add $it") }
+        fileTemplates.forEach { executeEdit("filetemplates add ${it.displayName}") }
         nodes.forEach { executeEdit("nodes add $it") }
 
         executeEdit("maxServices $maxStartedServices")
@@ -83,8 +86,12 @@ data class ConfigurationTemplate(
 
     fun exposePortRange(hostStartPort: Int, range: Int) {
         for (i in 0 until range) {
-            exposedPorts["${hostStartPort+range}"] = startPort + i
+            exposedPorts["${hostStartPort+i}"] = startPort + i
         }
+    }
+
+    fun exposePort(containerPort: Int, hostPort: Int = containerPort) {
+        exposedPorts["$hostPort"] = containerPort
     }
 
 }

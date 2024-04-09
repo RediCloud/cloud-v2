@@ -4,7 +4,7 @@ plugins {
 
 group = "dev.redicloud"
 
-val publishToRepository by extra(false)
+val publishToRepository by extra(true)
 
 dependencies {
     shade(BuildDependencies.LOGBACK_CORE)
