@@ -13,7 +13,7 @@ import dev.redicloud.database.config.toFile
 import dev.redicloud.logging.LogManager
 import dev.redicloud.logging.getLogLevelByProperty
 import dev.redicloud.repository.java.version.getJavaVersion
-import dev.redicloud.repository.java.version.isJavaVersionNotSupported
+import dev.redicloud.repository.java.version.isJavaVersionNotTested
 import dev.redicloud.repository.java.version.isJavaVersionSupported
 import dev.redicloud.service.node.NodeConfiguration
 import dev.redicloud.utils.*
@@ -207,7 +207,7 @@ class InitializeConsole() : Console(
     private fun checkJava(): String {
         return if (isJavaVersionSupported(getJavaVersion())) {
             "§2✓ §8(§fJava: %hc%${System.getProperty("java.version")}§8)"
-        } else if (isJavaVersionNotSupported(getJavaVersion())) {
+        } else if (isJavaVersionNotTested(getJavaVersion())) {
             "§e§l~ §8(§eJava: ${System.getProperty("java.version")}§8| §enot tested§8)"
         } else {
             "§4✘ §8(§cJava: ${System.getProperty("java.version")}§8| §cnot supported§8)"

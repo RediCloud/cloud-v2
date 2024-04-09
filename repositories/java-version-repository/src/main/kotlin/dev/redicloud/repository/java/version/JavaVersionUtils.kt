@@ -23,15 +23,15 @@ fun getJavaVersion(): CloudJavaVersion {
 }
 
 fun isJavaVersionSupported(version: CloudJavaVersion): Boolean {
-    return version.id == 52 || version.id == 61 || version.id == 62 || version.id == 63
+    return version.id == 52 || version.id == 61 || version.id == 62 || version.id == 63 || version.id == 65
 }
 
-fun isJavaVersionNotSupported(version: CloudJavaVersion): Boolean {
+fun isJavaVersionNotTested(version: CloudJavaVersion): Boolean {
     return version.id == 53 || version.id == 54 || version.id == 55 || version.id == 56 || version.id == 57 || version.id == 58 || version.id == 59 || version.id == 60 || version.id == 64
 }
 
 fun isJavaVersionUnsupported(version: CloudJavaVersion): Boolean {
-    return !isJavaVersionNotSupported(getJavaVersion()) && !isJavaVersionNotSupported(version)
+    return !isJavaVersionNotTested(getJavaVersion()) && !isJavaVersionNotTested(version)
 }
 
 suspend fun getVersionInfo(path: String): JavaVersionInfo? {
