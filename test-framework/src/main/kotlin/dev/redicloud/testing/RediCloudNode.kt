@@ -145,7 +145,7 @@ class RediCloudNode(
     }
 
     fun saveFileToTemplate(containerPath: String, destination: File, folder: Boolean): Boolean {
-        LOGGER.info("Saving folder $containerPath to template of node $config.name in cluster ${cluster.config.name}...")
+        LOGGER.info("Saving folder $containerPath to ${destination.absolutePath} (${config.name}@${cluster.config.name})...")
         if (!existsFolder(containerPath)) return false
         LOGGER.info("Copying folder from container to local folder...")
         var tempFolder = tempDirectory
