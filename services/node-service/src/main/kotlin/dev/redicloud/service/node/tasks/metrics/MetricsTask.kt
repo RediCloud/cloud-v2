@@ -23,6 +23,7 @@ class MetricsTask(
     }
 
     override suspend fun execute(): Boolean {
+        if (System.getenv().containsKey("REDICLOUD_TESTING") && System.getenv("REDICLOUD_TESTING") == "true") return true
         if (System.getProperty("dev.redicloud.metrics", "true").lowercase() == "false") return true
         try {
             val url = "https://api.redicloud.dev/v2/metrics"

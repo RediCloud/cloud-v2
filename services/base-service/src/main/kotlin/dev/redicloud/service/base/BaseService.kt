@@ -2,6 +2,7 @@ package dev.redicloud.service.base
 
 import com.google.inject.Guice
 import com.google.inject.name.Names
+import dev.redicloud.api.database.IDatabaseConnection
 import dev.redicloud.api.events.IEventManager
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.cache.tasks.InvalidCacheTask
@@ -98,17 +99,16 @@ abstract class BaseService(
             loadProperties(Thread.currentThread().contextClassLoader)
             VersionRepository.loadIfNotLoaded()
         }
-        databaseConnection = if (_databaseConnection != null && _databaseConnection.isConnected()) {
+        databaseConnection = if (_databaseConnection != null && _databaseConnection.connected) {
             _databaseConnection
         } else {
             DatabaseConnection(
                 databaseConfiguration,
-                serviceId,
-                GsonCodec()
+                serviceId
             )
         }
         try {
-            if (!databaseConnection.isConnected()) runBlocking { databaseConnection.connect() }
+            if (!databaseConnection.connected) runBlocking { databaseConnection.connect() }
         } catch (e: Exception) {
             LOGGER.severe("Failed to connect to database", e)
             exitProcess(-1)
@@ -248,9 +248,11 @@ abstract class BaseService(
         bind(java.util.logging.Logger::class).annotatedWith(Names.named("root")).toInstance(LogManager.rootLogger())
         bind(java.util.logging.Logger::class).annotatedWith(Names.named("service")).toInstance(LOGGER)
         bind(CloudTaskManager::class).toInstance(taskManager)
-        if (System.getProperty("redicloud.inject.database", "true").toBooleanStrictOrNull() == true) {
-            bind(RedissonClient::class).toInstance(databaseConnection.getClient())
+        if (System.getProperty("redicloud.inject.redisson", "true").toBooleanStrictOrNull() == true) {
+            bind(RedissonClient::class).toInstance(databaseConnection.client)
         }
+        bind(ClusterConfiguration::class).toInstance(clusterConfiguration)
+        bind(IDatabaseConnection::class).toInstance(databaseConnection)
     }
 
 }

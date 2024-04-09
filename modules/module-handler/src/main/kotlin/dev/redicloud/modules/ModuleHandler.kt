@@ -2,16 +2,14 @@ package dev.redicloud.modules
 
 import com.google.inject.Key
 import com.google.inject.name.Named
-import dev.redicloud.api.modules.ICloudModule
-import dev.redicloud.api.modules.IModuleHandler
-import dev.redicloud.api.modules.ModuleLifeCycle
-import dev.redicloud.api.modules.ModuleTask
+import dev.redicloud.api.modules.*
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.utils.CloudInjectable
-import dev.redicloud.api.utils.MODULE_FOLDER
+import dev.redicloud.api.utils.MODULES_FOLDER
 import dev.redicloud.api.utils.injector
 import dev.redicloud.api.version.ICloudServerVersionType
 import dev.redicloud.commands.api.SUGGESTERS
+import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.apply.impl.JarResourceLoader
@@ -33,7 +31,8 @@ class ModuleHandler(
     repoUrls: List<String>,
     private val eventManager: EventManager,
     private val packetManager: PacketManager,
-    private val serverVersionType: ICloudServerVersionType?
+    private val serverVersionType: ICloudServerVersionType?,
+    private val databaseConnection: DatabaseConnection
 ) : IModuleHandler {
 
     companion object {
@@ -45,6 +44,7 @@ class ModuleHandler(
     private val moduleFiles = mutableListOf<File>()
     private val cachedDescriptions = mutableListOf<ModuleDescription>()
     val repositories = mutableListOf<ModuleWebRepository>()
+    private val storages = mutableListOf<ModuleStorage>()
 
     init {
         repoUrls.forEach { url ->
@@ -176,7 +176,7 @@ class ModuleHandler(
 
     fun detectModules() = lock.withLock {
         moduleFiles.clear()
-        MODULE_FOLDER.getFile().listFiles()?.filter {
+        MODULES_FOLDER.getFile().listFiles()?.filter {
             it.isFile && it.extension == "jar"
         }?.filter {
             val jarFile = JarFile(it)
@@ -241,18 +241,34 @@ class ModuleHandler(
         }
 
         val moduleClass = loader.loadClass(matchedMain).kotlin
-        if (!moduleClass.isSubclassOf(ICloudModule::class)) {
+        if (!moduleClass.isSubclassOf(CloudModule::class)) {
             logger.warning("§cMain class of module ${description.id} is not a subclass of ICloudModule!")
             return@withLock
         }
         loaders[description.id] = loader
-        val moduleInstance: ICloudModule?
+        val moduleInstance: CloudModule?
         try {
             moduleInstance = if (moduleClass.isSubclassOf(CloudInjectable::class)) {
                 injector.getInstance(moduleClass.java)
             }else {
                 moduleClass.createInstance()
-            } as ICloudModule
+            } as CloudModule
+            val moduleHandlerField = CloudModule::class.java.declaredFields.firstOrNull { it.type == IModuleHandler::class.java}
+            if (moduleHandlerField == null) {
+                logger.warning("§cModule ${description.id} has no moduleHandler property!")
+            }else {
+                moduleHandlerField.isAccessible = true
+                moduleHandlerField.set(moduleInstance, this)
+                moduleHandlerField.isAccessible = false
+            }
+            val moduleIdField = CloudModule::class.java.declaredFields.firstOrNull { it.name == "moduleId" }
+            if (moduleIdField == null) {
+                logger.warning("§cModule ${description.id} has no moduleId property!")
+            }else {
+                moduleIdField.isAccessible = true
+                moduleIdField.set(moduleInstance, description.id)
+                moduleIdField.isAccessible = false
+            }
         }catch (e: Exception) {
             logger.warning("§cFailed to load module ${description.id}!", e)
             return@withLock
@@ -379,6 +395,10 @@ class ModuleHandler(
 
     override fun loadModule(moduleId: String) {
         loadModule(cachedDescriptions.firstOrNull { it.id == moduleId }?.cachedFile ?: return)
+    }
+
+    override fun getStorage(moduleId: String, name: String): ModuleStorage {
+        return storages.firstOrNull { it.moduleId == moduleId } ?: ModuleStorage(moduleId, name, databaseConnection)
     }
 
     fun getModuleDatas(): List<ModuleData> {

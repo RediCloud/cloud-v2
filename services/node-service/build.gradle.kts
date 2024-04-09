@@ -34,26 +34,11 @@ dependencies {
     shade(project(":file-cluster"))
     shade(project(":server-factories:node-server-factory"))
     shade(project(":server-factories:remote-server-factory"))
-    shade("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
+    shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
     shade(project(":repositories:cache-repository"))
     shade(project(":modules:module-handler"))
     shade(project(":updater"))
 
-    compileOnly("org.jline:jline-terminal-jansi:${Versions.jline}")
-    compileOnly("com.jcraft:jsch:0.1.55")
-}
-
-tasks.register("buildAndCopy") {
-    dependsOn(tasks.named("build"))
-    val outputJar = Builds.getOutputFileName(project) + ".jar"
-    doLast {
-        for (i in 1..Builds.testNodes) {
-            val id = if (i in 1..9) "0$i" else i.toString()
-            val path = Builds.getTestDirPath(project, "node$id")
-            project.copy {
-                from(project.buildDir.resolve("libs").resolve(outputJar))
-                into(path)
-            }
-        }
-    }
+    compileOnly(BuildDependencies.JLINE_JANSI)
+    compileOnly(BuildDependencies.JSCH)
 }

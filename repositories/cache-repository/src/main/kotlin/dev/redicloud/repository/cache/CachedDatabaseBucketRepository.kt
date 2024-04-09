@@ -5,14 +5,12 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.api.service.ServiceType
-import org.redisson.client.codec.BaseCodec
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
 open class CachedDatabaseBucketRepository<I : Any, K : Any>(
     connection: DatabaseConnection,
     name: String,
-    codec: BaseCodec? = null,
     interfaceClass: KClass<I>,
     cacheClass: KClass<K>,
     cacheDuration: Duration,
@@ -21,7 +19,6 @@ open class CachedDatabaseBucketRepository<I : Any, K : Any>(
 ) : DatabaseBucketRepository<I, K>(
     connection,
     name,
-    codec,
     interfaceClass,
     cacheClass
 ) {
@@ -52,7 +49,7 @@ open class CachedDatabaseBucketRepository<I : Any, K : Any>(
 
     override suspend fun getAll(customPattern: String?): List<K> {
         val keyPattern = customPattern ?: "cloud:$name:*"
-        val keys = connection.getClient().keys.getKeysByPattern(keyPattern)
+        val keys = connection.client.keys.getKeysByPattern(keyPattern)
         val new = mutableListOf<String>()
         keys.forEach {
             val identifier = it.substringAfter("$name:")

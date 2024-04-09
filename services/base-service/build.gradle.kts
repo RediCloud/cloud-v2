@@ -27,7 +27,6 @@ dependencies {
     compileOnly(project(":logging"))
     compileOnly(project(":commands:command-api"))
 
-
-    dependency("org.redisson:redisson:${Versions.redisson}")
-    dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinxCoroutines}")
+    dependency(BuildDependencies.KOTLINX_COROUTINES)
+    dependency(BuildDependencies.REDISSON)
 }

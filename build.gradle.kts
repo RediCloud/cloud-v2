@@ -2,7 +2,7 @@ import org.gradle.kotlin.dsl.extra
 
 plugins {
     kotlin("jvm")
-    id("dev.redicloud.libloader") version Versions.libloader apply false
+    id("dev.redicloud.libloader") version BuildDependencies.CLOUD_LIBLOADER_VERSION apply false
 }
 
 allprojects {
@@ -19,7 +19,7 @@ allprojects {
     the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).configurationName.set("dependency")
     the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).doBootstrapShade.set(false)
 
-    version = Versions.cloud
+    version = BuildDependencies.CLOUD_VERSION
 
     repositories {
         maven("https://repo.redicloud.dev/releases")
@@ -29,13 +29,21 @@ allprojects {
     }
 
     dependencies {
-        compileOnly("com.google.code.gson:gson:${Versions.gson}")
-        dependency("dev.redicloud.libloader:libloader-bootstrap:${Versions.libloaderBootstrap}")
-        dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.kotlinxCoroutines}")
-        compileOnly("org.redisson:redisson:${Versions.redisson}")
-        dependency("com.github.jkcclemens:khttp:${Versions.khttp}")
-        dependency("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
-        dependency("com.google.inject:guice:${Versions.guice}")
+        compileOnly(BuildDependencies.GSON)
+        dependency(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
+        dependency(BuildDependencies.KOTLINX_COROUTINES)
+        dependency(BuildDependencies.KHTTP)
+        dependency(BuildDependencies.KOTLIN_REFLECT)
+        dependency(BuildDependencies.GUICE)
+
+        testImplementation(BuildDependencies.DOCKER_TEST_CONTAINERS)
+        testImplementation(BuildDependencies.GSON)
+        testImplementation(BuildDependencies.LOGBACK_CORE)
+        testImplementation(BuildDependencies.LOGBACK_CLASSIC)
+        testImplementation(project(":utils"))
+        testImplementation(project(":apis:base-api"))
+        testImplementation(project(":database"))
+        testImplementation(project(":services:node-service"))
     }
 
     tasks {
@@ -91,18 +99,4 @@ allprojects {
         }
     }
 
-}
-
-tasks.register("buildCloudAndCopy") {
-    project.allprojects.forEach {
-        if (it == it.rootProject) return@forEach
-        try {
-            val task = it.tasks.named("buildAndCopy")
-            dependsOn(task)
-            println("Project ${it.name} has ${task.name} task!")
-        }catch (_: UnknownDomainObjectException) {
-            println("Project ${it.name} has no buildAndCopy task! Use default build task instead.")
-            dependsOn(it.tasks.named("build"))
-        }
-    }
 }

@@ -4,6 +4,8 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 redicloud-version.properties
+/testing/
+test-cloud/
 
 ### IntelliJ IDEA ###
 .idea/
@@ -13,12 +15,6 @@ redicloud-version.properties
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
-
-### Test Files ###
-/test/**/tmp/
-/test/**/.libs/
-/test/**/storage/
-/test/**/*.jar
 
 ### Eclipse ###
 .apt_generated

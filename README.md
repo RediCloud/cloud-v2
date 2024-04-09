@@ -36,12 +36,12 @@ A redis based cluster cloud system for minecraft.
 - multi java versions support (versions: 8-20) ✅
 - modify program arguments and jvm flags for each group / server version ✅
 - external proxy server (start external proxy server and connect them to the cloud)
-- easy dev plugin test (create external server, that you can start for e.g via your IDE. The services will connect without a node to the cloud cluster) 
+- easy dev plugin test -> test-framework ✅
 - offline/online player support at the same time
 - multi proxy (with player count sync)
 - limbo fallbacks
 - only proxy join (but please use your firewall: [guide](https://www.spigotmc.org/wiki/firewall-guide/))
-- module system
+- module system ✅
 - report server crashes ✅
 - log server exceptions to node ✅
 - suspend system (suspend time outed nodes...) ✅

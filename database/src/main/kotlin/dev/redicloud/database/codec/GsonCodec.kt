@@ -14,7 +14,7 @@ import org.redisson.client.protocol.Decoder
 import org.redisson.client.protocol.Encoder
 import java.nio.charset.Charset
 
-class GsonCodec : BaseCodec() {
+object GsonCodec : BaseCodec() {
 
     private val charset: Charset = Charsets.UTF_8
 

@@ -7,9 +7,6 @@ on:
       - "dev"
     paths-ignore:
       - "docs/**"
-  pull_request:
-    branches:
-      - "dev"
 
 jobs:
   build:
@@ -41,7 +38,7 @@ jobs:
         env:
           build_number: ${{ github.run_number }}
           build_vcs_number: ${{ github.sha }}
-          branch: ${{ github.ref_name }}
+          branch: ${{ github.ref }}
 
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v3

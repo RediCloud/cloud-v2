@@ -5,7 +5,7 @@ import java.io.File
 
 data class DatabaseConfiguration(
     val username: String? = "",
-    val password: String = "",
+    val password: String? = "",
     val nodes: List<DatabaseNode>,
     val databaseId: Int = 0
 ) {

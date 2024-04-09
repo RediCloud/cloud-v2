@@ -8,8 +8,8 @@ import kotlinx.coroutines.runBlocking
 class BuildsSuggester : AbstractCommandSuggester() {
     override fun suggest(context: CommandContext): Array<String> = runBlocking {
         val branch = context.input.split(" ").lastOrNull { it.isNotBlank() } ?: return@runBlocking arrayOf("latest")
-        return@runBlocking Updater.getBuilds(branch)?.map { it.toString() }?.also {
+        return@runBlocking Updater.getBuilds(branch).map { it.build.toString() }.also {
             it.toMutableList().add("latest")
-        }?.toTypedArray() ?: arrayOf("latest")
+        }.toTypedArray()
     }
 }
