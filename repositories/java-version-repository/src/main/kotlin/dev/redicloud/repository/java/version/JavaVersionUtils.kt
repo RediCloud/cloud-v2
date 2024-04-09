@@ -11,6 +11,10 @@ fun getJavaVersionsBetween(javaVersion1: CloudJavaVersion, javaVersion2: CloudJa
 
 fun getJavaVersion(): CloudJavaVersion {
     val version = System.getProperty("java.version")
+    if (version.contains("-") && version.split(".").size < 2) {
+        return JavaVersionRepository.ONLINE_VERSION_CACHE.get()!!.find { it.name == version.split("-")[0] }
+            ?: JavaVersionRepository.ONLINE_VERSION_CACHE.get()!!.first { it.unknown }
+    }
     val versionParts = version.split(".")
     val major = versionParts[0].toInt()
     val minor = versionParts[1].toInt()
@@ -31,15 +35,19 @@ fun isJavaVersionUnsupported(version: CloudJavaVersion): Boolean {
 }
 
 suspend fun getVersionInfo(path: String): JavaVersionInfo? {
-    var end = "bin" + File.separator + (if (getOperatingSystemType() == OSType.WINDOWS) "java.exe" else "java")
-    if (!path.endsWith(File.separator)) end = File.separator + end
-    val processBuilder = ProcessBuilder(path + (end), "-version")
+    var suffix = "bin" + File.separator + (if (getOperatingSystemType() == OSType.WINDOWS) "java.exe" else "java")
+    if (!path.endsWith(File.separator)) suffix = File.separator + suffix
+    val processBuilder = ProcessBuilder(path + (suffix), "-version")
     processBuilder.redirectErrorStream(true)
     val process = processBuilder.start()
     val reader = process.inputStream.bufferedReader()
     val output = reader.readLines()
     if (output.size >= 5) return null
-    val versionParts = output[1].split("(build ").last().split("+").first().split(".")
+    val version = output[1].split("(build ").last().split("+").first()
+    if (version.split(".").size < 3 && version.contains("-")) {
+        return JavaVersionInfo(version.split("-")[0].toInt(), 0, 0, output.joinToString("\n"))
+    }
+    val versionParts = version.split(".")
     val major = versionParts[0]
     val minor = versionParts[1]
     val patch = versionParts[2]
@@ -57,6 +65,9 @@ fun locateAllJavaVersions(): List<File> {
     if (System.getenv().containsKey("JAVA_HOME")) {
         val homePathSplit = System.getenv("JAVA_HOME").split(File.separator)
         paths.add(homePathSplit.subList(0, homePathSplit.size - 2).joinToString(File.separator))
+    }
+    if (System.getenv().containsKey("JAVA_INSTALLATIONS_FOLDER")) {
+        paths.add(System.getenv("JAVA_INSTALLATIONS_FOLDER"))
     }
 
     when (getOperatingSystemType()) {
@@ -79,9 +90,12 @@ fun locateAllJavaVersions(): List<File> {
         val state = it.exists()
         state
     }.filter { it.isDirectory }
-        .forEach { versionFolders.addAll(it.listFiles()!!.toList()) }
+    .forEach { it.listFiles()?.forEach { f -> versionFolders.add(f) } }
 
-    return versionFolders
+    val suffix = "bin" + File.separator + (if (getOperatingSystemType() == OSType.WINDOWS) "java.exe" else "java")
+    return versionFolders.filter {
+        File(it, suffix).exists()
+    }
 }
 
 fun toVersionId(versionNumber: Int): Int {

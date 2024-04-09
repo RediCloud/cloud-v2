@@ -32,6 +32,7 @@ object BuildDependencies {
     const val JLINE_CONSOLE = "org.jline:jline-console:3.25.1"
     const val JLINE_JANSI = "org.jline:jline-terminal-jansi:3.25.1"
 
+    const val DOCKER_TEST_CONTAINERS = "org.testcontainers:testcontainers:1.19.7"
     const val BCPROV = "org.bouncycastle:bcprov-jdk15on:1.70"
     const val BCPKIX = "org.bouncycastle:bcpkix-jdk15on:1.70"
 }

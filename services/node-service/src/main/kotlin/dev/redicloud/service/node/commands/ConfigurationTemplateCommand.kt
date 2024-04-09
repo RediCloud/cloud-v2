@@ -330,7 +330,7 @@ class ConfigurationTemplateCommand(
     }
 
     @CommandSubPath("edit <name> jvmargument add <argument>")
-    @CommandAlias(["edit <name> ja <argument> add <argument>"])
+    @CommandAlias(["edit <name> ja add <argument>"])
     @CommandDescription("Add a JVM argument to a configuration template")
     fun editJvmArgumentAdd(
         actor: ConsoleActor,
@@ -343,7 +343,7 @@ class ConfigurationTemplateCommand(
     }
 
     @CommandSubPath("edit <name> jvmargument remove <argument>")
-    @CommandAlias(["edit <name> ja <argument> remove <argument>"])
+    @CommandAlias(["edit <name> ja remove <argument>"])
     @CommandDescription("Remove a JVM argument from a configuration template")
     fun editJvmArgumentRemove(
         actor: ConsoleActor,
@@ -396,7 +396,7 @@ class ConfigurationTemplateCommand(
         actor.sendMessage("The maximum memory of the configuration template ${toConsoleValue(template.name)} was updated to ${toConsoleValue(memory)}!")
     }
 
-    @CommandSubPath("edit <name> filetemplate add <template>")
+    @CommandSubPath("edit <name> filetemplates add <template>")
     @CommandAlias(["edit <name> ft add <template>"])
     @CommandDescription("Add a file template to a configuration template")
     fun editFileTemplateAdd(
@@ -409,7 +409,7 @@ class ConfigurationTemplateCommand(
         actor.sendMessage("File template ${toConsoleValue(fileTemplate.name)} added to configuration template ${toConsoleValue(template.name)}!")
     }
 
-    @CommandSubPath("edit <name> filetemplate remove <template>")
+    @CommandSubPath("edit <name> filetemplates remove <template>")
     @CommandAlias(["edit <name> ft remove <template>"])
     @CommandDescription("Remove a file template from a configuration template")
     fun editFileTemplateRemove(
@@ -422,7 +422,7 @@ class ConfigurationTemplateCommand(
         actor.sendMessage("File template ${toConsoleValue(fileTemplate.name)} removed from configuration template ${toConsoleValue(template.name)}!")
     }
 
-    @CommandSubPath("edit <name> node add <node>")
+    @CommandSubPath("edit <name> nodes add <node>")
     @CommandAlias(["edit <name> node add <node>"])
     @CommandDescription("Add a node to a configuration template")
     fun editNodeAdd(
@@ -435,7 +435,7 @@ class ConfigurationTemplateCommand(
         actor.sendMessage("The node ${toConsoleValue(node.name)} will now be used to start servers of the configuration template ${toConsoleValue(template.name)}!")
     }
 
-    @CommandSubPath("edit <name> node remove <node>")
+    @CommandSubPath("edit <name> nodes remove <node>")
     @CommandAlias(["edit <name> node remove <node>"])
     @CommandDescription("Remove a node from a configuration template")
     fun editNodeRemove(

@@ -2,7 +2,7 @@ package dev.redicloud.modules.suggesters
 
 import dev.redicloud.api.commands.AbstractCommandSuggester
 import dev.redicloud.api.commands.CommandContext
-import dev.redicloud.api.utils.MODULE_FOLDER
+import dev.redicloud.api.utils.MODULES_FOLDER
 import dev.redicloud.modules.ModuleHandler
 
 class LoadableModulesSuggester(
@@ -15,7 +15,7 @@ class LoadableModulesSuggester(
                 val data = moduleHandler.getModuleData(it.id)
                 data == null || data != null && !data.loaded
             }
-        val files = MODULE_FOLDER.getFile().listFiles()
+        val files = MODULES_FOLDER.getFile().listFiles()
             ?.filter { it.exists() }
             ?.filter { it.isFile }
             ?.filter { it.extension == "jar" }

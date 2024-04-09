@@ -35,6 +35,15 @@ allprojects {
         dependency(BuildDependencies.KHTTP)
         dependency(BuildDependencies.KOTLIN_REFLECT)
         dependency(BuildDependencies.GUICE)
+
+        testImplementation(BuildDependencies.DOCKER_TEST_CONTAINERS)
+        testImplementation(BuildDependencies.GSON)
+        testImplementation(BuildDependencies.LOGBACK_CORE)
+        testImplementation(BuildDependencies.LOGBACK_CLASSIC)
+        testImplementation(project(":utils"))
+        testImplementation(project(":apis:base-api"))
+        testImplementation(project(":database"))
+        testImplementation(project(":services:node-service"))
     }
 
     tasks {
@@ -90,18 +99,4 @@ allprojects {
         }
     }
 
-}
-
-tasks.register("buildCloudAndCopy") {
-    project.allprojects.forEach {
-        if (it == it.rootProject) return@forEach
-        try {
-            val task = it.tasks.named("buildAndCopy")
-            dependsOn(task)
-            println("Project ${it.name} has ${task.name} task!")
-        }catch (_: UnknownDomainObjectException) {
-            println("Project ${it.name} has no buildAndCopy task! Use default build task instead.")
-            dependsOn(it.tasks.named("build"))
-        }
-    }
 }

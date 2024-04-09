@@ -1,7 +1,7 @@
 package dev.redicloud.modules.repository
 
 import com.google.gson.reflect.TypeToken
-import dev.redicloud.api.utils.MODULE_FOLDER
+import dev.redicloud.api.utils.MODULES_FOLDER
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.utils.SingleCache
 import dev.redicloud.utils.gson.gson
@@ -88,10 +88,10 @@ class ModuleWebRepository(
 
     //TODO: download console animation
     suspend fun download(moduleId: String, version: String): File {
-        MODULE_FOLDER.createIfNotExists()
-        val localFile = File(MODULE_FOLDER.getFile(), "$moduleId-$version.jar")
+        MODULES_FOLDER.createIfNotExists()
+        val localFile = File(MODULES_FOLDER.getFile(), "$moduleId-$version.jar")
         val bytes = getModuleBytes(moduleId, version) ?: throw IllegalStateException("Module not found: $moduleId-$version")
-        val tmpFile = File(MODULE_FOLDER.getFile(), "$moduleId-$version.jar.download")
+        val tmpFile = File(MODULES_FOLDER.getFile(), "$moduleId-$version.jar.download")
         tmpFile.createNewFile()
         tmpFile.writeBytes(bytes)
         if (localFile.exists()) localFile.delete()
