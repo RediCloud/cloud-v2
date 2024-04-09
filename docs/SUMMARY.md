@@ -24,7 +24,7 @@
 ## Development
 
 * [Compilation / Build](development/compilation-build.md)
-* [Repo / CI](development/repo-ci.md)
+* [Repository](development/repository.md)
 * [API requests](development/api-requests.md)
 * [Modules](development/modules.md)
 * [Test framework](development/test-framework.md)

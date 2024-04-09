@@ -9,7 +9,7 @@ The redicloud test framework offers the possibility to test/debug plugins within
 ## Example:
 
 {% hint style="warning" %}
-Dont forget to add the [redicloud repository](repo-ci.md) to your repository-list
+Dont forget to add the [redicloud repository](repository.md) to your repository-list
 {% endhint %}
 
 ```gradle
