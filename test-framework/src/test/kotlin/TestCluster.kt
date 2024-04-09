@@ -9,7 +9,7 @@ fun main() {
 
         // Set the cloud version that should be used (default: latest stable build)
         version {
-            branch = "tests"
+            branch = "dev"
             build = "latest"
         }
 
@@ -26,7 +26,7 @@ fun main() {
             // You can use 'gradleBuildFile' when you have a gradle project and want to upload the output jar file
             // Otherwise you can use 'file' to upload a file from your local machine
             gradleBuildFile {
-                projectName = "examples/example-plugin"
+                projectName = "examples/example-plugin" // The gradle-module name
                 targetDirectory = "plugins"
                 shadowJar = false
                 selectStrategy = FileSelectStrategy.LATEST_MODIFIED
