@@ -18,7 +18,7 @@ The redicloud test framework offers the possibility to test/debug plugins within
 Dont forget to add the [redicloud repository](repository.md) to your repository-list
 {% endhint %}
 
-```gradle
+```kotlin
 // build.gradle.kts
 // Versions: https://github.com/RediCloud/cloud-v2/packages/2118336
 testImplementation("dev.redicloud:test-framework:<version>")

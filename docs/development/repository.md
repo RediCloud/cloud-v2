@@ -2,12 +2,12 @@
 
 ## Github packages:
 
-```gradle
+```kotlin
 // build.gradle.kts
 maven("https://maven.pkg.github.com/RediCloud/cloud-v2") {
     credentials {
-        username = project.findProperty("github_username") ?: System.getenv("GITHUB_USERNAME")
-        password = project.findProperty("github_token") ?: System.getenv("GITHUB_TOKEN")
+        username = project.findProperty("github_username") as String? ?: System.getenv("GITHUB_USERNAME")
+        password = project.findProperty("github_token") as String? ?: System.getenv("GITHUB_TOKEN")
     }
 }
 ```
