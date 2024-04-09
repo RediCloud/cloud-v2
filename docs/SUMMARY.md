@@ -27,6 +27,7 @@
 * [Repo / CI](development/repo-ci.md)
 * [API requests](development/api-requests.md)
 * [Modules](development/modules.md)
+* [Test framework](development/test-framework.md)
 * [API](development/api/README.md)
   * [Server version handlers](development/api/server-version-handlers.md)
   * [Connector implemention](development/api/connector-implemention.md)
