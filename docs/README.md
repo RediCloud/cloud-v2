@@ -23,7 +23,7 @@
 * multi java versions support (versions: 8-20) ✅
 * modify program arguments and jvm flags for each group / server version ✅
 * external proxy server (start external proxy server and connect them to the cloud)
-* easy dev plugin test -> test-framework ✅
+* easy dev plugin test -> [test-framework](development/test-framework.md) ✅
 * offline/online player support at the same time
 * multi proxy (with player count sync)
 * limbo fallbacks
@@ -38,5 +38,5 @@
 * print server error directly to node console (loop, spam protection) ✅
 * clean console design ✅
 * Small further details (designs, small functions) can be changed per property, no code editing needed!
-* updater command ✅
+* [updater](commands/version-updater.md) command ✅
 * ...

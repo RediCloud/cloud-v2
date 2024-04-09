@@ -10,7 +10,7 @@
 1. Download the cloud:
    * Stable build: [Download](https://api.redicloud.dev/v2/files/master/latest/redicloud.zip) (recommended)
    * Development build: [Download](https://api.redicloud.dev/v2/files/dev/latest/redicloud.zip)
-   * CI (all builds):  [https://ci.redicloud.dev/](https://ci.redicloud.dev/project/CloudV2) (use login as guest)
+   * CI (all builds): [https://github.com/RediCloud/cloud-v2/actions](https://github.com/RediCloud/cloud-v2/actions)
 2. Unzip the redicloud.zip file (`unzip redicloud.zip`)
 3. Set start-file permission (`chmod +x start.sh`)
 4. Start the cloud (`./start.sh`)
