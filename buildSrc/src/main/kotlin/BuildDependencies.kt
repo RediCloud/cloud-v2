@@ -1,5 +1,5 @@
 object BuildDependencies {
-    const val CLOUD_VERSION = "2.3.0-SNAPSHOT"
+    const val CLOUD_VERSION = "2.3.0-RELEASE"
     const val CLOUD_LIBLOADER_VERSION = "1.6.7"
     const val CLOUD_LIBLOADER_BOOTSTRAP = "dev.redicloud.libloader:libloader-bootstrap:1.6.7"
 
