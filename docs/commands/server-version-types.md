@@ -26,9 +26,9 @@ To use hierarchical keys, simply connect the individual keys with a dot: `server
 
 ## Version handler
 
-A version handler is there to download the server versions and patch them if necessary. The version handler, which is implemented by default in the cloud, is the URL downloader. This downloads the server version from the specified URL and also offers the option to patch it. Through other implementations of the versions handler, it would also be possible to download new builds automatically. An example would be the papermc module. This provides the interface to the papermc.io API and always updates to the latest builds. You can set the version handler of a version as follows:&#x20;
+A version handler is there to download the server versions and patch them if necessary. The version handler, which is implemented by default in the cloud, is the URL downloader. This downloads the server version from the specified URL and also offers the option to patch it. Through other implementations of the versions handler, it would also be possible to download new builds automatically. An example would be the papermc module. This provides the interface to the papermc.io API and always updates to the latest builds. You can set the version handler of a version as follows:
 
-`svt edit <type> handler <handler>`&#x20;
+`svt edit <type> handler <handler>`
 
 With `svt handlers` you will see all registered version handlers.
 
@@ -36,7 +36,7 @@ With `svt handlers` you will see all registered version handlers.
 
 ## Connector settings
 
-The connector represents the interface between the cloud and the server. E.g. in the case of paper in the form of a plugin. It is also possible to use your own connectors, which you have implemented yourself. To do this, change the connector download url to your own with `svt edit <name> connector url <url>`.&#x20;
+The connector represents the interface between the cloud and the server. E.g. in the case of paper in the form of a plugin. It is also possible to use your own connectors, which you have implemented yourself. To do this, change the connector download url to your own with `svt edit <name> connector url <url>`.
 
 With `svt edit <name> connector file <filename>` you can set the name under which the connector file is saved.
 
@@ -70,7 +70,7 @@ You can start a server version with specific program arguments. You can set this
 
 ##
 
-## JVM argumentes&#x20;
+## JVM argumentes
 
 To use specific java arguments you can use the following commands:
 
