@@ -1,7 +1,0 @@
-{
-  "ignore": [
-    "com.github.jkcclemens:khttp:0.1.0",
-    "com.fasterxml.jackson:jackson-bom:2.16.1",
-    "org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.8.0"
-  ]
-}
