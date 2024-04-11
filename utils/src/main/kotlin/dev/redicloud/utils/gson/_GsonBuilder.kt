@@ -13,22 +13,12 @@ fun GsonBuilder.addInterfaceImpl(factory: InterfaceTypeAdapterFactory): GsonBuil
         }
 
         override fun shouldSkipField(f: FieldAttributes?): Boolean {
-            f?.getAnnotation(GsonInterface::class.java)?.let {
-                factory.register(f.declaredClass, it.value.java)
-            }
-            f?.getAnnotation(GsonGenericInterface::class.java)?.let {
-                factory.register(it.interfaceClass.java, it.implClass.java)
-            }
+            f?.let { factory.register(f) }
             return false
         }
     }).addDeserializationExclusionStrategy(object : ExclusionStrategy {
         override fun shouldSkipField(f: FieldAttributes?): Boolean {
-            f?.getAnnotation(GsonInterface::class.java)?.let {
-                factory.register(f.declaredClass, it.value.java)
-            }
-            f?.getAnnotation(GsonGenericInterface::class.java)?.let {
-                factory.register(it.interfaceClass.java, it.implClass.java)
-            }
+            f?.let { factory.register(f) }
             return false
         }
 

@@ -1,5 +1,6 @@
 package dev.redicloud.utils.gson
 
+import com.google.gson.FieldAttributes
 import com.google.gson.Gson
 import com.google.gson.TypeAdapter
 import com.google.gson.TypeAdapterFactory
@@ -28,12 +29,21 @@ class InterfaceTypeAdapterFactory : TypeAdapterFactory {
     ): TypeAdapter<T>? {
         if (routes.containsKey(type.rawType)) {
             return adapter.getOrPut(type.rawType) {
-                InterfaceTypeAdapter<T>(
-                    routes[type.rawType]!! as Class<T>,
+                InterfaceTypeAdapter(
+                    routes[type.rawType]!!,
                 )
             } as TypeAdapter<T>
         }
         return null
+    }
+
+    fun register(fieldAttributes: FieldAttributes) {
+        fieldAttributes.getAnnotation(GsonInterface::class.java)?.let {
+            register(fieldAttributes.declaredClass, it.value.java)
+        }
+        fieldAttributes.getAnnotation(GsonGenericInterface::class.java)?.let {
+            register(it.interfaceClass.java, it.implClass.java)
+        }
     }
 
 }
