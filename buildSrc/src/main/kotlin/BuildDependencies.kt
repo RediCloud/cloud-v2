@@ -10,10 +10,11 @@ object BuildDependencies {
     const val MINESTOM_EXTENSIONS = "dev.hollowcube:minestom-ce-extensions:1.2.0"
 
     const val KOTLIN_REFLECT = "org.jetbrains.kotlin:kotlin-reflect:1.8.22"
-    const val GSON = "com.google.code.gson:gson:2.10.1"
     const val KOTLINX_COROUTINES = "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0"
+    const val KTOR_CLIENT_CORE = "io.ktor:ktor-client-core:2.3.10"
+    const val KTOR_CLIENT_CIO = "io.ktor:ktor-client-cio:2.3.10"
+    const val GSON = "com.google.code.gson:gson:2.10.1"
     const val REDISSON = "org.redisson:redisson:3.27.1"
-    const val KHTTP = "com.github.jkcclemens:khttp:0.1.0"
     const val GUICE = "com.google.inject:guice:7.0.0"
     const val SSHD = "org.apache.sshd:sshd-sftp:2.10.0"
     const val JSCH = "com.jcraft:jsch:0.1.55"

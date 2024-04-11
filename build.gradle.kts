@@ -32,7 +32,8 @@ allprojects {
         compileOnly(BuildDependencies.GSON)
         dependency(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
         dependency(BuildDependencies.KOTLINX_COROUTINES)
-        dependency(BuildDependencies.KHTTP)
+        dependency(BuildDependencies.KTOR_CLIENT_CIO)
+        dependency(BuildDependencies.KTOR_CLIENT_CORE)
         dependency(BuildDependencies.KOTLIN_REFLECT)
         dependency(BuildDependencies.GUICE)
 
@@ -44,6 +45,8 @@ allprojects {
         testImplementation(project(":apis:base-api"))
         testImplementation(project(":database"))
         testImplementation(project(":services:node-service"))
+        testImplementation(BuildDependencies.KTOR_CLIENT_CIO)
+        testImplementation(BuildDependencies.KTOR_CLIENT_CORE)
     }
 
     tasks {

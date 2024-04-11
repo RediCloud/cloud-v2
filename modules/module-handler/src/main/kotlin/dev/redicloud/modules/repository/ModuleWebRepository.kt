@@ -5,7 +5,11 @@ import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.utils.SingleCache
 import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
-import khttp.get
+import dev.redicloud.utils.httpClient
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.time.Duration.Companion.seconds
 
@@ -25,32 +29,37 @@ class ModuleWebRepository(
 ) {
 
     init {
-        val response = get("$repoUrl/.redicloud")
-        if (response.statusCode != 200 && response.statusCode != 400) {
-            throw IllegalStateException("Repository is down? ${response.statusCode} for ${repoUrl}")
+        val response = runBlocking {
+            httpClient.get {
+                url("$repoUrl/.redicloud")
+            }
         }
-        if (response.statusCode == 400) {
-            throw IllegalStateException("Repository is not marked as redicloud module repository. Create a file called '.redicloud' in the root of your repository. (url: $repoUrl)")
+        if (!response.status.isSuccess()) {
+            throw IllegalStateException("Repository is down? ${response.status.value} for $repoUrl")
         }
     }
 
     private suspend inline fun <reified T> request(apiUrl: String): Response<T> {
-        val response = get(repoUrl + apiUrl)
-        if (response.statusCode != 200) {
-            return Response("{}", null, response.statusCode)
+        val response = httpClient.get {
+            url("${repoUrl.removeSuffix("/")}$apiUrl")
         }
-        val json = response.jsonObject.toString()
-        return Response(json, gson.fromJson(json, T::class.java), response.statusCode)
+        if (!response.status.isSuccess()) {
+            return Response("{}", null, response.status.value)
+        }
+        val json = response.bodyAsText()
+        return Response(json, gson.fromJson(json, T::class.java), response.status.value)
     }
 
     private suspend inline fun <reified T> requestList(apiUrl: String): Response<List<T>> {
-        val response = get(repoUrl.removeSuffix("/") + apiUrl)
-        if (response.statusCode != 200) {
-            return Response("{}", null, response.statusCode)
+        val response = httpClient.get {
+            url("${repoUrl.removeSuffix("/")}$apiUrl")
         }
-        val json = response.text
+        if (!response.status.isSuccess()) {
+            return Response("{}", null, response.status.value)
+        }
+        val json = response.bodyAsText()
         val list = gson.fromJsonToList<T>(json)
-        return Response(json, list, response.statusCode)
+        return Response(json, list, response.status.value)
     }
 
     suspend fun hasModule(moduleId: String): Boolean {
@@ -69,8 +78,10 @@ class ModuleWebRepository(
     }
 
     suspend fun getModuleBytes(moduleId: String, version: String): ByteArray? {
-        val response = get("$repoUrl/$moduleId/$version/$moduleId-$version.jar")
-        return response.content
+        val response = httpClient.get{
+            url("${repoUrl.removeSuffix("/")}/$moduleId/$version/${moduleId}-$version.jar")
+        }
+        return response.readBytes()
     }
 
     suspend fun getLatestVersion(moduleId: String): String? {

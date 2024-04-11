@@ -2,10 +2,13 @@ package dev.redicloud.module.papermc
 
 
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import dev.redicloud.api.version.ICloudServerVersionType
 import dev.redicloud.api.version.IServerVersion
 import dev.redicloud.api.version.IVersionRepository
-import khttp.get
+import dev.redicloud.utils.httpClient
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 
 class PaperMcApiRequester(
     private val versionRepository: IVersionRepository
@@ -15,9 +18,9 @@ class PaperMcApiRequester(
         val BASE_URL = "https://api.papermc.io/v2"
         val gson = Gson()
         suspend inline fun <reified T> request(apiUrl: String): Response<T> {
-            val response = get(BASE_URL + apiUrl)
-            val json = response.jsonObject.toString()
-            return Response(json, gson.fromJson(json, T::class.java), response.statusCode)
+            val response = httpClient.get { url("$BASE_URL$apiUrl") }
+            val json = response.bodyAsText()
+            return Response(json, gson.fromJson(json, T::class.java), response.status.value)
         }
     }
 
@@ -36,7 +39,7 @@ class PaperMcApiRequester(
         val url = "/projects/${type.name.lowercase()}"
         if (cache.contains(url)) return cache[url] as List<IServerVersion>
         val versions = request<VersionsResponse>(url).responseObject
-            ?.versions?.mapNotNull { versionRepository.parse(it) }?.toList() ?: emptyList() //TODO only paper able versions
+            ?.versions?.mapNotNull { versionRepository.parse(it) }?.toList() ?: emptyList()
         cache[url] = versions
         return versions
     }
@@ -55,15 +58,64 @@ class PaperMcApiRequester(
 data class Response<T>(val json: String, val responseObject: T?, val responseCode: Int)
 
 data class BuildsResponse(
-    val project_id: String,
-    val project_name: String,
+    @SerializedName("project_id")
+    val projectId: String,
+    @SerializedName("project_name")
+    val projectName: String,
     val version: String,
     val builds: IntArray
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as BuildsResponse
+
+        if (projectId != other.projectId) return false
+        if (projectName != other.projectName) return false
+        if (version != other.version) return false
+        if (!builds.contentEquals(other.builds)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = projectId.hashCode()
+        result = 31 * result + projectName.hashCode()
+        result = 31 * result + version.hashCode()
+        result = 31 * result + builds.contentHashCode()
+        return result
+    }
+}
 
 data class VersionsResponse(
-    val project_id: String,
-    val project_name: String,
-    val version_groups: Array<String>,
+    @SerializedName("project_id")
+    val projectId: String,
+    @SerializedName("project_name")
+    val projectName: String,
+    @SerializedName("version_groups")
+    val versionGroups: Array<String>,
     val versions: Array<String>
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as VersionsResponse
+
+        if (projectId != other.projectId) return false
+        if (projectName != other.projectName) return false
+        if (!versionGroups.contentEquals(other.versionGroups)) return false
+        if (!versions.contentEquals(other.versions)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = projectId.hashCode()
+        result = 31 * result + projectName.hashCode()
+        result = 31 * result + versionGroups.contentHashCode()
+        result = 31 * result + versions.contentHashCode()
+        return result
+    }
+}

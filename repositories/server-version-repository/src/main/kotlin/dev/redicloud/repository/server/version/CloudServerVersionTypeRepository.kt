@@ -15,6 +15,8 @@ import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.utils.gson.fromJsonToList
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
@@ -127,7 +129,9 @@ class CloudServerVersionTypeRepository(
         if (lock) getLock(serverVersionType).lock()
         try {
             if (!serverVersionType.getParsedConnectorURL().isValid()) throw IllegalStateException("Connector download url of ${serverVersionType.connectorPluginName} is null!")
-            khttp.get(serverVersionType.getParsedConnectorURL().toExternalForm()).content.let {
+            httpClient.get {
+                url(serverVersionType.getParsedConnectorURL().toExternalForm())
+            }.readBytes().let {
                 if (connectorFile.exists()) connectorFile.delete()
                 connectorFile.createNewFile()
                 connectorFile.writeBytes(it)

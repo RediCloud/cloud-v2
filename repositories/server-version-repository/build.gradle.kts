@@ -1,11 +1,6 @@
 group = "dev.redicloud.repository"
 
 dependencies {
-    testImplementation(BuildDependencies.KHTTP)
-    implementation(BuildDependencies.KHTTP)
-    runtimeOnly(BuildDependencies.KHTTP)
-    testRuntimeOnly(BuildDependencies.KHTTP)
-
     compileOnly(project(":apis:base-api"))
     compileOnly(project(":utils"))
     compileOnly(project(":tasks"))

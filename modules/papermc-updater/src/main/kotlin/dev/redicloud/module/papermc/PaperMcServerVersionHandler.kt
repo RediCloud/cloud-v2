@@ -9,7 +9,9 @@ import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.Logger
 import dev.redicloud.utils.*
-import khttp.get
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.Duration.Companion.minutes
@@ -62,14 +64,14 @@ class PaperMcServerVersionHandler(
             if (buildId == -1) throw NullPointerException("Cant find build for ${version.displayName}")
 
             val url = requester.getDownloadUrl(type, targetVersion, buildId)
-            val response = get(url)
-            if (response.statusCode != 200) throw IllegalStateException("Download of ${targetVersion.name} is not available (${response.statusCode}):\n${response.text}")
+            val response = httpClient.get { url(url) }
+            if (!response.status.isSuccess()) throw IllegalStateException("Download of ${targetVersion.name} is not available (${response.status.value}):\n${response.bodyAsText()}")
 
             val folder = getFolder(version)
             if (folder.exists()) folder.deleteRecursively()
             folder.mkdirs()
             if (jar.exists()) jar.delete()
-            jar.writeBytes(response.content)
+            jar.writeBytes(response.readBytes())
 
             version.buildId = buildId.toString()
             serverVersionRepository.updateVersion(version)
@@ -100,25 +102,18 @@ class PaperMcServerVersionHandler(
                         }
                         val file = File(folder, path)
                         if (!file.parentFile.exists()) file.parentFile.mkdirs()
-                        val response1 = get(url1)
-                        if (response1.statusCode != 200) {
+                        val response1 = httpClient.get { url(url1) }
+                        if (!response1.status.isSuccess()) {
                             logger.warning(
-                                "§cDownload of default file ${
-                                    toConsoleValue(
-                                        url1,
-                                        false
-                                    )
-                                } for ${
-                                    toConsoleValue(
-                                        version.displayName,
-                                        false
-                                    )
-                                } is not available (${response.statusCode}):\n${response.text}"
+                                "§cDownload of default file " +
+                                        "${toConsoleValue(url1, false)} for " +
+                                        "${toConsoleValue(version.displayName, false)} is not available " +
+                                        "(${response.status.value}):\n${response.bodyAsText()}"
                             )
                             return@add
                         }
                         file.createNewFile()
-                        file.writeBytes(response1.content)
+                        file.writeBytes(response1.readBytes())
                     } catch (e: Exception) {
                         logger.warning(
                             "§cFailed to download default file ${

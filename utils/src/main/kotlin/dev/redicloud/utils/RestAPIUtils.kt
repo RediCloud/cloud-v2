@@ -1,5 +1,9 @@
 package dev.redicloud.utils
 
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+
 fun getAPIUrl(): String {
     return "${getRootAPIUrl()}/files/$BRANCH/$BUILD"
 }
@@ -15,8 +19,10 @@ suspend fun getAPIUrlOrFallback(): String {
 
 suspend fun getTextOfAPIWithFallback(path: String): String {
     if (isValidUrl("${getAPIUrl()}/status")) {
-        val restResponse = khttp.get("${getAPIUrl()}/$path")
-        if (restResponse.statusCode == 200) return restResponse.text
+        val response = httpClient.get {
+            url("${getAPIUrl()}/$path")
+        }
+        if (response.status.isSuccess()) return response.bodyAsText()
     }
-    return khttp.get("${getRawUserContentUrl()}/$path").text
+    return httpClient.get { url("${getRawUserContentUrl()}/$path") }.bodyAsText()
 }

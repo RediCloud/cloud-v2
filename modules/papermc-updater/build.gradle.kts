@@ -1,19 +1,17 @@
 group = "dev.redicloud.module"
 
 dependencies {
-    testImplementation(kotlin("test"))
 
     compileOnly(project(":apis:base-api"))
     compileOnly(project(":console"))
     compileOnly(project(":logging"))
     compileOnly(project(":utils"))
-    dependency(BuildDependencies.KHTTP)
+    dependency(BuildDependencies.KTOR_CLIENT_CIO)
+    dependency(BuildDependencies.KTOR_CLIENT_CORE)
     dependency(BuildDependencies.GSON)
 
-    testImplementation(BuildDependencies.JUNIT)
+    testImplementation(kotlin("test"))
     testImplementation(project(":repositories:server-version-repository"))
-}
-
-tasks.test {
-    useJUnitPlatform()
+    testImplementation(project(":utils"))
+    testImplementation(BuildDependencies.KOTLINX_COROUTINES)
 }

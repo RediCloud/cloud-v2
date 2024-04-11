@@ -9,6 +9,9 @@ import dev.redicloud.tasks.CloudTask
 import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.api.service.ServiceId
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
 import java.util.*
 
 class MetricsTask(
@@ -27,7 +30,11 @@ class MetricsTask(
         if (System.getProperty("dev.redicloud.metrics", "true").lowercase() == "false") return true
         try {
             val url = "https://api.redicloud.dev/v2/metrics"
-            if (khttp.post(url, data = "ping").statusCode != 200) {
+            val pingResponse = httpClient.post {
+                url(url)
+                setBody("ping")
+            }
+            if (!pingResponse.status.isSuccess()) {
                 logger.fine("Failed to send metrics to redicloud api: invalid response to ping")
                 return false
             }
@@ -44,11 +51,14 @@ class MetricsTask(
                     it.serviceId.id to it.hostNodeId.id
                 }.toMap()
             )
-            val response = khttp.post(url, data = gson.toJson(metric))
-            if (response.statusCode == 200) {
+            val response = httpClient.post {
+                url(url)
+                setBody(gson.toJson(metric))
+            }
+            if (response.status.isSuccess()) {
                 logger.fine("Sent metrics to redicloud api")
             }else {
-                logger.fine("Failed to send metrics to redicloud api: ${response.statusCode}")
+                logger.fine("Failed to send metrics to redicloud api: ${response.status.value} ${response.bodyAsText()}")
             }
         }catch (e: Exception) {
             logger.fine("Failed to send metrics to redicloud api", e)
