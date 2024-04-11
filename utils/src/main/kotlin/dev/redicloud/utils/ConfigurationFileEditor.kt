@@ -30,7 +30,7 @@ class ConfigurationFileEditor private constructor(
 
     private fun getKeyToValueMapByLines(lines: List<String>): Map<String, String> {
         val keyValueSplitArrays = lines.filter { it.contains(keyValueSplitter) }.map { it.split(keyValueSplitter) }
-        return keyValueSplitArrays.map { it[0] to (it.getOrNull(1) ?: "") }.toMap()
+        return keyValueSplitArrays.associate { it[0] to (it.getOrNull(1) ?: "") }
     }
 
     fun getValue(key: String): String? {
