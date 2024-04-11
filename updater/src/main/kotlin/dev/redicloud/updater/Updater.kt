@@ -6,6 +6,7 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.updater.suggest.BranchSuggester
 import dev.redicloud.updater.suggest.BuildsSuggester
 import dev.redicloud.utils.*
+import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 import khttp.get
 import java.io.File
@@ -137,8 +138,7 @@ object Updater {
         if (branch == null) return emptyList()
         val response = get(getRootAPIUrl() + "/builds/?branch=$branch")
         if (response.statusCode != 200) return emptyList()
-        val type = object : TypeToken<ArrayList<BuildInfo>>() {}.type
-        return gson.fromJson(response.text, type)
+        return gson.fromJsonToList(response.text)
     }
 
     suspend fun getBranches(): List<String> {

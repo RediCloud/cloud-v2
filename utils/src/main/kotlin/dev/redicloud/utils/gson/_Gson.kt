@@ -12,7 +12,7 @@ inline fun <reified T> Gson.fromFile(file: File): T {
     return fromJson(file.readText(), T::class.java)
 }
 
-inline fun <reified T> Gson.fromStringToList(json: String): List<T> {
+inline fun <reified T> Gson.fromJsonToList(json: String): List<T> {
     val type = object : TypeToken<ArrayList<T>>() {}.type
     return fromJson(json, type)
 }

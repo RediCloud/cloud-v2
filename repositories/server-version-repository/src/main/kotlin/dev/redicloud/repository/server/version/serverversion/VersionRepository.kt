@@ -4,6 +4,7 @@ import com.google.gson.reflect.TypeToken
 import dev.redicloud.api.version.IServerVersion
 import dev.redicloud.api.version.IVersionRepository
 import dev.redicloud.utils.getTextOfAPIWithFallback
+import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 
 object VersionRepository : IVersionRepository {
@@ -18,8 +19,7 @@ object VersionRepository : IVersionRepository {
     override suspend fun loadOnlineVersions() {
         cachedVersions.clear()
         val json = getTextOfAPIWithFallback("api-files/server-versions.json")
-        val type = object : TypeToken<ArrayList<ServerVersion>>() {}.type
-        val list = gson.fromJson<List<ServerVersion>?>(json, type).toMutableList()
+        val list = gson.fromJsonToList<ServerVersion>(json).toMutableList()
         if (list.none { it.unknown }) {
             list.add(ServerVersion("unknown", -1, emptyArray()))
         }

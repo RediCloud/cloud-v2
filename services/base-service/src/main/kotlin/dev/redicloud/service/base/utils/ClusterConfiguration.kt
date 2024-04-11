@@ -2,6 +2,7 @@ package dev.redicloud.service.base.utils
 
 import com.google.gson.reflect.TypeToken
 import dev.redicloud.database.DatabaseConnection
+import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 import java.util.*
 
@@ -26,8 +27,7 @@ class ClusterConfiguration(
     }
 
     inline fun <reified T> getList(key: String): List<T> {
-        val type = object : TypeToken<java.util.ArrayList<T>>() {}.type
-        return gson.fromJson(map[key], type) ?: emptyList()
+        return gson.fromJsonToList(map[key]!!)
     }
 
     inline fun <reified T> get(key: String): T? {

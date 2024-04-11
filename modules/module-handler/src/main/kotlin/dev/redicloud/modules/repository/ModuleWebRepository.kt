@@ -1,13 +1,12 @@
 package dev.redicloud.modules.repository
 
-import com.google.gson.reflect.TypeToken
 import dev.redicloud.api.utils.MODULES_FOLDER
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.utils.SingleCache
+import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 import khttp.get
 import java.io.File
-import java.util.ArrayList
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -49,9 +48,8 @@ class ModuleWebRepository(
         if (response.statusCode != 200) {
             return Response("{}", null, response.statusCode)
         }
-        val type = object : TypeToken<ArrayList<T>>() {}.type
         val json = response.text
-        val list = gson.fromJson<List<T>>(json, type)
+        val list = gson.fromJsonToList<T>(json)
         return Response(json, list, response.statusCode)
     }
 

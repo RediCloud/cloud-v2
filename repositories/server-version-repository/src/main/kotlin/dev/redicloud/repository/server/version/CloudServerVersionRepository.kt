@@ -13,6 +13,7 @@ import dev.redicloud.utils.getTextOfAPIWithFallback
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.utils.gson.fromJsonToList
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
 
@@ -34,9 +35,7 @@ class CloudServerVersionRepository(
         val DEFAULT_VERSIONS_CACHE = SingleCache(1.minutes) {
             gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
             val json = getTextOfAPIWithFallback("api-files/versions.json")
-            val type = object : TypeToken<ArrayList<CloudServerVersion>>() {}.type
-            val list: MutableList<CloudServerVersion> = gson.fromJson(json, type)
-            list.toList()
+            gson.fromJsonToList<CloudServerVersion>(json)
         }
     }
 
