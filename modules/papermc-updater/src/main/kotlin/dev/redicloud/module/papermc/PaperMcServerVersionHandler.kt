@@ -32,7 +32,7 @@ class PaperMcServerVersionHandler(
 
     override val name: String = "papermc"
     override val default: Boolean = false
-    private var lastUpdateCheck: Long = -1L
+    private val lastUpdateChecks = mutableMapOf<ICloudServerVersion, Long>()
 
     override suspend fun download(version: ICloudServerVersion, force: Boolean): File {
         var canceled = false
@@ -133,7 +133,7 @@ class PaperMcServerVersionHandler(
 
             downloader.joinAll()
 
-            lastUpdateCheck = System.currentTimeMillis()
+            lastUpdateChecks[version] = System.currentTimeMillis()
         } catch (e: Exception) {
             error = true
             throw e
@@ -158,14 +158,14 @@ class PaperMcServerVersionHandler(
 
     override suspend fun isUpdateAvailable(version: ICloudServerVersion, force: Boolean): Boolean {
         if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
-        if (!force && System.currentTimeMillis() - lastUpdateCheck < 5.minutes.inWholeMilliseconds) return false
+        if (!force && System.currentTimeMillis() - (lastUpdateChecks[version] ?: -1) < 5.minutes.inWholeMilliseconds) return false
         val currentId = version.buildId ?: return true
         val type = serverVersionTypeRepository.getType(version.typeId!!)
             ?: throw NullPointerException("Cant find server version type ${version.typeId}")
         val targetVersion = if (version.version.latest) version.version.dynamicVersion() else version.version
         val latest = requester.getLatestBuild(type, targetVersion)
         if (latest == -1) throw NullPointerException("Cant find build for ${version.displayName}")
-        lastUpdateCheck = System.currentTimeMillis()
+        lastUpdateChecks[version] = System.currentTimeMillis()
         return latest > currentId.toInt()
     }
 

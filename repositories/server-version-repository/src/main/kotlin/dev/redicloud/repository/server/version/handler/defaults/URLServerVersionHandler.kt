@@ -38,7 +38,6 @@ open class URLServerVersionHandler(
         private val logger = LogManager.logger(URLServerVersionHandler::class)
     }
 
-    protected var lastUpdateCheck: Long = -1
     protected val locks = mutableMapOf<UUID, ReentrantLock>()
 
     override fun getLock(version: ICloudServerVersion): ReentrantLock {
