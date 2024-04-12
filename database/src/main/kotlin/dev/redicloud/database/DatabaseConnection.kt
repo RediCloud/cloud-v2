@@ -2,6 +2,7 @@ package dev.redicloud.database
 
 import dev.redicloud.api.database.*
 import dev.redicloud.api.database.communication.ICommunicationChannel
+import dev.redicloud.api.database.grid.bucket.IDataBucket
 import dev.redicloud.api.database.grid.list.ISyncedList
 import dev.redicloud.api.database.grid.list.ISyncedMutableList
 import dev.redicloud.api.database.grid.lock.ISyncedLock
@@ -15,6 +16,7 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.database.communication.CommunicationChannel
+import dev.redicloud.database.grid.bucket.DataBucket
 import dev.redicloud.database.grid.list.SyncedList
 import dev.redicloud.database.grid.map.SyncedMap
 import dev.redicloud.database.grid.list.SyncedMutableList
@@ -29,7 +31,7 @@ import org.redisson.config.Config
 
 class DatabaseConnection(
     config: DatabaseConfiguration,
-    val serviceId: ServiceId,
+    override val serviceId: ServiceId,
     connectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 64/2 else 64,
     connectionMinimumIdleSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 24/2 else 24,
     subscriptionConnectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 50/2 else 50,
@@ -132,6 +134,14 @@ class DatabaseConnection(
 
     override fun getLock(key: String): ISyncedLock {
         return SyncedLock(key, this)
+    }
+
+    override fun getKeysByPattern(pattern: String): List<String> {
+        return client.keys.getKeysByPattern(pattern).toList()
+    }
+
+    override fun <V> getBucket(key: String): IDataBucket<V> {
+        return DataBucket(key, this)
     }
 
     val client: RedissonClient

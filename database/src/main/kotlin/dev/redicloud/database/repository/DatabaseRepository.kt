@@ -1,9 +1,11 @@
 package dev.redicloud.database.repository
 
-import dev.redicloud.database.DatabaseConnection
-import org.redisson.client.codec.BaseCodec
+import dev.redicloud.api.database.IDatabaseConnection
 
-abstract class DatabaseRepository<T>(val connection: DatabaseConnection, val name: String) {
+abstract class DatabaseRepository<T>(
+    val connection: IDatabaseConnection,
+    val name: String
+)  {
 
     init {
         if (!connection.connected) throw Exception("Database connection is not connected")

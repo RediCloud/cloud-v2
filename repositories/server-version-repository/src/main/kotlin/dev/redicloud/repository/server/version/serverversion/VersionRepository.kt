@@ -35,8 +35,8 @@ object VersionRepository : IVersionRepository {
     }
 
     override fun parse(s: String, strict: Boolean): ServerVersion? {
-        val t = if (strict) s else s.lowercase().split("-")[0]
-        return versions().firstOrNull { it.name.lowercase() == t }
+        val t = if (strict) s else s.split("-")[0]
+        return if (strict) versions().firstOrNull { it.name == t } else versions().firstOrNull { it.name.lowercase() == t.lowercase() }
     }
 
 }

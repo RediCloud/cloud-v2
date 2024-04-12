@@ -1,15 +1,15 @@
 package dev.redicloud.repository.cache
 
+import dev.redicloud.api.database.IDatabaseConnection
 import dev.redicloud.cache.ClusterCache
-import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.api.service.ServiceType
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
-open class CachedDatabaseBucketRepository<I : Any, K : Any>(
-    connection: DatabaseConnection,
+open class CachedDatabaseBucketRepository<I : Any, K : Any> (
+    connection: IDatabaseConnection,
     name: String,
     interfaceClass: KClass<I>,
     cacheClass: KClass<K>,
@@ -49,7 +49,7 @@ open class CachedDatabaseBucketRepository<I : Any, K : Any>(
 
     override suspend fun getAll(customPattern: String?): List<K> {
         val keyPattern = customPattern ?: "cloud:$name:*"
-        val keys = connection.client.keys.getKeysByPattern(keyPattern)
+        val keys = connection.getKeysByPattern(keyPattern)
         val new = mutableListOf<String>()
         keys.forEach {
             val identifier = it.substringAfter("$name:")
