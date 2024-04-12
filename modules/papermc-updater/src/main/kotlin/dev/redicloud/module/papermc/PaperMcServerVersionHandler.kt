@@ -1,9 +1,13 @@
 package dev.redicloud.module.papermc
 
 import dev.redicloud.api.java.ICloudJavaVersion
+import dev.redicloud.api.java.ICloudJavaVersionRepository
+import dev.redicloud.api.utils.ProcessConfiguration
+import dev.redicloud.api.utils.TEMP_SERVER_VERSION_FOLDER
 import dev.redicloud.api.version.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
+import dev.redicloud.console.utils.ScreenProcessHandler
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.Logger
 import dev.redicloud.utils.*
@@ -11,12 +15,16 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import java.io.File
+import java.util.*
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
+import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.minutes
 
 class PaperMcServerVersionHandler(
     private val serverVersionRepository: ICloudServerVersionRepository,
     private val serverVersionTypeRepository: ICloudServerVersionTypeRepository,
+    private val javaVersionRepository: ICloudJavaVersionRepository,
     private val requester: PaperMcApiRequester,
     private val console: Console?,
     private val logger: Logger
@@ -176,11 +184,105 @@ class PaperMcServerVersionHandler(
     }
 
     override suspend fun update(version: ICloudServerVersion, versionType: ICloudServerVersionType): File {
-        return IServerVersionHandler.getDefaultHandler().update(version, versionType)
+        download(version, true)
+        if (isPatchVersion(version)) patch(version)
+        serverVersionTypeRepository.downloadConnector(versionType)
+        return getFolder(version)
     }
 
     override suspend fun patch(version: ICloudServerVersion) {
-        IServerVersionHandler.getDefaultHandler().patch(version)
+        if (!version.patch) return
+        var canceled = false
+        var patched = false
+        var error = false
+        console?.let {
+            val animation = AnimatedLineAnimation(
+                console,
+                200
+            ) {
+                if (canceled) {
+                    null
+                } else if (patched) {
+                    canceled = true
+                    "Patching version %tc%${toConsoleValue(version.displayName)}§8: ${if (error) "§4✘" else "§2✓"}"
+                } else {
+                    "Patching version %tc%${toConsoleValue(version.displayName)}§8: %tc%%loading%"
+                }
+            }
+            console.startAnimation(animation)
+        }
+        getLock(version).lock()
+        try {
+            val jar = getJar(version)
+            if (!jar.exists()) download(version, true)
+
+            val versionDir = getFolder(version)
+            val tempDir = File(TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath, UUID.randomUUID().toString())
+            tempDir.mkdirs()
+            versionDir.copyRecursively(tempDir, true)
+            val tempJar = File(tempDir, jar.name)
+
+            if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
+            val type = serverVersionTypeRepository.getType(version.typeId!!)
+                ?: throw NullPointerException("Cant find server version type ${version.typeId}")
+            if (version.javaVersionId == null) throw NullPointerException("Cant find java version for ${version.displayName}")
+            val javaVersion = javaVersionRepository.getVersion(version.javaVersionId!!)
+                ?: throw NullPointerException("Cant find java version for ${version.displayName}")
+            findFreePort(40000..60000)
+
+            val processBuilder = ProcessBuilder(patchCommand(type, javaVersion, tempJar))
+            processBuilder.directory(tempDir)
+            val process = processBuilder.start()
+            console?.let {
+                val screen = console.createScreen("patch_${version.displayName}")
+                ScreenProcessHandler(process, screen)
+            }
+            process.waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+
+            if (!versionDir.exists()) versionDir.mkdirs()
+
+            tempJar.copyTo(jar, true)
+            val processConfiguration = ProcessConfiguration.collect(
+                version,
+                type
+            )
+            val patterns = processConfiguration.getLibPatterns().toMutableList()
+            if (version.libPattern != null) patterns.add(Pattern.compile(version.libPattern!!))
+            if (type.libPattern != null) patterns.add(Pattern.compile(type.libPattern!!))
+            if (patterns.isNotEmpty()) {
+                patterns.add(Pattern.compile("(${tempJar.name})"))
+
+                fun deleteFiles(file: File): Boolean {
+                    val paths = processConfiguration.defaultFiles.values
+                    var workDirPath = file.absolutePath.replace(tempDir.absolutePath, "").replace("\\", "/")
+                    if (workDirPath.startsWith("/")) workDirPath = workDirPath.substring(1)
+                    if (paths.any { file.absolutePath.endsWith(it) }) return false
+                    if (patterns.none { it.matcher(workDirPath).find() }) {
+                        if (file.isDirectory) {
+                            if (file.listFiles()?.all { deleteFiles(it) } == true) file.deleteRecursively()
+                        } else {
+                            file.delete()
+                            return true
+                        }
+                    }
+                    return false
+                }
+
+                tempDir.listFiles()?.forEach {
+                    deleteFiles(it)
+                }
+            }
+            versionDir.deleteRecursively()
+            tempDir.copyRecursively(versionDir, true)
+            tempDir.deleteRecursively()
+            File(versionDir, ".patched").createNewFile()
+        }catch (e: Exception) {
+            error = true
+            throw e
+        } finally {
+            patched = true
+            getLock(version).unlock()
+        }
     }
 
     override suspend fun patchCommand(

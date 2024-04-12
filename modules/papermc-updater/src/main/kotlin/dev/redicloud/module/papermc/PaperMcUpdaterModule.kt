@@ -1,6 +1,7 @@
 package dev.redicloud.module.papermc
 
 import com.google.inject.name.Named
+import dev.redicloud.api.java.ICloudJavaVersionRepository
 import dev.redicloud.api.modules.CloudModule
 import dev.redicloud.api.modules.ModuleLifeCycle
 import dev.redicloud.api.modules.ModuleTask
@@ -27,6 +28,7 @@ class PaperMcUpdaterModule : CloudModule(), CloudInjectable {
         @Named("this") serviceId: ServiceId,
         serverVersionRepository: ICloudServerVersionRepository,
         serverVersionTypeRepository: ICloudServerVersionTypeRepository,
+        javaVersionRepository: ICloudJavaVersionRepository,
         versionRepository: IVersionRepository,
         console: Console
     ) {
@@ -34,6 +36,7 @@ class PaperMcUpdaterModule : CloudModule(), CloudInjectable {
         handler = PaperMcServerVersionHandler(
             serverVersionRepository,
             serverVersionTypeRepository,
+            javaVersionRepository,
             requester,
             console,
             logger
