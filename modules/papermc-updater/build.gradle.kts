@@ -13,5 +13,6 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation(project(":repositories:server-version-repository"))
     testImplementation(project(":utils"))
+    testImplementation(project(":logging"))
     testImplementation(BuildDependencies.KOTLINX_COROUTINES)
 }

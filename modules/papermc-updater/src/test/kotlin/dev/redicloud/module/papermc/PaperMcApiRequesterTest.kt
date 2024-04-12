@@ -5,10 +5,12 @@ import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.serverversion.VersionRepository
 import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
+import dev.redicloud.utils.isValidUrl
 import dev.redicloud.utils.printTestSetupEnd
 import dev.redicloud.utils.takeFirstLastRandom
 import kotlinx.coroutines.runBlocking
 import java.io.File
+import kotlin.math.max
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -54,6 +56,7 @@ class PaperMcApiRequesterTest {
             .map { version -> version to types.firstOrNull { it.uniqueId == version.typeId } }
             .filter { it.second != null }
             .filter { it.second!!.versionHandlerName == "papermc"}
+            .filterNot { it.first.version.latest }
             .takeFirstLastRandom(REQUEST_LIMIT_PER_TEST).toList()
             .forEach { (version, type) ->
                 val builds = requester.getBuilds(type!!, version.version)
@@ -73,11 +76,40 @@ class PaperMcApiRequesterTest {
     }
 
     @Test
-    fun testGetDownloadUrl() {
+    fun testGetDownloadUrl() = runBlocking {
+        versions.filter { it.typeId != null }
+            .map { version -> version to types.firstOrNull { it.uniqueId == version.typeId } }
+            .filter { it.second != null }
+            .filter { it.second!!.versionHandlerName == "papermc"}
+            .filterNot { it.first.version.latest }
+            .takeFirstLastRandom(REQUEST_LIMIT_PER_TEST).toList()
+            .forEach { (version, type) ->
+                val count = REQUEST_LIMIT_PER_TEST / 2
+                val builds = requester.getBuilds(type!!, version.version).takeFirstLastRandom(max(1, count))
+                assertTrue(builds.isNotEmpty(), "No builds found for version ${version.displayName}!")
+                builds.forEach { build ->
+                    val url = requester.getDownloadUrl(type, version.version, build)
+                    assertTrue(url.isNotEmpty(), "No download-url found for version ${version.displayName}!")
+                    println("Download-url for ${version.displayName} build $build: $url")
+                    assertTrue(isValidUrl(url), "Download-url $url is not valid for version ${version.displayName}!")
+                }
+            }
     }
 
     @Test
-    fun testGetLatestBuild() {
+    fun testGetLatestBuild() = runBlocking {
+        val versions = versions.asSequence().filter { it.typeId != null }
+            .map { version -> version to types.firstOrNull { it.uniqueId == version.typeId } }
+            .filter { it.second != null }
+            .filter { it.second!!.versionHandlerName == "papermc"}
+            .filterNot { it.first.version.latest }.toList()
+            .toSet()
+            .takeFirstLastRandom(REQUEST_LIMIT_PER_TEST).toList()
+        versions.forEach { (version, type) ->
+            val latestBuild = requester.getLatestBuild(type!!, version.version)
+            assertTrue(latestBuild >= 0, "No latest-build found for version ${version.displayName}!")
+            println("Latest-build for ${version.displayName}: $latestBuild")
+        }
     }
 
 }

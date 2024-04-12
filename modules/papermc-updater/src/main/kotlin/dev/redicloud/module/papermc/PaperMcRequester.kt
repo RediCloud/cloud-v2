@@ -38,8 +38,16 @@ class PaperMcApiRequester(
     suspend fun getVersions(type: ICloudServerVersionType): List<IServerVersion> {
         val url = "/projects/${type.name.lowercase()}"
         if (cache.contains(url)) return cache[url] as List<IServerVersion>
-        val versions = request<VersionsResponse>(url).responseObject
-            ?.versions?.mapNotNull { versionRepository.parse(it) }?.toList() ?: emptyList()
+        val responseVersions = request<VersionsResponse>(url).responseObject
+        val versions = responseVersions?.versions?.mapNotNull { v ->
+            val r = versionRepository.parse(v)
+            if (r == null) {
+                println("Unknown version: $v in [${versionRepository.versions().joinToString(", ") { it.name }}]")
+            }else {
+                println("Parsed version: ${r.name} for $v")
+            }
+            r
+        }?.toList() ?: emptyList()
         cache[url] = versions
         return versions
     }

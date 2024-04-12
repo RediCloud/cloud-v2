@@ -1,8 +1,6 @@
 package dev.redicloud.module.papermc
 
 import dev.redicloud.api.java.ICloudJavaVersion
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.api.version.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
@@ -17,14 +15,10 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.Duration.Companion.minutes
 
 class PaperMcServerVersionHandler(
-    private val serviceId: ServiceId,
     private val serverVersionRepository: ICloudServerVersionRepository,
     private val serverVersionTypeRepository: ICloudServerVersionTypeRepository,
-    private val javaVersionRepository: ICloudServerVersionRepository,
-    private val nodeRepository: ICloudNodeRepository,
-    private val console: Console,
-    private val versionRepository: IVersionRepository,
     private val requester: PaperMcApiRequester,
+    private val console: Console?,
     private val logger: Logger
 ) : IServerVersionHandler {
 
@@ -36,20 +30,22 @@ class PaperMcServerVersionHandler(
         var canceled = false
         var downloaded = false
         var error = false
-        val animation = AnimatedLineAnimation(
-            console,
-            200
-        ) {
-            if (canceled) {
-                null
-            } else if (downloaded) {
-                canceled = true
-                "Downloaded version %hc%${version.displayName}§8: ${if (error) "§4✘" else "§2✓"}"
-            } else {
-                "Downloading version %hc%${version.displayName}§8: %tc%%loading%"
+        console?.let {
+            val animation = AnimatedLineAnimation(
+                console,
+                200
+            ) {
+                if (canceled) {
+                    null
+                } else if (downloaded) {
+                    canceled = true
+                    "Downloaded version %hc%${version.displayName}§8: ${if (error) "§4✘" else "§2✓"}"
+                } else {
+                    "Downloading version %hc%${version.displayName}§8: %tc%%loading%"
+                }
             }
+            console.startAnimation(animation)
         }
-        console.startAnimation(animation)
         getLock(version).lock()
         val jar = getJar(version)
         try {
