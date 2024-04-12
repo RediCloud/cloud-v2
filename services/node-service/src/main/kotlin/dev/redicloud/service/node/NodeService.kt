@@ -2,6 +2,7 @@ package dev.redicloud.service.node
 
 import dev.redicloud.api.commands.ICommand
 import dev.redicloud.api.commands.ICommandManager
+import dev.redicloud.api.events.impl.module.ModuleHandlerInitializedEvent
 import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.cluster.file.FileNodeRepository
@@ -167,7 +168,7 @@ class NodeService(
         taskManager.builder()
             .task(CloudServerVersionUpdateTask(firstStart, this.serverVersionRepository, this.serverVersionTypeRepository))
             .period(5.minutes)
-            .instant()
+            .event(ModuleHandlerInitializedEvent::class)
             .register()
         taskManager.builder()
             .task(MetricsTask(this.clusterConfiguration, this.serviceId, this.playerRepository, this.serverRepository))

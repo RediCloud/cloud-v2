@@ -26,7 +26,7 @@ class CloudServerVersionUpdateTask(
             if (it.typeId == null) return@forEach
             val type = serverVersionTypeRepository.getType(it.typeId!!) ?: return@forEach
             val handle = IServerVersionHandler.getHandler(type)
-            if (handle.isUpdateAvailable(it) && !handle.getLock(it).isLocked && it.used) {
+            if (it.used && !handle.getLock(it).isLocked && handle.isUpdateAvailable(it)) {
                 if (!silent) logger.info("Updating server version ${toConsoleValue(it.displayName)}...")
                 handle.update(it, type)
             }
