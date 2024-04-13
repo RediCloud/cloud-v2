@@ -1228,7 +1228,7 @@
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.20.1/builds/%build%/downloads/paper-%version_name%-%build%.jar",
-    "buildId": "84",
+    "buildId": "196",
     "version": {
       "name": "1.20.1",
       "protocolId": 763,
@@ -1276,7 +1276,7 @@
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.20.4/builds/%build%/downloads/paper-%version_name%-%build%.jar",
-    "buildId": "424",
+    "buildId": "484",
     "version": {
       "name": "1.20.4",
       "protocolId": 765,
@@ -1300,7 +1300,7 @@
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/%version_name%/builds/%build%/downloads/paper-%version_name%-%build%.jar",
-    "buildId": "424",
+    "buildId": "484",
     "version": {
       "name": "latest",
       "protocolId": -1,
@@ -1348,7 +1348,7 @@
     "typeId": "e0982b0f-f27f-4206-a373-ce12ad8ea333",
     "projectName": "velocity",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/velocity/versions/3.3.0-SNAPSHOT/builds/%build%/downloads/velocity-%version_name%-%build%.jar",
-    "buildId": "359",
+    "buildId": "376",
     "version": {
       "name": "3.3.0-SNAPSHOT",
       "protocolId": 763,
@@ -1372,7 +1372,7 @@
     "typeId": "e0982b0f-f27f-4206-a373-ce12ad8ea333",
     "projectName": "velocity",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/velocity/versions/%version_name%/builds/%build%/downloads/velocity-%version_name%-%build%.jar",
-    "buildId": "359",
+    "buildId": "376",
     "version": {
       "name": "latest",
       "protocolId": -1,
@@ -1612,7 +1612,7 @@
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.20/builds/%build_id%/downloads/waterfall-%version_name%-%build_id%.jar",
-    "buildId": "562",
+    "buildId": "572",
     "version": {
       "name": "1.20",
       "protocolId": 763,
@@ -1660,10 +1660,59 @@
     "typeId": "6fa280a8-aaed-4ee7-99e4-c337b6985098",
     "projectName": "folia",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/1.20.1/builds/%build_id%/downloads/folia-%version_name%-%build_id%.jar",
-    "buildId": "10",
+    "buildId": "17",
     "version": {
       "name": "1.20.1",
       "protocolId": 763,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
+    "uniqueId": "afdffe5f-eb9f-ebbe-0000-000000000000",
+    "typeId": "6fa280a8-aaed-4ee7-99e4-c337b6985098",
+    "projectName": "folia",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/1.20.2/builds/%build_id%/downloads/folia-%version_name%-%build_id%.jar",
+    "buildId": "20",
+    "version": {
+      "name": "1.20.2",
+      "protocolId": 764,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+
+  {
+    "uniqueId": "bffcedab-dfda-faf5-0000-000000000000",
+    "typeId": "6fa280a8-aaed-4ee7-99e4-c337b6985098",
+    "projectName": "folia",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/1.20.4/builds/%build_id%/downloads/folia-%version_name%-%build_id%.jar",
+    "buildId": "29",
+    "version": {
+      "name": "1.20.4",
+      "protocolId": 765,
       "versionTypes": [
         "!VELOCITY"
       ]
@@ -1684,7 +1733,7 @@
     "typeId": "6fa280a8-aaed-4ee7-99e4-c337b6985098",
     "projectName": "folia",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/folia/versions/%version_name%/builds/%build_id%/downloads/folia-%version_name%-%build_id%.jar",
-    "buildId": "10",
+    "buildId": "29",
     "version": {
       "name": "latest",
       "protocolId": -1,
