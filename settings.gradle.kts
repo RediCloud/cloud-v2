@@ -7,6 +7,9 @@ pluginManagement {
         maven("https://repo.redicloud.dev/releases/")
     }
 }
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.5.0"
+}
 
 include("database")
 include("packets")
@@ -111,3 +114,6 @@ findProject(":modules:reset-module")?.name = "reset-module"
 
 include("test-framework")
 findProject(":test-framework")?.name = "test-framework"
+
+include("modules:webinterface")
+findProject(":modules:webinterface")?.name = "webinterface"
