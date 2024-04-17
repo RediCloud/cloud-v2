@@ -2,14 +2,16 @@ plugins {
     id("io.ktor.plugin") version "2.3.10"
 }
 
-group = "dev.redicloud.modules"
-
 application {
-    mainClass.set("dev.redicloud.modules.webinterface.ApplicationKt")
+    mainClass.set("dev.redicloud.module.webinterface.WebinterfaceModuleKt")
 }
 
+group = "dev.redicloud.modules"
+
 dependencies {
+    implementation(project(":apis:base-api"))
     implementation(project(":utils"))
+    implementation(project(":logging"))
     implementation("io.ktor:ktor-server-auth-jvm")
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-server-auth-jwt-jvm")
@@ -24,8 +26,8 @@ dependencies {
     implementation("io.ktor:ktor-server-auth")
     implementation("io.ktor:ktor-server-auth-jwt")
     implementation(BuildDependencies.LOGBACK_CLASSIC)
-    testImplementation("io.ktor:ktor-server-tests-jvm")
-    testImplementation(BuildDependencies.KOTLIN_TESTS)
+
+    testImplementation(project(":test-framework"))
 }
 tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

@@ -1,0 +1,13 @@
+{
+  "id": "webinterface",
+  "name": "Webinterface",
+  "description": "A simple webinterface to manage your cluster",
+  "version": "2.3.0-SNAPSHOT",
+  "website": "https://docs.redicloud.dev/modules/webinterface",
+  "authors": [
+    "Suqatri"
+  ],
+  "mainClasses": {
+    "NODE": "dev.redicloud.module.webinterface.WebinterfaceModule"
+  }
+}
