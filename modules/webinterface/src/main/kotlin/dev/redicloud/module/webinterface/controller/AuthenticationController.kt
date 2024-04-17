@@ -1,8 +1,11 @@
-package dev.redicloud.modules.webinterface.controller
+package dev.redicloud.module.webinterface.controller
 
-import dev.redicloud.modules.webinterface.service.sessions.user.UserSession
-import dev.redicloud.modules.webinterface.service.sessions.user.UserSessionService
-import dev.redicloud.modules.webinterface.service.user.IUserService
+import dev.redicloud.module.webinterface.service.sessions.flash.flash
+import dev.redicloud.module.webinterface.service.sessions.flash.readFlash
+import dev.redicloud.module.webinterface.service.sessions.flash.FlashMessageType
+import dev.redicloud.module.webinterface.service.sessions.user.UserSession
+import dev.redicloud.module.webinterface.service.sessions.user.UserSessionService
+import dev.redicloud.module.webinterface.service.user.IUserService
 import io.ktor.server.application.*
 import io.ktor.server.freemarker.*
 import io.ktor.server.request.*
@@ -22,18 +25,27 @@ class AuthenticationController(
         val formParameters = ctx.receiveParameters()
         val username = formParameters["username"]
         val password = formParameters["password"]
-        if (username == null || password == null) {
-            // TODO: Flash message for missing parameters
+        if (username == null || password == null || username.isBlank() || password.isBlank()) {
+            ctx.flash {
+                type = FlashMessageType.ERROR
+                content = "Please enter a username and password!"
+            }
             ctx.respondRedirect("/auth/login")
             return
         }
         val user = userService.getByName(username) ?: run {
-            // TODO: Flash message for invalid user
+            ctx.flash {
+                type = FlashMessageType.ERROR
+                content = "Invalid credentials!"
+            }
             ctx.respondRedirect("/auth/login")
             return
         }
         if (!user.checkPassword(password)) {
-            // TODO: flash message for invalid password
+            ctx.flash {
+                type = FlashMessageType.ERROR
+                content = "Invalid credentials!"
+            }
             ctx.respondRedirect("/auth/login")
             return
         }
@@ -48,11 +60,16 @@ class AuthenticationController(
             ctx.respondRedirect("/")
             return
         }
-        ctx.respondTemplate("login.ftl")
+        val model = mapOf("flash" to ctx.readFlash())
+        ctx.respondTemplate("login.ftl", model)
     }
 
     suspend fun logout(ctx: ApplicationCall) {
         ctx.sessions.clear<UserSession>()
+        ctx.flash {
+            type = FlashMessageType.INFO
+            content = "Successfully logged out!"
+        }
         ctx.respondRedirect("/")
     }
 

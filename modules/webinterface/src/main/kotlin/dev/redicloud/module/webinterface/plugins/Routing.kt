@@ -1,9 +1,9 @@
-package dev.redicloud.modules.webinterface.plugins
+package dev.redicloud.module.webinterface.plugins
 
-import dev.redicloud.modules.webinterface.routes.dashboard.registerHomeRoute
-import dev.redicloud.modules.webinterface.routes.registerAuthenticationRoutes
-import dev.redicloud.modules.webinterface.service.sessions.user.UserSessionService
-import dev.redicloud.modules.webinterface.service.user.IUserService
+import dev.redicloud.module.webinterface.routes.dashboard.registerHomeRoute
+import dev.redicloud.module.webinterface.routes.registerAuthenticationRoutes
+import dev.redicloud.module.webinterface.service.sessions.user.UserSessionService
+import dev.redicloud.module.webinterface.service.user.IUserService
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
 import io.ktor.server.routing.*

@@ -1,8 +1,8 @@
-package dev.redicloud.modules.webinterface.routes
+package dev.redicloud.module.webinterface.routes
 
-import dev.redicloud.modules.webinterface.controller.AuthenticationController
-import dev.redicloud.modules.webinterface.service.sessions.user.UserSessionService
-import dev.redicloud.modules.webinterface.service.user.IUserService
+import dev.redicloud.module.webinterface.controller.AuthenticationController
+import dev.redicloud.module.webinterface.service.sessions.user.UserSessionService
+import dev.redicloud.module.webinterface.service.user.IUserService
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 

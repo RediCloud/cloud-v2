@@ -1,8 +1,8 @@
-package dev.redicloud.modules.webinterface.service.user
+package dev.redicloud.module.webinterface.service.user
 
-import dev.redicloud.modules.webinterface.service.sessions.user.UserSession
-import dev.redicloud.modules.webinterface.service.sessions.user.decodeUserId
-import dev.redicloud.modules.webinterface.userService
+import dev.redicloud.module.webinterface.WebinterfaceModule
+import dev.redicloud.module.webinterface.service.sessions.user.UserSession
+import dev.redicloud.module.webinterface.service.sessions.user.decodeUserId
 import io.ktor.server.application.*
 import io.ktor.server.sessions.*
 import java.util.*
@@ -41,5 +41,5 @@ interface IUserService {
 
 suspend fun ApplicationCall.getUser(): User? {
     val session = sessions.get<UserSession>()
-    return session?.decodeUserId()?.let { userService.getById(it) }
+    return session?.decodeUserId()?.let { WebinterfaceModule.INSTANCE.userService.getById(it) }
 }

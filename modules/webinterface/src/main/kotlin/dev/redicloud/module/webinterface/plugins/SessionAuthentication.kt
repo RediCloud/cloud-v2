@@ -1,11 +1,11 @@
-package dev.redicloud.modules.webinterface.plugins
+package dev.redicloud.module.webinterface.plugins
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.exceptions.JWTVerificationException
-import dev.redicloud.modules.webinterface.ALGORITHM
-import dev.redicloud.modules.webinterface.URL
-import dev.redicloud.modules.webinterface.service.sessions.user.UserSession
-import dev.redicloud.modules.webinterface.service.user.IUserService
+import dev.redicloud.module.webinterface.WebinterfaceModule.Companion.ALGORITHM
+import dev.redicloud.module.webinterface.WebinterfaceModule.Companion.URL
+import dev.redicloud.module.webinterface.service.sessions.user.UserSession
+import dev.redicloud.module.webinterface.service.user.IUserService
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.response.*

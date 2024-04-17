@@ -1,4 +1,4 @@
-package dev.redicloud.modules.webinterface.plugins
+package dev.redicloud.module.webinterface.plugins
 
 import freemarker.cache.*
 import io.ktor.server.application.*

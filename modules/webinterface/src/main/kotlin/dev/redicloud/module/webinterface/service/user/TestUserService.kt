@@ -1,4 +1,4 @@
-package dev.redicloud.modules.webinterface.service.user
+package dev.redicloud.module.webinterface.service.user
 
 import dev.redicloud.utils.toUUID
 import java.util.*

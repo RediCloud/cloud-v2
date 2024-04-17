@@ -1,4 +1,4 @@
-package dev.redicloud.modules.webinterface.service.sessions.user
+package dev.redicloud.module.webinterface.service.sessions.user
 
 import com.auth0.jwt.JWT
 import io.ktor.server.auth.*
