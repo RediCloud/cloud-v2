@@ -12,7 +12,7 @@
     <@body.default>
     <@navbar.default/>
     <@sidebar.default/>
-    <div id="content" class="p-4 sm:ml-64 mt-[4rem]">
+    <div id="content" class="p-5 sm:ml-64 mt-[4rem]">
         <#nested />
     </div>
     </@body.default>
