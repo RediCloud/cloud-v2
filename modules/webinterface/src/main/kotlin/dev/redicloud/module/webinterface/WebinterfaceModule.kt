@@ -35,7 +35,7 @@ class WebinterfaceModule : CloudModule() {
         userSessionService = UserSessionService()
         userService = TestUserService()
         flashMessageService = FlashMessageService
-        val server = embeddedServer(Netty, port = 8123, host = "0.0.0.0") {
+        val server = embeddedServer(Netty, port = 8123, host = "0.0.0.0", watchPaths = listOf("classes", "resources")) {
             module(userSessionService, userService, flashMessageService)
             application = this
         }.start()

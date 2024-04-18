@@ -38,3 +38,9 @@ tasks {
         options.release.set(17)
     }
 }
+
+tasks.register("reloadTemplates") {
+    group = "other"
+    description = "Reload all html/css templates on runtime"
+    dependsOn(tasks.named("processResources"))
+}
