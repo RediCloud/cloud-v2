@@ -24,7 +24,6 @@ object FlashMessageService : ISessionService<FlashSession> {
     }
 
     fun flash(call: ApplicationCall, block: FlashMessage.() -> Unit) {
-        WebinterfaceModule.LOGGER.info("Flashing message to session")
         val flash = FlashMessage("init").apply(block)
         val session = call.sessions.get<FlashSession>() ?: FlashSession()
         session.messages.add(flash)
@@ -32,7 +31,6 @@ object FlashMessageService : ISessionService<FlashSession> {
     }
 
     fun read(call: ApplicationCall): List<FlashMessage> {
-        WebinterfaceModule.LOGGER.info("Getting flashed messages from session")
         val session = call.sessions.get<FlashSession>() ?: return emptyList()
         val messages = session.messages
         call.sessions.clear<FlashSession>()
