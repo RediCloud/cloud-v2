@@ -3,7 +3,7 @@
 ## Requirements
 
 * **Java**: 8 or higher (tested with 8, 11, 17, 21)
-* Redis database
+* Redis database ([Introduction](https://www.digitalocean.com/community/tutorials/how-to-install-and-secure-redis-on-debian-10))
 
 ## Step-by-step
 
