@@ -26,11 +26,11 @@ class History<T : Any>(val historySize: Int) {
     fun subList(fromIndex: Int, toIndex: Int): List<T> {
         val f = if (fromIndex < 0) 0 else fromIndex
         val t = if (toIndex > size) size else toIndex
-        return map.values.toList().subList(f, t)
+        return sorted().values.toList().subList(f, t)
     }
 
     private fun checkSize() {
-        if (size > historySize && map.isNotEmpty()) return
+        if (size < historySize && map.isNotEmpty()) return
         while (size > historySize) {
             sorted().minByOrNull { it.key }?.let {
                 map.remove(it.key, it.value)

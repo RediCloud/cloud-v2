@@ -14,6 +14,9 @@ import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.utils.gson.fromJsonToList
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
@@ -44,18 +47,17 @@ class CloudServerVersionTypeRepository(
         val DEFAULT_TYPES_CACHE = SingleCache(1.minutes) {
             gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
             val json = getTextOfAPIWithFallback("api-files/server-version-types.json")
-            val type = object : TypeToken<ArrayList<CloudServerVersionType>>() {}.type
-            val list: MutableList<CloudServerVersionType> = gson.fromJson(json, type)
+            val list: MutableList<CloudServerVersionType> = gson.fromJsonToList<CloudServerVersionType>(json).toMutableList()
             list.add(
                 CloudServerVersionType(
                     UUID.fromString("188507b4-37b9-45b5-b977-73ed6f6192a9"),
                     "unknown",
                     "urldownloader",
-                    false,
-                    true,
-                    "redicloud-unknown-${CLOUD_VERSION}.jar",
-                    null,
-                    "plugins"
+                    proxy = false,
+                    defaultType = true,
+                    connectorPluginName = "redicloud-unknown-${CLOUD_VERSION}.jar",
+                    connectorDownloadUrl = null,
+                    connectorFolder = "plugins"
                 )
             )
             list.toList()
@@ -127,7 +129,9 @@ class CloudServerVersionTypeRepository(
         if (lock) getLock(serverVersionType).lock()
         try {
             if (!serverVersionType.getParsedConnectorURL().isValid()) throw IllegalStateException("Connector download url of ${serverVersionType.connectorPluginName} is null!")
-            khttp.get(serverVersionType.getParsedConnectorURL().toExternalForm()).content.let {
+            httpClient.get {
+                url(serverVersionType.getParsedConnectorURL().toExternalForm())
+            }.readBytes().let {
                 if (connectorFile.exists()) connectorFile.delete()
                 connectorFile.createNewFile()
                 connectorFile.writeBytes(it)

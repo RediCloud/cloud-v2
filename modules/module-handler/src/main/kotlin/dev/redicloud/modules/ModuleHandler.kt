@@ -2,6 +2,8 @@ package dev.redicloud.modules
 
 import com.google.inject.Key
 import com.google.inject.name.Named
+import dev.redicloud.api.events.impl.module.ModuleHandlerInitializedEvent
+import dev.redicloud.api.events.impl.module.ModuleLifeCycleChangedEvent
 import dev.redicloud.api.modules.*
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.utils.CloudInjectable
@@ -69,6 +71,7 @@ class ModuleHandler(
         moduleFiles.forEach {
             loadModule(it)
         }
+        eventManager.fireEvent(ModuleHandlerInitializedEvent(this))
     }
 
     override suspend fun updateModules(silent: Boolean, loadModules: Boolean) = lock.withLock {
@@ -295,6 +298,7 @@ class ModuleHandler(
             moduleData.loaded = true
         }catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
+            eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleInstance))
             logger.warning("§cFailed to load module ${description.id}!", e)
             return@withLock
         }
@@ -317,9 +321,11 @@ class ModuleHandler(
         try {
             val tasksCount = callTasks(moduleData.id, ModuleLifeCycle.RELOAD)
             moduleData.lifeCycle = ModuleLifeCycle.LOAD
+            eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance))
             logger.info("Reloaded module %hc%${moduleData.id}%tc% with %hc%$tasksCount%tc% reload tasks!")
         }catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
+            eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance))
             logger.warning("§cFailed to reload module ${moduleData.id}!", e)
             return@withLock
         }
@@ -351,11 +357,12 @@ class ModuleHandler(
         return repositories.firstOrNull { it.hasModule(moduleId) }
     }
 
-    internal fun callTasks(moduleId: String, targetLifeCycle: ModuleLifeCycle): Int {
+    private fun callTasks(moduleId: String, targetLifeCycle: ModuleLifeCycle): Int {
         val moduleData = getModuleData(moduleId) ?: return 0
         val loader = loaders[moduleData.id] ?: return 0
         var tasksCount = 0
         moduleData.lifeCycle = targetLifeCycle
+        eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance))
         loader.tasks.filter { it.lifeCycle == targetLifeCycle }.sortedBy { it.order }.forEach {
             val function = it.function
             val injectParameters = mutableListOf<Any>()
@@ -390,7 +397,7 @@ class ModuleHandler(
     }
 
     override fun isModuleReloadable(moduleId: String): Boolean {
-        return loaders[moduleId]?.tasks?.filter { it.lifeCycle == ModuleLifeCycle.RELOAD }?.isNotEmpty() ?: false
+        return loaders[moduleId]?.tasks?.any { it.lifeCycle == ModuleLifeCycle.RELOAD } ?: false
     }
 
     override fun loadModule(moduleId: String) {
@@ -407,6 +414,10 @@ class ModuleHandler(
 
     fun getCachedDescriptions(): List<ModuleDescription> {
         return cachedDescriptions
+    }
+
+    override fun getDescription(moduleId: String): IModuleDescription {
+        return getModuleDescription(moduleId) ?: throw NullPointerException("Module with id $moduleId not found!")
     }
 
 }

@@ -15,4 +15,6 @@ dependencies {
     dependency(BuildDependencies.GSON)
     testRuntimeOnly(BuildDependencies.GSON)
     implementation(BuildDependencies.GSON)
+
+    testImplementation(kotlin("test"))
 }

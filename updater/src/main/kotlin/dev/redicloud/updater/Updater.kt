@@ -6,8 +6,11 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.updater.suggest.BranchSuggester
 import dev.redicloud.updater.suggest.BuildsSuggester
 import dev.redicloud.utils.*
+import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
-import khttp.get
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
 import java.io.File
 import java.util.*
 import java.util.jar.JarFile
@@ -41,9 +44,12 @@ object Updater {
         commandManager.registerSuggesters(BranchSuggester(), BuildsSuggester())
     }
 
-    fun download(branch: String, build: Int): File {
-        val response = get(getRootAPIUrl() + "/files/$branch/$build/redicloud.zip")
-        if (response.statusCode != 200) {
+    suspend fun download(branch: String, build: Int): File {
+
+        val response = httpClient.get {
+            url(getRootAPIUrl() + "/files/$branch/$build/redicloud.zip")
+        }
+        if (!response.status.isSuccess()) {
             throw IllegalStateException("Failed to download the latest build")
         }
         val versionsFolder = File("versions")
@@ -51,7 +57,7 @@ object Updater {
             versionsFolder.mkdir()
         }
         val file = File("versions/redicloud-$branch#$build.zip")
-        file.writeBytes(response.content)
+        file.writeBytes(response.readBytes())
         return file
     }
 
@@ -135,16 +141,19 @@ object Updater {
 
     suspend fun getBuilds(branch: String?): List<BuildInfo> {
         if (branch == null) return emptyList()
-        val response = get(getRootAPIUrl() + "/builds/?branch=$branch")
-        if (response.statusCode != 200) return emptyList()
-        val type = object : TypeToken<ArrayList<BuildInfo>>() {}.type
-        return gson.fromJson(response.text, type)
+        val response = httpClient.get {
+            url(getRootAPIUrl() + "/builds/?branch=$branch")
+        }
+        if (!response.status.isSuccess()) return emptyList()
+        return gson.fromJsonToList(response.bodyAsText())
     }
 
     suspend fun getBranches(): List<String> {
-        val response = get(getRootAPIUrl() + "/builds/")
-        if (response.statusCode != 200) return emptyList()
-        val info = gson.fromJson(response.text, BranchList::class.java)
+        val response = httpClient.get {
+            url(getRootAPIUrl() + "/builds/")
+        }
+        if (!response.status.isSuccess()) return emptyList()
+        val info = gson.fromJson(response.bodyAsText(), BranchList::class.java)
         return info.branches
     }
 

@@ -1,5 +1,7 @@
 package dev.redicloud.utils
 
+import io.ktor.client.request.*
+import io.ktor.http.*
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -22,6 +24,9 @@ suspend fun isValidUrl(url: String?): Boolean {
         connection.requestMethod = "HEAD"
         val responseCode = connection.responseCode
         connection.disconnect()
+        if (responseCode == HttpURLConnection.HTTP_BAD_METHOD) {
+            return httpClient.get { url(url) }.status.isSuccess()
+        }
         responseCode == HttpURLConnection.HTTP_OK
     }catch (e: Exception){
         false

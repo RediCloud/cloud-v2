@@ -1,5 +1,6 @@
 package dev.redicloud.repository.template.file
 
+import dev.redicloud.api.database.IDatabaseConnection
 import dev.redicloud.api.template.file.ICloudFileTemplate
 import dev.redicloud.api.template.file.ICloudFileTemplateRepository
 import dev.redicloud.database.DatabaseConnection
@@ -11,7 +12,7 @@ import java.util.*
 import kotlin.time.Duration.Companion.minutes
 
 abstract class AbstractFileTemplateRepository(
-    private val databaseConnection: DatabaseConnection,
+    private val databaseConnection: IDatabaseConnection,
     private val nodeRepository: NodeRepository,
     packetManager: PacketManager
 ) : CachedDatabaseBucketRepository<ICloudFileTemplate, FileTemplate>(

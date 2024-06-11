@@ -12,6 +12,7 @@ import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.utils.gson.fromJsonToList
 import java.io.File
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
@@ -33,8 +34,7 @@ class JavaVersionRepository(
     companion object {
         val ONLINE_VERSION_CACHE = EasyCache<List<CloudJavaVersion>, Unit>(1.minutes) {
             val json = getTextOfAPIWithFallback("api-files/java-versions.json")
-            val type = object : TypeToken<ArrayList<CloudJavaVersion>>() {}.type
-            gson.fromJson<List<CloudJavaVersion>?>(json, type)
+            gson.fromJsonToList<CloudJavaVersion>(json)
         }
     }
 

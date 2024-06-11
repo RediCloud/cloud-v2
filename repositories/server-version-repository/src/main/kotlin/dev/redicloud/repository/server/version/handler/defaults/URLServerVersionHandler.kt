@@ -13,7 +13,9 @@ import dev.redicloud.console.utils.ScreenProcessHandler
 import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.*
 import dev.redicloud.api.service.ServiceId
-import khttp.get
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -36,7 +38,6 @@ open class URLServerVersionHandler(
         private val logger = LogManager.logger(URLServerVersionHandler::class)
     }
 
-    protected var lastUpdateCheck: Long = -1
     protected val locks = mutableMapOf<UUID, ReentrantLock>()
 
     override fun getLock(version: ICloudServerVersion): ReentrantLock {
@@ -77,17 +78,17 @@ open class URLServerVersionHandler(
                 .replace("%version_name%", targetVersion.name)
                 .replace("%branch%", BRANCH)
 
-            val response = get(downloadUrl)
-            if (response.statusCode != 200) throw IllegalStateException(
-                "Download of ${version.displayName} is not available ($downloadUrl -> ${response.statusCode}):\n" +
-                        response.text
+            val response = httpClient.get { url(downloadUrl) }
+            if (!response.status.isSuccess()) throw IllegalStateException(
+                "Download of ${version.displayName} is not available ($downloadUrl -> ${response.status.value}):\n" +
+                        response.bodyAsText()
             )
 
             val folder = getFolder(version)
             if (folder.exists()) folder.deleteRecursively()
             folder.mkdirs()
             if (jar.exists()) jar.delete()
-            jar.writeBytes(response.content)
+            jar.writeBytes(response.readBytes())
 
             val downloader = MultiAsyncAction()
             val defaultFiles = mutableMapOf<String, String>()
@@ -107,13 +108,14 @@ open class URLServerVersionHandler(
                         }
                         val file = File(folder, path)
                         if (!file.parentFile.exists()) file.parentFile.mkdirs()
-                        val response1 = get(url1)
-                        if (response1.statusCode != 200) {
-                            logger.warning("§cDownload of default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.displayName, false)} is not available (${response.statusCode}):\n${response.text}")
+                        val response1 = httpClient.get { url(url1) }
+                        if (!response1.status.isSuccess()) {
+                            logger.warning("§cDownload of default file ${toConsoleValue(url1, false)} " +
+                                    "for ${toConsoleValue(version.displayName, false)} is not available (${response.status.value}):\n${response.bodyAsText()}")
                             return@add
                         }
                         file.createNewFile()
-                        file.writeBytes(response1.content)
+                        file.writeBytes(response1.readBytes())
                     }catch (e: Exception) {
                         logger.warning("§cFailed to download default file ${toConsoleValue(url1, false)} for ${toConsoleValue(version.displayName, false)}", e)
                     }
@@ -137,7 +139,7 @@ open class URLServerVersionHandler(
             .replace("%build%", version.buildId ?: "-1")
             .replace("%version_name%", targetVersion.name)
             .replace("%branch%", BRANCH)
-        return version.customDownloadUrl != null && get(downloadUrl).statusCode == 200
+        return version.customDownloadUrl != null && isValidUrl(downloadUrl)
     }
 
     override suspend fun isUpdateAvailable(version: ICloudServerVersion, force: Boolean): Boolean {

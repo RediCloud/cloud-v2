@@ -12,14 +12,6 @@ fun String.isUUID(): Boolean {
     }
 }
 
-fun String.replaceLast(targetChar: String, replacement: String): String {
-    val lastIndexOf = lastIndexOf(targetChar)
-    if (lastIndexOf >= 0) {
-        return replaceRange(lastIndexOf, lastIndexOf + 1, replacement)
-    }
-    return this
-}
-
 private val md5 = MessageDigest.getInstance("MD5")
 fun String.toUUID(): UUID {
     val bytes = md5.digest(this.toByteArray())

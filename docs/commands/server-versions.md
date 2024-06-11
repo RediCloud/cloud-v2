@@ -18,7 +18,7 @@ You can create your own version with `sv create <project> <version>`. Project is
 
 ## Download url
 
-You can set a version handler to a server version. This handler is there for downloading & updating the version. By default there is the simple url downloader. This only downloads the version again from the specified URL if it is not available in`storage/versions`. With `sv edit <version> url <url>` you can set the download url (Additional handlers can be added via modules).&#x20;
+You can set a version handler to a server version. This handler is there for downloading & updating the version. By default there is the simple url downloader. This only downloads the version again from the specified URL if it is not available in`storage/versions`. With `sv edit <version> url <url>` you can set the download url (Additional handlers can be added via modules).
 
 Further information on how to create your own version handler can be found [HERE](https://docs.redicloud.dev/commands/server-version-types#version-handler). You can find out how to assign this to a version [HERE](https://docs.redicloud.dev/development/api/server-version-handlers).
 
@@ -60,7 +60,7 @@ You can start a server version with specific program arguments. You can set this
 
 ##
 
-## JVM argumentes&#x20;
+## JVM argumentes
 
 To use specific java arguments you can use the following commands:
 

@@ -1,11 +1,11 @@
 package dev.redicloud.module.papermc
 
 import com.google.inject.name.Named
+import dev.redicloud.api.java.ICloudJavaVersionRepository
 import dev.redicloud.api.modules.CloudModule
 import dev.redicloud.api.modules.ModuleLifeCycle
 import dev.redicloud.api.modules.ModuleTask
 import dev.redicloud.api.service.ServiceId
-import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.api.utils.CloudInjectable
 import dev.redicloud.api.version.ICloudServerVersionRepository
 import dev.redicloud.api.version.ICloudServerVersionTypeRepository
@@ -28,21 +28,17 @@ class PaperMcUpdaterModule : CloudModule(), CloudInjectable {
         @Named("this") serviceId: ServiceId,
         serverVersionRepository: ICloudServerVersionRepository,
         serverVersionTypeRepository: ICloudServerVersionTypeRepository,
-        javaVersionRepository: ICloudServerVersionRepository,
-        nodeRepository: ICloudNodeRepository,
-        console: Console,
-        versionRepository: IVersionRepository
+        javaVersionRepository: ICloudJavaVersionRepository,
+        versionRepository: IVersionRepository,
+        console: Console
     ) {
         requester = PaperMcApiRequester(versionRepository)
         handler = PaperMcServerVersionHandler(
-            serviceId,
             serverVersionRepository,
             serverVersionTypeRepository,
             javaVersionRepository,
-            nodeRepository,
-            console,
-            versionRepository,
             requester,
+            console,
             logger
         )
         IServerVersionHandler.registerHandler(handler)

@@ -66,7 +66,7 @@ You can start a server version with specific program arguments. You can set this
 
 
 
-## JVM argumentes&#x20;
+## JVM argumentes
 
 To use specific java arguments you can use the following commands:
 
@@ -98,7 +98,7 @@ The memory should be provided in MB.
 
 ## File templates
 
-You can specify which file templates should be used by a configuration template as follows:&#x20;
+You can specify which file templates should be used by a configuration template as follows:
 
 `ct edit <name> ft add <template>`
 
@@ -184,7 +184,7 @@ Servers with a priority of 0 are started first and those with a priority of 100 
 
 
 
-## Server version&#x20;
+## Server version
 
 A configuration template must be set to a [server version](configuration-template.md#server-version). You can do this as follows:
 
