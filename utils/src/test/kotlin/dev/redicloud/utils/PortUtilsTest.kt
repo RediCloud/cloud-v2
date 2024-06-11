@@ -9,6 +9,7 @@ class PortUtilsTest : UtilTest() {
     @Test
     fun blockPortTest() {
         val port = randomIntInRange(55535, 65535)
+        assert(port in 55535..65535)
         blockPort(port)
         assertFalse(isPortFree(port))
     }
@@ -16,6 +17,7 @@ class PortUtilsTest : UtilTest() {
     @Test
     fun freePortTest() {
         val port = randomIntInRange(55535, 65535)
+        assert(port in 55535..65535)
         blockPort(port)
         freePort(port)
         assert(isPortFree(port))
@@ -24,6 +26,7 @@ class PortUtilsTest : UtilTest() {
     @Test
     fun findFreePortTest() {
         val startPort = randomIntInRange(55535, 65535)
+        assert(startPort in 55535..65535)
         blockPort(startPort)
         val port = findFreePort(startPort, random = false)
         assert(port != -1)

@@ -25,8 +25,9 @@ class CloudAutoStartServerTask(
         val connectedNodes = nodeRepository.getConnectedNodes()
         configurationTemplateRepository.getTemplates().forEach { template ->
             if (serverFactory.shutdown) return true
+            // Check if the template has a min start value
             if (template.minStartedServices < 1 && template.minStartedServicesPerNode < 1) return@forEach
-            val nodeBasedStarts: MutableMap<ServiceId, Int> = mutableMapOf()
+            val nodeBasedStarts: MutableMap<ServiceId, Int> = mutableMapOf() // Map of nodes and how many servers are started on them
             val unassigned: MutableMap<UUID, Int> = mutableMapOf()
             connectedNodes.forEach { node ->
                 nodeBasedStarts[node.serviceId] = 0 }
@@ -39,11 +40,11 @@ class CloudAutoStartServerTask(
                     nodeBasedStarts[it.hostNodeId] = count + 1
                 }
             serverFactory.startQueue.forEach { queueInfo ->
-                val t = if (queueInfo.configurationTemplate != null) {
-                    queueInfo.configurationTemplate
-                } else if (queueInfo.serviceId != null) {
+                val t = if (queueInfo.serviceId != null) {
                     registeredServers.firstOrNull { it.serviceId == queueInfo.serviceId }?.configurationTemplate
-                }else null
+                }else if (queueInfo.configurationTemplate != null) {
+                    queueInfo.configurationTemplate
+                } else null
                 if (t != null) {
                     if (queueInfo.nodeTarget != null) {
                         val count = nodeBasedStarts.getOrDefault(queueInfo.nodeTarget, 0)

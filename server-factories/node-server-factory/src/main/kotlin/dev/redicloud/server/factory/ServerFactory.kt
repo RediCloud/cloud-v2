@@ -75,13 +75,13 @@ class ServerFactory(
     suspend fun getStartList(): List<ServerQueueInformation> {
         return startQueue.toMutableList().sortedWith(compareByDescending<ServerQueueInformation>
         {
-            if (it.configurationTemplate != null) {
-                it.configurationTemplate!!.startPriority
-            } else if (it.serviceId != null) {
+            if (it.serviceId != null) {
                 val configuration = runBlocking {
                     serverRepository.getServer<CloudServer>(it.serviceId!!)?.configurationTemplate
                 }
                 configuration?.startPriority ?: 50
+            } else if (it.configurationTemplate != null) {
+                it.configurationTemplate!!.startPriority
             } else {
                 50
             }
@@ -98,7 +98,7 @@ class ServerFactory(
             throw IllegalArgumentException("Service id that was queued for deletion is not a server: ${serviceId.toName()}")
         }
         val server = serverRepository.getServer<CloudServer>(serviceId) ?: return false
-        if (server.hostNodeId != serviceId) {
+        if (server.hostNodeId != hostingId) {
             return false
         }
         if (server.state != CloudServerState.STOPPED) {
@@ -493,7 +493,7 @@ class ServerFactory(
 
     private suspend fun canStartOnNode(node: CloudNode, configurationTemplate: ICloudConfigurationTemplate): StartResult? {
         // check if the node is allowed to start the server
-        if (configurationTemplate.nodeIds.contains(node.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) {
+        if (!configurationTemplate.nodeIds.contains(node.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) {
             return NodeIsNotAllowedStartResult()
         }
 

@@ -1,13 +1,10 @@
 package dev.redicloud.database.codec
 
-import com.google.gson.*
-import dev.redicloud.utils.gson.addInterfaceImpl
-import dev.redicloud.utils.gson.fixKotlinAnnotations
+import com.google.gson.JsonElement
+import com.google.gson.JsonParser
 import dev.redicloud.utils.gson.gson
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
-import io.netty.buffer.ByteBufInputStream
-import io.netty.buffer.ByteBufOutputStream
 import org.redisson.client.codec.BaseCodec
 import org.redisson.client.handler.State
 import org.redisson.client.protocol.Decoder
@@ -21,7 +18,8 @@ object GsonCodec : BaseCodec() {
     private val encoder: Encoder = Encoder { `in`: Any ->
         val out = ByteBufAllocator.DEFAULT.buffer()
         try {
-            val p = GsonPackage(`in`.javaClass.name, JsonParser.parseString(gson.toJson(`in`)))
+            val json = gson.toJson(`in`)
+            val p = GsonPackage(`in`.javaClass.name, JsonParser.parseString(json))
             out.writeCharSequence(gson.toJson(p), charset)
             return@Encoder out
         } catch (e: Exception) {

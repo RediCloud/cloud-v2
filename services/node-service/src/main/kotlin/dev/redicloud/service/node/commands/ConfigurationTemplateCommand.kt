@@ -670,6 +670,7 @@ class ConfigurationTemplateCommand(
         if (servers.isNotEmpty()) {
             actor.sendMessage("§cYou cannot edit the static state of a template while there are still servers registered! Delete all static servers or stop all dynamic servers first!")
             actor.sendMessage("§cRegistered servers: ${servers.joinToString(", ") { it.name}}")
+            return@runBlocking
         }
         template.static = staticService
         configurationTemplateRepository.updateTemplate(template)

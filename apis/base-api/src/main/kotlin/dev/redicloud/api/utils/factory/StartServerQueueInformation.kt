@@ -9,13 +9,13 @@ import java.util.LinkedList
 import java.util.UUID
 
 data class ServerQueueInformation(
-    val uniqueId: UUID = UUID.randomUUID(),
-    val configurationTemplate: ICloudConfigurationTemplate?,
-    val serviceId: ServiceId?,
-    val failedStarts: FailedStarts = FailedStarts(),
-    val nodeStartOrder: MutableList<ServiceId> = mutableListOf(),
-    val nodeTarget: ServiceId? = null,
-    val queueTime: Long
+    val uniqueId: UUID = UUID.randomUUID(), // Random unique id to identify
+    val configurationTemplate: ICloudConfigurationTemplate?, // The configuration template
+    val serviceId: ServiceId?, // The static server id
+    val failedStarts: FailedStarts = FailedStarts(), // Failed starts with the failed node and the reason
+    val nodeStartOrder: MutableList<ServiceId> = mutableListOf(), // The possible start nodes in order
+    val nodeTarget: ServiceId? = null, // The current targeted node
+    val queueTime: Long // The time when the queue entry was created
 )
 
 class FailedStarts : LinkedList<String>() {
@@ -95,13 +95,7 @@ suspend fun ServerQueueInformation.calculateStartPriority(cloudNode: ICloudNode,
         return -1
     }
 
-    if (configurationTemplate != null) {
-        if (configurationTemplate.nodeIds.isNotEmpty() && !configurationTemplate.nodeIds.contains(cloudNode.serviceId)) {
-            addFailedStart(cloudNode.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
-            addFailedNode(cloudNode.serviceId)
-            return -1
-        }
-    }else if(serviceId != null) {
+    if(serviceId != null) {
         val server = serverRepository.getServer<ICloudServer>(serviceId)
         val storedConfigurationTemplate = server?.configurationTemplate
         if (storedConfigurationTemplate != null && storedConfigurationTemplate.nodeIds.isNotEmpty() && !storedConfigurationTemplate.nodeIds.contains(cloudNode.serviceId)) {
@@ -110,6 +104,12 @@ suspend fun ServerQueueInformation.calculateStartPriority(cloudNode: ICloudNode,
             return -1
         }
         if (server != null && server.configurationTemplate.static && server.hostNodeId != cloudNode.serviceId ) {
+            addFailedStart(cloudNode.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
+            addFailedNode(cloudNode.serviceId)
+            return -1
+        }
+    }else if (configurationTemplate != null) {
+        if (configurationTemplate.nodeIds.isNotEmpty() && !configurationTemplate.nodeIds.contains(cloudNode.serviceId)) {
             addFailedStart(cloudNode.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
             addFailedNode(cloudNode.serviceId)
             return -1
