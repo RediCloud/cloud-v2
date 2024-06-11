@@ -98,7 +98,7 @@ class ServerFactory(
             throw IllegalArgumentException("Service id that was queued for deletion is not a server: ${serviceId.toName()}")
         }
         val server = serverRepository.getServer<CloudServer>(serviceId) ?: return false
-        if (server.hostNodeId != serviceId) {
+        if (server.hostNodeId != hostingId) {
             return false
         }
         if (server.state != CloudServerState.STOPPED) {
