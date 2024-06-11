@@ -7,5 +7,5 @@ dependencies {
     compileOnly(project(":utils"))
     compileOnly(project(":database"))
 
-    dependency("io.javalin:javalin:6.1.6")
+    dependency(BuildDependencies.JAVALIN)
 }
