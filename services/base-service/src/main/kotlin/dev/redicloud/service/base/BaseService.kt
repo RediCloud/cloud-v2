@@ -141,7 +141,7 @@ abstract class BaseService(
     }
 
     protected fun loadModuleRepositoryUrls(): List<String> {
-        val moduleRepositoryUrls = clusterConfiguration.getList<String>("module-repositories").toMutableList()
+        val moduleRepositoryUrls = clusterConfiguration.getList<String>("module-repositories", emptyList()).toMutableList()
         val defaultRepoUrl = System.getProperty("redicloud.modules.default.repo", "https://api.redicloud.dev/module-repository")
         if (!moduleRepositoryUrls.contains(defaultRepoUrl)) {
             moduleRepositoryUrls.add(defaultRepoUrl)

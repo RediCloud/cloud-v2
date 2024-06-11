@@ -1,6 +1,5 @@
 package dev.redicloud.service.base.utils
 
-import com.google.gson.reflect.TypeToken
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
@@ -26,7 +25,10 @@ class ClusterConfiguration(
         return map[key]
     }
 
-    inline fun <reified T> getList(key: String): List<T> {
+    inline fun <reified T> getList(key: String, defaultValue: List<T>? = null): List<T> {
+        if (!contains(key)) {
+            return defaultValue ?: throw Exception("Key $key not found")
+        }
         return gson.fromJsonToList(map[key]!!)
     }
 
