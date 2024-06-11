@@ -25,8 +25,9 @@ class CloudAutoStartServerTask(
         val connectedNodes = nodeRepository.getConnectedNodes()
         configurationTemplateRepository.getTemplates().forEach { template ->
             if (serverFactory.shutdown) return true
+            // Check if the template has a min start value
             if (template.minStartedServices < 1 && template.minStartedServicesPerNode < 1) return@forEach
-            val nodeBasedStarts: MutableMap<ServiceId, Int> = mutableMapOf()
+            val nodeBasedStarts: MutableMap<ServiceId, Int> = mutableMapOf() // Map of nodes and how many servers are started on them
             val unassigned: MutableMap<UUID, Int> = mutableMapOf()
             connectedNodes.forEach { node ->
                 nodeBasedStarts[node.serviceId] = 0 }

@@ -493,7 +493,7 @@ class ServerFactory(
 
     private suspend fun canStartOnNode(node: CloudNode, configurationTemplate: ICloudConfigurationTemplate): StartResult? {
         // check if the node is allowed to start the server
-        if (configurationTemplate.nodeIds.contains(node.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) {
+        if (!configurationTemplate.nodeIds.contains(node.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) {
             return NodeIsNotAllowedStartResult()
         }
 
