@@ -20,6 +20,7 @@ object BuildDependencies {
     const val JSCH = "com.jcraft:jsch:0.1.55"
     const val LOGBACK_CORE = "ch.qos.logback:logback-core:1.4.14"
     const val LOGBACK_CLASSIC = "ch.qos.logback:logback-classic:1.4.14"
+    const val JAVALIN = "io.javalin:javalin:6.1.6"
 
     //Check compatibility with redisson
     const val NETTY_HANDLER = "io.netty:netty-handler:4.1.108.Final"
