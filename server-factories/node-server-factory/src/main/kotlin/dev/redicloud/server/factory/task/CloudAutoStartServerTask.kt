@@ -40,11 +40,11 @@ class CloudAutoStartServerTask(
                     nodeBasedStarts[it.hostNodeId] = count + 1
                 }
             serverFactory.startQueue.forEach { queueInfo ->
-                val t = if (queueInfo.configurationTemplate != null) {
-                    queueInfo.configurationTemplate
-                } else if (queueInfo.serviceId != null) {
+                val t = if (queueInfo.serviceId != null) {
                     registeredServers.firstOrNull { it.serviceId == queueInfo.serviceId }?.configurationTemplate
-                }else null
+                }else if (queueInfo.configurationTemplate != null) {
+                    queueInfo.configurationTemplate
+                } else null
                 if (t != null) {
                     if (queueInfo.nodeTarget != null) {
                         val count = nodeBasedStarts.getOrDefault(queueInfo.nodeTarget, 0)

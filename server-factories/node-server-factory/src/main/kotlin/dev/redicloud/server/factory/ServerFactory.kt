@@ -75,13 +75,13 @@ class ServerFactory(
     suspend fun getStartList(): List<ServerQueueInformation> {
         return startQueue.toMutableList().sortedWith(compareByDescending<ServerQueueInformation>
         {
-            if (it.configurationTemplate != null) {
-                it.configurationTemplate!!.startPriority
-            } else if (it.serviceId != null) {
+            if (it.serviceId != null) {
                 val configuration = runBlocking {
                     serverRepository.getServer<CloudServer>(it.serviceId!!)?.configurationTemplate
                 }
                 configuration?.startPriority ?: 50
+            } else if (it.configurationTemplate != null) {
+                it.configurationTemplate!!.startPriority
             } else {
                 50
             }

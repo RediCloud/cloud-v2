@@ -11,11 +11,19 @@ class InterfaceTypeAdapter<T : Any>(
 
     private val adapter = gson.getAdapter(TypeToken.get(implClazz))
 
-    override fun write(out: JsonWriter, value: T) {
+    override fun write(out: JsonWriter, value: T?) {
+        if (value == null) {
+            out.nullValue()
+            return
+        }
         adapter.write(out, value)
     }
 
-    override fun read(`in`: JsonReader): T {
+    override fun read(`in`: JsonReader): T? {
+        if (`in`.peek() == null) {
+            `in`.nextNull()
+            return null
+        }
         return adapter.read(`in`)
     }
 }

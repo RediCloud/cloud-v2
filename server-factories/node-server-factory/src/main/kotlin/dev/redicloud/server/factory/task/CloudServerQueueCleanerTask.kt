@@ -27,10 +27,10 @@ class CloudServerQueueCleanerTask(
         if (masterNode?.serviceId != serverFactory.hostingId) return false
 
         serverFactory.getStartList().forEach { info ->
-            val name = if (info.configurationTemplate != null) {
-                info.configurationTemplate!!.name
-            } else if (info.serviceId != null) {
+            val name = if (info.serviceId != null) {
                 info.serviceId!!.toName()
+            } else if (info.configurationTemplate != null) {
+                info.configurationTemplate!!.name
             } else null
 
             if (name == null) {
