@@ -1,5 +1,5 @@
 object BuildDependencies {
-    const val CLOUD_VERSION = "2.3.2-RELEASE"
+    const val CLOUD_VERSION = "2.3.2-SNAPSHOT"
     const val CLOUD_LIBLOADER_VERSION = "1.7.0"
     const val CLOUD_LIBLOADER_BOOTSTRAP = "dev.redicloud.libloader:libloader-bootstrap:1.7.0"
 
@@ -20,6 +20,7 @@ object BuildDependencies {
     const val JSCH = "com.jcraft:jsch:0.1.55"
     const val LOGBACK_CORE = "ch.qos.logback:logback-core:1.4.14"
     const val LOGBACK_CLASSIC = "ch.qos.logback:logback-classic:1.4.14"
+    const val JAVALIN = "io.javalin:javalin:6.1.6"
 
     //Check compatibility with redisson
     const val NETTY_HANDLER = "io.netty:netty-handler:4.1.108.Final"

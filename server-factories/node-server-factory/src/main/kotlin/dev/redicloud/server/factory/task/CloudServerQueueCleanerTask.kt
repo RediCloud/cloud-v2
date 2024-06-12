@@ -40,9 +40,10 @@ class CloudServerQueueCleanerTask(
             }
 
             if (info.serviceId != null) {
-                val node = nodeRepository.getNode(info.serviceId!!)
+                val service = serverRepository.getServer<CloudServer>(info.serviceId!!)
+                val node = nodeRepository.getNode(service!!.hostNodeId)
                 if (node == null || !node.connected && info.queueTime - (MAX_QUEUE_TIME/3) > 0) {
-                    logger.warning("§cNode for template ${toConsoleValue(name, false)} is not connected, cancelling server start!")
+                    logger.warning("§cNode for static service ${toConsoleValue(service.name, false)} (node-id: ${toConsoleValue(service.hostNodeId, false)}) is not connected, cancelling server start!")
                     serverFactory.startQueue.remove(info)
                     return@forEach
                 }

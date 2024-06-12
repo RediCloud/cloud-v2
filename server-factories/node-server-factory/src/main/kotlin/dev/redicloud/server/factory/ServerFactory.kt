@@ -506,14 +506,19 @@ class ServerFactory(
 
         // Check how many servers of the template are already started and cancel if the configured globally total amount is reached
         val startAmountOfTemplate =
-            servers.count { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }
+            servers.filter { !it.hidden }
+                .filter { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }
+                .count { it.state != CloudServerState.STOPPED }
         if (startAmountOfTemplate >= configurationTemplate.maxStartedServices && configurationTemplate.maxStartedServices != -1) {
             return TooMuchServicesOfTemplateStartResult()
         }
 
         // Check how many servers of the template are already started on this node and cancel if the configured node total amount is reached
         val startedAmountOfTemplateOnNode =
-            servers.count { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId && it.hostNodeId == node.serviceId }
+            servers.filter { it.hostNodeId == node.serviceId }
+                .filter { !it.hidden }
+                .filter { it.state != CloudServerState.STOPPED }
+                .count { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }
         if (startedAmountOfTemplateOnNode >= configurationTemplate.maxStartedServicesPerNode && configurationTemplate.maxStartedServicesPerNode != -1) {
             return TooMuchServicesOfTemplateOnNodeStartResult()
         }

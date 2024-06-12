@@ -44,7 +44,7 @@ open class URLServerVersionHandler(
         return locks.getOrPut(version.uniqueId) { ReentrantLock() }
     }
 
-    override suspend fun download(version: ICloudServerVersion, force: Boolean): File {
+    override suspend fun download(version: ICloudServerVersion, force: Boolean, lock: Boolean): File {
         var canceled = false
         var downloaded = false
         var error = false
@@ -62,7 +62,7 @@ open class URLServerVersionHandler(
             }
         }
         console.startAnimation(animation)
-        getLock(version).lock()
+        if (lock) getLock(version).lock()
         val jar = getJar(version)
         try {
             if (jar.exists() && !force) return jar
@@ -128,7 +128,7 @@ open class URLServerVersionHandler(
             throw e
         }finally {
             downloaded = true
-            getLock(version).unlock()
+            if (lock) getLock(version).unlock()
         }
         return jar
     }
@@ -178,7 +178,7 @@ open class URLServerVersionHandler(
         return list
     }
 
-    override suspend fun patch(version: ICloudServerVersion) {
+    override suspend fun patch(version: ICloudServerVersion, lock: Boolean) {
         if (!version.patch) return
         var canceled = false
         var patched = false
@@ -197,10 +197,10 @@ open class URLServerVersionHandler(
             }
         }
         console.startAnimation(animation)
-        getLock(version).lock()
+        if (lock) getLock(version).lock()
         try {
             val jar = getJar(version)
-            if (!jar.exists()) download(version, true)
+            if (!jar.exists()) download(version, true, lock = false)
 
             val versionDir = getFolder(version)
             val tempDir = File(TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath, UUID.randomUUID().toString())
@@ -265,7 +265,7 @@ open class URLServerVersionHandler(
             throw e
         } finally {
             patched = true
-            getLock(version).unlock()
+            if (lock) getLock(version).unlock()
         }
     }
 }

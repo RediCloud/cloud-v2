@@ -34,7 +34,7 @@ class PaperMcServerVersionHandler(
     override val default: Boolean = false
     private val lastUpdateChecks = mutableMapOf<ICloudServerVersion, Long>()
 
-    override suspend fun download(version: ICloudServerVersion, force: Boolean): File {
+    override suspend fun download(version: ICloudServerVersion, force: Boolean, lock: Boolean): File {
         var canceled = false
         var downloaded = false
         var error = false
@@ -54,7 +54,7 @@ class PaperMcServerVersionHandler(
             }
             console.startAnimation(animation)
         }
-        getLock(version).lock()
+        if (lock) getLock(version).lock()
         val jar = getJar(version)
         try {
             if (jar.exists() && !force) return jar
@@ -139,7 +139,7 @@ class PaperMcServerVersionHandler(
             throw e
         } finally {
             downloaded = true
-            getLock(version).unlock()
+            if (lock) getLock(version).unlock()
         }
 
         return jar
@@ -190,7 +190,7 @@ class PaperMcServerVersionHandler(
         return getFolder(version)
     }
 
-    override suspend fun patch(version: ICloudServerVersion) {
+    override suspend fun patch(version: ICloudServerVersion, lock: Boolean) {
         if (!version.patch) return
         var canceled = false
         var patched = false
@@ -211,10 +211,10 @@ class PaperMcServerVersionHandler(
             }
             console.startAnimation(animation)
         }
-        getLock(version).lock()
+        if (lock) getLock(version).lock()
         try {
             val jar = getJar(version)
-            if (!jar.exists()) download(version, true)
+            if (!jar.exists()) download(version, true, lock = false)
 
             val versionDir = getFolder(version)
             val tempDir = File(TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath, UUID.randomUUID().toString())
@@ -281,7 +281,7 @@ class PaperMcServerVersionHandler(
             throw e
         } finally {
             patched = true
-            getLock(version).unlock()
+            if (lock) getLock(version).unlock()
         }
     }
 
