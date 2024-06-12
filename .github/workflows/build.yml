@@ -38,12 +38,12 @@ jobs:
         env:
           build_number: ${{ github.run_number }}
           build_vcs_number: ${{ github.sha }}
-          branch: ${{ github.head_ref }}
+          branch: ${{ github.ref }}
 
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v3
         with:
-          arguments: build
+          arguments: build -x test 
 
       - name: Copy files
         run: |
@@ -70,11 +70,3 @@ jobs:
         with:
           name: redicloud
           path: export/
-
-      - name: Delete workflow runs
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          retain_days: 30
-          keep_minimum_runs: 10

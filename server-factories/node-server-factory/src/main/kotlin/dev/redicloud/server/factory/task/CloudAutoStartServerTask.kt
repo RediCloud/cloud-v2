@@ -62,8 +62,20 @@ class CloudAutoStartServerTask(
             val sum = nodeBasedStarts.values.sum() + unassigned.values.sum()
             if (sum < minGlobal && minGlobal > 0) {
                 val needToStart = minGlobal - sum
+                val targetServers = registeredServers.filter { it.configurationTemplate.uniqueId == template.uniqueId }
+                    .filter { it.state == CloudServerState.STOPPED }.toMutableList()
                 for (i in 0 until needToStart) {
-                    serverFactory.queueStart(template)
+                    if (template.static) {
+                        if (targetServers.isNotEmpty()) {
+                            val targetServer = targetServers.first()
+                            targetServers.remove(targetServer)
+                            serverFactory.queueStart(targetServer.serviceId)
+                        } else {
+                            serverFactory.queueStart(template)
+                        }
+                    } else {
+                        serverFactory.queueStart(template)
+                    }
                 }
                 return@forEach
             }
@@ -72,15 +84,36 @@ class CloudAutoStartServerTask(
                 nodeBasedStarts.forEach { (nodeId, count) ->
                     if (count >= minPerNode) return@forEach
                     val needStartToStart = minPerNode - count
+                    val targetServers = registeredServers.filter { it.configurationTemplate.uniqueId == template.uniqueId  }
+                        .filter { it.state == CloudServerState.STOPPED }
+                        .filter { it.hostNodeId == nodeId }
+                        .toMutableList()
                     for (i in 0 until needStartToStart) {
-                        val info = ServerQueueInformation(
-                            UUID.randomUUID(),
-                            template,
-                            null,
-                            queueTime = System.currentTimeMillis(),
-                            nodeTarget = nodeId
-                        )
-                        serverFactory.queueStart(info)
+                        if (template.static) {
+                            if (targetServers.isNotEmpty()) {
+                                val targetServer = targetServers.first()
+                                targetServers.remove(targetServer)
+                                serverFactory.queueStart(targetServer.serviceId)
+                            } else {
+                                val info = ServerQueueInformation(
+                                    UUID.randomUUID(),
+                                    template,
+                                    null,
+                                    queueTime = System.currentTimeMillis(),
+                                    nodeTarget = nodeId
+                                )
+                                serverFactory.queueStart(info)
+                            }
+                        } else {
+                            val info = ServerQueueInformation(
+                                UUID.randomUUID(),
+                                template,
+                                null,
+                                queueTime = System.currentTimeMillis(),
+                                nodeTarget = nodeId
+                            )
+                            serverFactory.queueStart(info)
+                        }
                     }
                 }
             }
