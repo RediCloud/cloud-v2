@@ -4,7 +4,7 @@ import dev.redicloud.api.java.ICloudJavaVersion
 import dev.redicloud.logging.LogManager
 import dev.redicloud.api.utils.MINECRAFT_VERSIONS_FOLDER
 import java.io.File
-import java.util.concurrent.locks.ReentrantLock
+import dev.redicloud.utils.SimpleLock
 
 interface IServerVersionHandler {
 
@@ -41,7 +41,7 @@ interface IServerVersionHandler {
 
     fun register() = registerHandler(this)
 
-    fun getLock(version: ICloudServerVersion): ReentrantLock
+    fun getLock(version: ICloudServerVersion): SimpleLock
 
     suspend fun shutdown(force: Boolean, serverVersionRepository: ICloudServerVersionRepository) {
         serverVersionRepository.getVersions().forEach {

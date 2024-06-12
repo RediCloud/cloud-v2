@@ -293,7 +293,7 @@ class PaperMcServerVersionHandler(
         return IServerVersionHandler.getDefaultHandler().patchCommand(type, javaVersion, jarToExecute)
     }
 
-    override fun getLock(version: ICloudServerVersion): ReentrantLock {
+    override fun getLock(version: ICloudServerVersion): SimpleLock {
         return IServerVersionHandler.getDefaultHandler().getLock(version)
     }
 

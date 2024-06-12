@@ -19,6 +19,7 @@ import io.ktor.http.*
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.minutes
@@ -38,10 +39,10 @@ open class URLServerVersionHandler(
         private val logger = LogManager.logger(URLServerVersionHandler::class)
     }
 
-    protected val locks = mutableMapOf<UUID, ReentrantLock>()
+    protected val locks = mutableMapOf<UUID, SimpleLock>()
 
-    override fun getLock(version: ICloudServerVersion): ReentrantLock {
-        return locks.getOrPut(version.uniqueId) { ReentrantLock() }
+    override fun getLock(version: ICloudServerVersion): SimpleLock {
+        return locks.getOrPut(version.uniqueId) { SimpleLock() }
     }
 
     override suspend fun download(version: ICloudServerVersion, force: Boolean, lock: Boolean): File {
