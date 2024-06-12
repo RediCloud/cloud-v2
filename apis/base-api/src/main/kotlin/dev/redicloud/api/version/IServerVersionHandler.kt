@@ -11,7 +11,7 @@ interface IServerVersionHandler {
     val name: String
     val default: Boolean
 
-    suspend fun download(version: ICloudServerVersion, force: Boolean = false): File
+    suspend fun download(version: ICloudServerVersion, force: Boolean = false, lock: Boolean = true): File
 
     suspend fun canDownload(version: ICloudServerVersion): Boolean
 
@@ -25,7 +25,7 @@ interface IServerVersionHandler {
 
     suspend fun update(version: ICloudServerVersion, versionType: ICloudServerVersionType): File
 
-    suspend fun patch(version: ICloudServerVersion)
+    suspend fun patch(version: ICloudServerVersion, lock: Boolean = true)
 
     suspend fun patchCommand(type: ICloudServerVersionType, javaVersion: ICloudJavaVersion, jarToExecute: File): List<String>
 
