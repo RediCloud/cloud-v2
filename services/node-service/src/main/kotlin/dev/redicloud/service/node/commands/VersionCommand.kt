@@ -45,9 +45,9 @@ class VersionCommand(
         }
         val updateInfo = Updater.updateAvailable()
         if (updateInfo.first && updateInfo.second != null) {
-            actor.sendMessage("An update is available: %hc%${updateInfo.second}")
+            actor.sendMessage("An update is available: %hc%${updateInfo.second!!.branch}§8#%tc%${updateInfo.second!!.build} §8(%tc%${updateInfo.second!!.version}§8)")
             actor.sendMessage("You can download the update with the command: %hc%version download $BRANCH ${updateInfo.second}")
-            actor.sendMessage("And switch the update with the command: %hc%version switch $BRANCH ${updateInfo.second}")
+            actor.sendMessage("And switch the update with the command: %hc%version switch $BRANCH ${updateInfo.second!!.build}")
         } else {
             actor.sendMessage("You are running the latest version!")
         }
