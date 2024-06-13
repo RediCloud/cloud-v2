@@ -347,7 +347,7 @@
     "name": "1.20",
     "protocolId": 763,
     "supportedJavaVersion": [
-      "17"
+      "17", "21"
     ],
     "versionTypes": ["!VELOCITY"]
   },
@@ -355,7 +355,7 @@
     "name": "1.20.1",
     "protocolId": 763,
     "supportedJavaVersion": [
-      "17"
+      "17", "21"
     ],
     "versionTypes": ["!VELOCITY"]
   },
@@ -363,7 +363,7 @@
     "name": "1.20.2",
     "protocolId": 764,
     "supportedJavaVersion": [
-      "17"
+      "17", "21"
     ],
     "versionTypes": ["!VELOCITY"]
   },
@@ -371,7 +371,23 @@
     "name": "1.20.4",
     "protocolId": 765,
     "supportedJavaVersion": [
-      "17"
+      "17", "21"
+    ],
+    "versionTypes": ["!VELOCITY"]
+  },
+  {
+    "name": "1.20.5",
+    "protocolId": 766,
+    "supportedJavaVersion": [
+      "17", "21"
+    ],
+    "versionTypes": ["!VELOCITY"]
+  },
+  {
+    "name": "1.20.6",
+    "protocolId": 766,
+    "supportedJavaVersion": [
+      "17", "21"
     ],
     "versionTypes": ["!VELOCITY"]
   },
@@ -391,7 +407,8 @@
     "supportedJavaVersion": [
       "17",
       "8",
-      "16"
+      "16",
+      "21"
     ],
     "versionTypes": ["VELOCITY"]
   }
