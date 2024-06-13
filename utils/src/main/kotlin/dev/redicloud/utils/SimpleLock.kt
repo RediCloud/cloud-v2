@@ -13,7 +13,11 @@ class SimpleLock : Lock {
 
     override fun lock() {
         while (!state.compareAndSet(false, true)) {
-            Thread.yield()
+            try {
+                Thread.sleep(2)
+            } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
+            }
         }
     }
 
@@ -22,7 +26,11 @@ class SimpleLock : Lock {
             if (Thread.interrupted()) {
                 throw InterruptedException()
             }
-            Thread.yield()
+            try {
+                Thread.sleep(2)
+            } catch (e: InterruptedException) {
+                Thread.currentThread().interrupt()
+            }
         }
     }
 
