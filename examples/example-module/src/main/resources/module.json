@@ -1,7 +1,7 @@
 {
   "name": "example-module",
   "id": "example-module",
-  "version": "2.3.3-RELEASE",
+  "version": "2.3.4-SNAPSHOT",
   "description": "An example module for redicloud",
   "website": "https://redocloud.dev/",
   "authors": [

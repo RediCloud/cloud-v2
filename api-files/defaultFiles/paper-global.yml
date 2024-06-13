@@ -94,7 +94,7 @@ proxies:
   proxy-protocol: false
   velocity:
     enabled: false
-    online-mode: false
+    online-mode: true
     secret: ''
 scoreboards:
   save-empty-scoreboard-teams: false

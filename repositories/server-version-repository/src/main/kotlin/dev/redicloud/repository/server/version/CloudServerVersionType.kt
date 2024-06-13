@@ -107,6 +107,11 @@ class CloudServerVersionType(
         result = 31 * result + (connectorDownloadUrl?.hashCode() ?: 0)
         result = 31 * result + connectorFolder.hashCode()
         result = 31 * result + (libPattern?.hashCode() ?: 0)
+        result = 31 * result + jvmArguments.hashCode()
+        result = 31 * result + environmentVariables.hashCode()
+        result = 31 * result + programParameters.hashCode()
+        result = 31 * result + defaultFiles.hashCode()
+        result = 31 * result + fileEdits.hashCode()
         return result
     }
 

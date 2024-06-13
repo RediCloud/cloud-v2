@@ -85,9 +85,9 @@ class FileCopier(
         versionHandler.getLock(snapshot.version).withLock {
             runBlocking {
                 if (!versionHandler.isPatched(snapshot.version) && versionHandler.isPatchVersion(snapshot.version)) {
-                    versionHandler.patch(snapshot.version)
+                    versionHandler.patch(snapshot.version, lock = false)
                 }else if(!versionHandler.isDownloaded(snapshot.version)) {
-                    versionHandler.download(snapshot.version)
+                    versionHandler.download(snapshot.version, lock = false)
                 }
                 if (force && configurationTemplate.static || !configurationTemplate.static) {
                     versionHandler.getFolder(snapshot.version).copyRecursively(workDirectory)
