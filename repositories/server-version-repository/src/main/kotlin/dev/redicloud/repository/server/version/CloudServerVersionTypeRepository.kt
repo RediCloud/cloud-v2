@@ -156,7 +156,7 @@ class CloudServerVersionTypeRepository(
             if (onlineType.isUnknown()) return@forEach
             if (existsType(onlineType.uniqueId)) {
                 val current = getType(onlineType.uniqueId)!!
-                if (current == onlineType) return@forEach
+                if (current.hashCode() == onlineType.hashCode()) return@forEach
                 if (!silent) LOGGER.info("Pulled server version type ${toConsoleValue(onlineType.name)} from web!")
                 updateType(onlineType)
                 serverVersionRepository.getVersions().forEach {
