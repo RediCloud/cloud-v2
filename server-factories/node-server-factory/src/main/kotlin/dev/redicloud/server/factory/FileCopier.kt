@@ -10,6 +10,7 @@ import dev.redicloud.server.factory.utils.StartDataSnapshot
 import dev.redicloud.api.utils.CONNECTORS_FOLDER
 import dev.redicloud.api.utils.STATIC_FOLDER
 import dev.redicloud.api.utils.TEMP_SERVER_FOLDER
+import dev.redicloud.utils.JarView
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.concurrent.withLock
@@ -43,6 +44,19 @@ class FileCopier(
             File(TEMP_SERVER_FOLDER.getFile().absolutePath, "${cloudServer.name}-${serviceId.id}")
         }
         if (!workDirectory.exists()) workDirectory.mkdirs()
+    }
+
+    suspend fun deleteConnectors() {
+        logger.fine("Deleting connectors for $serviceId")
+        val pluginFolder = File(workDirectory, snapshot.versionType.connectorFolder)
+        if (!pluginFolder.exists()) return
+        val plugins = pluginFolder.listFiles()?.filter { it.isFile }?.filter { it.extension == "jar" } ?: return
+        plugins.forEach { jar ->
+            val jarView = JarView(jar)
+            if (!jarView.hasEntry("redicloud.properties")) return@forEach
+            jarView.close()
+            jar.delete()
+        }
     }
 
     suspend fun copyConnector() {

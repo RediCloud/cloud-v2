@@ -225,6 +225,8 @@ class ServerFactory(
             copier.copyTemplates()
             // copy all version files
             copier.copyVersionFiles { serverProcess.replacePlaceholders(it, snapshotData) }
+            // delete old connector files
+            copier.deleteConnectors()
             // copy connector
             copier.copyConnector()
 
@@ -323,6 +325,8 @@ class ServerFactory(
             copier.copyTemplates(false)
             // copy all version files
             copier.copyVersionFiles(false) { serverProcess.replacePlaceholders(it, snapshotData) }
+            // delete old connector files
+            copier.deleteConnectors()
             // copy connector
             copier.copyConnector()
 
