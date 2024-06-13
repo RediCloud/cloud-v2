@@ -40,7 +40,7 @@ listeners:
   max_players: 1
   tab_size: 60
   force_default_server: false
-ip_forward: false
+ip_forward: true
 remote_ping_timeout: 5000
 prevent_proxy_connections: false
 groups:
