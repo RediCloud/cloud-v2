@@ -47,6 +47,7 @@ class FileLogFormatter : Formatter() {
             .append(TIME_FORMAT.format(record.millis)).append("] ")
             .append(record.level.name).append(": ")
             .append(message)
+            .append(System.lineSeparator())
         if (record.thrown != null) {
             val writer = StringWriter()
             record.thrown.printStackTrace(PrintWriter(writer))
