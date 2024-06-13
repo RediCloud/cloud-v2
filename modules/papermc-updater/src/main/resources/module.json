@@ -2,7 +2,7 @@
   "id": "papermc-updater",
   "name": "PaperMC Updater",
   "description": "A simple module to automatically update software (Velocity, Paper, Folia, Waterfall) to the latest version.",
-  "version": "2.3.2-SNAPSHOT",
+  "version": "2.3.4-SNAPSHOT",
   "website": "https://docs.redicloud.dev/modules/papermc-updater",
   "authors": [
     "Suqatri"
