@@ -1,10 +1,12 @@
 package dev.redicloud.updater
 
-import com.google.gson.reflect.TypeToken
 import dev.redicloud.api.commands.ICommandManager
+import dev.redicloud.console.Console
+import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
 import dev.redicloud.updater.suggest.BranchSuggester
 import dev.redicloud.updater.suggest.BuildsSuggester
+import dev.redicloud.updater.tasks.UpdateTask
 import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
@@ -19,6 +21,38 @@ object Updater {
 
     val versionInfoFile: File = File(".update-info")
     var updateToVersion: File? = null
+    val updateTasks = mutableListOf<UpdateTask>()
+
+    private fun getTasksForUpdate(updateInfo: UpdateInfo): List<UpdateTask> {
+        val toVersion = updateInfo.toNewVersionBuildInfo()
+        return updateTasks.filter { !it.from.isSameVersion(toVersion) }
+            .filter { it.from.isOlderThan(toVersion) }
+            .filter { !it.to.isOlderThan(toVersion) }
+            .sortedWith(compareBy(
+                { it.to.version.split("-")[0].split(".")[0].toIntOrNull() ?: 0 }, // major
+                { it.to.version.split("-")[0].split(".").getOrNull(1)?.toIntOrNull() ?: 0 }, // minor
+                { it.to.version.split("-")[0].split(".").getOrNull(2)?.toIntOrNull() ?: 0 }, // patch
+                { it.priority } // priority if versions are the same
+            ))
+    }
+
+    suspend fun preUpdate(console: Console, databaseConnection: DatabaseConnection) {
+        if (!versionInfoFile.exists()) return
+        val info = gson.fromJson(versionInfoFile.readText(charset("UTF-8")), UpdateInfo::class.java)
+        getTasksForUpdate(info).forEach { it.preUpdate(info, console, databaseConnection) }
+    }
+
+    suspend fun postUpdate(console: Console, databaseConnection: DatabaseConnection) {
+        if (!versionInfoFile.exists()) return
+        val info = gson.fromJson(versionInfoFile.readText(charset("UTF-8")), UpdateInfo::class.java)
+        getTasksForUpdate(info).forEach { it.postUpdate(info, console, databaseConnection) }
+    }
+
+    suspend fun prepareUpdate(console: Console, databaseConnection: DatabaseConnection) {
+        if (!versionInfoFile.exists()) return
+        val info = gson.fromJson(versionInfoFile.readText(charset("UTF-8")), UpdateInfo::class.java)
+        getTasksForUpdate(info).forEach { it.prepareUpdate(info, console, databaseConnection) }
+    }
 
     suspend fun check() {
         if (versionInfoFile.exists()) {
@@ -61,7 +95,7 @@ object Updater {
         return file
     }
 
-    fun switchVersion(branch: String, build: Int) {
+    suspend fun switchVersion(branch: String, build: Int, console: Console, databaseConnection: DatabaseConnection) {
         val versionsFolder = File("versions")
         if (!versionsFolder.exists()) {
             throw IllegalStateException("Version is not located in the versions folder")
@@ -71,7 +105,7 @@ object Updater {
             throw IllegalArgumentException("File must be a zip file")
         }
         unzipFile(file.absolutePath, File(".").absolutePath)
-        var version: String = "unknown"
+        var version = "unknown"
         updateToVersion = mainFolderJars().map { it to getJarProperties(it) }.filter {
             it.second["branch"] == branch && it.second["build"] == build.toString()
         }.map {
@@ -83,7 +117,9 @@ object Updater {
         }
         versionInfoFile.createNewFile()
         versionInfoFile.writeText(gson.toJson(UpdateInfo(version, build.toString(), branch, BRANCH, BUILD, CLOUD_VERSION)))
-}
+
+        prepareUpdate(console, databaseConnection)
+    }
 
     private fun getJarProperties(file: File): Map<String, String> {
         if (!file.exists() || file.extension != "jar") {

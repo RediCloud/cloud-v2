@@ -3,6 +3,7 @@ package dev.redicloud.service.node.bootstrap
 import dev.redicloud.logging.LogManager
 import dev.redicloud.service.node.NodeService
 import dev.redicloud.service.node.console.InitializeConsole
+import dev.redicloud.updater.Updater
 import dev.redicloud.utils.coroutineExceptionHandler
 import dev.redicloud.utils.loadProperties
 import dev.redicloud.utils.threadLogger
@@ -21,6 +22,7 @@ fun main(args: Array<String>) {
             val databaseConnection = preConsole.databaseConnection!!
             val databaseConfiguration = preConsole.databaseConfiguration!!
             val nodeConfiguration = preConsole.nodeConfiguration!!
+            Updater.postUpdate(preConsole, databaseConnection)
             NodeService(databaseConfiguration, databaseConnection, nodeConfiguration, preConsole.firstStartDetected)
         }.onFailure {
             LogManager.rootLogger().severe("Failed to start node service!", it)

@@ -116,6 +116,7 @@ class NodeService(
             serverFactory.shutdown()
             fileCluster.disconnect(true)
             nodeRepository.shutdownAction.run()
+            Updater.preUpdate(console, databaseConnection)
             super.shutdown(force)
             if (System.getProperty("redicloud.server.delete-directory", "true").toBooleanStrictOrNull() == true) {
                 TEMP_FOLDER.getFile().deleteRecursively()
@@ -249,7 +250,7 @@ class NodeService(
             console.commandManager.registerCommand(command)
         }
         register(ExitCommand(this))
-        register(VersionCommand(console))
+        register(VersionCommand(this.console, this.databaseConnection))
         register(ClusterCommand(this))
         register(CloudServerVersionCommand(this.serverVersionRepository, this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverRepository, this.javaVersionRepository, this.console))
         register(CloudServerVersionTypeCommand(this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverVersionRepository))

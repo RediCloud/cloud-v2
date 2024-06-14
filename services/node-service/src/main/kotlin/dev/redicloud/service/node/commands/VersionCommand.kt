@@ -4,6 +4,7 @@ import dev.redicloud.api.commands.*
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
+import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.repository.node.LOGGER
 import dev.redicloud.updater.BuildInfo
@@ -18,7 +19,8 @@ import kotlinx.coroutines.runBlocking
 @CommandAlias(["ver"])
 @CommandDescription("Displays the current version of the node service")
 class VersionCommand(
-    val console: NodeConsole
+    private val console: NodeConsole,
+    private val databaseConnection: DatabaseConnection
 ) : ICommand {
 
     @CommandSubPath("")
@@ -167,7 +169,7 @@ class VersionCommand(
             return@launch
         }
         switchConfirms.remove(confirmIdentifier)
-        val file = Updater.switchVersion(branch, buildId)
+        Updater.switchVersion(branch, buildId, console, databaseConnection)
         actor.sendMessage("Activated the version: %hc%$branch§8#%tc%$buildId")
         actor.sendMessage("§cYou have to restart the node service to apply the changes!")
     }
