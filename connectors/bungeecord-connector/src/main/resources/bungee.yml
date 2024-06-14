@@ -1,5 +1,5 @@
 name: redicloud-connector
-version: 2.3.5-SNAPSHOT
+version: 2.3.5-RELEASE
 url: https://redicloud.dev
 author: RediCloud
 main: dev.redicloud.connector.bungeecord.bootstrap.BungeeCordConnectorBootstrap
