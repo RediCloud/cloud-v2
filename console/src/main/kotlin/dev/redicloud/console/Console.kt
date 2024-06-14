@@ -10,10 +10,7 @@ import dev.redicloud.console.events.ConsoleRunEvent
 import dev.redicloud.console.jline.*
 import dev.redicloud.console.utils.*
 import dev.redicloud.logging.*
-import dev.redicloud.logging.handler.AcceptingLogHandler
-import dev.redicloud.logging.handler.LogFileHandler
-import dev.redicloud.logging.handler.LogFormatter
-import dev.redicloud.logging.handler.ThreadRecordDispatcher
+import dev.redicloud.logging.handler.*
 import dev.redicloud.utils.*
 import kotlinx.coroutines.*
 import org.fusesource.jansi.Ansi
@@ -128,7 +125,7 @@ open class Console(
             {  logRecord, s -> writeLog(logRecord, s) }
             .withFormatter(consoleFormatter))
         if (saveLogToFile) {
-            rootLogger.addHandler(LogFileHandler(logFileWithPattern, append = true).withFormatter(LogFormatter.SEPARATOR))
+            rootLogger.addHandler(LogFileHandler(logFileWithPattern, append = true).withFormatter(FILE_LOG_FORMATTER))
         }
 
         System.setErr(LogOutputStream.forSevere(rootLogger).toPrintStream())
@@ -152,7 +149,7 @@ open class Console(
         writeLine("§fA redis based cluster cloud system for Minecraft")
         writeLine("")
         writeLine("")
-        writeLine("§8» §fVersion§8: %hc%$CLOUD_VERSION §8| §fGIT§8: %hc%$BRANCH§8#§f$BUILD" + devInfo)
+        writeLine("§8» §fVersion§8: %hc%$CLOUD_VERSION §8| §fGIT§8: %hc%$BRANCH§8#§f$BUILD$devInfo")
         writeLine("§8» §fDiscord§8: %hc%https://discord.gg/g2HV52VV4G")
         writeLine("")
         writeLine("")

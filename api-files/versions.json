@@ -360,6 +360,30 @@
     "fileEdits": {}
   },
   {
+    "uniqueId": "fdf9ed7d-6277-fd98-0000-000000000000",
+    "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
+    "projectName": "spigot",
+    "customDownloadUrl": "https://download.getbukkit.org/spigot/spigot-1.20.6.jar",
+    "buildId": null,
+    "version": {
+      "name": "1.20.6",
+      "protocolId": 765,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
     "uniqueId": "fffffd7d-baeb-fbf7-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
@@ -1276,9 +1300,57 @@
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.20.4/builds/%build%/downloads/paper-%version_name%-%build%.jar",
-    "buildId": "484",
+    "buildId": "497",
     "version": {
       "name": "1.20.4",
+      "protocolId": 765,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
+    "uniqueId": "c2ff3fe8-c5ff-f773-0000-000000000000",
+    "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
+    "projectName": "paper",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.20.5/builds/%build%/downloads/paper-%version_name%-%build%.jar",
+    "buildId": "22",
+    "version": {
+      "name": "1.20.5",
+      "protocolId": 765,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
+    "uniqueId": "5fffbfb7-effe-ff9f-0000-000000000000",
+    "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
+    "projectName": "paper",
+    "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/1.20.6/builds/%build%/downloads/paper-%version_name%-%build%.jar",
+    "buildId": "139",
+    "version": {
+      "name": "1.20.6",
       "protocolId": 765,
       "versionTypes": [
         "!VELOCITY"
@@ -1300,7 +1372,7 @@
     "typeId": "b692f35a-42bd-45db-aec1-db1867bc19aa",
     "projectName": "paper",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/paper/versions/%version_name%/builds/%build%/downloads/paper-%version_name%-%build%.jar",
-    "buildId": "484",
+    "buildId": "139",
     "version": {
       "name": "latest",
       "protocolId": -1,
@@ -1348,7 +1420,7 @@
     "typeId": "e0982b0f-f27f-4206-a373-ce12ad8ea333",
     "projectName": "velocity",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/velocity/versions/3.3.0-SNAPSHOT/builds/%build%/downloads/velocity-%version_name%-%build%.jar",
-    "buildId": "376",
+    "buildId": "398",
     "version": {
       "name": "3.3.0-SNAPSHOT",
       "protocolId": 763,
@@ -1612,7 +1684,7 @@
     "typeId": "ebd2b13a-a25b-443c-876f-ab494a18354f",
     "projectName": "waterfall",
     "customDownloadUrl": "https://api.papermc.io/v2/projects/waterfall/versions/1.20/builds/%build_id%/downloads/waterfall-%version_name%-%build_id%.jar",
-    "buildId": "572",
+    "buildId": "578",
     "version": {
       "name": "1.20",
       "protocolId": 763,

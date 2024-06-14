@@ -230,6 +230,6 @@ class ServerProcess(
             .replace("%SERVICE_NAME%", cloudServer?.serviceId?.toName() ?: "unknown")
             .replace("%HOSTNAME%", snapshotData.hostname)
             .replace("%PROXY_SECRET%", clusterConfiguration.get("proxy-secret") ?: "redicloud_secret")
-            .replace("%MAX_PLAYERS%", (cloudServer?.maxPlayers ?: if (serverId.type == ServiceType.PROXY_SERVER) 100 else 20).toString())
+            .replace("%MAX_PLAYERS%", (cloudServer?.maxPlayers ?: snapshotData.configurationTemplate.maxPlayers).toString())
 
 }
