@@ -33,6 +33,7 @@ import dev.redicloud.console.Console
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.service.node.listener.ConfigurationUpdateServerListener
 import dev.redicloud.service.node.tasks.player.PlayerProxyConnectionStateTask
+import dev.redicloud.service.node.tasks.service.CloudInvalidServerUnregisterTask
 import dev.redicloud.updater.Updater
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.milliseconds
@@ -166,6 +167,10 @@ class NodeService(
             .period(5.seconds)
             .register()
         taskManager.builder()
+            .task(CloudServerUnregisterTask(this.serviceId, this.serverFactory, this.nodeRepository))
+            .period(5.seconds)
+            .register()
+        taskManager.builder()
             .task(CloudServerVersionUpdateTask(firstStart, this.serverVersionRepository, this.serverVersionTypeRepository))
             .period(5.minutes)
             .event(ModuleHandlerInitializedEvent::class)
@@ -184,6 +189,11 @@ class NodeService(
         taskManager.builder()
             .task(PlayerProxyConnectionStateTask(this.playerRepository, this.serverRepository, this.nodeRepository, this.serviceId))
             .event(CloudServerDisconnectedEvent::class)
+            .register()
+        taskManager.builder()
+            .task(CloudInvalidServerUnregisterTask(this.serverRepository, this.serverFactory))
+            .period(5.seconds)
+            .instant()
             .register()
     }
 
