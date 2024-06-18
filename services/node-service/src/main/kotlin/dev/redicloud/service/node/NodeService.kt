@@ -191,7 +191,7 @@ class NodeService(
             .event(CloudServerDisconnectedEvent::class)
             .register()
         taskManager.builder()
-            .task(CloudInvalidServerUnregisterTask(this.serverRepository, this.serverFactory))
+            .task(CloudInvalidServerUnregisterTask(this.serviceId, this.serverRepository, this.serverFactory, this.nodeRepository))
             .period(5.seconds)
             .instant()
             .register()
