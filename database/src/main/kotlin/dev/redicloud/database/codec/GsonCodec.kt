@@ -46,5 +46,5 @@ object GsonCodec : BaseCodec() {
 
 data class GsonPackage(
     val clazz: String,
-    val json: JsonElement
+    var json: JsonElement
 )

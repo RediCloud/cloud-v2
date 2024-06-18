@@ -30,24 +30,28 @@ abstract class UpdateTask(
         )
     }
 
-    abstract fun prepareUpdate(updateInfo: UpdateInfo, console: Console, databaseConnection: DatabaseConnection)
+    open fun prepareUpdate(updateInfo: UpdateInfo, console: Console, databaseConnection: DatabaseConnection) {}
 
-    abstract fun preUpdate(updateInfo: UpdateInfo, console: Console, databaseConnection: DatabaseConnection)
+    open fun preUpdate(updateInfo: UpdateInfo, console: Console, databaseConnection: DatabaseConnection) {}
 
-    abstract fun postUpdate(updateInfo: UpdateInfo, console: Console, databaseConnection: DatabaseConnection)
+    open fun postUpdate(updateInfo: UpdateInfo, console: Console, databaseConnection: DatabaseConnection) {}
 
-    fun getBucketsByClass(clazz: KClass<*>, databaseConnection: DatabaseConnection): List<RBucket<GsonPackage>> {
+    protected fun getBucketsByClass(clazzName: String, databaseConnection: DatabaseConnection): List<RBucket<GsonPackage>> {
         val client = databaseConnection.client
         val keys = client.keys.getKeysByPattern("cloud:*")
         val list = mutableListOf<RBucket<GsonPackage>>()
         for (key in keys) {
             val bucket = client.getBucket<GsonPackage>(key)
             val value = bucket.get()
-            if (value != null && value.clazz == clazz.qualifiedName) {
+            if (value != null && value.clazz == clazzName) {
                 list.add(bucket)
             }
         }
         return list
+    }
+
+    protected fun getBucketsByClass(clazz: KClass<*>, databaseConnection: DatabaseConnection): List<RBucket<GsonPackage>> {
+        return getBucketsByClass(clazz.java.name, databaseConnection)
     }
 
 }

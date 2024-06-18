@@ -18,6 +18,7 @@ import dev.redicloud.service.base.BaseService
 import dev.redicloud.api.events.impl.node.NodeConnectEvent
 import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
 import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.service.server.factory.ICloudRemoteServerFactory
 import dev.redicloud.repository.server.version.handler.defaults.URLServerVersionHandler
 import dev.redicloud.service.node.console.NodeConsole
@@ -32,8 +33,12 @@ import dev.redicloud.api.utils.TEMP_FOLDER
 import dev.redicloud.console.Console
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.service.node.listener.ConfigurationUpdateServerListener
+import dev.redicloud.service.node.listener.NodeConsoleCommandListener
+import dev.redicloud.service.node.packets.NodeConsoleCommandPacket
 import dev.redicloud.service.node.tasks.player.PlayerProxyConnectionStateTask
 import dev.redicloud.updater.Updater
+import dev.redicloud.utils.defaultScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -98,6 +103,7 @@ class NodeService(
 
     private fun registerListeners() {
         ConfigurationUpdateServerListener(serviceId, eventManager, configurationTemplateRepository, serverRepository, nodeRepository)
+        packetManager.registerListener(NodeConsoleCommandListener(console))
     }
 
     override fun plattformShutdown() {
@@ -232,7 +238,9 @@ class NodeService(
         if (thisNode.maxMemory > Runtime.getRuntime().freeMemory()) throw IllegalStateException("Not enough memory available! Please increase the max memory of this node!")
     }
 
-    private fun registerPackets() {}
+    private fun registerPackets() {
+        packetManager.registerPacket(NodeConsoleCommandPacket::class)
+    }
 
     private suspend fun connectFileCluster() {
         try {
@@ -249,8 +257,13 @@ class NodeService(
         fun register(command: ICommand) {
             console.commandManager.registerCommand(command)
         }
+        val s =
         register(ExitCommand(this))
-        register(VersionCommand(this.console, this.databaseConnection))
+        register(VersionCommand(this.console, this.databaseConnection) { command: String ->
+            defaultScope.launch {
+                executeClusterCommand(command, true)
+            }
+        })
         register(ClusterCommand(this))
         register(CloudServerVersionCommand(this.serverVersionRepository, this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverRepository, this.javaVersionRepository, this.console))
         register(CloudServerVersionTypeCommand(this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverVersionRepository))
@@ -261,6 +274,12 @@ class NodeService(
         register(ServerCommand(this.serverFactory, this.serverRepository, this.nodeRepository))
         register(ScreenCommand(this.console))
         register(ModuleCommand(this.moduleHandler, this.clusterConfiguration))
+    }
+
+    suspend fun executeClusterCommand(command: String, sendThis: Boolean = false) {
+        val packet = NodeConsoleCommandPacket(command)
+        packet.allowLocalReceiver = sendThis
+        packetManager.publish(packet, ServiceType.NODE)
     }
 
     private fun initShutdownHook() {

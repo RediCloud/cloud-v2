@@ -7,6 +7,7 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.updater.suggest.BranchSuggester
 import dev.redicloud.updater.suggest.BuildsSuggester
 import dev.redicloud.updater.tasks.UpdateTask
+import dev.redicloud.updater.tasks.impl.v2_3_5.AddClusterVersionUpdateTask
 import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
@@ -21,7 +22,10 @@ object Updater {
 
     val versionInfoFile: File = File(".update-info")
     var updateToVersion: File? = null
-    val updateTasks = mutableListOf<UpdateTask>()
+    val updateTasks = mutableListOf<UpdateTask>(
+        AddClusterVersionUpdateTask()
+    )
+    val logger = LogManager.logger(this)
 
     private fun getTasksForUpdate(updateInfo: UpdateInfo): List<UpdateTask> {
         val toVersion = updateInfo.toNewVersionBuildInfo()
@@ -39,19 +43,25 @@ object Updater {
     suspend fun preUpdate(console: Console, databaseConnection: DatabaseConnection) {
         if (!versionInfoFile.exists()) return
         val info = gson.fromJson(versionInfoFile.readText(charset("UTF-8")), UpdateInfo::class.java)
-        getTasksForUpdate(info).forEach { it.preUpdate(info, console, databaseConnection) }
+        val tasks = getTasksForUpdate(info)
+        logger.info("Running ${tasks.size} pre-update tasks!")
+        tasks.forEach { it.preUpdate(info, console, databaseConnection) }
     }
 
     suspend fun postUpdate(console: Console, databaseConnection: DatabaseConnection) {
         if (!versionInfoFile.exists()) return
         val info = gson.fromJson(versionInfoFile.readText(charset("UTF-8")), UpdateInfo::class.java)
-        getTasksForUpdate(info).forEach { it.postUpdate(info, console, databaseConnection) }
+        val tasks = getTasksForUpdate(info)
+        logger.info("Running ${tasks.size} post-update tasks!")
+        tasks.forEach { it.postUpdate(info, console, databaseConnection) }
     }
 
     suspend fun prepareUpdate(console: Console, databaseConnection: DatabaseConnection) {
         if (!versionInfoFile.exists()) return
         val info = gson.fromJson(versionInfoFile.readText(charset("UTF-8")), UpdateInfo::class.java)
-        getTasksForUpdate(info).forEach { it.prepareUpdate(info, console, databaseConnection) }
+        val tasks = getTasksForUpdate(info)
+        logger.info("Running ${tasks.size} prepare update tasks!")
+        tasks.forEach { it.prepareUpdate(info, console, databaseConnection) }
     }
 
     suspend fun check() {

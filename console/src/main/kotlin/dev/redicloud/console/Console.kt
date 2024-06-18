@@ -178,25 +178,29 @@ open class Console(
                 CURRENT_CONSOLE?.inputReader?.forEach { it.acceptInput(line) }
                 CURRENT_CONSOLE?.inputReader?.clear()
 
-                if (CURRENT_CONSOLE?.commandManager?.areCommandsDisabled() == false) {
-                    val commandManager = CURRENT_CONSOLE?.commandManager ?: continue
-                    try {
-                        val response = commandManager.handleInput(commandManager.defaultActor, line)
-                        if (response.type == CommandResponseType.HELP_SENT) continue
-                        if (response.message != null && response.type != CommandResponseType.BLANK_INPUT
-                            && response.type != CommandResponseType.ERROR) {
-                            commandManager.defaultActor.sendMessage(response.message!!)
-                        }
-                        if (response.throwable != null && response.type == CommandResponseType.ERROR) {
-                            LOGGER.severe(response.message!!, response.throwable!!)
-                        }
-                    }catch (e: Exception) {
-                        LOGGER.severe("Error while routing/processing command", e)
-                    }
-                }
+                executeCommand(line)
             }
         }, "RC Console")
         CONSOLE_THREAD!!.start()
+    }
+
+    fun executeCommand(input: String) {
+        if (CURRENT_CONSOLE?.commandManager?.areCommandsDisabled() == false) {
+            val commandManager = CURRENT_CONSOLE?.commandManager ?: return
+            try {
+                val response = commandManager.handleInput(commandManager.defaultActor, input)
+                if (response.type == CommandResponseType.HELP_SENT) return
+                if (response.message != null && response.type != CommandResponseType.BLANK_INPUT
+                    && response.type != CommandResponseType.ERROR) {
+                    commandManager.defaultActor.sendMessage(response.message!!)
+                }
+                if (response.throwable != null && response.type == CommandResponseType.ERROR) {
+                    LOGGER.severe(response.message!!, response.throwable!!)
+                }
+            }catch (e: Exception) {
+                LOGGER.severe("Error while routing/processing command", e)
+            }
+        }
     }
 
     private fun print(text: String) {

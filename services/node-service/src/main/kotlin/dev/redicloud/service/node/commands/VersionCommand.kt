@@ -20,7 +20,8 @@ import kotlinx.coroutines.runBlocking
 @CommandDescription("Displays the current version of the node service")
 class VersionCommand(
     private val console: NodeConsole,
-    private val databaseConnection: DatabaseConnection
+    private val databaseConnection: DatabaseConnection,
+    private val clusterCommandExecutor: (String) -> Unit
 ) : ICommand {
 
     @CommandSubPath("")
@@ -172,6 +173,7 @@ class VersionCommand(
         Updater.switchVersion(branch, buildId, console, databaseConnection)
         actor.sendMessage("Activated the version: %hc%$branch§8#%tc%$buildId")
         actor.sendMessage("§cYou have to restart the node service to apply the changes!")
+
     }
 
     @CommandSubPath("branches")
