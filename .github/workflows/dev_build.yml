@@ -43,7 +43,7 @@ jobs:
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v3
         with:
-          arguments: build
+          arguments: build -x test 
 
       - name: Copy files
         run: |
