@@ -245,12 +245,13 @@ class ServerFactory(
 
     internal suspend fun unregisterServer(
         serviceId: ServiceId,
-        cachedServer: CloudServer? = null
+        cachedServer: CloudServer? = null,
+        force: Boolean = false
     ) {
         if (!serverRepository.databaseConnection.connected) return
         val server = cachedServer ?: serverRepository.getServer(serviceId)
             ?: throw NullPointerException("Server ${serviceId.toName()} not found")
-        if (server.state != CloudServerState.STOPPED) {
+        if (!force && server.state != CloudServerState.STOPPED) {
             throw IllegalArgumentException("Server ${serviceId.toName()} is not stopped")
         }
         serverRepository.deleteServer(server)

@@ -27,7 +27,7 @@ class CloudServerUnregisterTask(
             serverFactory.unregisterQueue.remove(serviceId)
             actions.add {
                 try {
-                    serverFactory.unregisterServer(serviceId)
+                    serverFactory.unregisterServer(serviceId, force = true)
                 }catch (e: Exception) {
                     LOGGER.severe("§cFailed to unregister server ${serviceId.toName()}!", e)
                 }
