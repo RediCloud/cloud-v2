@@ -18,7 +18,7 @@ class CloudInvalidServerUnregisterTask(
             if (server.configurationTemplate.static) {
                 return@forEach
             }
-            if (server.state != CloudServerState.STOPPED && !unregisterQueue.contains(server.serviceId)) {
+            if (server.state == CloudServerState.STOPPED && !unregisterQueue.contains(server.serviceId)) {
                 serverFactory.queueUnregister(server.serviceId)
             }
         }
