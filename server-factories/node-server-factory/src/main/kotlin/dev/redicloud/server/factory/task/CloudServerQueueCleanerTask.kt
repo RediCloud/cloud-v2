@@ -22,9 +22,7 @@ class CloudServerQueueCleanerTask(
     }
 
     override suspend fun execute(): Boolean {
-        val nodes = nodeRepository.getConnectedNodes()
-        val masterNode = nodes.firstOrNull { it.master }
-        if (masterNode?.serviceId != serverFactory.hostingId) return false
+        if (nodeRepository.getMasterNode()?.serviceId != serverFactory.hostingId) return false
 
         serverFactory.getStartList().forEach { info ->
             val name = if (info.serviceId != null) {

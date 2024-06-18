@@ -107,7 +107,7 @@ class ServerFactory(
         if (!server.configurationTemplate.static) {
             throw IllegalArgumentException("Service id that was queued for deletion is not static: ${serviceId.toName()}")
         }
-        serverRepository.deleteServer(server)
+        this.unregisterServer(serviceId, server)
         val workDir = File(STATIC_FOLDER.getFile(), "${server.name}-${server.serviceId.id}")
         if (workDir.exists() && workDir.isDirectory) {
             if (!workDir.deleteRecursively()) {
@@ -241,6 +241,19 @@ class ServerFactory(
             }catch (_: NullPointerException) {}
             return UnknownErrorStartResult(e)
         }
+    }
+
+    internal suspend fun unregisterServer(
+        serviceId: ServiceId,
+        cachedServer: CloudServer? = null
+    ) {
+        if (!serverRepository.databaseConnection.connected) return
+        val server = cachedServer ?: serverRepository.getServer(serviceId)
+            ?: throw NullPointerException("Server ${serviceId.toName()} not found")
+        if (server.state != CloudServerState.STOPPED) {
+            throw IllegalArgumentException("Server ${serviceId.toName()} is not stopped")
+        }
+        serverRepository.deleteServer(server)
     }
 
 
@@ -385,7 +398,7 @@ class ServerFactory(
             eventManager.fireEvent(CloudServerDisconnectedEvent(server.serviceId))
 
             if (server.unregisterAfterDisconnect()) {
-                serverRepository.deleteServer(server)
+                this.unregisterServer(server.serviceId, server)
             }
         }
     }
