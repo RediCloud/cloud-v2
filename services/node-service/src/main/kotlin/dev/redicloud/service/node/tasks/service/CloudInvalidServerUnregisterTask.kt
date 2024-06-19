@@ -4,6 +4,7 @@ import dev.redicloud.api.server.factory.ICloudServerFactory
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.service.server.ICloudServer
 import dev.redicloud.api.service.server.ICloudServerRepository
 import dev.redicloud.tasks.CloudTask
 
@@ -20,21 +21,41 @@ class CloudInvalidServerUnregisterTask(
 
         val unregisterQueue = serverFactory.getUnregisterQueue()
         registeredServers.forEach { server ->
-            if (server.configurationTemplate.static || unregisterQueue.contains(server.serviceId)) {
+            val isStatic = server.configurationTemplate.static
+            val hasSession = server.currentOrLastSession() != null
+            val state = server.state
+            val hostId = server.hostNodeId
+            if (unregisterQueue.contains(server.serviceId)) {
                 return@forEach
             }
-            if (isMaster && server.state == CloudServerState.STOPPED) {
-                serverFactory.queueUnregister(server.serviceId)
+            if (isMaster && state == CloudServerState.STOPPED && !isStatic) {
+                stopOrUnregister(server)
                 return@forEach
             }
-            if (isMaster && server.state == CloudServerState.STOPPING && server.currentOrLastSession() == null) {
-                serverFactory.queueUnregister(server.serviceId)
+            if (isMaster && state == CloudServerState.STOPPING && !hasSession) {
+                stopOrUnregister(server)
                 return@forEach
             }
-
+            if (thisNodeId == hostId && state != CloudServerState.STOPPED && serverFactory.hostedProcesses.none { it.serverId == server.serviceId }) {
+                stopOrUnregister(server)
+                return@forEach
+            }
+            val nodes = nodeRepository.getConnectedNodes()
+            if (isMaster && nodes.none { it.serviceId == hostId } && state != CloudServerState.STOPPED) {
+                stopOrUnregister(server)
+                return@forEach
+            }
         }
 
         return false
+    }
+
+    private suspend fun stopOrUnregister(server: ICloudServer) {
+        if (server.configurationTemplate.static) {
+            serverFactory.queueStop(server.serviceId, true)
+        }else {
+            serverFactory.queueUnregister(server.serviceId)
+        }
     }
 
 }
