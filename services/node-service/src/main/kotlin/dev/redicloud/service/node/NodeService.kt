@@ -167,7 +167,7 @@ class NodeService(
             .period(5.seconds)
             .register()
         taskManager.builder()
-            .task(CloudServerUnregisterTask(this.serviceId, this.serverFactory, this.nodeRepository))
+            .task(CloudServerUnregisterTask(this.serviceId, this.serverFactory, this.nodeRepository, this.serverRepository))
             .period(5.seconds)
             .register()
         taskManager.builder()
