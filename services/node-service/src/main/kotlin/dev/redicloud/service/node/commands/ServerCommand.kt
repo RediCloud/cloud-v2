@@ -89,7 +89,7 @@ class ServerCommand(
     }
 
     @CommandSubPath("delete <server>")
-    @CommandDescription("Delete a static server")
+    @CommandDescription("Delete a server")
     fun delete(
         actor: ConsoleActor,
         @CommandParameter("server", true, CloudServerSuggester::class) server: CloudServer
@@ -98,9 +98,23 @@ class ServerCommand(
             actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is not stopped!")
             return@runBlocking
         }
-        actor.sendMessage("Queued deletion of static server ${server.identifyName()}...")
+        actor.sendMessage("Queued deletion of server ${server.identifyName()}...")
         actor.sendMessage("Note: If the hosted node is not connected to the cluster, the server will be deleted when the node connects to the cluster!")
         serverFactory.queueDelete(server.serviceId)
+    }
+
+    @CommandSubPath("unregister <server>")
+    @CommandDescription("Unregister a server (this will not delete the server files of a static server)")
+    fun unregister(
+        actor: ConsoleActor,
+        @CommandParameter("server", true, CloudServerSuggester::class) server: CloudServer
+    ) = runBlocking {
+        if (server.state != CloudServerState.STOPPED) {
+            actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is not stopped!")
+            return@runBlocking
+        }
+        actor.sendMessage("Queued unregistration of server ${server.identifyName()}...")
+        serverFactory.queueUnregister(server.serviceId)
     }
 
     @CommandSubPath("transfer <server> <node>")

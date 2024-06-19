@@ -36,6 +36,8 @@ open class RemoteServerFactory(
         databaseConnection.getMutableList("server-factory:queue:delete")
     val transferQueue: ISyncedMutableList<TransferServerQueueInformation> =
         databaseConnection.getMutableList("server-factory:queue:transfer")
+    val unregisterQueue: ISyncedMutableList<ServiceId> =
+        databaseConnection.getMutableList("server-factory:queue:unregister")
     var shutdown = false
 
     override suspend fun queueStart(configurationTemplate: ICloudConfigurationTemplate, count: Int): List<UUID> {
@@ -69,6 +71,10 @@ open class RemoteServerFactory(
         deleteQueue.add(serverId)
     }
 
+    override suspend fun queueUnregister(serviceId: ServiceId) {
+        unregisterQueue.add(serviceId)
+    }
+
     override suspend fun queueTransfer(serverId: ServiceId, targetNodeId: ServiceId) {
         transferQueue.add(TransferServerQueueInformation(serverId, targetNodeId))
     }
@@ -87,6 +93,10 @@ open class RemoteServerFactory(
 
     override suspend fun getTransferQueue(): List<TransferServerQueueInformation> {
         return transferQueue.toList()
+    }
+
+    override suspend fun getUnregisterQueue(): List<ServiceId> {
+        return unregisterQueue.toList()
     }
 
 }

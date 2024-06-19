@@ -145,7 +145,8 @@ object Updater {
             url(getRootAPIUrl() + "/builds/?branch=$branch")
         }
         if (!response.status.isSuccess()) return emptyList()
-        return gson.fromJsonToList(response.bodyAsText())
+        val builds = gson.fromJsonToList<BuildInfo>(response.bodyAsText())
+        return builds.sortedBy { it.build }
     }
 
     suspend fun getBranches(): List<String> {

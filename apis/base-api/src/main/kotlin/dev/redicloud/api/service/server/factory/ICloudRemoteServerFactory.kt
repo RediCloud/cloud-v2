@@ -16,6 +16,8 @@ interface ICloudRemoteServerFactory {
 
     suspend fun queueDelete(serverId: ServiceId)
 
+    suspend fun queueUnregister(serviceId: ServiceId)
+
     suspend fun queueTransfer(serverId: ServiceId, targetNodeId: ServiceId)
 
     suspend fun getStartingQueue(): List<ServerQueueInformation>
@@ -25,5 +27,7 @@ interface ICloudRemoteServerFactory {
     suspend fun getDeletingQueue(): List<ServiceId>
 
     suspend fun getTransferQueue(): List<TransferServerQueueInformation>
+
+    suspend fun getUnregisterQueue(): List<ServiceId>
 
 }
