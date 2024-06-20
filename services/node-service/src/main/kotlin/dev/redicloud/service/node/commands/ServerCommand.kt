@@ -227,10 +227,10 @@ class ServerCommand(
         actor: ConsoleActor,
         @CommandParameter("server", true, CloudServerSuggester::class) server: ICloudServer,
         @CommandParameter("template", true, FileTemplateSuggester::class) template: ICloudFileTemplate,
-        @CommandParameter("path", false) path: String? = "/"
+        @CommandParameter("path", false, EmptySuggester::class) path: String? = "./"
     ) = runBlocking {
         actor.sendMessage("Copying server files from ${server.identifyName()} to template ${toConsoleValue(template.name)}...")
-        serverFactory.queueCopy(server, template, path ?: "/")
+        serverFactory.queueCopy(server, template, path ?: "./")
     }
 
 }

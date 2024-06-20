@@ -4,6 +4,7 @@ import com.google.inject.Guice
 import com.google.inject.name.Names
 import dev.redicloud.api.database.IDatabaseConnection
 import dev.redicloud.api.events.IEventManager
+import dev.redicloud.api.java.ICloudJavaVersion
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.cache.tasks.InvalidCacheTask
 import dev.redicloud.api.packets.PacketListener
@@ -12,8 +13,6 @@ import dev.redicloud.api.player.ICloudPlayerRepository
 import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.api.service.server.ICloudServerRepository
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplateRepository
-import dev.redicloud.api.version.ICloudServerVersionRepository
-import dev.redicloud.api.version.ICloudServerVersionTypeRepository
 import dev.redicloud.commands.api.PARSERS
 import dev.redicloud.commands.api.SUGGESTERS
 import dev.redicloud.repository.node.NodeRepository
@@ -33,7 +32,6 @@ import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.logging.Logger
 import dev.redicloud.repository.server.version.serverversion.ServerVersion
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
@@ -52,9 +50,13 @@ import dev.redicloud.utils.ioScope
 import dev.redicloud.utils.loadProperties
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.api.service.node.ICloudNode
+import dev.redicloud.api.service.server.ICloudServer
+import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
+import dev.redicloud.api.template.file.ICloudFileTemplate
 import dev.redicloud.api.template.file.ICloudFileTemplateRepository
 import dev.redicloud.api.utils.injector
-import dev.redicloud.api.version.IVersionRepository
+import dev.redicloud.api.version.*
 import dev.redicloud.console.Console
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.repository.server.version.serverversion.VersionRepository
@@ -191,14 +193,22 @@ abstract class BaseService(
 
     private fun registerDefaultParsers() {
         PARSERS[CloudNode::class] = CloudNodeParser(this.nodeRepository)
+        PARSERS[ICloudNode::class] = PARSERS[CloudNode::class]!!
         PARSERS[CloudServer::class] = CloudServerParser(this.serverRepository)
+        PARSERS[ICloudServer::class] = PARSERS[CloudServer::class]!!
         PARSERS[CloudServerVersion::class] = CloudServerVersionParser(this.serverVersionRepository)
+        PARSERS[ICloudServerVersion::class] = PARSERS[CloudServerVersion::class]!!
         PARSERS[CloudServerVersionType::class] = CloudServerVersionTypeParser(this.serverVersionTypeRepository)
+        PARSERS[ICloudServerVersionType::class] = PARSERS[CloudServerVersionType::class]!!
         PARSERS[CloudJavaVersion::class] = JavaVersionParser(this.javaVersionRepository)
+        PARSERS[ICloudJavaVersion::class] = PARSERS[CloudJavaVersion::class]!!
         PARSERS[ServerVersion::class] = ServerVersionParser()
+        PARSERS[IServerVersion::class] = PARSERS[ServerVersion::class]!!
         PARSERS[ConfigurationTemplate::class] = ConfigurationTemplateParser(this.configurationTemplateRepository)
-        PARSERS[IServerVersionHandler::class] = ServerVersionHandlerParser()
+        PARSERS[ICloudConfigurationTemplate::class] = PARSERS[ConfigurationTemplate::class]!!
         PARSERS[FileTemplate::class] = FileTemplateParser(this.fileTemplateRepository)
+        PARSERS[ICloudFileTemplate::class] = PARSERS[FileTemplate::class]!!
+        PARSERS[IServerVersionHandler::class] = ServerVersionHandlerParser()
     }
 
     private fun registerDefaultSuggesters() {

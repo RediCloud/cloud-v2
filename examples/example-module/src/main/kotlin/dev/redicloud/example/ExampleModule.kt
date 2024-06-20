@@ -10,7 +10,6 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.utils.CloudInjectable
 import java.util.logging.Logger
 
-
 class ExampleModule @Inject constructor(
     @Named("service") val logger: Logger
 ) : CloudModule(), CloudInjectable {
