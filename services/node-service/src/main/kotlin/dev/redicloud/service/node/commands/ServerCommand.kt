@@ -3,6 +3,8 @@ package dev.redicloud.service.node.commands
 import dev.redicloud.api.commands.*
 import dev.redicloud.api.commands.BooleanSuggester
 import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.service.server.ICloudServer
+import dev.redicloud.api.template.file.ICloudFileTemplate
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.node.CloudNode
@@ -13,6 +15,7 @@ import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.service.base.suggester.CloudServerSuggester
 import dev.redicloud.service.base.suggester.ConfigurationTemplateSuggester
+import dev.redicloud.service.base.suggester.FileTemplateSuggester
 import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.toSymbol
@@ -89,7 +92,7 @@ class ServerCommand(
     }
 
     @CommandSubPath("delete <server>")
-    @CommandDescription("Delete a server")
+    @CommandDescription("Delete a static server")
     fun delete(
         actor: ConsoleActor,
         @CommandParameter("server", true, CloudServerSuggester::class) server: CloudServer
@@ -98,23 +101,9 @@ class ServerCommand(
             actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is not stopped!")
             return@runBlocking
         }
-        actor.sendMessage("Queued deletion of server ${server.identifyName()}...")
+        actor.sendMessage("Queued deletion of static server ${server.identifyName()}...")
         actor.sendMessage("Note: If the hosted node is not connected to the cluster, the server will be deleted when the node connects to the cluster!")
         serverFactory.queueDelete(server.serviceId)
-    }
-
-    @CommandSubPath("unregister <server>")
-    @CommandDescription("Unregister a server (this will not delete the server files of a static server)")
-    fun unregister(
-        actor: ConsoleActor,
-        @CommandParameter("server", true, CloudServerSuggester::class) server: CloudServer
-    ) = runBlocking {
-        if (server.state != CloudServerState.STOPPED) {
-            actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is not stopped!")
-            return@runBlocking
-        }
-        actor.sendMessage("Queued unregistration of server ${server.identifyName()}...")
-        serverFactory.queueUnregister(server.serviceId)
     }
 
     @CommandSubPath("transfer <server> <node>")
@@ -232,5 +221,16 @@ class ServerCommand(
         actor.sendHeader("Server information")
     }
 
+    @CommandSubPath("copy <server> <template> [path]")
+    @CommandDescription("Copy server files to a template")
+    fun copy(
+        actor: ConsoleActor,
+        @CommandParameter("server", true, CloudServerSuggester::class) server: ICloudServer,
+        @CommandParameter("template", true, FileTemplateSuggester::class) template: ICloudFileTemplate,
+        @CommandParameter("path", false) path: String? = "/"
+    ) = runBlocking {
+        actor.sendMessage("Copying server files from ${server.identifyName()} to template ${toConsoleValue(template.name)}...")
+        serverFactory.queueCopy(server, template, path ?: "/")
+    }
 
 }

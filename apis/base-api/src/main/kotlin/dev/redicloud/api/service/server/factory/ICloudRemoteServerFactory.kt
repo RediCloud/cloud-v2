@@ -1,8 +1,11 @@
 package dev.redicloud.api.service.server.factory
 
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.server.ICloudServer
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
-import dev.redicloud.api.utils.factory.ServerQueueInformation
+import dev.redicloud.api.template.file.ICloudFileTemplate
+import dev.redicloud.api.utils.factory.ServerFileTemplateCopyInformation
+import dev.redicloud.api.utils.factory.ServerStartQueueInformation
 import dev.redicloud.api.utils.factory.TransferServerQueueInformation
 import java.util.UUID
 
@@ -20,7 +23,9 @@ interface ICloudRemoteServerFactory {
 
     suspend fun queueTransfer(serverId: ServiceId, targetNodeId: ServiceId)
 
-    suspend fun getStartingQueue(): List<ServerQueueInformation>
+    suspend fun queueCopy(server: ICloudServer, template: ICloudFileTemplate, path: String)
+
+    suspend fun getStartingQueue(): List<ServerStartQueueInformation>
 
     suspend fun getStoppingQueue(): List<ServiceId>
 
@@ -29,5 +34,7 @@ interface ICloudRemoteServerFactory {
     suspend fun getTransferQueue(): List<TransferServerQueueInformation>
 
     suspend fun getUnregisterQueue(): List<ServiceId>
+
+    suspend fun getCopyQueue(): List<ServerFileTemplateCopyInformation>
 
 }

@@ -8,7 +8,7 @@ import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import java.util.LinkedList
 import java.util.UUID
 
-data class ServerQueueInformation(
+data class ServerStartQueueInformation(
     val uniqueId: UUID = UUID.randomUUID(), // Random unique id to identify
     val configurationTemplate: ICloudConfigurationTemplate?, // The configuration template
     val serviceId: ServiceId?, // The static server id
@@ -44,37 +44,37 @@ class FailedStarts : LinkedList<String>() {
     }
 }
 
-fun ServerQueueInformation.isNextNode(serviceId: ServiceId): Boolean {
+fun ServerStartQueueInformation.isNextNode(serviceId: ServiceId): Boolean {
     if (nodeTarget != null && nodeTarget == serviceId) return true
     return nodeStartOrder.isNotEmpty() && nodeStartOrder[0] == serviceId
 }
 
-fun ServerQueueInformation.addFailedStart(
+fun ServerStartQueueInformation.addFailedStart(
     serviceId: ServiceId,
     result: StartResultType
 ) {
     failedStarts.addFailedStart(serviceId, result)
 }
 
-fun ServerQueueInformation.addFailedNode(
+fun ServerStartQueueInformation.addFailedNode(
     serviceId: ServiceId
 ) {
     nodeStartOrder.remove(serviceId)
 }
 
-fun ServerQueueInformation.getFailedStarts(serviceId: ServiceId): Int {
+fun ServerStartQueueInformation.getFailedStarts(serviceId: ServiceId): Int {
     return failedStarts.getFailedStarts(serviceId)
 }
 
-fun ServerQueueInformation.getFailedStarts(serviceId: ServiceId, result: StartResultType): Int {
+fun ServerStartQueueInformation.getFailedStarts(serviceId: ServiceId, result: StartResultType): Int {
     return failedStarts.getFailedStarts(serviceId, result)
 }
 
-fun ServerQueueInformation.getFailedStarts(): Int {
+fun ServerStartQueueInformation.getFailedStarts(): Int {
     return failedStarts.getFailedStats()
 }
 
-suspend fun ServerQueueInformation.calculateStartOrder(nodes: List<ICloudNode>, serverRepository: ICloudServerRepository): MutableList<ServiceId> {
+suspend fun ServerStartQueueInformation.calculateStartOrder(nodes: List<ICloudNode>, serverRepository: ICloudServerRepository): MutableList<ServiceId> {
     nodeStartOrder.clear()
 
     nodes.forEach {
@@ -86,7 +86,7 @@ suspend fun ServerQueueInformation.calculateStartOrder(nodes: List<ICloudNode>, 
     return nodeStartOrder
 }
 
-suspend fun ServerQueueInformation.calculateStartPriority(cloudNode: ICloudNode, serverRepository: ICloudServerRepository): Int {
+suspend fun ServerStartQueueInformation.calculateStartPriority(cloudNode: ICloudNode, serverRepository: ICloudServerRepository): Int {
     var count = 0
 
     if (!cloudNode.connected) {

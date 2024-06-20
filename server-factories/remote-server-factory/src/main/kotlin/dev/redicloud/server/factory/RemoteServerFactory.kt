@@ -3,10 +3,12 @@ package dev.redicloud.server.factory
 import dev.redicloud.api.database.grid.list.ISyncedMutableList
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.service.server.ICloudServer
 import dev.redicloud.api.service.server.factory.ICloudRemoteServerFactory
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
-import dev.redicloud.api.utils.factory.FailedStarts
-import dev.redicloud.api.utils.factory.ServerQueueInformation
+import dev.redicloud.api.template.file.ICloudFileTemplate
+import dev.redicloud.api.utils.factory.ServerFileTemplateCopyInformation
+import dev.redicloud.api.utils.factory.ServerStartQueueInformation
 import dev.redicloud.api.utils.factory.TransferServerQueueInformation
 import dev.redicloud.api.utils.factory.calculateStartOrder
 import dev.redicloud.database.DatabaseConnection
@@ -28,7 +30,7 @@ open class RemoteServerFactory(
 
     val hostingId = databaseConnection.serviceId
 
-    val startQueue: ISyncedMutableList<ServerQueueInformation> =
+    val startQueue: ISyncedMutableList<ServerStartQueueInformation> =
         databaseConnection.getMutableList("server-factory:queue:start")
     val stopQueue: ISyncedMutableList<ServiceId> =
         databaseConnection.getMutableList("server-factory:queue:stop")
@@ -38,15 +40,17 @@ open class RemoteServerFactory(
         databaseConnection.getMutableList("server-factory:queue:transfer")
     val unregisterQueue: ISyncedMutableList<ServiceId> =
         databaseConnection.getMutableList("server-factory:queue:unregister")
+    val copyQueue: ISyncedMutableList<ServerFileTemplateCopyInformation> =
+        databaseConnection.getMutableList("server-factory:queue:copy")
     var shutdown = false
 
     override suspend fun queueStart(configurationTemplate: ICloudConfigurationTemplate, count: Int): List<UUID> {
-        val info = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, null, queueTime = System.currentTimeMillis())
+        val info = ServerStartQueueInformation(UUID.randomUUID(), configurationTemplate, null, queueTime = System.currentTimeMillis())
         val nodes = nodeRepository.getRegisteredNodes()
         info.calculateStartOrder(nodes, serverRepository)
         val ids = mutableListOf<UUID>()
         for (i in 1..count) {
-            val clone = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, null, info.failedStarts, info.nodeStartOrder, null, System.currentTimeMillis())
+            val clone = ServerStartQueueInformation(UUID.randomUUID(), configurationTemplate, null, info.failedStarts, info.nodeStartOrder, null, System.currentTimeMillis())
             startQueue.add(clone)
             ids.add(clone.uniqueId)
         }
@@ -54,7 +58,7 @@ open class RemoteServerFactory(
     }
 
     override suspend fun queueStart(serverId: ServiceId) {
-        val info = ServerQueueInformation(UUID.randomUUID(), null, serverId, queueTime = System.currentTimeMillis())
+        val info = ServerStartQueueInformation(UUID.randomUUID(), null, serverId, queueTime = System.currentTimeMillis())
         val nodes = nodeRepository.getRegisteredNodes()
         info.calculateStartOrder(nodes, serverRepository)
         startQueue.add(info)
@@ -79,7 +83,11 @@ open class RemoteServerFactory(
         transferQueue.add(TransferServerQueueInformation(serverId, targetNodeId))
     }
 
-    override suspend fun getStartingQueue(): List<ServerQueueInformation> {
+    override suspend fun queueCopy(server: ICloudServer, template: ICloudFileTemplate, path: String) {
+        copyQueue.add(ServerFileTemplateCopyInformation(server.serviceId, template.uniqueId, path))
+    }
+
+    override suspend fun getStartingQueue(): List<ServerStartQueueInformation> {
         return startQueue.toList()
     }
 
@@ -97,6 +105,10 @@ open class RemoteServerFactory(
 
     override suspend fun getUnregisterQueue(): List<ServiceId> {
         return unregisterQueue.toList()
+    }
+
+    override suspend fun getCopyQueue(): List<ServerFileTemplateCopyInformation> {
+        return copyQueue.toList()
     }
 
 }

@@ -5,7 +5,7 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.server.factory.ServerFactory
-import dev.redicloud.api.utils.factory.ServerQueueInformation
+import dev.redicloud.api.utils.factory.ServerStartQueueInformation
 import dev.redicloud.tasks.CloudTask
 import dev.redicloud.api.service.ServiceId
 import java.util.UUID
@@ -95,7 +95,7 @@ class CloudAutoStartServerTask(
                                 targetServers.remove(targetServer)
                                 serverFactory.queueStart(targetServer.serviceId)
                             } else {
-                                val info = ServerQueueInformation(
+                                val info = ServerStartQueueInformation(
                                     UUID.randomUUID(),
                                     template,
                                     null,
@@ -105,7 +105,7 @@ class CloudAutoStartServerTask(
                                 serverFactory.queueStart(info)
                             }
                         } else {
-                            val info = ServerQueueInformation(
+                            val info = ServerStartQueueInformation(
                                 UUID.randomUUID(),
                                 template,
                                 null,

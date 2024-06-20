@@ -37,7 +37,7 @@ import dev.redicloud.utils.*
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
-import dev.redicloud.api.utils.factory.ServerQueueInformation
+import dev.redicloud.api.utils.factory.ServerStartQueueInformation
 import dev.redicloud.repository.node.CloudNode
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -72,8 +72,8 @@ class ServerFactory(
         console.commandManager.registerSuggesters(ServerScreenSuggester(console))
     }
 
-    suspend fun getStartList(): List<ServerQueueInformation> {
-        return startQueue.toMutableList().sortedWith(compareByDescending<ServerQueueInformation>
+    suspend fun getStartList(): List<ServerStartQueueInformation> {
+        return startQueue.toMutableList().sortedWith(compareByDescending<ServerStartQueueInformation>
         {
             if (it.serviceId != null) {
                 val configuration = runBlocking {
@@ -88,7 +88,7 @@ class ServerFactory(
         }.thenByDescending { it.queueTime }).toList()
     }
 
-    fun queueStart(queueInformation: ServerQueueInformation) =
+    fun queueStart(queueInformation: ServerStartQueueInformation) =
         ioScope.launch {
             startQueue.add(queueInformation)
         }
