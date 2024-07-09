@@ -4,8 +4,8 @@ class CloudJKWrapper {
 
     companion object {
         @JvmStatic
-        fun injectCloudAPI(clazz: Class<out CloudInjectable>, cloudInjectable: CloudInjectable) {
-            injectCloudAPI(clazz, cloudInjectable)
+        fun <T : CloudInjectable> injectCloudAPI(clazz: Class<T>, cloudInjectable: T) {
+            injectApi(clazz, cloudInjectable)
         }
 
         @JvmStatic
