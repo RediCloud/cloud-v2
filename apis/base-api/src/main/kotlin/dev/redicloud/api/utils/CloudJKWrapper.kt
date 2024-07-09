@@ -1,13 +1,11 @@
 package dev.redicloud.api.utils
 
-import kotlinx.coroutines.runBlocking
-
 class CloudJKWrapper {
 
     companion object {
         @JvmStatic
-        fun injectCloudAPI(cloudInjectable: CloudInjectable) {
-            cloudInjectable.injectCloudApi()
+        fun injectCloudAPI(clazz: Class<out CloudInjectable>, cloudInjectable: CloudInjectable) {
+            injectCloudAPI(clazz, cloudInjectable)
         }
 
         @JvmStatic
