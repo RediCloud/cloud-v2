@@ -9,7 +9,7 @@ inline fun <reified T : CloudInjectable> T.injectCloudApi() {
 }
 
 fun <T : CloudInjectable> injectApi(clazz: Class<T>, instance: T) {
-val membersInjector = injector.getMembersInjector(clazz)
+    val membersInjector = injector.getMembersInjector(clazz)
     membersInjector.injectMembers(instance)
 }
 

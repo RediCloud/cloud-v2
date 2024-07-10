@@ -75,7 +75,6 @@ class CloudPlayerListener(
     @Subscribe
     fun onServerPreConnect(event: ServerPreConnectEvent) = runBlocking {
         if (!event.result.isAllowed) return@runBlocking
-        event.player
         val targetServer = if (event.originalServer.serverInfo.name == "rcfallback") {
             serverRepository.getFallback()
         }else serverRepository.getServer(event.originalServer.serverInfo.name, ServiceType.MINECRAFT_SERVER)
