@@ -39,8 +39,10 @@ import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import dev.redicloud.api.utils.factory.ServerQueueInformation
 import dev.redicloud.repository.node.CloudNode
+import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import java.io.File
 import java.util.*
 
@@ -165,38 +167,42 @@ class ServerFactory(
                     }
                 }
             }
-
-            // get the next id for the server and create it
-            cloudServer = if (snapshotData.versionType.proxy) {
-                serverRepository.createServer(
-                    CloudProxyServer(
-                        serviceId,
-                        configurationTemplate,
-                        getIdForServer(configurationTemplate),
-                        thisNode.serviceId,
-                        ServiceSessions(),
-                        false,
-                        CloudServerState.PREPARING,
-                        -1,
-                        configurationTemplate.maxPlayers
+            idLock.lock()
+            try {
+                // get the next id for the server and create it
+                cloudServer = if (snapshotData.versionType.proxy) {
+                    serverRepository.createServer(
+                        CloudProxyServer(
+                            serviceId,
+                            configurationTemplate,
+                            getIdForServer(configurationTemplate),
+                            thisNode.serviceId,
+                            ServiceSessions(),
+                            false,
+                            CloudServerState.PREPARING,
+                            -1,
+                            configurationTemplate.maxPlayers
+                        )
                     )
-                )
-            }else {
-                serverRepository.createServer(
-                    CloudMinecraftServer(
-                        serviceId,
-                        configurationTemplate,
-                        getIdForServer(configurationTemplate),
-                        thisNode.serviceId,
-                        ServiceSessions(),
-                        false,
-                        CloudServerState.PREPARING,
-                        -1,
-                        configurationTemplate.maxPlayers
+                }else {
+                    serverRepository.createServer(
+                        CloudMinecraftServer(
+                            serviceId,
+                            configurationTemplate,
+                            getIdForServer(configurationTemplate),
+                            thisNode.serviceId,
+                            ServiceSessions(),
+                            false,
+                            CloudServerState.PREPARING,
+                            -1,
+                            configurationTemplate.maxPlayers
+                        )
                     )
-                )
+                }
+            }finally {
+                idLock.unlock()
             }
-            serverProcess.cloudServer = cloudServer
+            serverProcess.cloudServer = cloudServer!!
 
             // Create server screen
             val serverScreen = ServerScreen(cloudServer.serviceId, cloudServer.name, this.console, this.packetManager)
@@ -475,21 +481,17 @@ class ServerFactory(
 
     /**
      * Gets the next id for a server with the given configuration template
+     * To make sure that the id is unique, lock the idLock
      */
     private suspend fun getIdForServer(configuration: ICloudConfigurationTemplate): Int {
-        idLock.lock()
-        try {
-            val usedIds = serverRepository.getRegisteredServers()
-                .filter { it.configurationTemplate.name == configuration.name }
-                .map { it.id }
-            var i = 1
-            while (usedIds.contains(i)) {
-                i++
-            }
-            return i
-        }finally {
-            idLock.unlock()
+        val usedIds = serverRepository.getRegisteredServers()
+            .filter { it.configurationTemplate.name == configuration.name }
+            .map { it.id }
+        var i = 1
+        while (usedIds.contains(i)) {
+            i++
         }
+        return i
     }
 
     private suspend fun loadServerData(configurationTemplate: ICloudConfigurationTemplate): Pair<StartDataSnapshot, StartResult?> {
