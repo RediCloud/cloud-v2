@@ -39,7 +39,8 @@ class CloudPlayerListener(
                 }
                 if (playerRepository.existsPlayer(event.connection.uniqueId)) {
                     val cloudPlayer = playerRepository.getPlayer(event.connection.uniqueId)!!
-                    if (cloudPlayer.connected) {
+                    val connectedOnThisProxy = ProxyServer.getInstance().getPlayer(event.connection.uniqueId) != null
+                    if (cloudPlayer.connected && (cloudPlayer.serverId != null || (cloudPlayer.proxyId == serviceId && connectedOnThisProxy))) {
                         event.isCancelled = true
                         event.setCancelReason(*ComponentBuilder().append("You are already connected!").create())
                         return@launch
