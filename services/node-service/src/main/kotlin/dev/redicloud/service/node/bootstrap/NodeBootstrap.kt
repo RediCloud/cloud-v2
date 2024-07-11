@@ -3,7 +3,6 @@ package dev.redicloud.service.node.bootstrap
 import dev.redicloud.logging.LogManager
 import dev.redicloud.service.node.NodeService
 import dev.redicloud.service.node.console.InitializeConsole
-import dev.redicloud.utils.coroutineExceptionHandler
 import dev.redicloud.utils.loadProperties
 import dev.redicloud.utils.threadLogger
 import kotlinx.coroutines.runBlocking
@@ -11,6 +10,7 @@ import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
     println("Starting node service...")
+    Thread.sleep(500)
     Thread.currentThread().setUncaughtExceptionHandler { thread, throwable ->
         threadLogger.severe("Caught exception in thread: ${thread.name}", throwable)
     }

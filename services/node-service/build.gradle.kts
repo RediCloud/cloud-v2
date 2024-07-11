@@ -38,7 +38,8 @@ dependencies {
     shade(project(":repositories:cache-repository"))
     shade(project(":modules:module-handler"))
     shade(project(":updater"))
-
+    shade(BuildDependencies.LOGBACK_CLASSIC)
+    shade(BuildDependencies.LOGBACK_CORE)
     compileOnly(BuildDependencies.JLINE_JANSI)
     compileOnly(BuildDependencies.JSCH)
 }

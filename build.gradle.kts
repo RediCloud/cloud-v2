@@ -32,8 +32,12 @@ allprojects {
         compileOnly(BuildDependencies.GSON)
         dependency(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
         dependency(BuildDependencies.KOTLINX_COROUTINES)
-        dependency(BuildDependencies.KTOR_CLIENT_CIO)
-        dependency(BuildDependencies.KTOR_CLIENT_CORE)
+        dependency(BuildDependencies.KTOR_CLIENT_CIO) {
+            exclude(group = "org.slf4j", module = "slf4j-api")
+        }
+        dependency(BuildDependencies.KTOR_CLIENT_CORE) {
+            exclude(group = "org.slf4j", module = "slf4j-api")
+        }
         dependency(BuildDependencies.KOTLIN_REFLECT)
         dependency(BuildDependencies.GUICE)
 
@@ -45,8 +49,12 @@ allprojects {
         testImplementation(project(":apis:base-api"))
         testImplementation(project(":database"))
         testImplementation(project(":services:node-service"))
-        testImplementation(BuildDependencies.KTOR_CLIENT_CIO)
-        testImplementation(BuildDependencies.KTOR_CLIENT_CORE)
+        testImplementation(BuildDependencies.KTOR_CLIENT_CIO) {
+            exclude(group = "org.slf4j", module = "slf4j-api")
+        }
+        testImplementation(BuildDependencies.KTOR_CLIENT_CORE) {
+            exclude(group = "org.slf4j", module = "slf4j-api")
+        }
     }
 
     tasks {

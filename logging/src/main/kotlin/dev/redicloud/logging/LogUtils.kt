@@ -1,8 +1,6 @@
 package dev.redicloud.logging
 
 import ch.qos.logback.classic.LoggerContext
-import org.slf4j.helpers.NOPLogger
-import org.slf4j.helpers.NOPLoggerFactory
 import java.util.ResourceBundle
 import java.util.logging.Level
 
@@ -24,8 +22,7 @@ fun clearHandlers(logger: Logger) {
 }
 
 fun configureLogger(name: String, level: Level) {
-    val context = org.slf4j.LoggerFactory.getILoggerFactory()
-    when (context) {
+    when (val context = org.slf4j.LoggerFactory.getILoggerFactory()) {
         is LoggerContext -> {
             val logger = context.getLogger(name)
             logger.level = translateLevelToLogback(level)
