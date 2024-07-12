@@ -24,18 +24,18 @@ class CloudServerQueueCleanerTask(
     override suspend fun execute(): Boolean {
         if (nodeRepository.getMasterNode()?.serviceId != serverFactory.hostingId) return false
 
+        cleanStartQueue()
+        cleanTransferQueue()
+        cleanStopQueue()
+
+        return false
+    }
+
+    private suspend fun cleanStartQueue() {
         serverFactory.getStartList().forEach { info ->
             val name = if (info.serviceId != null) {
                 info.serviceId!!.toName()
-            } else if (info.configurationTemplate != null) {
-                info.configurationTemplate!!.name
-            } else null
-
-            if (name == null) {
-                logger.warning("§cCould not get name of server to start, cancelling server start!")
-                serverFactory.startQueue.remove(info)
-                return@forEach
-            }
+            } else info.configurationTemplate
 
             if (info.serviceId != null) {
                 val service = serverRepository.getServer<CloudServer>(info.serviceId!!)
@@ -60,7 +60,9 @@ class CloudServerQueueCleanerTask(
                 return@forEach
             }
         }
+    }
 
+    private suspend fun cleanTransferQueue() {
         serverFactory.transferQueue.forEach {
             val server = serverRepository.getServer<CloudServer>(it.serverId)
             if (server == null) {
@@ -80,7 +82,9 @@ class CloudServerQueueCleanerTask(
                 return@forEach
             }
         }
+    }
 
+    private suspend fun cleanStopQueue() {
         serverFactory.stopQueue.forEach {
             val server = serverRepository.getServer<CloudServer>(it)
             if (server == null) {
@@ -93,8 +97,6 @@ class CloudServerQueueCleanerTask(
                 return@forEach
             }
         }
-
-        return false
     }
 
 }

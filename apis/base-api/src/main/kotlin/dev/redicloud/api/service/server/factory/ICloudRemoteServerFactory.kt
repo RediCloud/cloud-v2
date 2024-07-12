@@ -8,9 +8,9 @@ import java.util.UUID
 
 interface ICloudRemoteServerFactory {
 
-    suspend fun queueStart(configurationTemplate: ICloudConfigurationTemplate, count: Int = 1): List<UUID>
-
     suspend fun queueStart(serverId: ServiceId)
+
+    suspend fun queueStart(configurationTemplate: ICloudConfigurationTemplate, count: Int = 1, targetNodeId: ServiceId? = null): List<UUID>
 
     suspend fun queueStop(serverId: ServiceId, force: Boolean = false): Boolean
 

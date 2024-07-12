@@ -75,18 +75,16 @@ class CloudServerStartTask(
         serverFactory.getStartList().forEach { info ->
             if (!info.isNextNode(serverFactory.hostingId)) return@forEach
 
-            val name = if (info.configurationTemplate != null) info.configurationTemplate!!.name else info.serviceId?.toName() ?: "unknown"
+            val name = if (info.serviceId == null) info.configurationTemplate.name else info.serviceId?.toName() ?: "unknown"
 
             actions.add {
                 try {
                     serverFactory.startQueue.remove(info)
-                    val result = if (info.configurationTemplate != null) {
-                        serverFactory.startServer(info.configurationTemplate!!, serverUniqueId = info.uniqueId)
-                    }else if (info.serviceId != null) {
+                    val result = if (info.serviceId == null) {
+                        serverFactory.startServer(info.configurationTemplate, serverUniqueId = info.uniqueId)
+                    }else {
                         serverFactory.startServer(info.serviceId, null)
-                    }else null
-
-                    if (result == null) return@add
+                    }
 
                     when (result.type) {
 

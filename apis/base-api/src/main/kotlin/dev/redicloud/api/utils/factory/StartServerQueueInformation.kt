@@ -10,7 +10,7 @@ import java.util.UUID
 
 data class ServerQueueInformation(
     val uniqueId: UUID = UUID.randomUUID(), // Random unique id to identify
-    val configurationTemplate: ICloudConfigurationTemplate?, // The configuration template
+    val configurationTemplate: ICloudConfigurationTemplate, // The configuration template
     val serviceId: ServiceId?, // The static server id
     val failedStarts: FailedStarts = FailedStarts(), // Failed starts with the failed node and the reason
     val nodeStartOrder: MutableList<ServiceId> = mutableListOf(), // The possible start nodes in order
