@@ -45,6 +45,7 @@ class CloudServerStopTask(
             val templateBasedServers = servers.filter { it.configurationTemplate.uniqueId == template.uniqueId }
             val stopAble = templateBasedServers.filter { it.connectedPlayers.isEmpty() }
                 .filter { template.timeAfterStopUselessServer < System.currentTimeMillis() - it.currentSession!!.startTime }
+                .toMutableList()
 
             val templateStartedServers = startedServers.getOrDefault(template, emptyMap())
             val globalStarted = templateStartedServers.values.sum()
@@ -61,7 +62,7 @@ class CloudServerStopTask(
         return false
     }
 
-    private suspend fun requestNodeServerStops(template: ConfigurationTemplate, templateStartedServers: Map<ServiceId, Int>, stopAble: List<CloudServer>) {
+    private suspend fun requestNodeServerStops(template: ConfigurationTemplate, templateStartedServers: Map<ServiceId, Int>, stopAble: MutableList<CloudServer>) {
         val actions = MultiAsyncAction()
         templateStartedServers.forEach { (nodeId, count) ->
             if (template.minStartedServicesPerNode in 1 until count) {
@@ -77,8 +78,9 @@ class CloudServerStopTask(
         actions.joinAll()
     }
 
-    private suspend fun requestGlobalServerStops(template: ConfigurationTemplate, started: Int, stopAble: List<CloudServer>) {
+    private suspend fun requestGlobalServerStops(template: ConfigurationTemplate, started: Int, stopAble: MutableList<CloudServer>) {
         if (template.minStartedServices !in 1 until started) return
+        if (stopAble.isEmpty()) return
 
         val actions = MultiAsyncAction()
         val countToStop = started - template.minStartedServices
