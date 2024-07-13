@@ -1,15 +1,15 @@
 package dev.redicloud.server.factory.task
 
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
+import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.utils.MultiAsyncAction
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 
 class CloudServerStopTask(
     private val serviceId: ServiceId,
@@ -62,16 +62,22 @@ class CloudServerStopTask(
         return false
     }
 
-    private suspend fun requestNodeServerStops(template: ConfigurationTemplate, templateStartedServers: Map<ServiceId, Int>, stopAble: MutableList<CloudServer>) {
+    private suspend fun requestNodeServerStops(
+        template: ConfigurationTemplate,
+        templateStartedServers: Map<ServiceId, Int>,
+        stopAble: MutableList<CloudServer>
+    ) {
         val actions = MultiAsyncAction()
         templateStartedServers.forEach { (nodeId, count) ->
             if (template.minStartedServices >= count) return@forEach
             if (template.minStartedServicesPerNode in 1 until count) {
                 val countToStop = count - template.minStartedServicesPerNode
-                stopAble.filter { it.hostNodeId == nodeId }.take(countToStop).forEach {
-                    actions.add {
-                        serverFactory.queueStop(it.serviceId)
-                    }
+                stopAble.filter { server -> serverFactory.stopQueue.none { it == server.serviceId } }
+                    .filter { it.hostNodeId == nodeId }
+                    .take(countToStop).forEach {
+                        actions.add {
+                            serverFactory.queueStop(it.serviceId)
+                        }
                 }
                 return@forEach
             }
@@ -79,16 +85,21 @@ class CloudServerStopTask(
         actions.joinAll()
     }
 
-    private suspend fun requestGlobalServerStops(template: ConfigurationTemplate, started: Int, stopAble: MutableList<CloudServer>) {
+    private suspend fun requestGlobalServerStops(
+        template: ConfigurationTemplate,
+        started: Int,
+        stopAble: MutableList<CloudServer>
+    ) {
         if (template.minStartedServices !in 1 until started) return
         if (stopAble.isEmpty()) return
 
         val actions = MultiAsyncAction()
         val countToStop = started - template.minStartedServices
-        stopAble.take(countToStop).forEach {
-            actions.add {
-                serverFactory.queueStop(it.serviceId)
-            }
+        stopAble.filter { server -> serverFactory.stopQueue.none { it == server.serviceId  } }
+            .take(countToStop).forEach {
+                actions.add {
+                    serverFactory.queueStop(it.serviceId)
+                }
         }
         actions.joinAll()
     }
