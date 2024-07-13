@@ -154,14 +154,14 @@ class ServerProcess(
             val answer = response.withTimeOut(4.seconds).waitBlocking()
             if (answer != null) {
                 var seconds = 0
-                while (cloudServer!!.connected && seconds < SERVER_STOP_TIMEOUT) {
+                while (cloudServer != null && cloudServer?.connected == true && seconds < SERVER_STOP_TIMEOUT) {
                     withContext(Dispatchers.IO) {
                         Thread.sleep(1000)
                     }
                     seconds++
-                    cloudServer = serverRepository.getServer(serverId)!!
+                    cloudServer = serverRepository.getServer(serverId)
                 }
-                if (cloudServer!!.connected) {
+                if (cloudServer?.connected == true) {
                     logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stop request timed out. Stopping process manually!")
                 }
             } else {
