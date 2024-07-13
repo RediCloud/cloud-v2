@@ -65,6 +65,7 @@ class CloudServerStopTask(
     private suspend fun requestNodeServerStops(template: ConfigurationTemplate, templateStartedServers: Map<ServiceId, Int>, stopAble: MutableList<CloudServer>) {
         val actions = MultiAsyncAction()
         templateStartedServers.forEach { (nodeId, count) ->
+            if (template.minStartedServices >= count) return@forEach
             if (template.minStartedServicesPerNode in 1 until count) {
                 val countToStop = count - template.minStartedServicesPerNode
                 stopAble.filter { it.hostNodeId == nodeId }.take(countToStop).forEach {
