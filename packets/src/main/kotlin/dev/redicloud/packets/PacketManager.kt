@@ -44,7 +44,7 @@ class PacketManager(
 
         serviceTopic = databaseConnection.getCommunicationChannel(serviceId.toName())
         broadcastTopic = databaseConnection.getCommunicationChannel("broadcast")
-        ServiceType.values().forEach {
+        ServiceType.entries.forEach {
             typedTopics[it] = databaseConnection.getCommunicationChannel(it.name.lowercase())
         }
 
@@ -61,14 +61,11 @@ class PacketManager(
         return object : IChannelListener<PackedPacket> {
             override fun onMessage(channel: String, message: PackedPacket) {
                 val data = message.data
-                val p = registeredPackets.firstOrNull { it.qualifiedName == message.clazz }
-                if (p == null) {
-                    LOGGER.warning("Received packet in channel $channel but packet is not registered: ${message.clazz}")
-                    return
-                }
-                val packet = gson.fromJson(data, p.java)
+                val packetClazz = registeredPackets.firstOrNull { it.qualifiedName == message.clazz }
+                    ?: return kotlin.run { LOGGER.fine("Received packet with unknown class ${message.clazz} in channel $channel") }
+                val packet = gson.fromJson(data, packetClazz.java)
                 if (!packet.allowLocalReceiver && packet.sender == serviceId) return
-                LOGGER.finest("Received packet ${p.simpleName} in channel $channel")
+                LOGGER.finest("Received packet ${packetClazz.simpleName} in channel $channel")
                 packet.received(this@PacketManager)
                 packetsOfLast3Seconds.add(packet)
                 packetScope.launch {
