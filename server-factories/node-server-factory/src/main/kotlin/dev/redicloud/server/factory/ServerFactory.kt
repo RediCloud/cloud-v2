@@ -39,8 +39,10 @@ import dev.redicloud.server.factory.screens.ServerScreenSuggester
 import dev.redicloud.server.factory.utils.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.MultiAsyncAction
+import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.ioScope
 import dev.redicloud.utils.zipFile
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -194,6 +196,7 @@ class ServerFactory(
                     )
                 }
             } finally {
+                Thread.sleep(50)
                 idLock.unlock()
             }
             serverProcess.cloudServer = cloudServer!!

@@ -10,6 +10,7 @@ import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.utils.MultiAsyncAction
+import dev.redicloud.utils.pop
 
 class CloudServerStopTask(
     private val serviceId: ServiceId,
@@ -23,11 +24,14 @@ class CloudServerStopTask(
         private val logger = LogManager.logger(CloudServerStopTask::class)
     }
 
+    private val preQueuedStop = mutableListOf<ServiceId>()
+
     override suspend fun execute(): Boolean {
+        preQueuedStop.clear()
+
         processRequestedServerStops()
 
         val thisNode = nodeRepository.getNode(serviceId)!!
-
         if (!thisNode.master) return false
 
         val actions = MultiAsyncAction()
@@ -74,7 +78,8 @@ class CloudServerStopTask(
                 val countToStop = count - template.minStartedServicesPerNode
                 stopAble.filter { server -> serverFactory.stopQueue.none { it == server.serviceId } }
                     .filter { it.hostNodeId == nodeId }
-                    .take(countToStop).forEach {
+                    .pop(countToStop).forEach {
+                        preQueuedStop.add(it.serviceId)
                         actions.add {
                             serverFactory.queueStop(it.serviceId)
                         }
@@ -95,8 +100,10 @@ class CloudServerStopTask(
 
         val actions = MultiAsyncAction()
         val countToStop = started - template.minStartedServices
-        stopAble.filter { server -> serverFactory.stopQueue.none { it == server.serviceId  } }
-            .take(countToStop).forEach {
+        stopAble.filter { !preQueuedStop.contains(it.serviceId) }
+            .filter { !serverFactory.stopQueue.contains(it.serviceId) }
+            .pop(countToStop).forEach {
+                preQueuedStop.add(it.serviceId)
                 actions.add {
                     serverFactory.queueStop(it.serviceId)
                 }
