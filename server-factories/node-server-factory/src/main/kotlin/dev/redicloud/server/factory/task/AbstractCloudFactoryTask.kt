@@ -84,6 +84,7 @@ abstract class AbstractCloudFactoryTask(
                     templateStarts[queueInfo.nodeTarget!!] = count + 1
                 }
             }
+            nodeBasedStarts[template] = templateStarts
         }
         return nodeBasedStarts
     }
