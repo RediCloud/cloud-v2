@@ -13,3 +13,11 @@ fun <T> Collection<T>.takeFirstLastRandom(count: Int): List<T> {
     result.addAll(randomEntries)
     return result
 }
+
+fun <T> Collection<T>.pop(count: Int): List<T> {
+    if (isEmpty()) return emptyList()
+    val result = take(count)
+    val mutable = toMutableList()
+    mutable.removeAll(result)
+    return result
+}

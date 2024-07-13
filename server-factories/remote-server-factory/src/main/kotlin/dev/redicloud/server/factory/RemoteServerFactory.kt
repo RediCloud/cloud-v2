@@ -40,13 +40,21 @@ open class RemoteServerFactory(
         databaseConnection.getMutableList("server-factory:queue:unregister")
     var shutdown = false
 
-    override suspend fun queueStart(configurationTemplate: ICloudConfigurationTemplate, count: Int): List<UUID> {
+    override suspend fun queueStart(configurationTemplate: ICloudConfigurationTemplate, count: Int, targetNodeId: ServiceId?): List<UUID> {
         val info = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, null, queueTime = System.currentTimeMillis())
         val nodes = nodeRepository.getRegisteredNodes()
         info.calculateStartOrder(nodes, serverRepository)
         val ids = mutableListOf<UUID>()
         for (i in 1..count) {
-            val clone = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, null, info.failedStarts, info.nodeStartOrder, null, System.currentTimeMillis())
+            val clone = ServerQueueInformation(
+                UUID.randomUUID(),
+                configurationTemplate,
+                null,
+                info.failedStarts,
+                info.nodeStartOrder,
+                targetNodeId,
+                System.currentTimeMillis()
+            )
             startQueue.add(clone)
             ids.add(clone.uniqueId)
         }
@@ -54,7 +62,8 @@ open class RemoteServerFactory(
     }
 
     override suspend fun queueStart(serverId: ServiceId) {
-        val info = ServerQueueInformation(UUID.randomUUID(), null, serverId, queueTime = System.currentTimeMillis())
+        val server = serverRepository.getServer<CloudServer>(serverId) ?: throw IllegalArgumentException("Server with id $serverId not found")
+        val info = ServerQueueInformation(UUID.randomUUID(), server.configurationTemplate, serverId, queueTime = System.currentTimeMillis())
         val nodes = nodeRepository.getRegisteredNodes()
         info.calculateStartOrder(nodes, serverRepository)
         startQueue.add(info)

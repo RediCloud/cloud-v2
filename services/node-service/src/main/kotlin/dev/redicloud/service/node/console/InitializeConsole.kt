@@ -24,7 +24,7 @@ import java.util.*
 import java.util.logging.Filter
 import java.util.logging.Level
 
-class InitializeConsole() : Console(
+class InitializeConsole : Console(
     "unknown", null, logLevel = getLogLevelByProperty() ?: Level.SEVERE, uninstallAnsiOnClose = false
 ) {
 
@@ -164,8 +164,9 @@ class InitializeConsole() : Console(
         emptyPrompt()
         updatePrompt()
         sendHeader()
-        LogManager.rootLogger().filter = Filter { record
-            -> record.level != Level.INFO && !record.message.contains("org.redisson") && !record.message.contains("SLF4J:") }
+        LogManager.rootLogger().filter = Filter { record ->
+            record.level != Level.INFO && !record.message.contains("org.redisson") && !record.message.contains("SLF4J:")
+        }
         runBlocking {
             nodeConfiguration = checkNode()
             serviceId = nodeConfiguration!!.toServiceId()

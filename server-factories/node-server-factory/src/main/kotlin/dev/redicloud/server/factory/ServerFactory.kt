@@ -2,13 +2,17 @@ package dev.redicloud.server.factory
 
 import com.jcraft.jsch.ChannelSftp
 import com.jcraft.jsch.Session
-import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.api.events.impl.server.CloudServerDeleteEvent
 import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.events.impl.server.CloudServerTransferredEvent
 import dev.redicloud.api.server.factory.ICloudServerFactory
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
+import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import dev.redicloud.api.utils.STATIC_FOLDER
 import dev.redicloud.api.utils.TEMP_FILE_TRANSFER_FOLDER
+import dev.redicloud.api.utils.factory.ServerQueueInformation
 import dev.redicloud.api.utils.toUniversalPath
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.console.Console
@@ -17,6 +21,7 @@ import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.java.version.JavaVersionRepository
+import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.repository.server.CloudProxyServer
@@ -33,12 +38,11 @@ import dev.redicloud.server.factory.screens.ServerScreenParser
 import dev.redicloud.server.factory.screens.ServerScreenSuggester
 import dev.redicloud.server.factory.utils.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
-import dev.redicloud.utils.*
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.api.service.ServiceType
-import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
-import dev.redicloud.api.utils.factory.ServerQueueInformation
-import dev.redicloud.repository.node.CloudNode
+import dev.redicloud.utils.MultiAsyncAction
+import dev.redicloud.utils.defaultScope
+import dev.redicloud.utils.ioScope
+import dev.redicloud.utils.zipFile
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -64,6 +68,7 @@ class ServerFactory(
     companion object {
         private val logger = LogManager.logger(ServerFactory::class)
     }
+
     override val hostedProcesses: MutableList<ServerProcess> = mutableListOf()
     private val idLock = databaseConnection.getLock("server-factory:id-lock")
 
@@ -80,18 +85,11 @@ class ServerFactory(
                     serverRepository.getServer<CloudServer>(it.serviceId!!)?.configurationTemplate
                 }
                 configuration?.startPriority ?: 50
-            } else if (it.configurationTemplate != null) {
-                it.configurationTemplate!!.startPriority
             } else {
-                50
+                it.configurationTemplate.startPriority
             }
         }.thenByDescending { it.queueTime }).toList()
     }
-
-    fun queueStart(queueInformation: ServerQueueInformation) =
-        ioScope.launch {
-            startQueue.add(queueInformation)
-        }
 
     internal suspend fun deleteServer(serviceId: ServiceId): Boolean {
         if (!serviceId.type.isServer()) {
@@ -165,45 +163,51 @@ class ServerFactory(
                     }
                 }
             }
-
-            // get the next id for the server and create it
-            cloudServer = if (snapshotData.versionType.proxy) {
-                serverRepository.createServer(
-                    CloudProxyServer(
-                        serviceId,
-                        configurationTemplate,
-                        getIdForServer(configurationTemplate),
-                        thisNode.serviceId,
-                        ServiceSessions(),
-                        false,
-                        CloudServerState.PREPARING,
-                        -1,
-                        configurationTemplate.maxPlayers
+            idLock.lock()
+            try {
+                // get the next id for the server and create it
+                cloudServer = if (snapshotData.versionType.proxy) {
+                    serverRepository.createServer(
+                        CloudProxyServer(
+                            serviceId,
+                            configurationTemplate,
+                            getIdForServer(configurationTemplate),
+                            thisNode.serviceId,
+                            ServiceSessions(),
+                            false,
+                            CloudServerState.PREPARING,
+                            -1,
+                            configurationTemplate.maxPlayers
+                        )
                     )
-                )
-            }else {
-                serverRepository.createServer(
-                    CloudMinecraftServer(
-                        serviceId,
-                        configurationTemplate,
-                        getIdForServer(configurationTemplate),
-                        thisNode.serviceId,
-                        ServiceSessions(),
-                        false,
-                        CloudServerState.PREPARING,
-                        -1,
-                        configurationTemplate.maxPlayers
+                } else {
+                    serverRepository.createServer(
+                        CloudMinecraftServer(
+                            serviceId,
+                            configurationTemplate,
+                            getIdForServer(configurationTemplate),
+                            thisNode.serviceId,
+                            ServiceSessions(),
+                            false,
+                            CloudServerState.PREPARING,
+                            -1,
+                            configurationTemplate.maxPlayers
+                        )
                     )
-                )
+                }
+            } finally {
+                Thread.sleep(50)
+                idLock.unlock()
             }
-            serverProcess.cloudServer = cloudServer
+            serverProcess.cloudServer = cloudServer!!
 
             // Create server screen
             val serverScreen = ServerScreen(cloudServer.serviceId, cloudServer.name, this.console, this.packetManager)
             console.createScreen(serverScreen)
 
             if (!snapshotData.versionHandler.isPatched(snapshotData.version)
-                && snapshotData.versionHandler.isPatchVersion(snapshotData.version)) {
+                && snapshotData.versionHandler.isPatchVersion(snapshotData.version)
+            ) {
                 snapshotData.versionHandler.patch(snapshotData.version)
             }
 
@@ -238,7 +242,8 @@ class ServerFactory(
             // delete the server if it is created and not static
             try {
                 stopServer(serviceId, internalCall = true)
-            }catch (_: NullPointerException) {}
+            } catch (_: NullPointerException) {
+            }
             return UnknownErrorStartResult(e)
         }
     }
@@ -250,7 +255,7 @@ class ServerFactory(
     ) {
         if (!serverRepository.databaseConnection.connected) return
         val server = cachedServer ?: serverRepository.getServer(serviceId)
-            ?: throw NullPointerException("Server ${serviceId.toName()} not found")
+        ?: throw NullPointerException("Server ${serviceId.toName()} not found")
         if (!force && server.state != CloudServerState.STOPPED) {
             throw IllegalArgumentException("Server ${serviceId.toName()} is not stopped")
         }
@@ -275,8 +280,9 @@ class ServerFactory(
         logger.fine("Prepare static server ${serviceId.toName()}...")
         val server = serverRepository.getServer<CloudServer>(serviceId)
             ?: throw NullPointerException("Static server ${serviceId.toName()} not found")
-        val newConfigurationTemplate = configurationTemplateRepository.getTemplate(server.configurationTemplate.uniqueId)
-            ?: return UnknownConfigurationTemplateStartResult(server.configurationTemplate.uniqueId)
+        val newConfigurationTemplate =
+            configurationTemplateRepository.getTemplate(server.configurationTemplate.uniqueId)
+                ?: return UnknownConfigurationTemplateStartResult(server.configurationTemplate.uniqueId)
 
         val serverDataLoadResult = loadServerData(newConfigurationTemplate)
         if (serverDataLoadResult.second != null) return serverDataLoadResult.second!!
@@ -313,7 +319,8 @@ class ServerFactory(
             serverRepository.updateServer(server)
 
             if (!snapshotData.versionHandler.isPatched(snapshotData.version)
-                && snapshotData.versionHandler.isPatchVersion(snapshotData.version)) {
+                && snapshotData.versionHandler.isPatchVersion(snapshotData.version)
+            ) {
                 snapshotData.versionHandler.patch(snapshotData.version)
             }
 
@@ -351,8 +358,9 @@ class ServerFactory(
             hostedProcesses.remove(serverProcess)
             // delete the server if it is created and not static
             try {
-                stopServer(serviceId, true, true)
-            }catch (_: NullPointerException) {}
+                stopServer(serviceId, force = true, internalCall = true)
+            } catch (_: NullPointerException) {
+            }
             return UnknownErrorStartResult(e)
         }
     }
@@ -440,9 +448,9 @@ class ServerFactory(
             serverRepository.updateServer(server)
             eventManager.fireEvent(event)
             return true
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             logger.severe("§cError while transferring server ${serverId.toName()} to node ${nodeId.toName()}", e)
-        }finally {
+        } finally {
             channel?.disconnect()
             session?.disconnect()
         }
@@ -475,21 +483,17 @@ class ServerFactory(
 
     /**
      * Gets the next id for a server with the given configuration template
+     * To make sure that the id is unique, lock the idLock
      */
     private suspend fun getIdForServer(configuration: ICloudConfigurationTemplate): Int {
-        idLock.lock()
-        try {
-            val usedIds = serverRepository.getRegisteredServers()
-                .filter { it.configurationTemplate.name == configuration.name }
-                .map { it.id }
-            var i = 1
-            while (usedIds.contains(i)) {
-                i++
-            }
-            return i
-        }finally {
-            idLock.unlock()
+        val usedIds = serverRepository.getRegisteredServers()
+            .filter { it.configurationTemplate.name == configuration.name }
+            .map { it.id }
+        var i = 1
+        while (usedIds.contains(i)) {
+            i++
         }
+        return i
     }
 
     private suspend fun loadServerData(configurationTemplate: ICloudConfigurationTemplate): Pair<StartDataSnapshot, StartResult?> {
@@ -509,7 +513,10 @@ class ServerFactory(
         return snapshotData to null
     }
 
-    private suspend fun canStartOnNode(node: CloudNode, configurationTemplate: ICloudConfigurationTemplate): StartResult? {
+    private suspend fun canStartOnNode(
+        node: CloudNode,
+        configurationTemplate: ICloudConfigurationTemplate
+    ): StartResult? {
         // check if the node is allowed to start the server
         if (!configurationTemplate.nodeIds.contains(node.serviceId) && configurationTemplate.nodeIds.isNotEmpty()) {
             return NodeIsNotAllowedStartResult()

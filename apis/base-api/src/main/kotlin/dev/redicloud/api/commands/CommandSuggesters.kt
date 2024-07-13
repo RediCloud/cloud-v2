@@ -1,16 +1,16 @@
 package dev.redicloud.api.commands
 
 /**
- * A empty suggester that returns an empty array. Used as default argument suggester.
+ * An empty suggester that returns an empty array. Used as default argument suggester.
  */
-class EmptySuggester() : AbstractCommandSuggester() {
+class EmptySuggester : AbstractCommandSuggester() {
     override fun suggest(context: CommandContext): Array<String> = arrayOf()
 }
 
 /**
  * A suggester that returns all available memory values that are smaller than the total memory.
  */
-class MemorySuggester() : AbstractCommandSuggester() {
+class MemorySuggester : AbstractCommandSuggester() {
     private val memoryList = mutableListOf<Long>(
         524,
         1024,
@@ -35,14 +35,14 @@ class MemorySuggester() : AbstractCommandSuggester() {
 /**
  * A suggester that returns the two possible values for a boolean.
  */
-class BooleanSuggester() : AbstractCommandSuggester() {
+class BooleanSuggester : AbstractCommandSuggester() {
     override fun suggest(context: CommandContext): Array<String> = arrayOf("true", "false")
 }
 
 /**
  * A suggester that returns integers in a given range if provided. This is an example for annotated parameters.
  */
-class IntegerSuggester() : AbstractCommandSuggester() {
+class IntegerSuggester : AbstractCommandSuggester() {
     override fun suggest(context: CommandContext): Array<String> {
         val min = context.getOr(0, 1)
         val max = context.getOr(1, 10)

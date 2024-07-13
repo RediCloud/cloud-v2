@@ -2,32 +2,33 @@ package dev.redicloud.server.factory
 
 import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.server.factory.ICloudServerProcess
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.CloudServerState
-import dev.redicloud.service.base.packets.CloudServiceShutdownPacket
-import dev.redicloud.console.utils.toConsoleValue
+import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
+import dev.redicloud.api.utils.CLOUD_PATH
+import dev.redicloud.api.utils.LIB_FOLDER
+import dev.redicloud.api.utils.ProcessConfiguration
+import dev.redicloud.api.utils.ProcessHandler
+import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.console.utils.ScreenProcessHandler
+import dev.redicloud.console.utils.toConsoleValue
+import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.logging.getDefaultLogLevel
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
-import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.server.factory.screens.ServerScreen
 import dev.redicloud.server.factory.utils.*
+import dev.redicloud.service.base.packets.CloudServiceShutdownPacket
 import dev.redicloud.service.base.utils.ClusterConfiguration
-import dev.redicloud.api.utils.CLOUD_PATH
-import dev.redicloud.api.utils.LIB_FOLDER
-import dev.redicloud.api.utils.ProcessConfiguration
-import dev.redicloud.utils.findFreePort
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.api.service.ServiceType
-import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
-import dev.redicloud.api.utils.ProcessHandler
-import dev.redicloud.event.EventManager
 import dev.redicloud.utils.blockPort
+import dev.redicloud.utils.findFreePort
 import dev.redicloud.utils.freePort
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.seconds
 
 class ServerProcess(
@@ -99,7 +100,9 @@ class ServerProcess(
 
         if (stopped) return StoppedStartResult()
 
-        process = processBuilder.start()
+        process = withContext(Dispatchers.IO) {
+            processBuilder.start()
+        }
         // create handler and listen for exit
         processHandler = ScreenProcessHandler(process!!, serverScreen)
         processHandler!!.onExit { runBlocking { stop(internalCall =  true) } }
@@ -151,12 +154,14 @@ class ServerProcess(
             val answer = response.withTimeOut(4.seconds).waitBlocking()
             if (answer != null) {
                 var seconds = 0
-                while (cloudServer!!.connected && seconds < SERVER_STOP_TIMEOUT) {
-                    Thread.sleep(1000)
+                while (cloudServer != null && cloudServer?.connected == true && seconds < SERVER_STOP_TIMEOUT) {
+                    withContext(Dispatchers.IO) {
+                        Thread.sleep(1000)
+                    }
                     seconds++
-                    cloudServer = serverRepository.getServer(serverId)!!
+                    cloudServer = serverRepository.getServer(serverId)
                 }
-                if (cloudServer!!.connected) {
+                if (cloudServer?.connected == true) {
                     logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stop request timed out. Stopping process manually!")
                 }
             } else {
@@ -195,7 +200,7 @@ class ServerProcess(
                 ?: throw IllegalStateException("Java version ${snapshotData.javaVersion.id} not found")
         }
 
-        val list = mutableListOf<String>(
+        val list = mutableListOf(
             javaPath,
         )
 

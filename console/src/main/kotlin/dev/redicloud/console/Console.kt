@@ -468,7 +468,7 @@ open class Console(
         updatePrompt()
     }
 
-    override fun clearScreen() {
+    final override fun clearScreen() {
         TERMINAL.puts(InfoCmp.Capability.clear_screen)
         TERMINAL.flush()
         this.redisplay()

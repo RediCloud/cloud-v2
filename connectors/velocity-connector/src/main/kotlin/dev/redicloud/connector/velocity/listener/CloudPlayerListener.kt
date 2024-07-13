@@ -35,7 +35,7 @@ class CloudPlayerListener(
         val player = event.player
         if (playerRepository.existsPlayer(player.uniqueId)) {
             val cloudPlayer = playerRepository.getPlayer(player.uniqueId)!!
-            if (cloudPlayer.connected) {
+            if (cloudPlayer.connected && (cloudPlayer.serverId != null || (cloudPlayer.proxyId == serviceId && event.player.currentServer.isPresent))) {
                 event.player.disconnect(Component.text("You are already connected to the network!"))
                 return@runBlocking
             }
@@ -75,7 +75,6 @@ class CloudPlayerListener(
     @Subscribe
     fun onServerPreConnect(event: ServerPreConnectEvent) = runBlocking {
         if (!event.result.isAllowed) return@runBlocking
-        event.player
         val targetServer = if (event.originalServer.serverInfo.name == "rcfallback") {
             serverRepository.getFallback()
         }else serverRepository.getServer(event.originalServer.serverInfo.name, ServiceType.MINECRAFT_SERVER)

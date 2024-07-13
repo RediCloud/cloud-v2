@@ -39,8 +39,9 @@ class CloudPlayerListener(
                 }
                 if (playerRepository.existsPlayer(event.connection.uniqueId)) {
                     val cloudPlayer = playerRepository.getPlayer(event.connection.uniqueId)!!
-                    if (cloudPlayer.connected) {
-                        event.setCancelled(true)
+                    val connectedOnThisProxy = ProxyServer.getInstance().getPlayer(event.connection.uniqueId) != null
+                    if (cloudPlayer.connected && (cloudPlayer.serverId != null || (cloudPlayer.proxyId == serviceId && connectedOnThisProxy))) {
+                        event.isCancelled = true
                         event.setCancelReason(*ComponentBuilder().append("You are already connected!").create())
                         return@launch
                     }
@@ -85,11 +86,10 @@ class CloudPlayerListener(
     fun onServerPreConnect(event: ServerConnectEvent) = runBlocking {
         if (event.isCancelled) return@runBlocking
         val player = event.player
-        val targetServer = if (event.reason == ServerConnectEvent.Reason.JOIN_PROXY ||
-            player.server?.info?.name == "rcfallback") {
+        val targetServer = if (event.reason == ServerConnectEvent.Reason.JOIN_PROXY || player.server?.info?.name == "rcfallback") {
             serverRepository.getFallback()
         } else if (player.server != null) {
-            serverRepository.getServer(player.server.info.name, ServiceType.MINECRAFT_SERVER)
+            serverRepository.getServer(event.target.name, ServiceType.MINECRAFT_SERVER)
         }else serverRepository.getFallback()
         if (targetServer == null) {
             event.isCancelled = true
