@@ -8,6 +8,7 @@ import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.cache.tasks.InvalidCacheTask
 import dev.redicloud.api.packets.PacketListener
 import dev.redicloud.api.java.ICloudJavaVersionRepository
+import dev.redicloud.api.player.ICloudPlayerExecutor
 import dev.redicloud.api.player.ICloudPlayerRepository
 import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.api.service.server.ICloudServerRepository
@@ -18,7 +19,6 @@ import dev.redicloud.commands.api.PARSERS
 import dev.redicloud.commands.api.SUGGESTERS
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.database.DatabaseConnection
-import dev.redicloud.database.codec.GsonCodec
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
@@ -58,6 +58,12 @@ import dev.redicloud.api.version.IVersionRepository
 import dev.redicloud.console.Console
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.repository.server.version.serverversion.VersionRepository
+import dev.redicloud.service.base.packets.ping.ServicePingPacket
+import dev.redicloud.service.base.packets.ping.ServicePingResponse
+import dev.redicloud.service.base.packets.player.*
+import dev.redicloud.service.base.packets.service.CloudServiceShutdownPacket
+import dev.redicloud.service.base.packets.service.CloudServiceShutdownResponse
+import dev.redicloud.service.base.player.BasePlayerExecutor
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -93,6 +99,7 @@ abstract class BaseService(
     val taskManager: CloudTaskManager
     val clusterConfiguration: ClusterConfiguration
     abstract val moduleHandler: ModuleHandler
+    abstract val playerExecutor: BasePlayerExecutor
 
     init {
         runBlocking {
@@ -222,6 +229,15 @@ abstract class BaseService(
         packetManager.registerPacket(CloudServiceShutdownResponse::class)
         packetManager.registerPacket(ClusterMessagePacket::class)
         packetManager.registerPacket(ScreenCommandPacket::class)
+        packetManager.registerPacket(CloudPlayerBookPacket::class)
+        packetManager.registerPacket(CloudPlayerBookPacket::class)
+        packetManager.registerPacket(CloudPlayerConnectServerPacket::class)
+        packetManager.registerPacket(CloudPlayerKickPacket::class)
+        packetManager.registerPacket(CloudPlayerHeaderFooterPacket::class)
+        packetManager.registerPacket(CloudPlayerMessagePacket::class)
+        packetManager.registerPacket(CloudPlayerResourcePackPacket::class)
+        packetManager.registerPacket(CloudPlayerSoundPacket::class)
+        packetManager.registerPacket(CloudPlayerTitlePacket::class)
     }
 
     private fun registerPacketListeners() {
@@ -253,6 +269,7 @@ abstract class BaseService(
         }
         bind(ClusterConfiguration::class).toInstance(clusterConfiguration)
         bind(IDatabaseConnection::class).toInstance(databaseConnection)
+        bind(ICloudPlayerExecutor::class).toInstance(playerExecutor)
     }
 
 }
