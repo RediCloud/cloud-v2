@@ -27,4 +27,5 @@ dependencies {
 
     // Internal usage, ignore it! You don't need to add this
     compileOnly(project(":apis:base-api"))
+    compileOnly(BuildDependencies.KYORI_ADVENTURE_API)
 }

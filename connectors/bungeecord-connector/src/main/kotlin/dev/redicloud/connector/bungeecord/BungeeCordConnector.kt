@@ -8,7 +8,10 @@ import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.service.minecraft.ProxyServerService
 import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.connector.bungeecord.player.BungeeCordPlayerExecutor
+import dev.redicloud.service.base.player.BasePlayerExecutor
 import kotlinx.coroutines.runBlocking
+import net.kyori.adventure.platform.bungeecord.BungeeAudiences
 import net.md_5.bungee.api.ProxyServer
 import net.md_5.bungee.api.config.ServerInfo
 import net.md_5.bungee.api.plugin.Listener
@@ -22,6 +25,8 @@ class BungeeCordConnector(
     internal var bungeecordShuttingDown: Boolean = false
     override var playerProvider: IServerPlayerProvider = BungeeCordServerPlayerProvider()
     override val screenProvider: AbstractScreenProvider = BungeeCordScreenProvider(this.packetManager)
+    override val playerExecutor: BasePlayerExecutor = BungeeCordPlayerExecutor(this.plugin, this.playerRepository, this.serverRepository, this.packetManager, this.serviceId)
+
 
     init {
         initApi()

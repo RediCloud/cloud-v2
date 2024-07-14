@@ -42,6 +42,9 @@ dependencies {
 
     compileOnly(BuildDependencies.SPIGOT_API)
     shade(project(":connectors:bukkit-legacy"))
+
+    compileOnly(BuildDependencies.KYORI_ADVENTURE_API)
+    compileOnly(BuildDependencies.KYORI_ADVENTURE_BUKKIT)
 }
 
 val shadowModJar by tasks.creating(ShadowJar::class) {
