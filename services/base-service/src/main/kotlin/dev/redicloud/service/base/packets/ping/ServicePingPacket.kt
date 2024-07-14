@@ -1,4 +1,4 @@
-package dev.redicloud.service.base.packets
+package dev.redicloud.service.base.packets.ping
 
 import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.api.packets.IPacketManager
