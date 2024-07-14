@@ -4,8 +4,8 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.service.CachedServiceRepository
 import dev.redicloud.repository.service.ServiceRepository
-import dev.redicloud.service.base.packets.ServicePingPacket
-import dev.redicloud.service.base.packets.ServicePingResponse
+import dev.redicloud.service.base.packets.ping.ServicePingPacket
+import dev.redicloud.service.base.packets.ping.ServicePingResponse
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import kotlin.time.Duration.Companion.seconds

@@ -31,7 +31,9 @@ import dev.redicloud.service.node.tasks.metrics.MetricsTask
 import dev.redicloud.api.utils.TEMP_FOLDER
 import dev.redicloud.console.Console
 import dev.redicloud.modules.ModuleHandler
+import dev.redicloud.service.base.player.BasePlayerExecutor
 import dev.redicloud.service.node.listener.ConfigurationUpdateServerListener
+import dev.redicloud.service.node.player.NodePlayerExecutor
 import dev.redicloud.service.node.tasks.player.PlayerProxyConnectionStateTask
 import dev.redicloud.service.node.tasks.service.CloudInvalidServerUnregisterTask
 import dev.redicloud.updater.Updater
@@ -47,9 +49,10 @@ class NodeService(
     val firstStart: Boolean = false
 ) : BaseService(databaseConfiguration, databaseConnection, configuration.toServiceId()) {
 
-    final override val fileTemplateRepository: NodeFileTemplateRepository
-    final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
-    final override val moduleHandler: ModuleHandler
+    override val fileTemplateRepository: NodeFileTemplateRepository
+    override val serverVersionTypeRepository: CloudServerVersionTypeRepository
+    override val moduleHandler: ModuleHandler
+    override val playerExecutor: NodePlayerExecutor
     val console: NodeConsole
     val fileNodeRepository: FileNodeRepository
     val fileCluster: FileCluster
@@ -63,6 +66,7 @@ class NodeService(
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console, packetManager)
         serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress, console, clusterConfiguration, configurationTemplateRepository, eventManager, fileCluster)
         moduleHandler = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, null, databaseConnection)
+        playerExecutor = NodePlayerExecutor(this.playerRepository, serverRepository, packetManager, serviceId)
 
         runBlocking {
             registerDefaults()

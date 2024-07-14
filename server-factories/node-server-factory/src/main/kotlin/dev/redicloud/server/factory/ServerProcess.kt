@@ -21,7 +21,7 @@ import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.server.factory.screens.ServerScreen
 import dev.redicloud.server.factory.utils.*
-import dev.redicloud.service.base.packets.CloudServiceShutdownPacket
+import dev.redicloud.service.base.packets.service.CloudServiceShutdownPacket
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.blockPort
 import dev.redicloud.utils.findFreePort
