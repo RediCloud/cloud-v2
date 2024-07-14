@@ -15,4 +15,6 @@ dependencies {
     shade(BuildDependencies.NETTY_COMMON)
     shade(BuildDependencies.LOGBACK_CORE.withVersion("1.3.14"))
     shade(BuildDependencies.LOGBACK_CLASSIC.withVersion("1.3.14"))
+    dependency(BuildDependencies.KYORI_ADVENTURE_API)
+    dependency(BuildDependencies.KYORI_ADVENTURE_BUKKIT)
 }

@@ -37,6 +37,11 @@ object BuildDependencies {
     const val DOCKER_TEST_CONTAINERS = "org.testcontainers:testcontainers:1.19.7"
     const val BCPROV = "org.bouncycastle:bcprov-jdk15on:1.70"
     const val BCPKIX = "org.bouncycastle:bcpkix-jdk15on:1.70"
+
+    const val KYORI_ADVENTURE_API = "net.kyori:adventure-api:4.17.0"
+    const val KYORI_ADVENTURE_BUKKIT = "net.kyori:adventure-platform-bukkit:4.3.3"
+    const val KYORI_ADVENTURE_BUNGEECORD = "net.kyori:adventure-platform-bungeecord:4.3.3"
+    const val KYORI_ADVENTURE_SERIALIZER_GSON = "net.kyori:adventure-text-serializer-gson:4.17.0"
 }
 
 fun String.withVersion(version: String): String {

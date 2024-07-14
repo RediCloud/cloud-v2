@@ -29,4 +29,6 @@ dependencies {
 
     dependency(BuildDependencies.KOTLINX_COROUTINES)
     dependency(BuildDependencies.REDISSON)
+    compileOnly(BuildDependencies.KYORI_ADVENTURE_API)
+    dependency(BuildDependencies.KYORI_ADVENTURE_SERIALIZER_GSON)
 }
