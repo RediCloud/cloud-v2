@@ -2,9 +2,9 @@ package dev.redicloud.cluster.file.filter
 
 import dev.redicloud.cluster.file.FileNodeRepository
 import dev.redicloud.event.EventManager
-import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
-import dev.redicloud.api.events.impl.node.file.FileNodeConnectedEvent
-import dev.redicloud.api.events.impl.node.file.FileNodeDisconnectedEvent
+import dev.redicloud.api.events.internal.node.NodeSuspendedEvent
+import dev.redicloud.api.events.internal.node.file.FileNodeConnectedEvent
+import dev.redicloud.api.events.internal.node.file.FileNodeDisconnectedEvent
 import dev.redicloud.api.events.listen
 import kotlinx.coroutines.runBlocking
 

@@ -1,6 +1,6 @@
 package dev.redicloud.server.factory
 
-import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
+import dev.redicloud.api.events.internal.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.server.factory.ICloudServerProcess
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.CloudServerState

@@ -25,6 +25,6 @@ interface ICloudServerRepository {
 
     suspend fun <T : ICloudServer> getRegisteredServers(type: ServiceType): List<T>
 
-    suspend fun getFallback(vararg currentServerIds: ServiceId?): ICloudMinecraftServer?
+    suspend fun getFallback(vararg ignoredServerIds: ServiceId?): ICloudMinecraftServer?
 
 }

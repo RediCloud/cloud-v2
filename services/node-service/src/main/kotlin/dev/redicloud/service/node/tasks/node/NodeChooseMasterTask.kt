@@ -1,7 +1,7 @@
 package dev.redicloud.service.node.tasks.node
 
 import dev.redicloud.repository.node.NodeRepository
-import dev.redicloud.api.events.impl.node.NodeMasterChangedEvent
+import dev.redicloud.api.events.internal.node.NodeMasterChangedEvent
 import dev.redicloud.event.EventManager
 import dev.redicloud.tasks.CloudTask
 import dev.redicloud.api.service.ServiceId

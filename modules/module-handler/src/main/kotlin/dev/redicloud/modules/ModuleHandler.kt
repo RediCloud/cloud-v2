@@ -2,8 +2,8 @@ package dev.redicloud.modules
 
 import com.google.inject.Key
 import com.google.inject.name.Named
-import dev.redicloud.api.events.impl.module.ModuleHandlerInitializedEvent
-import dev.redicloud.api.events.impl.module.ModuleLifeCycleChangedEvent
+import dev.redicloud.api.events.internal.module.ModuleHandlerInitializedEvent
+import dev.redicloud.api.events.internal.module.ModuleLifeCycleChangedEvent
 import dev.redicloud.api.modules.*
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.utils.CloudInjectable

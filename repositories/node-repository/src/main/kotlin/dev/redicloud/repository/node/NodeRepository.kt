@@ -4,7 +4,7 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.CachedServiceRepository
-import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
+import dev.redicloud.api.events.internal.node.NodeDisconnectEvent
 import dev.redicloud.api.service.node.ICloudNode
 import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.repository.service.ServiceRepository

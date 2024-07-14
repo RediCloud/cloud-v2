@@ -1,6 +1,6 @@
 package dev.redicloud.service.minecraft.repositories
 
-import dev.redicloud.api.events.impl.server.CloudServerConnectedEvent
+import dev.redicloud.api.events.internal.server.CloudServerConnectedEvent
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.api.service.ServiceId
