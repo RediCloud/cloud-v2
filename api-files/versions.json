@@ -1,5 +1,29 @@
 [
   {
+    "uniqueId": "faff7fbf-b33f-efff-0000-000000000000",
+    "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
+    "projectName": "spigot",
+    "customDownloadUrl": "https://cdn.getbukkit.org/spigot/spigot-1.8.8-R0.1-SNAPSHOT-latest.jar",
+    "buildId": null,
+    "version": {
+      "name": "1.8.8",
+      "protocolId": 47,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
     "uniqueId": "feb5ffd3-cefa-5edc-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
@@ -1775,7 +1799,6 @@
     "defaultFiles": {},
     "fileEdits": {}
   },
-
   {
     "uniqueId": "bffcedab-dfda-faf5-0000-000000000000",
     "typeId": "6fa280a8-aaed-4ee7-99e4-c337b6985098",
