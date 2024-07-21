@@ -24,6 +24,30 @@
     "fileEdits": {}
   },
   {
+    "uniqueId": "ffe7efdd-dffd-6fbf-0000-000000000000",
+    "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
+    "projectName": "spigot",
+    "customDownloadUrl": "https://cdn.getbukkit.org/spigot/spigot-1.16.4.jar",
+    "buildId": null,
+    "version": {
+      "name": "1.16.4",
+      "protocolId": 754,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
     "uniqueId": "feb5ffd3-cefa-5edc-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
