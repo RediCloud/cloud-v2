@@ -24,6 +24,78 @@
     "fileEdits": {}
   },
   {
+    "uniqueId": "f77ffa0f-fe9e-b9dc-0000-000000000000",
+    "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
+    "projectName": "spigot",
+    "customDownloadUrl": "https://cdn.getbukkit.org/spigot/spigot-1.15.jar",
+    "buildId": null,
+    "version": {
+      "name": "1.15",
+      "protocolId": 573,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
+    "uniqueId": "3df3bdff-96ff-7ddd-0000-000000000000",
+    "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
+    "projectName": "spigot",
+    "customDownloadUrl": "https://cdn.getbukkit.org/spigot/spigot-1.15.1.jar",
+    "buildId": null,
+    "version": {
+      "name": "1.15.1",
+      "protocolId": 575,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
+    "uniqueId": "fed73cdd-a7fb-76fb-0000-000000000000",
+    "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
+    "projectName": "spigot",
+    "customDownloadUrl": "https://cdn.getbukkit.org/spigot/spigot-1.15.2.jar",
+    "buildId": null,
+    "version": {
+      "name": "1.15.2",
+      "protocolId": 578,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
     "uniqueId": "fc4b737f-fa63-4ed3-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
