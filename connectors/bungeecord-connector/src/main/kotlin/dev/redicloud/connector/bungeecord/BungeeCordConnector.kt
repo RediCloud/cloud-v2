@@ -1,5 +1,6 @@
 package dev.redicloud.connector.bungeecord
 
+import dev.redicloud.api.events.CloudEventListener
 import dev.redicloud.api.provider.IServerPlayerProvider
 import dev.redicloud.connector.bungeecord.listener.CloudPlayerListener
 import dev.redicloud.connector.bungeecord.provider.BungeeCordScreenProvider
@@ -8,6 +9,7 @@ import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.service.minecraft.ProxyServerService
 import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.connector.bungeecord.listener.CloudServerListener
 import dev.redicloud.connector.bungeecord.player.BungeeCordPlayerExecutor
 import dev.redicloud.service.base.player.BasePlayerExecutor
 import kotlinx.coroutines.runBlocking
@@ -101,6 +103,7 @@ class BungeeCordConnector(
             ProxyServer.getInstance().pluginManager.registerListener(plugin, listener)
         }
         register(CloudPlayerListener(this.serviceId, this.playerRepository, this.serverRepository, this.plugin))
+        CloudServerListener(this.serverRepository, this.nodeRepository, this.eventManager)
     }
 
     override fun getConnectorPlugin(): Plugin {

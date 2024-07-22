@@ -12,6 +12,7 @@ import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.service.minecraft.ProxyServerService
 import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.connector.velocity.listener.CloudServerListener
 import dev.redicloud.connector.velocity.player.VelocityPlayerExecutor
 import dev.redicloud.service.base.player.BasePlayerExecutor
 import kotlinx.coroutines.runBlocking
@@ -101,6 +102,7 @@ class VelocityConnector(
 
     private fun registerListeners() {
         this.proxyServer.eventManager.register(getConnectorPlugin(), CloudPlayerListener(this.serviceId, this.playerRepository, this.serverRepository, this.proxyServer))
+        CloudServerListener(this.proxyServer, this.serverRepository, this.nodeRepository, this.eventManager)
     }
 
     override fun getConnectorPlugin(): PluginContainer = this.proxyServer.pluginManager.getPlugin("redicloud-connector").get()
