@@ -24,6 +24,126 @@
     "fileEdits": {}
   },
   {
+    "uniqueId": "bdd5ebf8-6ef5-7eba-0000-000000000000",
+    "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
+    "projectName": "spigot",
+    "customDownloadUrl": "https://cdn.getbukkit.org/spigot/spigot-1.14.jar",
+    "buildId": null,
+    "version": {
+      "name": "1.14",
+      "protocolId": 477,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
+    "uniqueId": "f7ffebff-dbef-ffdf-0000-000000000000",
+    "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
+    "projectName": "spigot",
+    "customDownloadUrl": "https://cdn.getbukkit.org/spigot/spigot-1.14.1.jar",
+    "buildId": null,
+    "version": {
+      "name": "1.14.1",
+      "protocolId": 480,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
+    "uniqueId": "b9dbfdb5-b7bf-754e-0000-000000000000",
+    "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
+    "projectName": "spigot",
+    "customDownloadUrl": "https://cdn.getbukkit.org/spigot/spigot-1.14.2.jar",
+    "buildId": null,
+    "version": {
+      "name": "1.14.2",
+      "protocolId": 485,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
+    "uniqueId": "f5db1fab-bfee-7fbe-0000-000000000000",
+    "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
+    "projectName": "spigot",
+    "customDownloadUrl": "https://cdn.getbukkit.org/spigot/spigot-1.14.3.jar",
+    "buildId": null,
+    "version": {
+      "name": "1.14.3",
+      "protocolId": 490,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
+    "uniqueId": "d4b7bacd-7a7f-9d96-0000-000000000000",
+    "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
+    "projectName": "spigot",
+    "customDownloadUrl": "https://cdn.getbukkit.org/spigot/spigot-1.14.4.jar",
+    "buildId": null,
+    "version": {
+      "name": "1.14.4",
+      "protocolId": 498,
+      "versionTypes": [
+        "!VELOCITY"
+      ]
+    },
+    "javaVersionId": null,
+    "libPattern": null,
+    "patch": true,
+    "online": true,
+    "used": false,
+    "jvmArguments": [],
+    "environmentVariables": {},
+    "programParameters": [],
+    "defaultFiles": {},
+    "fileEdits": {}
+  },
+  {
     "uniqueId": "f77ffa0f-fe9e-b9dc-0000-000000000000",
     "typeId": "6760e0ea-455d-44bc-84c4-ec603125e61a",
     "projectName": "spigot",
