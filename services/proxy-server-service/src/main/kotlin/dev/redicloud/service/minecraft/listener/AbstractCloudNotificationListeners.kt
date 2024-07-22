@@ -8,6 +8,7 @@ import dev.redicloud.api.events.internal.node.NodeSuspendedEvent
 import dev.redicloud.api.events.internal.server.CloudServerStateChangeEvent
 import dev.redicloud.api.events.listen
 import dev.redicloud.api.service.ICloudService
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.api.service.server.ICloudServerRepository
@@ -106,7 +107,8 @@ abstract class AbstractCloudNotificationListeners(
                 }
 
                 CloudServerState.RUNNING -> {
-                    sendMessage("redicloud.server.state.running", "server ${server.name}") {
+                    val clickCommand = if (server.serviceId.type == ServiceType.MINECRAFT_SERVER) "/server ${server.name}" else null
+                    sendMessage("redicloud.server.state.running", clickCommand) {
                         it.append(
                             translateIdentifierName(server),
                             Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
