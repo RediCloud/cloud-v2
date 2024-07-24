@@ -114,7 +114,7 @@ abstract class AbstractCloudNotificationListeners(
                             Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
                             Component.text().content("● ").color(NamedTextColor.GREEN),
                             Component.text().content("(").color(NamedTextColor.DARK_GRAY),
-                            Component.text().content("running").color(NamedTextColor.WHITE),
+                            Component.text().content("started").color(NamedTextColor.WHITE),
                             Component.text().content(")").color(NamedTextColor.DARK_GRAY)
                         )
                     }

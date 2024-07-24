@@ -78,6 +78,12 @@ class ServerRepository(
         }
         if (impl.oldState != cloudServer.state) {
             eventManager.fireEvent(CloudServerStateChangeEvent(cloudServer.serviceId, cloudServer.state))
+            impl.oldState = cloudServer.state
+            when (cloudServer) {
+                is CloudMinecraftServer -> internalMinecraftServerRepository.updateService(cloudServer as CloudMinecraftServer)
+                is CloudProxyServer -> internalProxyServerRepository.updateService(cloudServer as CloudProxyServer)
+                else -> throw IllegalArgumentException("Unknown service type ${cloudServer.serviceId.type} (${cloudServer.serviceId.type})")
+            }
         }
         return cloudServer
     }
