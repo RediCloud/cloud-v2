@@ -1,20 +1,15 @@
 package dev.redicloud.repository.server
 
-import dev.redicloud.api.events.impl.server.CloudServerUnregisteredEvent
-import dev.redicloud.api.events.impl.template.configuration.ConfigurationTemplateUpdateEvent
+import dev.redicloud.api.events.internal.server.CloudServerUnregisteredEvent
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
-import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
-import dev.redicloud.api.events.impl.server.CloudServerRegisteredEvent
-import dev.redicloud.api.events.impl.server.CloudServerStateChangeEvent
-import dev.redicloud.api.events.listen
+import dev.redicloud.api.events.internal.server.CloudServerRegisteredEvent
+import dev.redicloud.api.events.internal.server.CloudServerStateChangeEvent
 import dev.redicloud.api.service.server.*
 import dev.redicloud.repository.service.ServiceRepository
-import dev.redicloud.utils.defaultScope
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
-import kotlinx.coroutines.launch
 
 class ServerRepository(
     databaseConnection: DatabaseConnection,
@@ -83,6 +78,12 @@ class ServerRepository(
         }
         if (impl.oldState != cloudServer.state) {
             eventManager.fireEvent(CloudServerStateChangeEvent(cloudServer.serviceId, cloudServer.state))
+            impl.oldState = cloudServer.state
+            when (cloudServer) {
+                is CloudMinecraftServer -> internalMinecraftServerRepository.updateService(cloudServer as CloudMinecraftServer)
+                is CloudProxyServer -> internalProxyServerRepository.updateService(cloudServer as CloudProxyServer)
+                else -> throw IllegalArgumentException("Unknown service type ${cloudServer.serviceId.type} (${cloudServer.serviceId.type})")
+            }
         }
         return cloudServer
     }
@@ -123,11 +124,11 @@ class ServerRepository(
     override suspend fun <T : ICloudServer> getRegisteredServers(type: ServiceType): List<T> =
         registeredServices.filter { it.type == type }.mapNotNull { getServer(it) }
 
-    override suspend fun getFallback(vararg currentServerIds: ServiceId?): CloudMinecraftServer? {
+    override suspend fun getFallback(vararg ignoredServerIds: ServiceId?): CloudMinecraftServer? {
         return getConnectedServers<CloudMinecraftServer>(ServiceType.MINECRAFT_SERVER)
             .asSequence()
             .filter { it.serviceId != serviceId }
-            .filter { !currentServerIds.toList().contains(it.serviceId) }
+            .filter { !ignoredServerIds.toList().contains(it.serviceId) }
             //TODO check permissions
             .filter { it.configurationTemplate.fallbackServer }
             .filter { it.state == CloudServerState.RUNNING }

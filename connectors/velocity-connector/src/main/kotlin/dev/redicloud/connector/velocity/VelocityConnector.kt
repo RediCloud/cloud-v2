@@ -12,18 +12,25 @@ import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.service.minecraft.ProxyServerService
 import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.connector.velocity.listener.CloudNotificationListeners
+import dev.redicloud.connector.velocity.player.VelocityPlayerExecutor
+import dev.redicloud.service.base.player.BasePlayerExecutor
+import dev.redicloud.service.minecraft.listener.AbstractCloudNotificationListeners
 import kotlinx.coroutines.runBlocking
 import java.net.InetSocketAddress
 
 class VelocityConnector(
     private val bootstrap: VelocityConnectorBootstrap,
-    val proxyServer: ProxyServer
+    private val proxyServer: ProxyServer
 ) : ProxyServerService<PluginContainer, ServerInfo>() {
 
 
     internal var velocityShuttingDown: Boolean = false
     override var playerProvider: IServerPlayerProvider = VelocityServerPlayerProvider(proxyServer)
     override val screenProvider: AbstractScreenProvider = VelocityScreenProvider(this.packetManager, this.proxyServer)
+    override val playerExecutor: BasePlayerExecutor = VelocityPlayerExecutor(this.proxyServer, this.playerRepository, this.serverRepository, this.packetManager, this.serviceId)
+    override val notificationListeners: AbstractCloudNotificationListeners = CloudNotificationListeners(this.proxyServer, this.serverRepository, this.nodeRepository, this.eventManager)
+
 
     init {
         initApi()

@@ -34,4 +34,6 @@ dependencies {
     shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
 
     compileOnly(BuildDependencies.BUNGEECORD_API)
+    dependency(BuildDependencies.KYORI_ADVENTURE_API)
+    dependency(BuildDependencies.KYORI_ADVENTURE_BUNGEECORD)
 }

@@ -21,4 +21,5 @@ dependencies {
     compileOnly(project(":services:base-service"))
     compileOnly(project(":services:minecraft-server-service"))
     compileOnly(project(":apis:connector-api"))
+    compileOnly(BuildDependencies.KYORI_ADVENTURE_API)
 }

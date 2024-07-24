@@ -113,9 +113,9 @@ class CloudServerVersionTypeRepository(
                     null
                 } else if (downloaded) {
                     canceled = true
-                    "Downloaded connector ${toConsoleValue(connectorFile.name)}§8: ${if (error) "§4✘" else "§2✓"}"
+                    "Downloaded connector ${toConsoleValue(serverVersionType.name)}§8: ${if (error) "§4✘" else "§2✓"}"
                 } else {
-                    "Downloading connector ${toConsoleValue(connectorFile.name)}§8: %tc%%loading%"
+                    "Downloading connector ${toConsoleValue(serverVersionType.name)}§8: %tc%%loading%"
                 }
             }
         } else {
@@ -124,7 +124,7 @@ class CloudServerVersionTypeRepository(
         console?.startAnimation(animation!!)
         LOGGER.log(
             if (console == null) Level.INFO else Level.FINE,
-            "Downloading connector for ${toConsoleValue(connectorFile.name)}..."
+            "Downloading connector for ${toConsoleValue(serverVersionType.name)}..."
         )
         if (lock) getLock(serverVersionType).lock()
         try {
@@ -138,10 +138,10 @@ class CloudServerVersionTypeRepository(
             }
             LOGGER.log(
                 if (console == null) Level.FINE else Level.INFO,
-                "Successfully downloaded connector for ${toConsoleValue(connectorFile.name)}!"
+                "Successfully downloaded connector for ${toConsoleValue(serverVersionType.name)}!"
             )
         } catch (e: Exception) {
-            LOGGER.severe("§cFailed to download connector for ${toConsoleValue(connectorFile.name, false)}!", e)
+            LOGGER.severe("§cFailed to download connector ${toConsoleValue(connectorFile.name, false)}!", e)
             error = true
         } finally {
             downloaded = true

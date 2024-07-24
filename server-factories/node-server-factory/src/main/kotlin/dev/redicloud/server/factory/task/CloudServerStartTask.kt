@@ -7,9 +7,9 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.server.factory.*
 import dev.redicloud.server.factory.utils.*
-import dev.redicloud.api.events.impl.node.NodeConnectEvent
-import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
-import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
+import dev.redicloud.api.events.internal.node.NodeConnectEvent
+import dev.redicloud.api.events.internal.node.NodeDisconnectEvent
+import dev.redicloud.api.events.internal.node.NodeSuspendedEvent
 import dev.redicloud.api.events.listen
 import dev.redicloud.api.utils.factory.*
 import dev.redicloud.tasks.CloudTask

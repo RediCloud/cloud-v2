@@ -2,8 +2,8 @@ package dev.redicloud.service.node
 
 import dev.redicloud.api.commands.ICommand
 import dev.redicloud.api.commands.ICommandManager
-import dev.redicloud.api.events.impl.module.ModuleHandlerInitializedEvent
-import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
+import dev.redicloud.api.events.internal.module.ModuleHandlerInitializedEvent
+import dev.redicloud.api.events.internal.server.CloudServerDisconnectedEvent
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.cluster.file.FileNodeRepository
 import dev.redicloud.database.DatabaseConnection
@@ -15,9 +15,9 @@ import dev.redicloud.repository.server.version.task.CloudServerVersionUpdateTask
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.server.factory.task.*
 import dev.redicloud.service.base.BaseService
-import dev.redicloud.api.events.impl.node.NodeConnectEvent
-import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
-import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
+import dev.redicloud.api.events.internal.node.NodeConnectEvent
+import dev.redicloud.api.events.internal.node.NodeDisconnectEvent
+import dev.redicloud.api.events.internal.node.NodeSuspendedEvent
 import dev.redicloud.api.service.server.factory.ICloudRemoteServerFactory
 import dev.redicloud.repository.server.version.handler.defaults.URLServerVersionHandler
 import dev.redicloud.service.node.console.NodeConsole
@@ -32,6 +32,7 @@ import dev.redicloud.api.utils.TEMP_FOLDER
 import dev.redicloud.console.Console
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.service.node.listener.ConfigurationUpdateServerListener
+import dev.redicloud.service.node.player.NodePlayerExecutor
 import dev.redicloud.service.node.tasks.player.PlayerProxyConnectionStateTask
 import dev.redicloud.service.node.tasks.service.CloudInvalidServerUnregisterTask
 import dev.redicloud.updater.Updater
@@ -47,9 +48,10 @@ class NodeService(
     val firstStart: Boolean = false
 ) : BaseService(databaseConfiguration, databaseConnection, configuration.toServiceId()) {
 
-    final override val fileTemplateRepository: NodeFileTemplateRepository
-    final override val serverVersionTypeRepository: CloudServerVersionTypeRepository
-    final override val moduleHandler: ModuleHandler
+    override val fileTemplateRepository: NodeFileTemplateRepository
+    override val serverVersionTypeRepository: CloudServerVersionTypeRepository
+    override val moduleHandler: ModuleHandler
+    override val playerExecutor: NodePlayerExecutor
     val console: NodeConsole
     val fileNodeRepository: FileNodeRepository
     val fileCluster: FileCluster
@@ -63,6 +65,7 @@ class NodeService(
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console, packetManager)
         serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress, console, clusterConfiguration, configurationTemplateRepository, eventManager, fileCluster)
         moduleHandler = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, null, databaseConnection)
+        playerExecutor = NodePlayerExecutor(this.playerRepository, serverRepository, packetManager, serviceId)
 
         runBlocking {
             registerDefaults()

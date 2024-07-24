@@ -1,6 +1,6 @@
 package dev.redicloud.repository.template.configuration
 
-import dev.redicloud.api.events.impl.template.configuration.ConfigurationTemplateUpdateEvent
+import dev.redicloud.api.events.internal.template.configuration.ConfigurationTemplateUpdateEvent
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplateRepository
 import dev.redicloud.database.DatabaseConnection

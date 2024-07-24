@@ -1,10 +1,10 @@
 package dev.redicloud.service.node.console
 
 import dev.redicloud.api.service.server.CloudServerState
-import dev.redicloud.api.events.impl.server.CloudServerConnectedEvent
-import dev.redicloud.api.events.impl.server.CloudServerDeleteEvent
-import dev.redicloud.api.events.impl.server.CloudServerDisconnectedEvent
-import dev.redicloud.api.events.impl.server.CloudServerTransferredEvent
+import dev.redicloud.api.events.internal.server.CloudServerConnectedEvent
+import dev.redicloud.api.events.internal.server.CloudServerDeleteEvent
+import dev.redicloud.api.events.internal.server.CloudServerDisconnectedEvent
+import dev.redicloud.api.events.internal.server.CloudServerTransferredEvent
 import dev.redicloud.console.Console
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.console.utils.Screen
@@ -14,11 +14,11 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.service.node.NodeConfiguration
-import dev.redicloud.api.events.impl.node.NodeConnectEvent
-import dev.redicloud.api.events.impl.node.NodeDisconnectEvent
-import dev.redicloud.api.events.impl.node.NodeMasterChangedEvent
-import dev.redicloud.api.events.impl.node.NodeSuspendedEvent
-import dev.redicloud.api.events.impl.server.CloudServerStateChangeEvent
+import dev.redicloud.api.events.internal.node.NodeConnectEvent
+import dev.redicloud.api.events.internal.node.NodeDisconnectEvent
+import dev.redicloud.api.events.internal.node.NodeMasterChangedEvent
+import dev.redicloud.api.events.internal.node.NodeSuspendedEvent
+import dev.redicloud.api.events.internal.server.CloudServerStateChangeEvent
 import dev.redicloud.api.events.listen
 import dev.redicloud.commands.api.PARSERS
 import kotlinx.coroutines.runBlocking

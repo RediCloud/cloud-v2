@@ -35,7 +35,7 @@ class CloudServerQueueCleanerTask(
         serverFactory.getStartList().forEach { info ->
             val name = if (info.serviceId != null) {
                 info.serviceId!!.toName()
-            } else info.configurationTemplate
+            } else info.configurationTemplate.name
 
             if (info.serviceId != null) {
                 val service = serverRepository.getServer<CloudServer>(info.serviceId!!)

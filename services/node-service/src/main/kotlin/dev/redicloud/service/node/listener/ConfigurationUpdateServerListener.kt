@@ -1,7 +1,6 @@
 package dev.redicloud.service.node.listener
 
-import dev.redicloud.api.events.IEventManager
-import dev.redicloud.api.events.impl.template.configuration.ConfigurationTemplateUpdateEvent
+import dev.redicloud.api.events.internal.template.configuration.ConfigurationTemplateUpdateEvent
 import dev.redicloud.api.events.listen
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.node.ICloudNodeRepository

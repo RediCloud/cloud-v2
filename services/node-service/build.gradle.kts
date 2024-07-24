@@ -40,6 +40,7 @@ dependencies {
     shade(project(":updater"))
     shade(BuildDependencies.LOGBACK_CLASSIC)
     shade(BuildDependencies.LOGBACK_CORE)
+    dependency(BuildDependencies.KYORI_ADVENTURE_API)
     compileOnly(BuildDependencies.JLINE_JANSI)
     compileOnly(BuildDependencies.JSCH)
 }
