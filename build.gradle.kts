@@ -1,3 +1,6 @@
+import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.kotlin.dsl.extra
 
 plugins {
@@ -18,6 +21,9 @@ allprojects {
 
     the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).configurationName.set("dependency")
     the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).doBootstrapShade.set(false)
+    extensions.configure(JavaPluginExtension::class.java) {
+        withSourcesJar()
+    }
 
     version = BuildDependencies.CLOUD_VERSION
 
@@ -81,17 +87,23 @@ allprojects {
 
 
     afterEvaluate {
-        fun findConfigurationValue(name: String): String? {
-            val envValue = System.getenv(name)
-            val propValue = findProperty(name)?.toString()
-            return envValue ?: propValue
+        fun findConfigurationValue(vararg names: String): String? {
+            names.forEach { name ->
+                val propValue = findProperty(name)?.toString()
+                if (!propValue.isNullOrBlank()) return propValue
+                val envValue = System.getenv(name)
+                if (!envValue.isNullOrBlank()) return envValue
+            }
+            return null
         }
         val publishToRepository = runCatching { extra.get("publishToRepository").toString().toBoolean() }.getOrNull() ?: return@afterEvaluate
         if (!publishToRepository) return@afterEvaluate
-        val repositoryUsername = project.findProperty("gpr.user") as String? ?: System.getenv("username")
-        val repositoryPassword = project.findProperty("gpr.key") as String? ?: System.getenv("token")
-        val repositoryUrl = project.findProperty("gpr.url") as String? ?: ("https://maven.pkg.github.com/" + System.getenv("repository"))
-        (extensions["publishing"] as PublishingExtension).apply {
+        val repositoryUsername = findConfigurationValue("gpr.user", "GPR_USER", "username", "GITHUB_ACTOR")
+        val repositoryPassword = findConfigurationValue("gpr.key", "GPR_KEY", "token", "GITHUB_TOKEN")
+        val repositoryUrl = findConfigurationValue("gpr.url", "GPR_URL")
+            ?: ("https://maven.pkg.github.com/" + findConfigurationValue("repository", "GITHUB_REPOSITORY"))
+
+        extensions.configure(PublishingExtension::class.java) {
             repositories {
                 maven {
                     name = "GitHubPackages"
@@ -101,9 +113,26 @@ allprojects {
                         password = repositoryPassword
                     }
                 }
-                publications {
-                    register<MavenPublication>("gpr") {
-                        from(components["java"])
+            }
+            publications {
+                register("gpr", MavenPublication::class.java) {
+                    from(components["java"])
+                    artifactId = project.name
+                    pom {
+                        name.set(project.name)
+                        description.set("RediCloud API module ${project.path}")
+                        url.set("https://github.com/RediCloud/cloud-v2")
+                        licenses {
+                            license {
+                                name.set("Apache License 2.0")
+                                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                            }
+                        }
+                        scm {
+                            url.set("https://github.com/RediCloud/cloud-v2")
+                            connection.set("scm:git:https://github.com/RediCloud/cloud-v2.git")
+                            developerConnection.set("scm:git:ssh://git@github.com/RediCloud/cloud-v2.git")
+                        }
                     }
                 }
             }

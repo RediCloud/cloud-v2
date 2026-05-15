@@ -94,7 +94,7 @@ abstract class AbstractCloudNotificationListeners(
             val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@runBlocking
             when (it.state) {
                 CloudServerState.PREPARING -> {
-                    sendMessage("redicloud.server.state.preparing") {
+                    sendMessage("redicloud.server.state", "redicloud.server.state.preparing") {
                         it.append(
                             translateIdentifierName(server),
                             Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
@@ -106,9 +106,23 @@ abstract class AbstractCloudNotificationListeners(
                     }
                 }
 
+                CloudServerState.STARTING -> {
+                    val clickCommand = if (server.serviceId.type == ServiceType.MINECRAFT_SERVER) "/server ${server.name}" else null
+                    sendMessage("redicloud.server.state", "redicloud.server.state.starting", clickCommand = clickCommand) {
+                        it.append(
+                            translateIdentifierName(server),
+                            Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
+                            Component.text().content("● ").color(NamedTextColor.GOLD),
+                            Component.text().content("(").color(NamedTextColor.DARK_GRAY),
+                            Component.text().content("starting").color(NamedTextColor.WHITE),
+                            Component.text().content(")").color(NamedTextColor.DARK_GRAY)
+                        )
+                    }
+                }
+
                 CloudServerState.RUNNING -> {
                     val clickCommand = if (server.serviceId.type == ServiceType.MINECRAFT_SERVER) "/server ${server.name}" else null
-                    sendMessage("redicloud.server.state.running", clickCommand) {
+                    sendMessage("redicloud.server.state", "redicloud.server.state.running", clickCommand = clickCommand) {
                         it.append(
                             translateIdentifierName(server),
                             Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
@@ -121,7 +135,7 @@ abstract class AbstractCloudNotificationListeners(
                 }
 
                 CloudServerState.STOPPING -> {
-                    sendMessage("redicloud.server.state.stopping") {
+                    sendMessage("redicloud.server.state", "redicloud.server.state.stopping") {
                         it.append(
                             translateIdentifierName(server),
                             Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
@@ -144,6 +158,6 @@ abstract class AbstractCloudNotificationListeners(
         ).build()
     }
 
-    abstract fun sendMessage(permission: String, clickCommand: String? = null, lambda: (TextComponent.Builder) -> Unit)
+    abstract fun sendMessage(vararg permissions: String, clickCommand: String? = null, lambda: (TextComponent.Builder) -> Unit)
 
 }

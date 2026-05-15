@@ -16,14 +16,14 @@ class CloudNotificationListeners(
     eventManager: IEventManager
 ) : AbstractCloudNotificationListeners(serverRepository, nodeRepository, eventManager) {
 
-    override fun sendMessage(permission: String, clickCommand: String?, lambda: (TextComponent.Builder) -> Unit) {
+    override fun sendMessage(vararg permissions: String, clickCommand: String?, lambda: (TextComponent.Builder) -> Unit) {
         val builder = Component.text()
         if (clickCommand != null) {
             builder.clickEvent(ClickEvent.runCommand(clickCommand))
         }
         lambda(builder)
         val bungeeCordComponent = BungeeComponentSerializer.get().serialize(builder.build())
-        ProxyServer.getInstance().players.filter { it.hasPermission(permission) }.forEach {
+        ProxyServer.getInstance().players.filter { player -> permissions.any { player.hasPermission(it) } }.forEach {
             it.sendMessage(*bungeeCordComponent)
         }
     }
