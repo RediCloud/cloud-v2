@@ -12,6 +12,24 @@ repositories {
     }
      */
 
+    /*
+    Maven users can use the same repository in pom.xml:
+
+    <repositories>
+        <repository>
+            <id>redicloud-github</id>
+            <url>https://maven.pkg.github.com/RediCloud/cloud-v2</url>
+        </repository>
+    </repositories>
+
+    <dependency>
+        <groupId>dev.redicloud.api</groupId>
+        <artifactId>base-api</artifactId>
+        <version>${redicloud.version}</version>
+        <scope>provided</scope>
+    </dependency>
+     */
+
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots")
 }
 
