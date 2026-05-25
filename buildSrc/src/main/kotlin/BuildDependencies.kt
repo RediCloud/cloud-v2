@@ -4,7 +4,7 @@ object BuildDependencies {
     const val CLOUD_LIBLOADER_BOOTSTRAP = "dev.redicloud.libloader:libloader-bootstrap:1.7.0"
 
     const val SPIGOT_API = "org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT"
-    const val BUNGEECORD_API = "net.md-5:bungeecord-api:1.20-R0.3-SNAPSHOT"
+    const val BUNGEECORD_API = "net.md-5:bungeecord-api:1.21-R0.4"
     const val VELOCITY_API = "com.velocitypowered:velocity-api:3.1.1"
     const val MINESTOM_API = "dev.hollowcube:minestom-ce:1619cedc53"
     const val MINESTOM_EXTENSIONS = "dev.hollowcube:minestom-ce-extensions:1.2.0"

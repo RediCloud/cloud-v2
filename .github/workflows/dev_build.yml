@@ -60,10 +60,6 @@ jobs:
         uses: gradle/gradle-build-action@v3
         with:
           arguments: publish
-        env:
-          token: ${{ github.token }}
-          username: Suqatri
-          repository: ${{ github.repository }}
 
       - name: Upload zip
         uses: actions/upload-artifact@v4

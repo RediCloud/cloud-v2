@@ -2,9 +2,17 @@ rootProject.name = "RediCloud-v2"
 
 pluginManagement {
     repositories {
+        val gprUser = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GITHUB_ACTOR")
+        val gprKey = providers.gradleProperty("gpr.key").orNull ?: System.getenv("GITHUB_TOKEN")
+
         gradlePluginPortal()
         mavenCentral()
-        maven("https://repo.redicloud.dev/releases/")
+        maven("https://maven.pkg.github.com/RediCloud/gradle-plugins") {
+            credentials {
+                username = gprUser
+                password = gprKey
+            }
+        }
     }
 }
 plugins {
