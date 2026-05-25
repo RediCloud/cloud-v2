@@ -22,8 +22,12 @@ allprojects {
     version = BuildDependencies.CLOUD_VERSION
 
     repositories {
-        maven("https://repo.redicloud.dev/releases")
-        maven("https://repo.redicloud.dev/snapshots")
+        maven("https://maven.pkg.github.com/RediCloud/gradle-plugins") {
+            credentials {
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
         maven("https://jitpack.io")
         mavenCentral()
     }
@@ -88,9 +92,11 @@ allprojects {
         }
         val publishToRepository = runCatching { extra.get("publishToRepository").toString().toBoolean() }.getOrNull() ?: return@afterEvaluate
         if (!publishToRepository) return@afterEvaluate
-        val repositoryUsername = project.findProperty("gpr.user") as String? ?: System.getenv("username")
-        val repositoryPassword = project.findProperty("gpr.key") as String? ?: System.getenv("token")
-        val repositoryUrl = project.findProperty("gpr.url") as String? ?: ("https://maven.pkg.github.com/" + System.getenv("repository"))
+        val repositoryUsername = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+        val repositoryPassword = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+        val repositorySlug = System.getenv("GITHUB_REPOSITORY") ?: System.getenv("repository")
+        val repositoryUrl = project.findProperty("gpr.url") as String?
+            ?: (repositorySlug?.let { "https://maven.pkg.github.com/$it" } ?: "https://maven.pkg.github.com/RediCloud/cloud-v2")
         (extensions["publishing"] as PublishingExtension).apply {
             repositories {
                 maven {
