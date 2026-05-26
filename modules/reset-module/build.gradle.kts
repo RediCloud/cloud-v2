@@ -7,5 +7,5 @@ dependencies {
     compileOnly(project(":utils"))
     compileOnly(project(":database"))
 
-    dependency(BuildDependencies.JAVALIN)
+    dependency(libs.javalin)
 }

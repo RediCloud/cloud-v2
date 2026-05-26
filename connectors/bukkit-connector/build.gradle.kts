@@ -2,9 +2,8 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    alias(libs.plugins.shadow)
 }
-apply(plugin = "com.github.johnrengelman.shadow")
 
 group = "dev.redicloud.connector"
 
@@ -35,19 +34,20 @@ dependencies {
     shade(project(":logging"))
     shade(project(":console"))
     shade(project(":tasks"))
-    shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
+    shade(libs.libloader.bootstrap)
     shade(project(":modules:module-handler"))
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":apis:connector-api"))
 
-    compileOnly(BuildDependencies.SPIGOT_API)
+    compileOnly(libs.spigot.api)
     shade(project(":connectors:bukkit-legacy"))
 
-    compileOnly(BuildDependencies.KYORI_ADVENTURE_API)
-    compileOnly(BuildDependencies.KYORI_ADVENTURE_BUKKIT)
+    compileOnly(libs.adventure.api)
+    compileOnly(libs.adventure.bukkit)
 }
 
 val shadowModJar by tasks.creating(ShadowJar::class) {
+    dependsOn(tasks.jar, tasks.named("shadowJar"))
     archiveFileName.set(Builds.getOutputFileName(project) + "-shadow.jar")
 
     relocate("io.netty", "dev.redicloud.netty")
@@ -55,7 +55,7 @@ val shadowModJar by tasks.creating(ShadowJar::class) {
     relocate("com.google.common", "dev.redicloud.common")
 
     from(provider { zipTree(tasks.jar.get().archiveFile) })
-    destinationDirectory.set(buildDir.resolve("shadowing"))
+    destinationDirectory.set(layout.buildDirectory.dir("shadowing"))
     archiveVersion.set("")
     manifest.from(provider {
         zipTree(tasks.jar.get().archiveFile)

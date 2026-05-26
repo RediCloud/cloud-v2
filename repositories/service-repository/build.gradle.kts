@@ -11,7 +11,7 @@ dependencies {
     compileOnly(project(":packets"))
     compileOnly(project(":logging"))
 
-    dependency(BuildDependencies.KOTLINX_COROUTINES)
+    dependency(libs.kotlinx.coroutines)
     compileOnly(project(":repositories:cache-repository"))
     compileOnly(project(":cache"))
 }

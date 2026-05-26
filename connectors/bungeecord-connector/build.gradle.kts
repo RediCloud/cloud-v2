@@ -31,9 +31,9 @@ dependencies {
     shade(project(":modules:module-handler"))
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":apis:connector-api"))
-    shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
+    shade(libs.libloader.bootstrap)
 
-    compileOnly(BuildDependencies.BUNGEECORD_API)
-    dependency(BuildDependencies.KYORI_ADVENTURE_API)
-    dependency(BuildDependencies.KYORI_ADVENTURE_BUNGEECORD)
+    compileOnly(libs.bungeecord.api)
+    dependency(libs.adventure.api)
+    dependency(libs.adventure.bungeecord)
 }

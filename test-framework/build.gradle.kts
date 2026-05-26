@@ -7,15 +7,15 @@ group = "dev.redicloud"
 val publishToRepository by extra(true)
 
 dependencies {
-    shade(BuildDependencies.LOGBACK_CORE)
-    shade(BuildDependencies.LOGBACK_CLASSIC)
-    shade(BuildDependencies.DOCKER_TEST_CONTAINERS)
+    shade(libs.logback.core)
+    shade(libs.logback.classic)
+    shade(libs.testcontainers)
     shade(project(":utils"))
     shade(project(":apis:base-api"))
 
-    testImplementation(BuildDependencies.LOGBACK_CORE)
-    testImplementation(BuildDependencies.LOGBACK_CLASSIC)
-    testImplementation(BuildDependencies.DOCKER_TEST_CONTAINERS)
+    testImplementation(libs.logback.core)
+    testImplementation(libs.logback.classic)
+    testImplementation(libs.testcontainers)
     testImplementation(project(":utils"))
     testImplementation(project(":apis:base-api"))
 }

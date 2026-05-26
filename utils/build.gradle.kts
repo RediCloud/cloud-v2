@@ -12,9 +12,9 @@ repositories {
 
 dependencies {
     compileOnly(project(":logging"))
-    dependency(BuildDependencies.GSON)
-    testRuntimeOnly(BuildDependencies.GSON)
-    implementation(BuildDependencies.GSON)
+    dependency(libs.gson)
+    testRuntimeOnly(libs.gson)
+    implementation(libs.gson)
 
     testImplementation(kotlin("test"))
 }

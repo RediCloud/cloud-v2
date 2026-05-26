@@ -27,8 +27,8 @@ dependencies {
     compileOnly(project(":logging"))
     compileOnly(project(":commands:command-api"))
 
-    dependency(BuildDependencies.KOTLINX_COROUTINES)
-    dependency(BuildDependencies.REDISSON)
-    compileOnly(BuildDependencies.KYORI_ADVENTURE_API)
-    dependency(BuildDependencies.KYORI_ADVENTURE_SERIALIZER_GSON)
+    dependency(libs.kotlinx.coroutines)
+    dependency(libs.redisson)
+    compileOnly(libs.adventure.api)
+    dependency(libs.adventure.serializer.gson)
 }

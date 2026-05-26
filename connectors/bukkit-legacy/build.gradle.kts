@@ -1,20 +1,20 @@
 group = "dev.redicloud.connector"
 
 dependencies {
-    shade(BuildDependencies.REDISSON) {
+    shade(libs.redisson) {
         exclude("com.fasterxml.jackson.core")
     }
-    shade(BuildDependencies.GSON)
-    shade(BuildDependencies.GUICE)
-    shade(BuildDependencies.NETTY_HANDLER)
-    shade(BuildDependencies.NETTY_RESOLVER_DNS)
-    shade(BuildDependencies.NETTY_RESOLVER)
-    shade(BuildDependencies.NETTY_TRANSPORT)
-    shade(BuildDependencies.NETTY_BUFFER)
-    shade(BuildDependencies.NETTY_CODEC)
-    shade(BuildDependencies.NETTY_COMMON)
-    shade(BuildDependencies.LOGBACK_CORE.withVersion("1.3.14"))
-    shade(BuildDependencies.LOGBACK_CLASSIC.withVersion("1.3.14"))
-    dependency(BuildDependencies.KYORI_ADVENTURE_API)
-    dependency(BuildDependencies.KYORI_ADVENTURE_BUKKIT)
+    shade(libs.gson)
+    shade(libs.guice)
+    shade(libs.netty.handler)
+    shade(libs.netty.resolver.dns)
+    shade(libs.netty.resolver)
+    shade(libs.netty.transport)
+    shade(libs.netty.buffer)
+    shade(libs.netty.codec)
+    shade(libs.netty.common)
+    shade(libs.logback.core.legacy)
+    shade(libs.logback.classic.legacy)
+    dependency(libs.adventure.api)
+    dependency(libs.adventure.bukkit)
 }

@@ -1,14 +1,8 @@
 group = "dev.redicloud.connector"
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
-}
-
 tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
+        compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 
     withType<JavaCompile> {
@@ -45,7 +39,7 @@ dependencies {
     shade(project(":modules:module-handler"))
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":apis:connector-api"))
-    shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
-    compileOnly(BuildDependencies.MINESTOM_API)
-    compileOnly(BuildDependencies.MINESTOM_EXTENSIONS)
+    shade(libs.libloader.bootstrap)
+    compileOnly(libs.minestom)
+    compileOnly(libs.minestom.extensions)
 }

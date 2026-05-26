@@ -12,5 +12,5 @@ dependencies {
     compileOnly(project(":packets"))
     compileOnly(project(":commands:command-api"))
     compileOnly(project(":database"))
-    compileOnly(BuildDependencies.KOTLIN_REFLECT)
+    compileOnly(libs.kotlin.reflect)
 }
