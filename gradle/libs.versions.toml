@@ -16,6 +16,7 @@ testcontainers = "1.21.3"
 bouncycastle = "1.84"
 adventure = "4.23.0"
 adventure-platform = "4.4.0"
+detekt = "1.23.8"
 shadow = "9.4.1"
 libloader = "1.8.0"
 spigot-api = "1.20.4-R0.1-SNAPSHOT"
@@ -65,5 +66,6 @@ minestom-extensions = { module = "dev.hollowcube:minestom-ce-extensions", versio
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
 libloader = { id = "dev.redicloud.libloader", version.ref = "libloader" }

@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+    paths-ignore:
+      - "docs/**"
+  pull_request:
+    branches: [dev, main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build and test
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          arguments: build
+
+      - name: Detekt
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          arguments: detekt

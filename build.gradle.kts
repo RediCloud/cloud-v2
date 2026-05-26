@@ -3,6 +3,7 @@ import org.gradle.kotlin.dsl.extra
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.libloader) apply false
+    alias(libs.plugins.detekt) apply false
 }
 
 val rootLibs = libs
@@ -10,6 +11,7 @@ val rootLibs = libs
 allprojects {
     apply(plugin = "kotlin")
     apply(plugin = "dev.redicloud.libloader")
+    apply(plugin = "io.gitlab.arturbosch.detekt")
     apply(plugin = "maven-publish")
 
     val dependency by configurations.creating

@@ -1,17 +1,19 @@
-name: Build and Publish (dev builds)
+name: Release
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - "dev"
-    paths-ignore:
-      - "docs/**"
+    inputs:
+      branch:
+        description: 'Branch to release from'
+        required: true
+        type: choice
+        options:
+          - dev
+          - main
 
 jobs:
-  build:
-
-    runs-on: self-hosted
+  release:
+    runs-on: ubuntu-latest
 
     permissions:
       contents: read
@@ -19,12 +21,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
       - uses: fwilhe2/setup-kotlin@main
 
-      - name: Make gradlewexecutable
+      - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Make deploy script executable0
+      - name: Make deploy script executable
         run: chmod +x ./deploy.kts
 
       - name: Set up JDK 21
@@ -38,12 +43,12 @@ jobs:
         env:
           build_number: ${{ github.run_number }}
           build_vcs_number: ${{ github.sha }}
-          branch: ${{ github.ref }}
+          branch: ${{ github.event.inputs.branch }}
 
       - name: Build with Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          arguments: build -x test 
+          arguments: build -x test
 
       - name: Copy files
         run: |
@@ -56,13 +61,14 @@ jobs:
           cp -r start-scripts/ export/
           cp modules/*/build/libs/*.jar export/modules/
           rm export/modules/*module-handler*.jar
+
       - name: Publish
         uses: gradle/actions/setup-gradle@v4
         with:
           arguments: publish
 
-      - name: Upload zip
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: redicloud
+          name: redicloud-${{ github.event.inputs.branch }}
           path: export/
