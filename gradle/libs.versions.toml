@@ -1,0 +1,69 @@
+[versions]
+kotlin = "2.3.20"
+kotlinx-coroutines = "1.10.2"
+ktor = "3.1.3"
+gson = "2.13.1"
+redisson = "3.47.0"
+guice = "7.0.0"
+sshd = "2.15.0"
+jsch = "0.2.23"
+logback = "1.5.18"
+logback-legacy = "1.3.15"
+javalin = "6.6.0"
+netty = "4.1.121.Final"
+jline = "3.29.0"
+testcontainers = "1.21.0"
+bouncycastle = "1.80"
+adventure = "4.21.0"
+adventure-platform = "4.3.4"
+shadow = "9.4.1"
+libloader = "1.8.0"
+spigot-api = "1.20.4-R0.1-SNAPSHOT"
+bungeecord-api = "1.21-R0.4"
+velocity-api = "3.1.1"
+minestom = "1619cedc53"
+minestom-extensions = "1.2.0"
+
+[libraries]
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+redisson = { module = "org.redisson:redisson", version.ref = "redisson" }
+guice = { module = "com.google.inject:guice", version.ref = "guice" }
+sshd = { module = "org.apache.sshd:sshd-sftp", version.ref = "sshd" }
+jsch = { module = "com.github.mwiede:jsch", version.ref = "jsch" }
+logback-core = { module = "ch.qos.logback:logback-core", version.ref = "logback" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+logback-core-legacy = { module = "ch.qos.logback:logback-core", version.ref = "logback-legacy" }
+logback-classic-legacy = { module = "ch.qos.logback:logback-classic", version.ref = "logback-legacy" }
+javalin = { module = "io.javalin:javalin", version.ref = "javalin" }
+netty-handler = { module = "io.netty:netty-handler", version.ref = "netty" }
+netty-resolver-dns = { module = "io.netty:netty-resolver-dns", version.ref = "netty" }
+netty-resolver = { module = "io.netty:netty-resolver", version.ref = "netty" }
+netty-transport = { module = "io.netty:netty-transport", version.ref = "netty" }
+netty-buffer = { module = "io.netty:netty-buffer", version.ref = "netty" }
+netty-codec = { module = "io.netty:netty-codec", version.ref = "netty" }
+netty-common = { module = "io.netty:netty-common", version.ref = "netty" }
+jline-console = { module = "org.jline:jline-console", version.ref = "jline" }
+jline-jansi = { module = "org.jline:jline-terminal-jansi", version.ref = "jline" }
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
+bcprov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
+bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle" }
+adventure-api = { module = "net.kyori:adventure-api", version.ref = "adventure" }
+adventure-bukkit = { module = "net.kyori:adventure-platform-bukkit", version.ref = "adventure-platform" }
+adventure-bungeecord = { module = "net.kyori:adventure-platform-bungeecord", version.ref = "adventure-platform" }
+adventure-serializer-gson = { module = "net.kyori:adventure-text-serializer-gson", version.ref = "adventure" }
+libloader-bootstrap = { module = "dev.redicloud.libloader:libloader-bootstrap", version.ref = "libloader" }
+spigot-api = { module = "org.spigotmc:spigot-api", version.ref = "spigot-api" }
+bungeecord-api = { module = "net.md-5:bungeecord-api", version.ref = "bungeecord-api" }
+velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "velocity-api" }
+minestom = { module = "dev.hollowcube:minestom-ce", version.ref = "minestom" }
+minestom-extensions = { module = "dev.hollowcube:minestom-ce-extensions", version.ref = "minestom-extensions" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
+libloader = { id = "dev.redicloud.libloader", version.ref = "libloader" }

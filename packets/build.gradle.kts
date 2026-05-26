@@ -10,5 +10,5 @@ dependencies {
     compileOnly(project(":utils"))
     compileOnly(project(":logging"))
 
-    dependency(BuildDependencies.GSON)
+    dependency(libs.gson)
 }

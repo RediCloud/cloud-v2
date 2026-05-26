@@ -35,8 +35,8 @@ dependencies {
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":modules:module-handler"))
     shade(project(":apis:connector-api"))
-    shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
+    shade(libs.libloader.bootstrap)
 
-    compileOnly(BuildDependencies.VELOCITY_API)
-    kapt(BuildDependencies.VELOCITY_API)
+    compileOnly(libs.velocity.api)
+    kapt(libs.velocity.api)
 }

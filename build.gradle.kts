@@ -1,9 +1,11 @@
 import org.gradle.kotlin.dsl.extra
 
 plugins {
-    kotlin("jvm") version "2.3.20"
-    id("dev.redicloud.libloader") version BuildDependencies.CLOUD_LIBLOADER_VERSION apply false
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.libloader) apply false
 }
+
+val rootLibs = libs
 
 allprojects {
     apply(plugin = "kotlin")
@@ -19,7 +21,7 @@ allprojects {
     the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).configurationName.set("dependency")
     the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).doBootstrapShade.set(false)
 
-    version = BuildDependencies.CLOUD_VERSION
+    version = property("cloudVersion") as String
 
     repositories {
         maven("https://maven.pkg.github.com/RediCloud/gradle-plugins") {
@@ -33,30 +35,30 @@ allprojects {
     }
 
     dependencies {
-        compileOnly(BuildDependencies.GSON)
-        dependency(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
-        dependency(BuildDependencies.KOTLINX_COROUTINES)
-        dependency(BuildDependencies.KTOR_CLIENT_CIO) {
+        compileOnly(rootLibs.gson)
+        dependency(rootLibs.libloader.bootstrap)
+        dependency(rootLibs.kotlinx.coroutines)
+        dependency(rootLibs.ktor.client.cio) {
             exclude(group = "org.slf4j", module = "slf4j-api")
         }
-        dependency(BuildDependencies.KTOR_CLIENT_CORE) {
+        dependency(rootLibs.ktor.client.core) {
             exclude(group = "org.slf4j", module = "slf4j-api")
         }
-        dependency(BuildDependencies.KOTLIN_REFLECT)
-        dependency(BuildDependencies.GUICE)
+        dependency(rootLibs.kotlin.reflect)
+        dependency(rootLibs.guice)
 
-        testImplementation(BuildDependencies.DOCKER_TEST_CONTAINERS)
-        testImplementation(BuildDependencies.GSON)
-        testImplementation(BuildDependencies.LOGBACK_CORE)
-        testImplementation(BuildDependencies.LOGBACK_CLASSIC)
+        testImplementation(rootLibs.testcontainers)
+        testImplementation(rootLibs.gson)
+        testImplementation(rootLibs.logback.core)
+        testImplementation(rootLibs.logback.classic)
         testImplementation(project(":utils"))
         testImplementation(project(":apis:base-api"))
         testImplementation(project(":database"))
         testImplementation(project(":services:node-service"))
-        testImplementation(BuildDependencies.KTOR_CLIENT_CIO) {
+        testImplementation(rootLibs.ktor.client.cio) {
             exclude(group = "org.slf4j", module = "slf4j-api")
         }
-        testImplementation(BuildDependencies.KTOR_CLIENT_CORE) {
+        testImplementation(rootLibs.ktor.client.core) {
             exclude(group = "org.slf4j", module = "slf4j-api")
         }
     }

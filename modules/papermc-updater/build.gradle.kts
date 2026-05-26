@@ -6,15 +6,15 @@ dependencies {
     compileOnly(project(":console"))
     compileOnly(project(":logging"))
     compileOnly(project(":utils"))
-    dependency(BuildDependencies.KTOR_CLIENT_CIO)
-    dependency(BuildDependencies.KTOR_CLIENT_CORE) {
+    dependency(libs.ktor.client.cio)
+    dependency(libs.ktor.client.core) {
             exclude(group = "org.slf4j", module = "slf4j-api")
         }
-    dependency(BuildDependencies.GSON)
+    dependency(libs.gson)
 
     testImplementation(kotlin("test"))
     testImplementation(project(":repositories:server-version-repository"))
     testImplementation(project(":utils"))
     testImplementation(project(":logging"))
-    testImplementation(BuildDependencies.KOTLINX_COROUTINES)
+    testImplementation(libs.kotlinx.coroutines)
 }

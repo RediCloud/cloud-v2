@@ -2,7 +2,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    id("com.gradleup.shadow") version "9.4.1"
+    alias(libs.plugins.shadow)
 }
 
 group = "dev.redicloud.connector"
@@ -34,16 +34,16 @@ dependencies {
     shade(project(":logging"))
     shade(project(":console"))
     shade(project(":tasks"))
-    shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
+    shade(libs.libloader.bootstrap)
     shade(project(":modules:module-handler"))
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":apis:connector-api"))
 
-    compileOnly(BuildDependencies.SPIGOT_API)
+    compileOnly(libs.spigot.api)
     shade(project(":connectors:bukkit-legacy"))
 
-    compileOnly(BuildDependencies.KYORI_ADVENTURE_API)
-    compileOnly(BuildDependencies.KYORI_ADVENTURE_BUKKIT)
+    compileOnly(libs.adventure.api)
+    compileOnly(libs.adventure.bukkit)
 }
 
 val shadowModJar by tasks.creating(ShadowJar::class) {

@@ -8,5 +8,5 @@ dependencies {
     compileOnly(project(":database"))
     compileOnly(project(":cache"))
     compileOnly(project(":packets"))
-    compileOnly(BuildDependencies.REDISSON)
+    compileOnly(libs.redisson)
 }

@@ -13,8 +13,8 @@ dependencies {
     compileOnly(project(":repositories:service-repository"))
     compileOnly(project(":repositories:cache-repository"))
 
-    dependency(BuildDependencies.SSHD)
-    dependency(BuildDependencies.JSCH)
-    dependency(BuildDependencies.BCPROV)
-    dependency(BuildDependencies.BCPKIX)
+    dependency(libs.sshd)
+    dependency(libs.jsch)
+    dependency(libs.bcprov)
+    dependency(libs.bcpkix)
 }

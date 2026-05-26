@@ -24,5 +24,5 @@ dependencies {
     compileOnly(project(":repositories:service-repository"))
     compileOnly(project(":server-factories:remote-server-factory"))
 
-    dependency(BuildDependencies.JSCH)
+    dependency(libs.jsch)
 }
