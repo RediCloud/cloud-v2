@@ -2,9 +2,8 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.gradleup.shadow") version "9.4.1"
 }
-apply(plugin = "com.github.johnrengelman.shadow")
 
 group = "dev.redicloud.connector"
 
@@ -55,7 +54,7 @@ val shadowModJar by tasks.creating(ShadowJar::class) {
     relocate("com.google.common", "dev.redicloud.common")
 
     from(provider { zipTree(tasks.jar.get().archiveFile) })
-    destinationDirectory.set(buildDir.resolve("shadowing"))
+    destinationDirectory.set(layout.buildDirectory.dir("shadowing"))
     archiveVersion.set("")
     manifest.from(provider {
         zipTree(tasks.jar.get().archiveFile)

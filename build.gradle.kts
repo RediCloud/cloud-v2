@@ -1,7 +1,7 @@
 import org.gradle.kotlin.dsl.extra
 
 plugins {
-    kotlin("jvm")
+    kotlin("jvm") version "2.3.20"
     id("dev.redicloud.libloader") version BuildDependencies.CLOUD_LIBLOADER_VERSION apply false
 }
 
@@ -63,7 +63,7 @@ allprojects {
 
     tasks {
         withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-            kotlinOptions.jvmTarget = "1.8"
+            compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
         }
 
         withType<JavaCompile> {
