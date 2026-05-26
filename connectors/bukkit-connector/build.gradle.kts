@@ -47,6 +47,7 @@ dependencies {
 }
 
 val shadowModJar by tasks.creating(ShadowJar::class) {
+    dependsOn(tasks.jar, tasks.named("shadowJar"))
     archiveFileName.set(Builds.getOutputFileName(project) + "-shadow.jar")
 
     relocate("io.netty", "dev.redicloud.netty")
