@@ -27,11 +27,11 @@ jobs:
       - name: Make deploy script executable0
         run: chmod +x ./deploy.kts
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'adopt'
+          java-version: '21'
+          distribution: 'temurin'
 
       - name: Kotlin deploy script
         run: kotlin ./deploy.kts
@@ -41,7 +41,7 @@ jobs:
           branch: ${{ github.ref }}
 
       - name: Build with Gradle
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/actions/setup-gradle@v4
         with:
           arguments: build -x test 
 
@@ -57,7 +57,7 @@ jobs:
           cp modules/*/build/libs/*.jar export/modules/
           rm export/modules/*module-handler*.jar
       - name: Publish
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/actions/setup-gradle@v4
         with:
           arguments: publish
 
