@@ -24,12 +24,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Build and test
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          arguments: build
+
+      - name: Build and test
+        run: ./gradlew build
 
       - name: Detekt
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          arguments: detekt
+        run: ./gradlew detekt

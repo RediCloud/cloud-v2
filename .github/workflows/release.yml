@@ -38,6 +38,9 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Kotlin deploy script
         run: kotlin ./deploy.kts
         env:
@@ -46,9 +49,7 @@ jobs:
           branch: ${{ github.event.inputs.branch }}
 
       - name: Build with Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          arguments: build -x test
+        run: ./gradlew build -x test
 
       - name: Copy files
         run: |
@@ -63,9 +64,7 @@ jobs:
           rm export/modules/*module-handler*.jar
 
       - name: Publish
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          arguments: publish
+        run: ./gradlew publish
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
