@@ -13,7 +13,5 @@ class CloudJKWrapper {
         fun <T> runBlocking(block: suspend () -> T): T = kotlinx.coroutines.runBlocking {
             block()
         }
-
     }
-
 }

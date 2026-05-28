@@ -1,6 +1,5 @@
 package dev.redicloud.utils
 
-
 fun <T> Collection<T>.takeFirstLastRandom(count: Int): List<T> {
     if (isEmpty()) return emptyList()
     val result = mutableListOf<T>()

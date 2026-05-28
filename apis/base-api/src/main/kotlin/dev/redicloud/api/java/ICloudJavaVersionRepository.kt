@@ -25,5 +25,4 @@ interface ICloudJavaVersionRepository {
     suspend fun getOnlineVersions(): List<ICloudJavaVersion>
 
     suspend fun detectInstalledVersions(): List<ICloudJavaVersion>
-
 }

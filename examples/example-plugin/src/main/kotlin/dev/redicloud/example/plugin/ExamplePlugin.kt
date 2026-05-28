@@ -46,5 +46,4 @@ class ExamplePlugin : JavaPlugin(), CloudInjectable {
         logger.info("Players: ${playerRepository.getConnectedPlayers().joinToString(", ") { it.name }}")
         logger.info("<================================>")
     }
-
 }

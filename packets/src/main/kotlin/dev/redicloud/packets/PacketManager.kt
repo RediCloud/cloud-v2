@@ -7,12 +7,12 @@ import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.api.packets.IPacketResponse
 import dev.redicloud.api.packets.PacketListener
-import dev.redicloud.database.DatabaseConnection
-import dev.redicloud.logging.LogManager
-import dev.redicloud.utils.gson.fixKotlinAnnotations
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.database.DatabaseConnection
+import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.coroutineExceptionHandler
+import dev.redicloud.utils.gson.fixKotlinAnnotations
 import kotlinx.coroutines.*
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
@@ -75,7 +75,7 @@ class PacketManager(
                 ArrayList(packetResponses).filterNotNull().forEach {
                     try {
                         it.handle(packet)
-                    }catch (e: Exception) {
+                    } catch (e: Exception) {
                         LOGGER.severe("Error while handling packet response ${packet::class.java.simpleName}!", e)
                     }
                 }
@@ -171,6 +171,4 @@ class PacketManager(
         databaseConnection.getCommunicationChannel(categoryName).publish(packedPacket)
         return PacketResponse(this, packet)
     }
-
-
 }

@@ -10,32 +10,31 @@ import dev.redicloud.api.database.grid.map.ISyncedMap
 import dev.redicloud.api.database.grid.map.ISyncedMutableMap
 import dev.redicloud.api.database.grid.map.cache.ISyncedCacheMap
 import dev.redicloud.api.database.grid.map.cache.ISyncedCacheMutableMap
-import dev.redicloud.database.codec.GsonCodec
-import dev.redicloud.database.config.DatabaseConfiguration
-import dev.redicloud.logging.LogManager
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.database.codec.GsonCodec
 import dev.redicloud.database.communication.CommunicationChannel
+import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.database.grid.bucket.DataBucket
 import dev.redicloud.database.grid.list.SyncedList
-import dev.redicloud.database.grid.map.SyncedMap
 import dev.redicloud.database.grid.list.SyncedMutableList
 import dev.redicloud.database.grid.lock.SyncedLock
+import dev.redicloud.database.grid.map.SyncedMap
 import dev.redicloud.database.grid.map.SyncedMutableMap
 import dev.redicloud.database.grid.map.cache.SyncedCacheMap
 import dev.redicloud.database.grid.map.cache.SyncedCacheMutableMap
+import dev.redicloud.logging.LogManager
 import org.redisson.Redisson
 import org.redisson.api.RedissonClient
-import org.redisson.client.codec.BaseCodec
 import org.redisson.config.Config
 
 class DatabaseConnection(
     config: DatabaseConfiguration,
     override val serviceId: ServiceId,
-    connectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 64/2 else 64,
-    connectionMinimumIdleSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 24/2 else 24,
-    subscriptionConnectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 50/2 else 50,
-    subscriptionConnectionMinimumIdleSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 2/2 else 2
+    connectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 64 / 2 else 64,
+    connectionMinimumIdleSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 24 / 2 else 24,
+    subscriptionConnectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 50 / 2 else 50,
+    subscriptionConnectionMinimumIdleSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 2 / 2 else 2
 ) : IDatabaseConnection {
 
     companion object {
@@ -52,7 +51,7 @@ class DatabaseConnection(
             val clusterConfig = redissonConfig.useClusterServers()
                 .setClientName(serviceId.toName())
                 .also {
-                    if(!config.password.isNullOrEmpty()) {
+                    if (!config.password.isNullOrEmpty()) {
                         it.setPassword(config.password)
                     }
                     if (!config.username.isNullOrEmpty()) {
@@ -67,7 +66,7 @@ class DatabaseConnection(
                 .setMasterConnectionMinimumIdleSize(connectionMinimumIdleSize)
                 .setSubscriptionConnectionPoolSize(subscriptionConnectionPoolSize)
                 .setSubscriptionConnectionMinimumIdleSize(subscriptionConnectionMinimumIdleSize)
-        }else {
+        } else {
             val singleConfig = redissonConfig.useSingleServer()
                 .setAddress(config.nodes.first().toConnectionString())
                 .setDatabase(config.databaseId)
@@ -77,7 +76,7 @@ class DatabaseConnection(
                 .setConnectionMinimumIdleSize(connectionMinimumIdleSize)
                 .setSubscriptionConnectionMinimumIdleSize(subscriptionConnectionMinimumIdleSize)
                 .also {
-                    if(!config.password.isNullOrEmpty()) {
+                    if (!config.password.isNullOrEmpty()) {
                         it.setPassword(config.password)
                     }
                 }
@@ -146,5 +145,4 @@ class DatabaseConnection(
 
     val client: RedissonClient
         get() = _client ?: throw IllegalStateException("Not connected to redis!")
-
 }

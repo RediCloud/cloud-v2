@@ -37,6 +37,4 @@ class BukkitPlayerExecutor(
     override fun executeKick(cloudPlayer: ICloudPlayer, reason: Component) {
         runBlocking { this@BukkitPlayerExecutor.kick(cloudPlayer, reason) }
     }
-
-
 }

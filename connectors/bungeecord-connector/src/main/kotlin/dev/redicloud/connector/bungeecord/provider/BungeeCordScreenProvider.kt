@@ -13,5 +13,4 @@ class BungeeCordScreenProvider(
         LogManager.rootLogger().info("Executing command: $command")
         ProxyServer.getInstance().pluginManager.dispatchCommand(ProxyServer.getInstance().console, command)
     }
-
 }

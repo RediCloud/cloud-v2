@@ -33,5 +33,4 @@ class PortUtilsTest : UtilTest() {
         assert(isPortFree(port))
         assertEquals(startPort + 1, port)
     }
-
 }

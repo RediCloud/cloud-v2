@@ -1,7 +1,5 @@
 package dev.redicloud.testing
 
-import dev.redicloud.libloader.boot.Bootstrap
-import dev.redicloud.libloader.boot.apply.impl.JarResourceLoader
 import dev.redicloud.testing.config.ClusterConfiguration
 import dev.redicloud.testing.config.NodeConfig
 import dev.redicloud.testing.redis.RedisInstance
@@ -55,13 +53,14 @@ class RediCloudCluster(
     }
 
     private fun shutdownHook() {
-        Runtime.getRuntime().addShutdownHook(Thread {
-            nodes.forEach {
-                if (!it.tempDirectory.deleteRecursively()) {
-                    it.tempDirectory.deleteOnExit()
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                nodes.forEach {
+                    if (!it.tempDirectory.deleteRecursively()) {
+                        it.tempDirectory.deleteOnExit()
+                    }
                 }
             }
-        })
+        )
     }
-
 }

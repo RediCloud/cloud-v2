@@ -9,14 +9,17 @@ import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogRecord
 
-class FallbackLogger(val javaLogger: java.util.logging.Logger) : Logger(javaLogger.name, javaLogger.resourceBundleName) {
+class FallbackLogger(val javaLogger: java.util.logging.Logger) : Logger(
+    javaLogger.name,
+    javaLogger.resourceBundleName
+) {
 
     override var logRecordDispatcher: LogRecordDispatcher? = null
 
     override fun log(record: LogRecord) {
         if (this.logRecordDispatcher == null) {
             javaLogger.log(record)
-        }else {
+        } else {
             logRecordDispatcher!!.dispatch(this, record)
         }
     }
@@ -73,6 +76,4 @@ class FallbackLogger(val javaLogger: java.util.logging.Logger) : Logger(javaLogg
     override fun setParent(parent: java.util.logging.Logger?) {
         javaLogger.parent = parent
     }
-
-
 }

@@ -32,7 +32,7 @@ class SlideConsoleAnimation(val lines: Array<String>, updateInterval: Long, cons
         lines.forEach {
             if (currentCount > stringSize) return true
             val currentLine = currentStrings[index] ?: ""
-            val current = it.getOrNull(stringSize-currentCount)?.toString() ?: ""
+            val current = it.getOrNull(stringSize - currentCount)?.toString() ?: ""
             currentStrings[index] = current + currentLine
             index++
         }
@@ -43,6 +43,4 @@ class SlideConsoleAnimation(val lines: Array<String>, updateInterval: Long, cons
         currentCount++
         return false
     }
-
-
 }

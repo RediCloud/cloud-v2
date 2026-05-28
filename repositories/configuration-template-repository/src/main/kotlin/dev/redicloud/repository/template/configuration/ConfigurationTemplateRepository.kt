@@ -1,13 +1,13 @@
 package dev.redicloud.repository.template.configuration
 
 import dev.redicloud.api.events.internal.template.configuration.ConfigurationTemplateUpdateEvent
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplateRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
-import dev.redicloud.api.service.ServiceType
 import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
 
@@ -23,7 +23,8 @@ class ConfigurationTemplateRepository(
     5.minutes,
     packetManager,
     ServiceType.NODE
-), ICloudConfigurationTemplateRepository {
+),
+    ICloudConfigurationTemplateRepository {
 
     override suspend fun getTemplate(uniqueId: UUID): ConfigurationTemplate? {
         return get("$uniqueId")
@@ -57,5 +58,4 @@ class ConfigurationTemplateRepository(
     override suspend fun getTemplates(): List<ConfigurationTemplate> {
         return getAll()
     }
-
 }

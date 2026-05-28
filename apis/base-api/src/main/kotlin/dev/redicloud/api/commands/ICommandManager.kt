@@ -43,5 +43,4 @@ interface ICommandManager<K : ICommandActor<*>> {
     fun unregisterParser(parser: ICommandArgumentParser<*>)
 
     fun getActor(identifier: Any): K
-
 }

@@ -13,7 +13,7 @@ data class ServiceId(val id: UUID, val type: ServiceType) {
             try {
                 val split = name.split("_")
                 return ServiceId(UUID.fromString(split[2]), ServiceType.valueOf(split[1].replace("-", "_").uppercase()))
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 throw IllegalArgumentException("Invalid service id: $name", e)
             }
         }

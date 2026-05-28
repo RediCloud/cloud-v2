@@ -1,9 +1,7 @@
 package dev.redicloud.module.rest
 
 import dev.redicloud.api.modules.IModuleStorage
-import dev.redicloud.api.modules.getList
 import dev.redicloud.api.modules.getListOrDefault
-import dev.redicloud.utils.EasyCache
 import dev.redicloud.utils.SingleCache
 import io.javalin.http.Context
 import io.javalin.http.Handler
@@ -44,5 +42,4 @@ abstract class RestHandler(
     }
 
     abstract suspend fun handleRequest(ctx: Context)
-
 }

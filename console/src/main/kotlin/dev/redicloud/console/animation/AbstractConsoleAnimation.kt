@@ -1,8 +1,6 @@
 package dev.redicloud.console.animation
 
 import dev.redicloud.console.Console
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import org.fusesource.jansi.Ansi
 import java.time.Instant
 
@@ -53,7 +51,7 @@ abstract class AbstractConsoleAnimation(
             first = true
             try {
                 Thread.sleep(this.updateInterval)
-            }catch (e: InterruptedException) {
+            } catch (e: InterruptedException) {
                 Thread.currentThread().interrupt()
                 break
             }
@@ -64,5 +62,4 @@ abstract class AbstractConsoleAnimation(
         this.finishHandlers.forEach { it() }
         this.finishHandlers.clear()
     }
-
 }

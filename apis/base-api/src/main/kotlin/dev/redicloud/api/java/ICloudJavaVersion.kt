@@ -17,5 +17,4 @@ interface ICloudJavaVersion {
     fun isLocated(serviceId: ServiceId): Boolean
 
     fun autoLocate(): File?
-
 }

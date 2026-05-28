@@ -14,12 +14,12 @@ import net.minestom.server.extensions.Extension
 class MinestomConnector(val extension: Extension) : MinecraftServerService<Extension>() {
 
     internal var minestomShuttingDown = false
-    override val screenProvider: AbstractScreenProvider
-        = MinestomScreenProvider(this.packetManager, this.extension)
-    override var playerProvider: IServerPlayerProvider
-        = MinestomServerPlayerProvider()
-    override val playerExecutor: BasePlayerExecutor
-        = MinestomPlayerExecutor(this.playerRepository, this.serverRepository, this.packetManager, this.serviceId)
+    override val screenProvider: AbstractScreenProvider =
+        MinestomScreenProvider(this.packetManager, this.extension)
+    override var playerProvider: IServerPlayerProvider =
+        MinestomServerPlayerProvider()
+    override val playerExecutor: BasePlayerExecutor =
+        MinestomPlayerExecutor(this.playerRepository, this.serverRepository, this.packetManager, this.serviceId)
 
     init {
         initApi()
@@ -41,5 +41,4 @@ class MinestomConnector(val extension: Extension) : MinecraftServerService<Exten
     }
 
     override fun getConnectorPlugin(): Extension = this.extension
-
 }

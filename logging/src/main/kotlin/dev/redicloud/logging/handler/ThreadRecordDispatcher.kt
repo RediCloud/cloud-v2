@@ -55,5 +55,4 @@ class ThreadRecordDispatcher(val logger: Logger) : Thread(DEFAULT_NAME.format(lo
             delay(100)
         }
     }
-
 }

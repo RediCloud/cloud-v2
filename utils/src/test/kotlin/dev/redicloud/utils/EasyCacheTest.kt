@@ -4,7 +4,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.seconds
 
-
 class EasyCacheTest : UtilTest() {
 
     @Test
@@ -38,5 +37,4 @@ class EasyCacheTest : UtilTest() {
         assertEquals("test", cache.get(), "Cache should return the value")
         assertEquals(1, getCount, "Cache should have been called once")
     }
-
 }

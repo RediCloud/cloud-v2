@@ -23,5 +23,4 @@ enum class CloudServerState(
             }
         }
     }
-
 }

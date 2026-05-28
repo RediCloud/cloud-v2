@@ -1,7 +1,5 @@
 package dev.redicloud.testing.config
 
-import java.io.File
-
 data class NodeConfig(
     var name: String,
     var startUpCommands: MutableList<String> = mutableListOf(),

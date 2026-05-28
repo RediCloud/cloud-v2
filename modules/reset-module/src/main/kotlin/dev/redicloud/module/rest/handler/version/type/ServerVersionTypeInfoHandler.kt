@@ -36,5 +36,4 @@ class ServerVersionTypeInfoHandler(
         val versions = serverVersionTypeRepository.getTypes()
         ctx.json(versions)
     }
-
 }

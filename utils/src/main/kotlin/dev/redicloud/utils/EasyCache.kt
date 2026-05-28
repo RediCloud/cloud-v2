@@ -37,10 +37,15 @@ open class EasyCache<T, I>(
     }
 
     fun isCacheValid(key: I?): Boolean {
-        return isCached(key) && System.currentTimeMillis() - (if (key != null) cachedValues[key]!!.first else singleCachedValue?.first
-            ?: -1) < cacheTime.inWholeMilliseconds
+        return isCached(key) && System.currentTimeMillis() - (
+            if (key != null) {
+                cachedValues[key]!!.first
+            } else {
+                singleCachedValue?.first
+                    ?: -1
+            }
+            ) < cacheTime.inWholeMilliseconds
     }
-
 }
 
 class SingleCache<I>(

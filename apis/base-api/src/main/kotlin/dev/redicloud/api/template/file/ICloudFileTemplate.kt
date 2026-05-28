@@ -12,5 +12,4 @@ interface ICloudFileTemplate {
     val displayName: String
     val folder: File
     val prefixFolder: File
-
 }

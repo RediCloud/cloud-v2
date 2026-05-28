@@ -13,5 +13,4 @@ class InstalledModulesSuggester(
             .map { it.id }
             .toTypedArray()
     }
-
 }

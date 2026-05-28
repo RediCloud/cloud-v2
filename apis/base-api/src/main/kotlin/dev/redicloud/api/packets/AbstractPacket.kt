@@ -28,5 +28,4 @@ abstract class AbstractPacket {
         if (manager == null) throw IllegalStateException("PacketManager is null!")
         manager!!.publish(packet.asAnswerOf(this), sender!!)
     }
-
 }

@@ -25,7 +25,6 @@ class RedisInstance(
         }
     }
 
-
     fun execute(vararg commands: String): String {
         if (!isRunning) {
             throw RuntimeException("Container is not running")
@@ -41,5 +40,4 @@ class RedisInstance(
             throw RuntimeException("Failed to execute command: $commands", e)
         }
     }
-
 }

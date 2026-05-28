@@ -17,5 +17,4 @@ class BukkitServerPlayerProvider() : IServerPlayerProvider {
     override fun getMaxPlayerCount(): Int {
         return Bukkit.getMaxPlayers()
     }
-
 }

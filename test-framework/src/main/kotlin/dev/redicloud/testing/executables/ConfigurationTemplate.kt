@@ -1,7 +1,5 @@
 package dev.redicloud.testing.executables
 
-import dev.redicloud.api.utils.TEMPLATE_FOLDER
-import dev.redicloud.api.utils.toUniversalPath
 import dev.redicloud.testing.RediCloudCluster
 import dev.redicloud.testing.RediCloudNode
 import dev.redicloud.testing.pre.PreServerVersion
@@ -86,12 +84,11 @@ data class ConfigurationTemplate(
 
     fun exposePortRange(hostStartPort: Int, range: Int) {
         for (i in 0 until range) {
-            exposedPorts["${hostStartPort+i}"] = startPort + i
+            exposedPorts["${hostStartPort + i}"] = startPort + i
         }
     }
 
     fun exposePort(containerPort: Int, hostPort: Int = containerPort) {
         exposedPorts["$hostPort"] = containerPort
     }
-
 }

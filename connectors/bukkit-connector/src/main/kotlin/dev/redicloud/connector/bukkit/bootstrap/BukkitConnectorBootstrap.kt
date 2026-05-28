@@ -22,7 +22,7 @@ class BukkitConnectorBootstrap : JavaPlugin() {
             configureLogger("org.redisson", Level.OFF)
             configureLogger("io.netty", Level.INFO)
             connector = BukkitConnector(this)
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
@@ -39,5 +39,4 @@ class BukkitConnectorBootstrap : JavaPlugin() {
         connector!!.bukkitShuttingDown = true
         connector!!.onDisable()
     }
-
 }

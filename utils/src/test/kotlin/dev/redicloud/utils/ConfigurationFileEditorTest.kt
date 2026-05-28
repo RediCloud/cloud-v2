@@ -4,7 +4,6 @@ import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 
-
 class ConfigurationFileEditorTest : UtilTest() {
 
     private val exampleYml = """
@@ -87,5 +86,4 @@ class ConfigurationFileEditorTest : UtilTest() {
             file.delete()
         }
     }
-
 }

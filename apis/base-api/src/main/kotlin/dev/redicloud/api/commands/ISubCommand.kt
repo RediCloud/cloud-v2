@@ -8,5 +8,4 @@ interface ISubCommand {
     val description: String
     val permission: String?
     val arguments: List<ICommandArgument>
-
 }

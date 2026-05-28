@@ -71,7 +71,7 @@ class ScreenProcessHandler(
                     screen.destroy()
                     stopped = true
                 }
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 if (!inputStream.isOpen() && !errorStream.isOpen()) return
                 LOGGER.severe("Error while reading process output", e)
             }
@@ -87,5 +87,4 @@ class ScreenProcessHandler(
     override fun onLine(block: (String) -> Unit) {
         lines.add(block)
     }
-
 }

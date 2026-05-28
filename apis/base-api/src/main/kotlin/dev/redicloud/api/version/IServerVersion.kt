@@ -11,5 +11,4 @@ interface IServerVersion : Comparable<IServerVersion> {
     val mcVersion: Boolean
 
     fun dynamicVersion(): IServerVersion
-
 }

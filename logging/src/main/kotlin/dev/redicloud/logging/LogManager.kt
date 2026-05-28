@@ -23,5 +23,4 @@ class LogManager private constructor() {
 
         fun logger(o: Any): Logger = LOGGER_FACTORY.getLogger(o.javaClass.name)
     }
-
 }

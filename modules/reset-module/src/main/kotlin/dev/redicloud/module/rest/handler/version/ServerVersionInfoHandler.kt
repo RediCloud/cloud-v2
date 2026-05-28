@@ -10,7 +10,7 @@ class ServerVersionInfoHandler(
     private val serverVersionRepository: ICloudServerVersionRepository,
     private val serverVersionFetcher: ServerVersionFetcher,
     config: IModuleStorage
-) : RestHandler(config, "/server-version/info/"){
+) : RestHandler(config, "/server-version/info/") {
 
     override suspend fun handleRequest(ctx: Context) {
         if (ctx.queryParam("id") != null) {
@@ -36,5 +36,4 @@ class ServerVersionInfoHandler(
         val versions = serverVersionRepository.getVersions()
         ctx.json(versions)
     }
-
 }

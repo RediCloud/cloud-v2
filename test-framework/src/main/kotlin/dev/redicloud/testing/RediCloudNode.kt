@@ -98,9 +98,10 @@ class RediCloudNode(
             )
         }
         val timeout = if (localLibs.exists()) 45.seconds else 5.minutes
-        waitingFor(Wait
-            .forLogMessage(".*${config.name}#$id: .*(connected to the cluster)*.", 1)
-            .withStartupTimeout(Duration.ofMillis(timeout.inWholeMilliseconds))
+        waitingFor(
+            Wait
+                .forLogMessage(".*${config.name}#$id: .*(connected to the cluster)*.", 1)
+                .withStartupTimeout(Duration.ofMillis(timeout.inWholeMilliseconds))
         )
         waitUntilContainerStarted()
         Thread.sleep(4000)
@@ -145,7 +146,9 @@ class RediCloudNode(
     }
 
     fun saveFileToTemplate(containerPath: String, destination: File, folder: Boolean): Boolean {
-        LOGGER.info("Saving folder $containerPath to ${destination.absolutePath} (${config.name}@${cluster.config.name})...")
+        LOGGER.info(
+            "Saving folder $containerPath to ${destination.absolutePath} (${config.name}@${cluster.config.name})..."
+        )
         if (!existsFolder(containerPath)) return false
         LOGGER.info("Copying folder from container to local folder...")
         var tempFolder = tempDirectory
@@ -190,5 +193,4 @@ class RediCloudNode(
             throw RuntimeException("Failed to execute command: $commands", e)
         }
     }
-
 }

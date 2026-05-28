@@ -28,5 +28,4 @@ interface ICloudFileTemplateRepository {
     suspend fun collectTemplates(vararg templates: ICloudFileTemplate): List<ICloudFileTemplate>
 
     suspend fun pushTemplates(serviceId: ServiceId)
-
 }

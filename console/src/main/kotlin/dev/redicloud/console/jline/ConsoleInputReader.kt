@@ -14,7 +14,7 @@ class ConsoleInputReader {
         while (input == null) {
             try {
                 delay(500)
-            }catch (e: InterruptedException) {
+            } catch (e: InterruptedException) {
                 LOGGER.severe("Interrupted while waiting for input", e)
                 return ""
             }

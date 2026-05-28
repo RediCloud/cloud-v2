@@ -98,12 +98,12 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
             val possibleSubCommands = command.subCommands
                 .filter { it.isThis(input, true) }
                 .filter { actor.hasPermission(it.permission) }
-                if (possibleSubCommands.size == 1) {
+            if (possibleSubCommands.size == 1) {
                 list.addAll(possibleSubCommands.first().suggester.preSuggest(CommandContext(input, emptyArray())))
                 possibleSubCommands.first().arguments
                     .filter { it.isThis(input, true) }
                     .map { it.subCommand.suggester.preSuggest(CommandContext(input, it.annotatedSuggesterParameter)) }
-            }else{
+            } else {
                 possibleSubCommands.forEach {
                     list.addAll(it.getSubPaths())
                 }
@@ -112,21 +112,24 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
 
         list.removeIf { it.isBlank() }
 
-        if ((list.isEmpty() || commandBase == null)
-            && possibleCommands.isNotEmpty()
-            && input.removeLastSpaces().split(" ").size == 1) {
+        if ((list.isEmpty() || commandBase == null) &&
+            possibleCommands.isNotEmpty() &&
+            input.removeLastSpaces().split(" ").size == 1
+        ) {
             list.clear()
-            list.addAll(possibleCommands
-                .filter { actor.hasPermission(it.permission) }
-                .filter { !isDisabled(it) }
-                .flatMap {
-                    if (input.isBlank()) {
-                        mutableListOf(it.name)
-                    }else {
-                        mutableListOf(it.name, *it.aliases)
+            list.addAll(
+                possibleCommands
+                    .filter { actor.hasPermission(it.permission) }
+                    .filter { !isDisabled(it) }
+                    .flatMap {
+                        if (input.isBlank()) {
+                            mutableListOf(it.name)
+                        } else {
+                            mutableListOf(it.name, *it.aliases)
+                        }
                     }
-                }
-                .filter { it.lowercase().startsWith(split[0].lowercase()) })
+                    .filter { it.lowercase().startsWith(split[0].lowercase()) }
+            )
             return list
         }
 
@@ -135,29 +138,35 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
         val currentIndex = if (input.endsWith(" ")) split.size else split.size - 1
         list.forEach { path ->
             val split1 = "$commandName $path".removeLastSpaces().split(" ")
-            if (split1.size < currentIndex+1) return@forEach
+            if (split1.size < currentIndex + 1) return@forEach
             val result = split1[currentIndex]
-            val inputR = if (currentIndex-1 == -1) commandName else if (parameters.size < currentIndex+1) "" else parameters[currentIndex]
-            if (commandBase != null
-                && listOf(commandBase.name, *commandBase.aliases).any { inputR.lowercase() == it.lowercase() }
-                && !result.isArgument()
-                && result.isNotBlank()
-                && split1.size > currentIndex + 1) {
+            val inputR = if (currentIndex - 1 == -1) commandName else if (parameters.size < currentIndex + 1) "" else parameters[currentIndex]
+            if (commandBase != null &&
+                listOf(commandBase.name, *commandBase.aliases).any { inputR.lowercase() == it.lowercase() } &&
+                !result.isArgument() &&
+                result.isNotBlank() &&
+                split1.size > currentIndex + 1
+            ) {
                 results.add(split1[currentIndex + 1])
-            }else if(inputR.isEmpty() && !result.isArgument()) {
+            } else if (inputR.isEmpty() && !result.isArgument()) {
                 results.add(split1[currentIndex])
-            }else if (!input.endsWith(" ")
-                && result.lowercase().startsWith(inputR.lowercase())
-                && !result.isArgument()
-                && result.isNotBlank()) {
+            } else if (!input.endsWith(" ") &&
+                result.lowercase().startsWith(inputR.lowercase()) &&
+                !result.isArgument() &&
+                result.isNotBlank()
+            ) {
                 results.add(result)
-            }else {
+            } else {
                 if (split1.size >= currentIndex + 2 && inputR != "") return@forEach
                 val nextResult = if (inputR == "") result else split1[currentIndex + 1]
                 if (nextResult.isArgument()) {
                     commandBase?.subCommands?.filter { it.isThis(input, true) }?.forEach { subCommand ->
                         subCommand.arguments.filter { it.isThis(input, true) }.forEach { argument ->
-                            results.addAll(argument.suggester.preSuggest(CommandContext(input, argument.annotatedSuggesterParameter)))
+                            results.addAll(
+                                argument.suggester.preSuggest(
+                                    CommandContext(input, argument.annotatedSuggesterParameter)
+                                )
+                            )
                         }
                     }
                 }
@@ -174,20 +183,29 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
         val parameters = split.drop(1)
         val command = getCommand(commandName)
             ?: return helpFormatter.formatHelp(actor, CommandContext(input, emptyArray()))
-        if (isDisabled(command)) return CommandResponse(CommandResponseType.DISABLED, "Command '$commandName' is disabled")
+        if (isDisabled(
+                command
+            )
+        ) {
+            return CommandResponse(CommandResponseType.DISABLED, "Command '$commandName' is disabled")
+        }
 
-        if (!actor.hasPermission(command.permission)) return CommandResponse(
-            CommandResponseType.PERMISSION,
-            "You do not have permission to execute this command! (${command.permission})"
-        )
+        if (!actor.hasPermission(command.permission)) {
+            return CommandResponse(
+                CommandResponseType.PERMISSION,
+                "You do not have permission to execute this command! (${command.permission})"
+            )
+        }
 
         val subCommand = command.subCommands
             .firstOrNull { it.isThis(input, false) } ?: return helpFormatter.formatHelp(actor, CommandContext(input, emptyArray()))
 
-        if (!actor.hasPermission(subCommand.permission)) return CommandResponse(
-            CommandResponseType.PERMISSION,
-            "You do not have permission to execute this command! (${subCommand.permission})"
-        )
+        if (!actor.hasPermission(subCommand.permission)) {
+            return CommandResponse(
+                CommandResponseType.PERMISSION,
+                "You do not have permission to execute this command! (${subCommand.permission})"
+            )
+        }
 
         val optimalPath = subCommand.parseToOptimalPath(input)!!
         val argumentIndexes = mutableListOf<Int>()
@@ -222,7 +240,7 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
             commandBase.subCommands.forEach {
                 if (it.isThis("${commandBase.name} $currentInput", true)) {
                     results.add(it)
-                }else {
+                } else {
                     results.remove(it)
                 }
             }
@@ -241,12 +259,13 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
             is CommandBase -> command
             is IRegisteredCommand -> registeredCommands.firstOrNull { it as IRegisteredCommand == command }
             is ICommand -> registeredCommands.firstOrNull { it.commandImpl == command }
-            else -> throw IllegalArgumentException("Command must be a CommandBase, IRegisteredCommand or ICommand (got ${command::class.simpleName})")
+            else -> throw IllegalArgumentException(
+                "Command must be a CommandBase, IRegisteredCommand or ICommand (got ${command::class.simpleName})"
+            )
         }
     }
 
     override fun getCommands(): List<IRegisteredCommand> {
         return registeredCommands
     }
-
 }

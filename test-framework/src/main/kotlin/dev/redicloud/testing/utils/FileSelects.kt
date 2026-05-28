@@ -46,22 +46,22 @@ data class ProjectFileSelect(
                         true
                     }
                 }.maxByOrNull { it.lastModified() }
-                FileSelectStrategy.OLDEST_MODIFIED -> files
-                    .filter {
-                        if (fileName != null) {
-                            it.name == fileName
-                        } else {
-                            true
-                        }
-                    }.filter {
-                        if (shadowJar) {
-                            it.name.contains("all")
-                        } else {
-                            true
-                        }
-                    }.minByOrNull { it.lastModified() }
+                FileSelectStrategy.OLDEST_MODIFIED ->
+                    files
+                        .filter {
+                            if (fileName != null) {
+                                it.name == fileName
+                            } else {
+                                true
+                            }
+                        }.filter {
+                            if (shadowJar) {
+                                it.name.contains("all")
+                            } else {
+                                true
+                            }
+                        }.minByOrNull { it.lastModified() }
             } ?: throw IllegalArgumentException("Project $projectName does not have any files")
             return file
         }
-
 }

@@ -45,5 +45,4 @@ class History<T : Any>(val historySize: Int) {
     fun sorted(): SortedMap<Long, T> {
         return map.toSortedMap { o1, o2 -> o1.compareTo(o2) }
     }
-
 }

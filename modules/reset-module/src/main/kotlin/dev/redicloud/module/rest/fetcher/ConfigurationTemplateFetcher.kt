@@ -23,5 +23,4 @@ class ConfigurationTemplateFetcher(
             return null
         }
     }
-
 }

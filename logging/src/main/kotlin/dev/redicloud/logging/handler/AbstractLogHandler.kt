@@ -7,5 +7,4 @@ abstract class AbstractLogHandler : Handler() {
     override fun flush() {}
 
     override fun close() {}
-
 }

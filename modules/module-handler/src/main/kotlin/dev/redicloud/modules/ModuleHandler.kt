@@ -54,7 +54,7 @@ class ModuleHandler(
                 ModuleWebRepository(url, this).also {
                     repositories.add(it)
                 }
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 logger.severe("Failed to add module repository $url!", e)
             }
         }
@@ -80,13 +80,21 @@ class ModuleHandler(
                 try {
                     val targetRepositories = if (description.cachedFile != null) {
                         repositories.filter { it.isUpdateAvailable(description.id) }
-                    }else emptyList()
+                    } else {
+                        emptyList()
+                    }
 
                     if (targetRepositories.isEmpty()) return@forEach
 
                     if (targetRepositories.size > 2) {
-                        logger.warning("§cFound more than 2 repositories that have an update for module ${description.id}!")
-                        targetRepositories.forEach { logger.warning("§c - ${it.repoUrl} | ${it.getLatestVersion(description.id)}") }
+                        logger.warning(
+                            "§cFound more than 2 repositories that have an update for module ${description.id}!"
+                        )
+                        targetRepositories.forEach {
+                            logger.warning(
+                                "§c - ${it.repoUrl} | ${it.getLatestVersion(description.id)}"
+                            )
+                        }
                         return@forEach
                     }
 
@@ -103,7 +111,7 @@ class ModuleHandler(
                         return@forEach
                     }
                     if (loadModules) loadModule(file)
-                }catch (e: Exception) {
+                } catch (e: Exception) {
                     logger.severe("Failed to update module ${description.id}!", e)
                 }
             }
@@ -152,7 +160,7 @@ class ModuleHandler(
             logger.warning("§cModule with id $moduleId not found!")
             return
         }
-        logger.info("Installing module %hc%${info.id} §8(%tc%${latest}§8)%tc%...")
+        logger.info("Installing module %hc%${info.id} §8(%tc%$latest§8)%tc%...")
         try {
             val file = repository.download(info.id, latest)
             if (file.length() < 1000) {
@@ -162,10 +170,10 @@ class ModuleHandler(
             logger.info("Module with id %hc%$moduleId%tc% installed!")
             if (load) {
                 loadModule(file)
-            }else {
+            } else {
                 logger.info("Use 'module load $moduleId' to load the module!")
             }
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             logger.warning("§cFailed to install module with id $moduleId!")
             return
         }
@@ -187,7 +195,9 @@ class ModuleHandler(
             if (moduleInfo == null) {
                 logger.warning("Found jar file without module.json: ${it.name}")
                 return@filter false
-            }else true
+            } else {
+                true
+            }
         }?.forEach {
             moduleFiles.add(it)
             loadDescription(it)
@@ -228,7 +238,11 @@ class ModuleHandler(
 
         val identifierTypes = mutableListOf<String>()
         identifierTypes.add(serviceId.type.name.lowercase())
-        if (serverVersionType != null) identifierTypes.add("${serviceId.type.name}_${serverVersionType.name}".lowercase())
+        if (serverVersionType != null) {
+            identifierTypes.add(
+                "${serviceId.type.name}_${serverVersionType.name}".lowercase()
+            )
+        }
 
         val matchedMain: String = description.mainClasses
             .filter { identifierTypes.contains(it.key.lowercase()) }
@@ -239,7 +253,7 @@ class ModuleHandler(
 
         try {
             Bootstrap().apply(loader, loader, JarResourceLoader(description.id, file))
-        }catch (_: Exception) {
+        } catch (_: Exception) {
             // No library loader found, can be ignored
         }
 
@@ -253,13 +267,13 @@ class ModuleHandler(
         try {
             moduleInstance = if (moduleClass.isSubclassOf(CloudInjectable::class)) {
                 injector.getInstance(moduleClass.java)
-            }else {
+            } else {
                 moduleClass.createInstance()
             } as CloudModule
-            val moduleHandlerField = CloudModule::class.java.declaredFields.firstOrNull { it.type == IModuleHandler::class.java}
+            val moduleHandlerField = CloudModule::class.java.declaredFields.firstOrNull { it.type == IModuleHandler::class.java }
             if (moduleHandlerField == null) {
                 logger.warning("§cModule ${description.id} has no moduleHandler property!")
-            }else {
+            } else {
                 moduleHandlerField.isAccessible = true
                 moduleHandlerField.set(moduleInstance, this)
                 moduleHandlerField.isAccessible = false
@@ -267,12 +281,12 @@ class ModuleHandler(
             val moduleIdField = CloudModule::class.java.declaredFields.firstOrNull { it.name == "moduleId" }
             if (moduleIdField == null) {
                 logger.warning("§cModule ${description.id} has no moduleId property!")
-            }else {
+            } else {
                 moduleIdField.isAccessible = true
                 moduleIdField.set(moduleInstance, description.id)
                 moduleIdField.isAccessible = false
             }
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             logger.warning("§cFailed to load module ${description.id}!", e)
             return@withLock
         }
@@ -296,7 +310,7 @@ class ModuleHandler(
             val tasksCount = callTasks(moduleData.id, ModuleLifeCycle.LOAD)
             logger.info("Loaded module %hc%${description.id}%tc% with %hc%$tasksCount%tc% load tasks!")
             moduleData.loaded = true
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
             eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleInstance))
             logger.warning("§cFailed to load module ${description.id}!", e)
@@ -323,7 +337,7 @@ class ModuleHandler(
             moduleData.lifeCycle = ModuleLifeCycle.LOAD
             eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance))
             logger.info("Reloaded module %hc%${moduleData.id}%tc% with %hc%$tasksCount%tc% reload tasks!")
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
             eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance))
             logger.warning("§cFailed to reload module ${moduleData.id}!", e)
@@ -347,7 +361,7 @@ class ModuleHandler(
             }
             JarFile(file).close()
             logger.info("Unloaded module %hc%$moduleId%tc% with %hc%$tasksCount%tc% unload tasks!")
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             logger.warning("§cFailed to unload module $moduleId!", e)
             return@withLock
         }
@@ -370,13 +384,15 @@ class ModuleHandler(
                 val type = it.type.kotlin
                 val key = if (it.isAnnotationPresent(Named::class.java)) {
                     Key.get(type.java, it.getAnnotation(Named::class.java))
-                }else Key.get(type.java)
+                } else {
+                    Key.get(type.java)
+                }
                 val instance = injector.getInstance(key)
                 injectParameters.add(instance)
             }
-            if (function.isSuspend) { //TODO test suspend
+            if (function.isSuspend) { // TODO test suspend
                 runBlocking { function.callSuspend(moduleData.instance, *injectParameters.toTypedArray()) }
-            }else {
+            } else {
                 function.javaMethod!!.invoke(moduleData.instance, *injectParameters.toTypedArray())
             }
             tasksCount++
@@ -419,5 +435,4 @@ class ModuleHandler(
     override fun getDescription(moduleId: String): IModuleDescription {
         return getModuleDescription(moduleId) ?: throw NullPointerException("Module with id $moduleId not found!")
     }
-
 }

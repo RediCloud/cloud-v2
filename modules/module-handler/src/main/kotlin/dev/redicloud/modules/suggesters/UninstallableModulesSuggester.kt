@@ -13,5 +13,4 @@ class UninstallableModulesSuggester(
             .map { it.id }
             .toTypedArray()
     }
-
 }

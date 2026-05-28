@@ -62,5 +62,4 @@ data class FileTemplate(
         val select = ProjectFileSelect("", null, "", FileSelectStrategy.LATEST_MODIFIED, false).apply(block)
         localFiles[select.file] = select.targetDirectory
     }
-
 }

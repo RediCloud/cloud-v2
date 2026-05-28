@@ -31,5 +31,4 @@ interface IDataBucket<V> {
     suspend fun set(data: V)
 
     suspend fun delete(): Boolean
-
 }

@@ -9,7 +9,7 @@ class ModuleClassLoader(
     val data: ModuleData,
     file: File,
     parent: ClassLoader
-) : JarLoader, URLClassLoader(arrayOf(file.toURI().toURL()), parent){
+) : JarLoader, URLClassLoader(arrayOf(file.toURI().toURL()), parent) {
 
     lateinit var tasks: List<ModuleTaskData>
 
@@ -18,5 +18,4 @@ class ModuleClassLoader(
     }
 
     override fun load(javaFile: URL?) = addURL(javaFile)
-
 }

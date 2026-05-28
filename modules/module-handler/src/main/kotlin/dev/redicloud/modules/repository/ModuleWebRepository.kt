@@ -78,8 +78,8 @@ class ModuleWebRepository(
     }
 
     suspend fun getModuleBytes(moduleId: String, version: String): ByteArray? {
-        val response = httpClient.get{
-            url("${repoUrl.removeSuffix("/")}/$moduleId/$version/${moduleId}-$version.jar")
+        val response = httpClient.get {
+            url("${repoUrl.removeSuffix("/")}/$moduleId/$version/$moduleId-$version.jar")
         }
         return response.readBytes()
     }
@@ -95,7 +95,7 @@ class ModuleWebRepository(
         return lastVersion != description.version
     }
 
-    //TODO: download console animation
+    // TODO: download console animation
     suspend fun download(moduleId: String, version: String): File {
         MODULES_FOLDER.createIfNotExists()
         val localFile = File(MODULES_FOLDER.getFile(), "$moduleId-$version.jar")
@@ -108,7 +108,6 @@ class ModuleWebRepository(
         moduleHandler.detectModules()
         return localFile
     }
-
 }
 
 data class Response<T>(val json: String, val responseObject: T?, val responseCode: Int)

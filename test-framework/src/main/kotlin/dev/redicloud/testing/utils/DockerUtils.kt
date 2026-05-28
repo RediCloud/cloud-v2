@@ -1,7 +1,6 @@
 package dev.redicloud.testing.utils
 
 import com.google.common.util.concurrent.Futures
-import dev.redicloud.testing.RediCloud
 import dev.redicloud.testing.pre.PreJavaVersion
 import org.slf4j.LoggerFactory
 import org.testcontainers.containers.GenericContainer
@@ -23,7 +22,7 @@ object DockerUtils {
             testContainer.start()
             testContainer.stop()
             return Futures.immediateFuture(imageName)
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             logger.info("Building image $imageName...")
             return ImageFromDockerfile(NODE_IMAGE_NAME, false)
                 .withDockerfileFromBuilder { builder ->
@@ -40,5 +39,4 @@ object DockerUtils {
                 }
         }
     }
-
 }

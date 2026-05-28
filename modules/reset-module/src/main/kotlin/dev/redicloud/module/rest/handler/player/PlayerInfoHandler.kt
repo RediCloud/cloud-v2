@@ -40,5 +40,4 @@ class PlayerInfoHandler(
         }
         ctx.json(players)
     }
-
 }

@@ -17,7 +17,6 @@ interface IEventManager {
     fun unregisterListener(listener: Any)
 
     fun fireEvent(event: CloudEvent)
-
 }
 
 inline fun <reified T : CloudEvent> IEventManager.listen(noinline handler: (T) -> Unit): InlineEventCaller<T> {

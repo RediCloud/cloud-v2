@@ -44,6 +44,4 @@ class MinestomConnectorBootstrap : Extension() {
         connector?.minestomShuttingDown = true
         connector?.onDisable()
     }
-
-
 }

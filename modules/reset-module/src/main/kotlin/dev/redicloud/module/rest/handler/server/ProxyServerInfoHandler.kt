@@ -32,5 +32,4 @@ class ProxyServerInfoHandler(
 
         ctx.json(servers)
     }
-
 }

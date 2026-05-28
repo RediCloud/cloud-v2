@@ -46,7 +46,7 @@ data class ClusterConfiguration(
     }
 
     fun node(block: NodeConfig.() -> Unit): String {
-        val node = NodeConfig("node-${nodeConfigs.size+1}").apply(block)
+        val node = NodeConfig("node-${nodeConfigs.size + 1}").apply(block)
         nodeConfigs.add(node)
         return node.name
     }
@@ -71,5 +71,4 @@ data class ClusterConfiguration(
     fun shortcut(name: String, block: (RediCloudCluster) -> Unit) {
         shortcuts[name] = block
     }
-
 }

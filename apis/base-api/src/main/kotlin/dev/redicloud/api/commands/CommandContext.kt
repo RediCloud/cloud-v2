@@ -25,5 +25,4 @@ class CommandContext(val input: String, val annotationArguments: Array<String>) 
         result = 31 * result + annotationArguments.contentHashCode()
         return result
     }
-
 }

@@ -32,10 +32,8 @@ class LogOutputStream(val level: Level, val logger: Logger) : ByteArrayOutputStr
             if (content.isNotEmpty() && !content.equals(System.lineSeparator())) {
                 this.logger.log(this.level, content)
             }
-        }finally {
+        } finally {
             lock.unlock()
         }
     }
-
-
 }

@@ -23,5 +23,4 @@ class ServerVersionTypeFetcher(
         }
         return serverVersionType.getType(name)
     }
-
 }

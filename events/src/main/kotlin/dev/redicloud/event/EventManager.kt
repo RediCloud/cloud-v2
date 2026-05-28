@@ -1,10 +1,10 @@
 package dev.redicloud.event
 
 import dev.redicloud.api.events.*
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.utils.gson.gson
-import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -56,7 +56,7 @@ class EventManager(
                 try {
                     handlers.getOrPut(eventType) { mutableListOf() }.add(handlerMethod)
                     handlers[eventType]?.sortWith(compareByDescending<EventHandlerMethod> { it.priority })
-                }finally {
+                } finally {
                     lock.unlock()
                 }
             }
@@ -73,7 +73,7 @@ class EventManager(
                 try {
                     handlers.getOrPut(eventType) { mutableListOf() }.add(handlerMethod)
                     handlers[eventType]?.sortWith(compareByDescending<EventHandlerMethod> { it.priority })
-                }finally {
+                } finally {
                     lock.unlock()
                 }
             }
@@ -86,7 +86,7 @@ class EventManager(
             handlers.values.forEach { list ->
                 list.removeIf { it.listener == listener }
             }
-        }finally {
+        } finally {
             lock.unlock()
         }
     }
@@ -124,7 +124,8 @@ class EventManager(
                                 gson.toJson(event),
                                 event::class.qualifiedName!!,
                                 identifier
-                            ), ServiceType.CLIENT
+                            ),
+                            ServiceType.CLIENT
                         )
                         fireLocalEvent(event)
                     } catch (e: Exception) {
@@ -145,14 +146,16 @@ class EventManager(
                                 gson.toJson(event),
                                 event::class.qualifiedName!!,
                                 identifier
-                            ), ServiceType.MINECRAFT_SERVER
+                            ),
+                            ServiceType.MINECRAFT_SERVER
                         )
                         packetManager?.publish(
                             CloudEventPacket(
                                 gson.toJson(event),
                                 event::class.qualifiedName!!,
                                 identifier
-                            ), ServiceType.PROXY_SERVER
+                            ),
+                            ServiceType.PROXY_SERVER
                         )
                         fireLocalEvent(event)
                     } catch (e: Exception) {
@@ -173,7 +176,8 @@ class EventManager(
                                 gson.toJson(event),
                                 event::class.qualifiedName!!,
                                 identifier
-                            ), ServiceType.MINECRAFT_SERVER
+                            ),
+                            ServiceType.MINECRAFT_SERVER
                         )
                         fireLocalEvent(event)
                     } catch (e: Exception) {
@@ -194,7 +198,8 @@ class EventManager(
                                 gson.toJson(event),
                                 event::class.qualifiedName!!,
                                 identifier
-                            ), ServiceType.PROXY_SERVER
+                            ),
+                            ServiceType.PROXY_SERVER
                         )
                         fireLocalEvent(event)
                     } catch (e: Exception) {
@@ -215,7 +220,8 @@ class EventManager(
                                 gson.toJson(event),
                                 event::class.qualifiedName!!,
                                 identifier
-                            ), ServiceType.NODE
+                            ),
+                            ServiceType.NODE
                         )
                         fireLocalEvent(event)
                     } catch (e: Exception) {
@@ -246,5 +252,4 @@ class EventManager(
             }
         }
     }
-
 }

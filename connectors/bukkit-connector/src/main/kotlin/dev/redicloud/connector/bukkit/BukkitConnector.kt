@@ -8,7 +8,6 @@ import dev.redicloud.service.base.player.BasePlayerExecutor
 import dev.redicloud.service.minecraft.MinecraftServerService
 import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
 import kotlinx.coroutines.runBlocking
-import net.kyori.adventure.platform.bukkit.BukkitAudiences
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -17,7 +16,14 @@ class BukkitConnector(val plugin: JavaPlugin) : MinecraftServerService<JavaPlugi
     internal var bukkitShuttingDown = false
     override var playerProvider: IServerPlayerProvider = BukkitServerPlayerProvider()
     override val screenProvider: AbstractScreenProvider = BukkitScreenProvider(this.packetManager, this.plugin)
-    override val playerExecutor: BasePlayerExecutor = BukkitPlayerExecutor(this.plugin, this.playerRepository, this.serverRepository, this.packetManager, this.serviceId)
+    override val playerExecutor: BasePlayerExecutor =
+        BukkitPlayerExecutor(
+            this.plugin,
+            this.playerRepository,
+            this.serverRepository,
+            this.packetManager,
+            this.serviceId
+        )
 
     init {
         initApi()
@@ -41,5 +47,4 @@ class BukkitConnector(val plugin: JavaPlugin) : MinecraftServerService<JavaPlugi
         this.bukkitShuttingDown = true
         Bukkit.shutdown()
     }
-
 }

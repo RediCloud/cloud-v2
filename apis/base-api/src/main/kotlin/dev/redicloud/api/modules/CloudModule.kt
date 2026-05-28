@@ -10,9 +10,7 @@ abstract class CloudModule {
     val state: ModuleLifeCycle
         get() = moduleHandler!!.getState(moduleId)!!
 
-
     fun getStorage(name: String): IModuleStorage {
         return moduleHandler!!.getStorage(moduleId, name)
     }
-
 }

@@ -6,7 +6,7 @@ import java.util.*
 
 class ServerVersionFetcher(
     private val serverVersionRepository: ICloudServerVersionRepository
-){
+) {
 
     suspend fun fetchVersionById(id: String?): ICloudServerVersion? {
         return try {
@@ -23,5 +23,4 @@ class ServerVersionFetcher(
         }
         return serverVersionRepository.getVersion(name)
     }
-
 }

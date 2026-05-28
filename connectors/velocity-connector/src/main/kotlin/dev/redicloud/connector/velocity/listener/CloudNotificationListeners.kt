@@ -27,5 +27,4 @@ class CloudNotificationListeners(
             it.sendMessage(component)
         }
     }
-
 }

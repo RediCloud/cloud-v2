@@ -68,5 +68,4 @@ class PacketResponse(
             timeOutJob?.cancel()
         }
     }
-
 }

@@ -18,7 +18,7 @@ class BungeeCordConnectorBootstrap : Plugin() {
             loadProperties(this.javaClass.classLoader)
             Bootstrap().apply(URLClassLoaderJarLoader(this.javaClass.classLoader as URLClassLoader))
             connector = BungeeCordConnector(this)
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
@@ -35,5 +35,4 @@ class BungeeCordConnectorBootstrap : Plugin() {
         connector!!.bungeecordShuttingDown = true
         connector!!.onDisable()
     }
-
 }

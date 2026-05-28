@@ -48,5 +48,4 @@ class PaperMcUpdaterModule : CloudModule(), CloudInjectable {
     fun onUnload() {
         IServerVersionHandler.unregisterHandler(handler)
     }
-
 }

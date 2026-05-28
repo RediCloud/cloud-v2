@@ -15,7 +15,6 @@ import java.net.URLClassLoader
 import java.util.logging.Logger
 import kotlin.system.exitProcess
 
-
 @Plugin(
     id = "redicloud-connector",
     name = "redicloud-connector-velocity",
@@ -32,7 +31,7 @@ class VelocityConnectorBootstrap @Inject constructor(val proxyServer: ProxyServe
             loadProperties(this.javaClass.classLoader)
             Bootstrap().apply(URLClassLoaderJarLoader(this.javaClass.classLoader as URLClassLoader))
             connector = VelocityConnector(this, proxyServer)
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             e.printStackTrace()
             proxyServer.shutdown()
         }
@@ -52,5 +51,4 @@ class VelocityConnectorBootstrap @Inject constructor(val proxyServer: ProxyServe
         connector!!.velocityShuttingDown = true
         connector!!.onDisable()
     }
-
 }

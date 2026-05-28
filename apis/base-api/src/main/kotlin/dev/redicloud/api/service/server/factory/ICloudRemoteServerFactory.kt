@@ -29,5 +29,4 @@ interface ICloudRemoteServerFactory {
     suspend fun getTransferQueue(): List<TransferServerQueueInformation>
 
     suspend fun getUnregisterQueue(): List<ServiceId>
-
 }

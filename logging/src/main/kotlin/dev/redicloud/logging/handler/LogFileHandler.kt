@@ -25,5 +25,4 @@ class LogFileHandler(
         super.setFormatter(formatter)
         return this
     }
-
 }

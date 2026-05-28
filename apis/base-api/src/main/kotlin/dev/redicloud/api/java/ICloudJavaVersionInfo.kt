@@ -7,5 +7,4 @@ interface ICloudJavaVersionInfo {
     val patch: Int
     val raw: String
     val versionId: Int
-
 }

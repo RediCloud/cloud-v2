@@ -14,5 +14,4 @@ class InstallableModulesSuggester(
             .filter { id -> moduleHandler.getCachedDescriptions().none { it.id == id } }
             .toTypedArray()
     }
-
 }

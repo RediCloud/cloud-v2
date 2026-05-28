@@ -17,5 +17,4 @@ class MinestomServerPlayerProvider() : IServerPlayerProvider {
     override fun getMaxPlayerCount(): Int {
         return -1
     }
-
 }

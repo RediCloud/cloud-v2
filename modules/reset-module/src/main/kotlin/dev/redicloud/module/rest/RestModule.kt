@@ -1,7 +1,6 @@
 package dev.redicloud.module.rest
 
 import com.google.inject.name.Named
-import dev.redicloud.api.commands.ICommandManager
 import dev.redicloud.api.modules.CloudModule
 import dev.redicloud.api.modules.IModuleStorage
 import dev.redicloud.api.modules.ModuleLifeCycle
@@ -87,5 +86,4 @@ class RestModule : CloudModule(), CloudInjectable {
     private fun register(handler: RestHandler) {
         app!!.get(handler.path, handler)
     }
-
 }

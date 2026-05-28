@@ -46,5 +46,4 @@ class CommandBase(
     fun getSubCommand(subPath: String): CommandSubBase? = subCommands.firstOrNull {
         it.isThis("$name $subPath", false)
     }
-
 }

@@ -51,7 +51,9 @@ object RediCloud {
         clusters.forEach { cluster ->
             cluster.nodes.forEach { node ->
                 val containerPath = "${node.workingDirectory}/$targetDirectory/${file.name}"
-                RediCloudNode.LOGGER.info("Uploading file ${file.absolutePath} to $containerPath (${node.config.name}@${cluster.config.name})...")
+                RediCloudNode.LOGGER.info(
+                    "Uploading file ${file.absolutePath} to $containerPath (${node.config.name}@${cluster.config.name})..."
+                )
                 node.copyFileToContainer(
                     Transferable.of(file.absolutePath),
                     containerPath
@@ -59,5 +61,4 @@ object RediCloud {
             }
         }
     }
-
 }

@@ -82,5 +82,4 @@ abstract class CloudTask(private val useLock: Boolean = true) {
     fun onFinished(block: () -> Unit) {
         finishListener.add(block)
     }
-
 }

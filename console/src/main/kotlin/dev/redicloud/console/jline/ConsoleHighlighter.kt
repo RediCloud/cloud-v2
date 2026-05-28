@@ -2,7 +2,6 @@ package dev.redicloud.console.jline
 
 import dev.redicloud.console.Console
 import dev.redicloud.console.utils.ConsoleColor
-import org.jline.reader.Highlighter
 import org.jline.reader.LineReader
 import org.jline.reader.impl.DefaultHighlighter
 import org.jline.utils.AttributedString
@@ -55,6 +54,4 @@ class ConsoleHighlighter(private val console: Console) : DefaultHighlighter() {
         builder.append(buffer.substring(prevEnd))
         return super.highlight(reader, console.formatText(builder.toString(), "", false))
     }
-
-
 }

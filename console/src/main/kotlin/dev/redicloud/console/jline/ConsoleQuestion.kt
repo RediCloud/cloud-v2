@@ -39,7 +39,6 @@ class ConsoleQuestion(
         console.enableCommands()
         return result
     }
-
 }
 
 interface ConsoleQuestionCondition {

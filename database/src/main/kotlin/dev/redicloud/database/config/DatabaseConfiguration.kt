@@ -27,9 +27,7 @@ data class DatabaseConfiguration(
         fun fromFile(file: File): DatabaseConfiguration {
             return gson.fromJson(file.readText(Charsets.UTF_8), DatabaseConfiguration::class.java)
         }
-
     }
-
 }
 
 fun DatabaseConfiguration.toEnv(processBuilder: ProcessBuilder) {

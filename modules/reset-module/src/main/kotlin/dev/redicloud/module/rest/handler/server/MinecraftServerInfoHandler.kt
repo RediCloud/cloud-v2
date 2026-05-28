@@ -32,5 +32,4 @@ class MinecraftServerInfoHandler(
 
         ctx.json(servers)
     }
-
 }

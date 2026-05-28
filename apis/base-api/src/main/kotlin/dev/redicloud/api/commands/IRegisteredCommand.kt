@@ -9,5 +9,4 @@ interface IRegisteredCommand {
     val usage: String
     val paths: Array<String>
     val subCommands: List<ISubCommand>
-
 }

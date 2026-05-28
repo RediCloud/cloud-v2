@@ -1,7 +1,7 @@
 import dev.redicloud.testing.RediCloud
 import dev.redicloud.testing.pre.PreJavaVersion
-import dev.redicloud.testing.utils.FileSelectStrategy
 import dev.redicloud.testing.pre.PreServerVersion
+import dev.redicloud.testing.utils.FileSelectStrategy
 
 fun main() {
     RediCloud.startCluster {
@@ -57,7 +57,10 @@ fun main() {
             jvmArguments = mutableListOf(
                 "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" // Enable debugging e.g. for your plugin
             )
-            exposePort(containerPort = 5005, hostPort = 5000) // Expose the debug port 5005 to your local machine on port 5000
+            exposePort(
+                containerPort = 5005,
+                hostPort = 5000
+            ) // Expose the debug port 5005 to your local machine on port 5000
         }
 
         // Set the java version for the server versions
@@ -81,7 +84,6 @@ fun main() {
             }
             it.execute("server stop Lobby-*") // You can also execute commands on the cloud
         }
-
     }
     // Will block the main thread until the user stops the process with 'exit'
     RediCloud.userInputs()

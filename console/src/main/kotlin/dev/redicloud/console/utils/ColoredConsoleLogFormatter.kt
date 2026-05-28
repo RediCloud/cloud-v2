@@ -1,13 +1,11 @@
 package dev.redicloud.console.utils
 
 import dev.redicloud.console.Console
-import dev.redicloud.logging.handler.LogFormatter
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.text.SimpleDateFormat
 import java.util.logging.Formatter
 import java.util.logging.LogRecord
-
 
 class ColoredConsoleLogFormatter(val console: Console) : Formatter() {
 
@@ -25,6 +23,4 @@ class ColoredConsoleLogFormatter(val console: Console) : Formatter() {
         }
         return builder.toString()
     }
-
-
 }

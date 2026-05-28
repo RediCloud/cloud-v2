@@ -4,18 +4,18 @@ import com.jcraft.jsch.*
 import com.jcraft.jsch.ChannelSftp.LsEntry
 import dev.redicloud.api.events.internal.node.file.FileNodeConnectedEvent
 import dev.redicloud.api.events.internal.node.file.FileNodeDisconnectedEvent
+import dev.redicloud.api.packets.AbstractPacket
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.utils.CLOUD_PATH
 import dev.redicloud.cluster.file.filter.IPFilter
 import dev.redicloud.cluster.file.packet.UnzipPacket
 import dev.redicloud.cluster.file.packet.UnzipResponse
 import dev.redicloud.cluster.file.utils.generatePassword
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
-import dev.redicloud.api.packets.AbstractPacket
-import dev.redicloud.api.utils.CLOUD_PATH
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.utils.*
-import dev.redicloud.api.service.ServiceId
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.sshd.common.file.virtualfs.VirtualFileSystemFactory
@@ -48,7 +48,6 @@ import java.util.logging.Filter
 import java.util.logging.Level
 import kotlin.time.Duration.Companion.seconds
 
-
 class FileCluster(
     val serviceId: ServiceId,
     val hostname: String,
@@ -69,7 +68,9 @@ class FileCluster(
 
     init {
         LogManager.rootLogger().filter = Filter { record
-            -> record.level != Level.INFO && !record.message.contains("org.apache.sshd") }
+            ->
+            record.level != Level.INFO && !record.message.contains("org.apache.sshd")
+        }
         packetManager.registerPacket(UnzipPacket::class)
         packetManager.registerPacket(UnzipResponse::class)
     }
@@ -81,8 +82,10 @@ class FileCluster(
             val nodeInternal = this.nodeRepository.getNode(serviceId) != null
             val newFileNode = FileNode(
                 this.fileNodeRepository.migrateId(serviceId),
-                -1, hostname,
-                "redicloud", generatePassword(32),
+                -1,
+                hostname,
+                "redicloud",
+                generatePassword(32),
                 nodeInternal,
                 CLOUD_PATH
             )
@@ -97,7 +100,6 @@ class FileCluster(
         val cloudPath = Paths.get(CLOUD_PATH)
         sshd!!.fileSystemFactory = VirtualFileSystemFactory(cloudPath)
         sshd!!.subsystemFactories = listOf(SftpSubsystemFactory())
-
 
         sshd!!.passwordAuthenticator = PasswordAuthenticator { username, password, session ->
             runBlocking {
@@ -117,10 +119,10 @@ class FileCluster(
                         return@runBlocking false
                     }
                 }
-                return@runBlocking node.connected
-                        && ipFilter.canConnect(hostname)
-                        && username == node.username
-                        && password == node.password
+                return@runBlocking node.connected &&
+                    ipFilter.canConnect(hostname) &&
+                    username == node.username &&
+                    password == node.password
             }
         }
         sshd!!.publickeyAuthenticator = PublickeyAuthenticator { username, key, session ->
@@ -175,7 +177,7 @@ class FileCluster(
         val subject = X500Name("CN=Self-Signed")
 
         val now = Instant.now()
-        val expirationTime = now.plus(31*3, ChronoUnit.DAYS)
+        val expirationTime = now.plus(31 * 3, ChronoUnit.DAYS)
 
         val serialNumber = BigInteger.valueOf(now.toEpochMilli())
 
@@ -238,7 +240,7 @@ class FileCluster(
                 currentPath += "${File.separator}$directory"
                 try {
                     channel.mkdir(currentPath)
-                }catch (_: Exception) {}
+                } catch (_: Exception) {}
             }
         }
     }
@@ -267,9 +269,11 @@ class FileCluster(
         channel.cd(channel.home)
     }
 
-
     suspend fun unzip(serviceId: ServiceId, file: String, unzipPath: String): AbstractPacket? {
-        val response = packetManager.publish(UnzipPacket(file, unzipPath), serviceId).withTimeOut(60.seconds).waitBlocking()
+        val response = packetManager.publish(
+            UnzipPacket(file, unzipPath),
+            serviceId
+        ).withTimeOut(60.seconds).waitBlocking()
         if (response != null) delay(500)
         return response
     }
@@ -292,5 +296,4 @@ class FileCluster(
         newPath = newPath.replace(separator, "/")
         return newPath
     }
-
 }

@@ -51,6 +51,4 @@ class BungeeCordPlayerExecutor(
         val components = BungeeComponentSerializer.get().serialize(reason)
         player.disconnect(*components)
     }
-
-
 }

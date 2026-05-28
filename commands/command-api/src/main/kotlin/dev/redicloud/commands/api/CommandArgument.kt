@@ -21,12 +21,15 @@ class CommandArgument(
     override val annotatedSuggesterParameter: Array<String>
     override val vararg: Boolean
     override val pathFormat: String
-        get() = if (vararg) { "<$name...>" }else if (required) "<$name>" else "[$name]"
+        get() = if (vararg) { "<$name...>" } else if (required) "<$name>" else "[$name]"
     override val actorArgument: Boolean
         get() = name == "_actor"
 
     init {
-        if (parameter.type.kotlin.superclasses.any { it == ICommandActor::class } || parameter.type.kotlin == ICommandActor::class) {
+        if (parameter.type.kotlin.superclasses.any {
+                it == ICommandActor::class
+            } || parameter.type.kotlin == ICommandActor::class
+        ) {
             name = "_actor"
             required = false
             clazz = parameter.type.kotlin
@@ -34,16 +37,16 @@ class CommandArgument(
             annotatedSuggester = EmptySuggester()
             annotatedSuggesterParameter = arrayOf()
             vararg = false
-        }else {
+        } else {
             if (!parameter.isAnnotationPresent(CommandParameter::class.java)) {
                 name = parameter.name
-                required = !parameter.isImplicit //TODO check String? and Int? etc.
+                required = !parameter.isImplicit // TODO check String? and Int? etc.
                 annotatedSuggester = EmptySuggester()
                 annotatedSuggesterParameter = emptyArray()
             } else {
                 val annotation = parameter.getAnnotation(CommandParameter::class.java)
                 name = annotation.name.ifEmpty { parameter.name }
-                required = annotation.required //TODO check String? and Int? etc.
+                required = annotation.required // TODO check String? and Int? etc.
                 annotatedSuggester = SUGGESTERS.firstOrNull { it::class == annotation.suggester } ?: EmptySuggester()
                 annotatedSuggesterParameter = annotation.suggesterArguments
             }
@@ -54,7 +57,11 @@ class CommandArgument(
             }.values.firstOrNull() ?: throw IllegalStateException("No parser found for ${clazz.qualifiedName} in arguments of '${subCommand.command.name} ${subCommand.path}'")
         }
         suggester = CommandArgumentSuggester(this)
-        if (vararg && !required) throw IllegalStateException("Vararg arguments can't be optional! (Argument: $name in '${subCommand.command.name} ${subCommand.path}')")
+        if (vararg && !required) {
+            throw IllegalStateException(
+                "Vararg arguments can't be optional! (Argument: $name in '${subCommand.command.name} ${subCommand.path}')"
+            )
+        }
     }
 
     fun isThis(input: String, predict: Boolean): Boolean {
@@ -71,16 +78,16 @@ class CommandArgument(
         val optimalCurrentPaths = listOf(subCommand.path, *subCommand.aliasPaths)
             .flatMap { subCommandPaths ->
                 listOf(subCommand.command.name, *subCommand.command.aliases)
-                .map { commandPath -> "$commandPath $subCommandPaths".removeLastSpaces() }
+                    .map { commandPath -> "$commandPath $subCommandPaths".removeLastSpaces() }
             }.toSet()
 
-        optimalCurrentPaths.forEach optimalPathForEach@ { optimalPath ->
+        optimalCurrentPaths.forEach optimalPathForEach@{ optimalPath ->
             var index = -1
             var argumentIndex = -1
             var currentBuild = ""
             var lastWasThis = false
             var alreadyIndexed = false
-            optimalPath.split(" ").forEach optimalParameterForEach@ {
+            optimalPath.split(" ").forEach optimalParameterForEach@{
                 index++
                 if (input.split(" ").size < index + 1) {
                     return@optimalParameterForEach
@@ -111,11 +118,12 @@ class CommandArgument(
                     }
                 }
             }
-            if (predict
-                && currentBuild.endsWith(" ")
-                && optimalPath.lowercase().startsWith(currentBuild.lowercase())
-                && currentBuild.split(" ").size == input.split(" ").size
-                && argumentIndex+1 == this.index) {
+            if (predict &&
+                currentBuild.endsWith(" ") &&
+                optimalPath.lowercase().startsWith(currentBuild.lowercase()) &&
+                currentBuild.split(" ").size == input.split(" ").size &&
+                argumentIndex + 1 == this.index
+            ) {
                 return true
             }
             if (currentBuild.lowercase() == input.lowercase() && lastWasThis) {
@@ -127,5 +135,4 @@ class CommandArgument(
     }
 
     fun parse(input: String): Any? = parser?.parse(input)
-
 }

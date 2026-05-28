@@ -1,11 +1,11 @@
 package dev.redicloud.cluster.file.filter
 
-import dev.redicloud.cluster.file.FileNodeRepository
-import dev.redicloud.event.EventManager
 import dev.redicloud.api.events.internal.node.NodeSuspendedEvent
 import dev.redicloud.api.events.internal.node.file.FileNodeConnectedEvent
 import dev.redicloud.api.events.internal.node.file.FileNodeDisconnectedEvent
 import dev.redicloud.api.events.listen
+import dev.redicloud.cluster.file.FileNodeRepository
+import dev.redicloud.event.EventManager
 import kotlinx.coroutines.runBlocking
 
 class IPFilter(
@@ -46,5 +46,4 @@ class IPFilter(
     }
 
     fun canConnect(remoteAddress: String): Boolean = allowedIpCache.contains(remoteAddress)
-
 }

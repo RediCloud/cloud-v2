@@ -39,5 +39,4 @@ class JarView(
     fun close() {
         jarFile.close()
     }
-
 }

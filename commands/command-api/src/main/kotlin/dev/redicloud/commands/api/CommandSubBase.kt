@@ -19,7 +19,7 @@ class CommandSubBase(
     override val description: String
     override val arguments: List<CommandArgument>
     override val aliasPaths: Array<String>
-    override  val permission: String?
+    override val permission: String?
 
     init {
         suspend = function.isSuspend
@@ -44,8 +44,16 @@ class CommandSubBase(
                 vararg = true
                 return@forEach
             }
-            if (it.vararg && !it.actorArgument) throw IllegalStateException("Vararg argument of '${command.name} ${path}' can be only the last argument")
-            if (optionalArguments && !it.actorArgument) throw IllegalStateException("Argument of '${command.name} ${path}' is required after optional argument")
+            if (it.vararg && !it.actorArgument) {
+                throw IllegalStateException(
+                    "Vararg argument of '${command.name} $path' can be only the last argument"
+                )
+            }
+            if (optionalArguments && !it.actorArgument) {
+                throw IllegalStateException(
+                    "Argument of '${command.name} $path' is required after optional argument"
+                )
+            }
         }
         aliasPaths = function.findAnnotation<CommandAlias>()?.aliases ?: arrayOf()
         permission = function.findAnnotation<CommandPermission>()?.permission
@@ -57,13 +65,20 @@ class CommandSubBase(
         val min = this.arguments.count { it.required && !it.actorArgument }
         val lastArgument = this.arguments.lastOrNull { !it.actorArgument }
         if (arguments.size < min) {
-            return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT,
-                "Not enough arguments (min: $min, max: $max)", usage = getUsage())
+            return CommandResponse(
+                CommandResponseType.INVALID_ARGUMENT_COUNT,
+                "Not enough arguments (min: $min, max: $max)",
+                usage = getUsage()
+            )
         }
-        if (arguments.size > max
-            && lastArgument?.vararg == false) {
-            return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT,
-                "Too many arguments (min: $min, max: $max)", usage = getUsage())
+        if (arguments.size > max &&
+            lastArgument?.vararg == false
+        ) {
+            return CommandResponse(
+                CommandResponseType.INVALID_ARGUMENT_COUNT,
+                "Too many arguments (min: $min, max: $max)",
+                usage = getUsage()
+            )
         }
         var index = -1
         this.arguments.forEach {
@@ -73,7 +88,12 @@ class CommandSubBase(
             }
             index++
             if (index >= arguments.count()) {
-                if (it.required) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT, "Not enough arguments (min: $min, max: $max)")
+                if (it.required) {
+                    return CommandResponse(
+                        CommandResponseType.INVALID_ARGUMENT_COUNT,
+                        "Not enough arguments (min: $min, max: $max)"
+                    )
+                }
                 parsedArguments.add(null)
                 return@forEach
             }
@@ -100,15 +120,18 @@ class CommandSubBase(
         val final = parsedArguments.toTypedArray()
         return try {
             if (suspend) {
-                runBlocking { function.callSuspend(command.commandImpl, *final) } //TODO fix this
-            }else {
+                runBlocking { function.callSuspend(command.commandImpl, *final) } // TODO fix this
+            } else {
                 // function.call(command.commandImpl, *final) //TODO fix this
                 function.javaMethod!!.invoke(command.commandImpl, *final)
             }
             CommandResponse(CommandResponseType.SUCCESS, null)
-        }catch (e: Exception) {
-            CommandResponse(CommandResponseType.ERROR,
-                "Error while executing command: ${command.name} $path", e)
+        } catch (e: Exception) {
+            CommandResponse(
+                CommandResponseType.ERROR,
+                "Error while executing command: ${command.name} $path",
+                e
+            )
         }
     }
 
@@ -166,7 +189,13 @@ class CommandSubBase(
                 if (parameterSplit.size <= index) return@filter arguments.isNotEmpty() && arguments.last().vararg
                 val parameter = parameterSplit[index].lowercase()
                 if (parameter.isOptionalArgument() || parameter.isRequiredArgument()) return@filter true
-                if (predicate) parameter.lowercase().startsWith(it.lowercase()) else parameter.lowercase() == it.lowercase()
+                if (predicate) {
+                    parameter.lowercase().startsWith(
+                        it.lowercase()
+                    )
+                } else {
+                    parameter.lowercase() == it.lowercase()
+                }
             }
             matched.clear()
             matched.addAll(possible)
@@ -180,5 +209,4 @@ class CommandSubBase(
     fun getSubPaths(): List<String> {
         return listOf(*aliasPaths, path).map { it.removeLastSpaces() }
     }
-
 }

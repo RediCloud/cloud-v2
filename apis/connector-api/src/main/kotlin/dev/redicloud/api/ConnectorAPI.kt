@@ -5,5 +5,4 @@ import dev.redicloud.api.provider.IServerPlayerProvider
 interface IConnectorAPI {
 
     var playerProvider: IServerPlayerProvider
-
 }

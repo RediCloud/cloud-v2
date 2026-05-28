@@ -6,14 +6,14 @@ import java.nio.charset.StandardCharsets
 class ConfigurationFileEditor private constructor(
     private val linesWithSpaces: List<String>,
     private val keyValueSplitter: String
-){
+) {
 
     companion object {
         const val YAML_SPLITTER = ": "
         const val PROPERTIES_SPLITTER = "="
         const val TOML_SPLITTER = " = "
         fun ofFile(file: File): ConfigurationFileEditor? {
-            val keyValueSplitter = when(file.extension) {
+            val keyValueSplitter = when (file.extension) {
                 "yml" -> YAML_SPLITTER
                 "properties" -> PROPERTIES_SPLITTER
                 "toml" -> TOML_SPLITTER
@@ -38,7 +38,7 @@ class ConfigurationFileEditor private constructor(
     }
 
     fun setValue(key: String, value: String) {
-        if (!this.keyToValues.containsKey(key)) throw IllegalStateException("Key '${key}' does not exist")
+        if (!this.keyToValues.containsKey(key)) throw IllegalStateException("Key '$key' does not exist")
         this.keyToValues[key] = value
     }
 
@@ -88,6 +88,4 @@ class ConfigurationFileEditor private constructor(
         val line = lines.lastOrNull { it.startsWith(lineStart) } ?: return -1
         return this.lines.indexOf(line)
     }
-
-
 }

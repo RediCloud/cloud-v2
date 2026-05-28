@@ -1,6 +1,5 @@
 package dev.redicloud.updater
 
-import com.google.gson.reflect.TypeToken
 import dev.redicloud.api.commands.ICommandManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.updater.suggest.BranchSuggester
@@ -32,9 +31,15 @@ object Updater {
         }
         val updateInfo = updateAvailable()
         if (updateInfo.first && updateInfo.second != null) {
-            LogManager.rootLogger().info("An update is available: ${updateInfo.second!!.branch}#${updateInfo.second!!.build}")
-            LogManager.rootLogger().info("You can download the update with the command: version download $BRANCH ${updateInfo.second!!.build}")
-            LogManager.rootLogger().info("And switch the update with the command: version switch $BRANCH ${updateInfo.second!!.build}")
+            LogManager.rootLogger().info(
+                "An update is available: ${updateInfo.second!!.branch}#${updateInfo.second!!.build}"
+            )
+            LogManager.rootLogger().info(
+                "You can download the update with the command: version download $BRANCH ${updateInfo.second!!.build}"
+            )
+            LogManager.rootLogger().info(
+                "And switch the update with the command: version switch $BRANCH ${updateInfo.second!!.build}"
+            )
         } else {
             LogManager.rootLogger().info("You are running the latest version!")
         }
@@ -45,7 +50,6 @@ object Updater {
     }
 
     suspend fun download(branch: String, build: Int): File {
-
         val response = httpClient.get {
             url(getRootAPIUrl() + "/files/$branch/$build/redicloud.zip")
         }
@@ -82,8 +86,10 @@ object Updater {
             versionInfoFile.delete()
         }
         versionInfoFile.createNewFile()
-        versionInfoFile.writeText(gson.toJson(UpdateInfo(version, build.toString(), branch, BRANCH, BUILD, CLOUD_VERSION)))
-}
+        versionInfoFile.writeText(
+            gson.toJson(UpdateInfo(version, build.toString(), branch, BRANCH, BUILD, CLOUD_VERSION))
+        )
+    }
 
     private fun getJarProperties(file: File): Map<String, String> {
         if (!file.exists() || file.extension != "jar") {
@@ -157,5 +163,4 @@ object Updater {
         val info = gson.fromJson(response.bodyAsText(), BranchList::class.java)
         return info.branches
     }
-
 }

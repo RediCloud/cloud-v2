@@ -22,6 +22,5 @@ interface ICloudService {
         serviceId.type == ServiceType.MINECRAFT_SERVER || serviceId.type == ServiceType.PROXY_SERVER
 
     fun canSelfUnregister(): Boolean =
-        serviceId.type == ServiceType.NODE || serviceId.type == ServiceType.FILE_NODE ||serviceId.type == ServiceType.CLIENT
-
+        serviceId.type == ServiceType.NODE || serviceId.type == ServiceType.FILE_NODE || serviceId.type == ServiceType.CLIENT
 }

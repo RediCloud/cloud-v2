@@ -2,7 +2,6 @@ package dev.redicloud.utils
 
 import java.io.File
 
-
 fun getClassesWithPrefix(packagePrefix: String): List<Class<*>> {
     val classLoader = Thread.currentThread().contextClassLoader
     val packageName = packagePrefix.substringBeforeLast(".")
