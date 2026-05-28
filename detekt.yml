@@ -2,6 +2,8 @@ build:
   maxIssues: 0
 
 style:
+  ForbiddenComment:
+    active: false
   MaxLineLength:
     active: false
   WildcardImport:
