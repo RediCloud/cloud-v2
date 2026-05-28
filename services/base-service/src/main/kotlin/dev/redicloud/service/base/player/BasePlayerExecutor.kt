@@ -199,18 +199,14 @@ abstract class BasePlayerExecutor(
     }
 
     override suspend fun connect(cloudPlayer: ICloudPlayer, serviceId: ServiceId) {
-        if (serviceId.type != ServiceType.MINECRAFT_SERVER) {
-            throw IllegalArgumentException("ServiceId type must be MINECRAFT_SERVER")
-        }
+        require(serviceId.type == ServiceType.MINECRAFT_SERVER) { "ServiceId type must be MINECRAFT_SERVER" }
         val server = serverRepository.getServer<ICloudServer>(serviceId)
             ?: throw NullPointerException("Server with serviceId $serviceId not found")
         this.connect(cloudPlayer, server)
     }
 
     override suspend fun connect(cloudPlayer: ICloudPlayer, server: ICloudServer) {
-        if (server.serviceId.type != ServiceType.MINECRAFT_SERVER) {
-            throw IllegalArgumentException("Server type must be MINECRAFT_SERVER")
-        }
+        require(server.serviceId.type == ServiceType.MINECRAFT_SERVER) { "Server type must be MINECRAFT_SERVER" }
         if (!cloudPlayer.connected || cloudPlayer.proxyId == null) return
         if (cloudPlayer.proxyId == thisServiceId) {
             this.executeConnect(cloudPlayer, server)

@@ -46,7 +46,7 @@ class PlayerRepository(
     }
 
     override suspend fun updatePlayer(cloudPlayer: ICloudPlayer): CloudPlayer {
-        val oldPlayer = getPlayer(cloudPlayer.uniqueId) ?: throw IllegalStateException("Player not found")
+        val oldPlayer = getPlayer(cloudPlayer.uniqueId) ?: error("Player not found")
         return set(cloudPlayer.uniqueId.toString(), cloudPlayer).also {
             if (oldPlayer.serverId != null && it.serverId == null || oldPlayer.proxyId != null && it.proxyId == null) {
                 eventManager.fireEvent(CloudPlayerDisconnectEvent(it.uniqueId))

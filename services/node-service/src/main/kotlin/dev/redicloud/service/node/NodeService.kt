@@ -240,8 +240,8 @@ class NodeService(
 
     private suspend fun memoryCheck() {
         val thisNode = nodeRepository.getNode(this.serviceId)!!
-        if (thisNode.maxMemory < 1024) throw IllegalStateException("Max memory of this node is too low! Please increase the max memory of this node!")
-        if (thisNode.maxMemory > Runtime.getRuntime().freeMemory()) throw IllegalStateException("Not enough memory available! Please increase the max memory of this node!")
+        check(thisNode.maxMemory >= 1024) { "Max memory of this node is too low! Please increase the max memory of this node!" }
+        check(thisNode.maxMemory <= Runtime.getRuntime().freeMemory()) { "Not enough memory available! Please increase the max memory of this node!" }
     }
 
     private fun registerPackets() {}

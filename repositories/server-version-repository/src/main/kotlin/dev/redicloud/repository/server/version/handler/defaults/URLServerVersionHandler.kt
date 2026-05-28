@@ -164,10 +164,10 @@ open class URLServerVersionHandler(
         jarToExecute: File
     ): List<String> {
         if(!javaVersion.isLocated(serviceId)) {
-            javaVersion.located[serviceId.id] = javaVersion.autoLocate()?.absolutePath ?: throw IllegalStateException("Java version ${javaVersion.id} not found")
+            javaVersion.located[serviceId.id] = javaVersion.autoLocate()?.absolutePath ?: error("Java version ${javaVersion.id} not found")
         }
         val javaPath = javaVersion.located[serviceId.id]
-        if (javaPath == null || javaPath.isEmpty()) throw IllegalStateException("Java version ${javaVersion.id} not found")
+        check(!javaPath.isNullOrEmpty()) { "Java version ${javaVersion.id} not found" }
 
         val list = mutableListOf(
             javaPath,

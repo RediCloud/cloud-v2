@@ -73,12 +73,12 @@ abstract class MinecraftServerService<T> : BaseService(
     }
 
     private suspend fun getServer(): CloudServer {
-        return serverRepository.getServer(serviceId) ?: throw IllegalStateException("Server not found!")
+        return serverRepository.getServer(serviceId) ?: error("Server not found!")
     }
 
     open fun onEnable() = runBlocking {
         try {
-            val server = serverRepository.getServer<CloudServer>(serviceId) ?: throw IllegalStateException("Server not found!")
+            val server = serverRepository.getServer<CloudServer>(serviceId) ?: error("Server not found!")
             server.state = CloudServerState.RUNNING
             serverRepository.updateServer(server)
             logger.info("Enabled cloud connector for server ${server.identifyName(false)}!")

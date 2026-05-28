@@ -128,7 +128,7 @@ class CloudServerVersionTypeRepository(
         )
         if (lock) getLock(serverVersionType).lock()
         try {
-            if (!serverVersionType.getParsedConnectorURL().isValid()) throw IllegalStateException("Connector download url of ${serverVersionType.connectorPluginName} is null!")
+            check(serverVersionType.getParsedConnectorURL().isValid()) { "Connector download url of ${serverVersionType.connectorPluginName} is null!" }
             httpClient.get {
                 url(serverVersionType.getParsedConnectorURL().toExternalForm())
             }.readBytes().let {

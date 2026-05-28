@@ -1,10 +1,6 @@
 build:
   maxIssues: 0
 
-formatting:
-  Filename:
-    active: false
-
 style:
   MaxLineLength:
     active: false

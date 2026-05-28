@@ -54,7 +54,7 @@ class CloudServerVersionType(
             ?.replace("%cloud_version%", CLOUD_VERSION)
             ?.replace("%build%", BUILD)
             ?.replace("%branch%", BRANCH)
-            ?: throw IllegalStateException("Connector download url is null!")
+            ?: error("Connector download url is null!")
         )
     }
 

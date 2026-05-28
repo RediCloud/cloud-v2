@@ -39,7 +39,7 @@ abstract class CloudService(
         }
 
     override fun endSession(session: ICloudServiceSession?): ICloudServiceSession {
-        val current = (session ?: currentSession) as ServiceSession? ?: throw IllegalStateException("No session is currently active")
+        val current = (session ?: currentSession) as ServiceSession? ?: error("No session is currently active")
         current.endTime = System.currentTimeMillis()
         sessions.currentSession = null
         return current
@@ -51,9 +51,7 @@ abstract class CloudService(
         }
 
     override fun startSession(ipAddress: String): ServiceSession {
-        if (!isIpv4(ipAddress) && !isIpv6(ipAddress)) {
-            throw IllegalArgumentException("Invalid IP address: $ipAddress")
-        }
+        require(isIpv4(ipAddress) || isIpv6(ipAddress)) { "Invalid IP address: $ipAddress" }
         var hostname = ipAddress
         if (isIpv6(ipAddress) && !ipAddress.startsWith("[")) {
             hostname = "[$ipAddress]"

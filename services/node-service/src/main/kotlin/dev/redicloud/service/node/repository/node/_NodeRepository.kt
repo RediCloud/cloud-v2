@@ -23,7 +23,7 @@ suspend fun NodeRepository.connect(nodeService: NodeService) {
         val allocated = total - free
         val actualFree: Long = Runtime.getRuntime().maxMemory() - allocated
         val memory = toMb((actualFree * 0.9).toLong())
-        if (memory < 1024) throw IllegalStateException("There must be at least 1GB of free memory to start a node!")
+        check(memory >= 1024) { "There must be at least 1GB of free memory to start a node!" }
         //TODO: Update current memory by task
         createNode(CloudNode(serviceId, nodeService.configuration.nodeName, ServiceSessions(), mutableListOf(), false, toMb(allocated), memory))
     }

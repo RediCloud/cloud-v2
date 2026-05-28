@@ -197,7 +197,7 @@ class ServerProcess(
     private fun startCommand(type: CloudServerVersionType, javaPath: String, snapshotData: StartDataSnapshot): List<String> {
         if (!snapshotData.javaVersion.isLocated(hostServiceId)) {
             snapshotData.javaVersion.located[hostServiceId.id] = snapshotData.javaVersion.autoLocate()?.absolutePath
-                ?: throw IllegalStateException("Java version ${snapshotData.javaVersion.id} not found")
+                ?: error("Java version ${snapshotData.javaVersion.id} not found")
         }
 
         val list = mutableListOf(

@@ -69,7 +69,7 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
         }
 
     suspend fun getService(serviceId: ServiceId): K? {
-        if (serviceId.type != targetServiceType) throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${serviceId.type.name})")
+        require(serviceId.type == targetServiceType) { "Service type does not match (expected ${targetServiceType.name}, got ${serviceId.type.name})" }
         return get(serviceId.id.toString())
     }
 
@@ -78,16 +78,12 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
     }
 
     suspend fun existsService(serviceId: ServiceId): Boolean {
-        if (serviceId.type != targetServiceType) {
-            throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${serviceId.type.name})")
-        }
+        require(serviceId.type == targetServiceType) { "Service type does not match (expected ${targetServiceType.name}, got ${serviceId.type.name})" }
         return exists(serviceId.id.toString())
     }
 
     suspend fun createService(cloudService: I): K {
-        if (cloudService.serviceId.type != targetServiceType) {
-            throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})")
-        }
+        require(cloudService.serviceId.type == targetServiceType) { "Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})" }
         if (cloudService.connected && !connectedServices.contains(cloudService.serviceId)) {
             connectedServices.add(cloudService.serviceId)
         }else if(!cloudService.connected) {
@@ -100,9 +96,7 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
     }
 
     suspend fun updateService(cloudService: I): K {
-        if (cloudService.serviceId.type != targetServiceType) {
-            throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})")
-        }
+        require(cloudService.serviceId.type == targetServiceType) { "Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})" }
         if (cloudService.connected && !connectedServices.contains(cloudService.serviceId)) {
             connectedServices.add(cloudService.serviceId)
         }else if(!cloudService.connected) {

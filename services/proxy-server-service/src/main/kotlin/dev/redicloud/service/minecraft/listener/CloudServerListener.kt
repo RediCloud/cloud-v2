@@ -16,7 +16,7 @@ class CloudServerListener(
         defaultScope.launch {
             if (it.serviceId.type != ServiceType.MINECRAFT_SERVER) return@launch
             val server = proxyServerService.serverRepository.getMinecraftServer(it.serviceId)
-                ?: throw IllegalStateException("Cant register server that is not in the repository: ${it.serviceId.toName()}")
+                ?: error("Cant register server that is not in the repository: ${it.serviceId.toName()}")
             proxyServerService.registerServer(server)
         }
     }

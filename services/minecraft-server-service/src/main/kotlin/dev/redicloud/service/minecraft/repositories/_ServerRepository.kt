@@ -6,7 +6,7 @@ import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.api.service.ServiceId
 
 suspend fun ServerRepository.connect(serviceId: ServiceId): ServiceId {
-    val thisServer = this.getServer<CloudServer>(serviceId) ?: throw IllegalStateException("Server not found")
+    val thisServer = this.getServer<CloudServer>(serviceId) ?: error("Server not found")
     thisServer.connected = true
     thisServer.startSession(System.getenv("RC_HOST"))
     updateServer(thisServer)

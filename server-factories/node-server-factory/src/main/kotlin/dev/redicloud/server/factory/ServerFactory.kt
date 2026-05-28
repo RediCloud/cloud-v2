@@ -88,9 +88,7 @@ class ServerFactory(
     }
 
     internal suspend fun deleteServer(serviceId: ServiceId): Boolean {
-        if (!serviceId.type.isServer()) {
-            throw IllegalArgumentException("Service id that was queued for deletion is not a server: ${serviceId.toName()}")
-        }
+        require(serviceId.type.isServer()) { "Service id that was queued for deletion is not a server: ${serviceId.toName()}" }
         val server = serverRepository.getServer<CloudServer>(serviceId) ?: return false
         if (server.hostNodeId != hostingId) {
             return false
@@ -98,9 +96,7 @@ class ServerFactory(
         if (server.state != CloudServerState.STOPPED) {
             return false
         }
-        if (!server.configurationTemplate.static) {
-            throw IllegalArgumentException("Service id that was queued for deletion is not static: ${serviceId.toName()}")
-        }
+        require(server.configurationTemplate.static) { "Service id that was queued for deletion is not static: ${serviceId.toName()}" }
         this.unregisterServer(serviceId, server)
         val workDir = File(STATIC_FOLDER.getFile(), "${server.name}-${server.serviceId.id}")
         if (workDir.exists() && workDir.isDirectory) {
@@ -252,9 +248,7 @@ class ServerFactory(
         if (!serverRepository.databaseConnection.connected) return
         val server = cachedServer ?: serverRepository.getServer(serviceId)
         ?: throw NullPointerException("Server ${serviceId.toName()} not found")
-        if (!force && server.state != CloudServerState.STOPPED) {
-            throw IllegalArgumentException("Server ${serviceId.toName()} is not stopped")
-        }
+        require(force || server.state == CloudServerState.STOPPED) { "Server ${serviceId.toName()} is not stopped" }
         serverRepository.deleteServer(server)
     }
 
@@ -270,9 +264,7 @@ class ServerFactory(
         if (serviceId == null) {
             return startServer(configurationTemplate!!, force)
         }
-        if (!serviceId.type.isServer()) {
-            throw IllegalArgumentException("Queued service id to start a server must be a server!")
-        }
+        require(serviceId.type.isServer()) { "Queued service id to start a server must be a server!" }
         logger.fine("Prepare static server ${serviceId.toName()}...")
         val server = serverRepository.getServer<CloudServer>(serviceId)
             ?: throw NullPointerException("Static server ${serviceId.toName()} not found")
@@ -371,9 +363,7 @@ class ServerFactory(
         }
         val server = serverRepository.getServer<CloudServer>(serviceId)
             ?: throw NullPointerException("Server not found")
-        if (server.hostNodeId != hostingId) {
-            throw IllegalArgumentException("Server is not on this node")
-        }
+        require(server.hostNodeId == hostingId) { "Server is not on this node" }
         if (server.state == CloudServerState.STOPPED && !force || server.state == CloudServerState.STOPPING && !force) {
             return
         }
