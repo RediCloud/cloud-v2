@@ -244,7 +244,9 @@ class NodeService(
         check(thisNode.maxMemory <= Runtime.getRuntime().freeMemory()) { "Not enough memory available! Please increase the max memory of this node!" }
     }
 
-    private fun registerPackets() {}
+    private fun registerPackets() {
+        // node-specific packets registered in BaseService
+    }
 
     private suspend fun connectFileCluster() {
         try {
