@@ -70,13 +70,17 @@ allprojects {
             compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
         }
 
+        withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+            jvmTarget = "1.8"
+        }
+
         withType<JavaCompile> {
             options.release.set(8)
             options.encoding = "UTF-8"
         }
     }
 
-    tasks.withType<Jar>() {
+    tasks.withType<Jar> {
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
         manifest {
             attributes["Main-Class"] = "dev.redicloud.libloader.boot.Bootstrap"
@@ -84,7 +88,8 @@ allprojects {
             attributes["Agent-Class"] = "dev.redicloud.libloader.boot.Agent"
             attributes["Launcher-Agent-Class"] = "dev.redicloud.libloader.boot.Agent"
         }
-        archiveFileName.set(Builds.getOutputFileName(this@allprojects) + ".jar")
+        val v = if (this@allprojects.version == "unspecified") this@allprojects.parent?.version ?: "unknown" else this@allprojects.version
+        archiveFileName.set("redicloud-${this@allprojects.name}-$v.jar")
     }
 
 

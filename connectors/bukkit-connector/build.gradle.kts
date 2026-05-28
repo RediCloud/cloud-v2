@@ -48,7 +48,8 @@ dependencies {
 
 val shadowModJar by tasks.creating(ShadowJar::class) {
     dependsOn(tasks.jar, tasks.named("shadowJar"))
-    archiveFileName.set(Builds.getOutputFileName(project) + "-shadow.jar")
+    val v = if (project.version == "unspecified") project.parent?.version ?: "unknown" else project.version
+    archiveFileName.set("redicloud-${project.name}-$v-shadow.jar")
 
     relocate("io.netty", "dev.redicloud.netty")
     relocate("com.google.gson", "dev.redicloud.gson")
