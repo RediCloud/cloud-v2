@@ -10,7 +10,7 @@ import java.util.logging.Level
 class LogOutputStream(val level: Level, val logger: Logger) : ByteArrayOutputStream() {
 
     companion object {
-        val AUTO_FLUSH = true
+        const val AUTO_FLUSH = true
         val CHARSET = Charsets.UTF_8
         fun forSevere(logger: Logger) = LogOutputStream(Level.SEVERE, logger)
         fun forInformation(logger: Logger) = LogOutputStream(Level.INFO, logger)

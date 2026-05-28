@@ -134,7 +134,7 @@ fun getLevelColor(level: Level): ConsoleColor {
     }
 }
 
-private val LEVEL_NAME_LENGTH = 5
+private const val LEVEL_NAME_LENGTH = 5
 fun getNormedLevelName(level: Level, spaces: Boolean = true): String {
     var name = when (level) {
         Level.INFO -> "INFO"

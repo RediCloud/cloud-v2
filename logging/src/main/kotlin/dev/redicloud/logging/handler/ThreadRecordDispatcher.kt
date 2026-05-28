@@ -10,7 +10,7 @@ import java.util.logging.LogRecord
 class ThreadRecordDispatcher(val logger: Logger) : Thread(DEFAULT_NAME.format(logger.name)), LogRecordDispatcher {
 
     companion object {
-        val DEFAULT_NAME = "LR dispatcher %s"
+        const val DEFAULT_NAME = "LR dispatcher %s"
     }
 
     private val queue: BlockingQueue<LogRecord>

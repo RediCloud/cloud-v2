@@ -11,7 +11,7 @@ class AnimatedLineAnimation(console: Console, updateInterval: Long, val line: ()
 
     companion object {
         private val LOADING_ANIMATION_SYMBOLS = listOf("|", "/", "-", "\\")
-        private val LOADING_ANIMATION_IDENTIFIER = "%loading%"
+        private const val LOADING_ANIMATION_IDENTIFIER = "%loading%"
     }
 
     private val loadingAnimations = mutableMapOf<Int, String>()

@@ -14,7 +14,7 @@ class PaperMcApiRequester(
 ) {
 
     companion object {
-        val BASE_URL = "https://api.papermc.io/v2"
+        const val BASE_URL = "https://api.papermc.io/v2"
         val gson = Gson()
         suspend inline fun <reified T> request(apiUrl: String): Response<T> {
             val response = httpClient.get { url("$BASE_URL$apiUrl") }

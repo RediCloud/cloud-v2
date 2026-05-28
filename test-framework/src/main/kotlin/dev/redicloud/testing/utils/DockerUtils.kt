@@ -7,11 +7,11 @@ import org.testcontainers.containers.GenericContainer
 import org.testcontainers.images.builder.ImageFromDockerfile
 import java.util.concurrent.Future
 
-val NODE_IMAGE_NAME = "redicloud-node"
-val NODE_IMAGE = "redicloud-node"
-val REDIS_IMAGE_NAME = "redis"
+const val NODE_IMAGE_NAME = "redicloud-node"
+const val NODE_IMAGE = "redicloud-node"
+const val REDIS_IMAGE_NAME = "redis"
 
-val ALPIN_IMAGE = "alpine:edge"
+const val ALPIN_IMAGE = "alpine:edge"
 
 object DockerUtils {
     private val logger = LoggerFactory.getLogger(DockerUtils::class.java)

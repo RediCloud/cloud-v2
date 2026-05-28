@@ -4,7 +4,11 @@ import java.util.logging.Handler
 
 abstract class AbstractLogHandler : Handler() {
 
-    override fun flush() {}
+    override fun flush() {
+        // no-op
+    }
 
-    override fun close() {}
+    override fun close() {
+        // no-op
+    }
 }

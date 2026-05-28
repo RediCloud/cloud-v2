@@ -4,7 +4,7 @@ import dev.redicloud.api.provider.IServerPlayerProvider
 import net.minestom.server.MinecraftServer
 import java.util.*
 
-class MinestomServerPlayerProvider() : IServerPlayerProvider {
+class MinestomServerPlayerProvider : IServerPlayerProvider {
 
     override fun getConnectedPlayerCount(): Int {
         return MinecraftServer.getConnectionManager().onlinePlayerCount

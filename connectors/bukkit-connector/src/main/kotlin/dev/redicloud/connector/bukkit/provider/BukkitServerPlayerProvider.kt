@@ -4,7 +4,7 @@ import dev.redicloud.api.provider.IServerPlayerProvider
 import org.bukkit.Bukkit
 import java.util.*
 
-class BukkitServerPlayerProvider() : IServerPlayerProvider {
+class BukkitServerPlayerProvider : IServerPlayerProvider {
 
     override fun getConnectedPlayerCount(): Int {
         return Bukkit.getOnlinePlayers().size
