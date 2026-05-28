@@ -38,7 +38,7 @@ class ConfigurationFileEditor private constructor(
     }
 
     fun setValue(key: String, value: String) {
-        if (!this.keyToValues.containsKey(key)) throw IllegalStateException("Key '$key' does not exist")
+        check(this.keyToValues.containsKey(key)) { "Key '$key' does not exist" }
         this.keyToValues[key] = value
     }
 

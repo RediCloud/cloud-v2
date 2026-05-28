@@ -10,12 +10,8 @@ class JarView(
 ) {
 
     init {
-        if (!file.exists()) {
-            throw IllegalArgumentException("File does not exist")
-        }
-        if (!file.isFile || file.extension != "jar") {
-            throw IllegalArgumentException("File is not a file")
-        }
+        require(file.exists()) { "File does not exist" }
+        require(file.isFile && file.extension == "jar") { "File is not a jar file" }
     }
 
     private val jarFile = JarFile(file)

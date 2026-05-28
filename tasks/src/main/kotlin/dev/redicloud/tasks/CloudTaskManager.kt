@@ -33,7 +33,7 @@ class CloudTaskManager(
     )
 
     fun register(task: CloudTask): UUID {
-        if (tasks.containsKey(task.id)) throw IllegalArgumentException("Task with id ${task.id} is already registered")
+        require(!tasks.containsKey(task.id)) { "Task with id ${task.id} is already registered" }
         tasks[task.id] = task
         task.start(this)
         return task.id
@@ -71,25 +71,25 @@ class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManage
     }
 
     fun atTime(atTime: Long): CloudTaskExecutorBuilder {
-        if (atTime < System.currentTimeMillis()) throw IllegalArgumentException("At time must be in the future")
+        require(atTime >= System.currentTimeMillis()) { "At time must be in the future" }
         executors.add(AtTimeCloudExecutor(this.task!!, atTime))
         return this
     }
 
     fun delay(delay: Long): CloudTaskExecutorBuilder {
-        if (delay < 0) throw IllegalArgumentException("Delay must be positive")
+        require(delay >= 0) { "Delay must be positive" }
         executors.add(AtTimeCloudExecutor(this.task!!, System.currentTimeMillis() + delay))
         return this
     }
 
     fun delay(duration: Duration): CloudTaskExecutorBuilder {
-        if (duration.inWholeMilliseconds < 0) throw IllegalArgumentException("Delay must be positive")
+        require(duration.inWholeMilliseconds >= 0) { "Delay must be positive" }
         executors.add(AtTimeCloudExecutor(this.task!!, System.currentTimeMillis() + duration.inWholeMilliseconds))
         return this
     }
 
     fun period(period: Duration, maxExecutions: Int = -1): CloudTaskExecutorBuilder {
-        if (period.inWholeMilliseconds < 0) throw IllegalArgumentException("Period must be positive")
+        require(period.inWholeMilliseconds >= 0) { "Period must be positive" }
         executors.add(PeriodicallyCloudTaskExecutor(this.task!!, period, maxExecutions))
         return this
     }
@@ -105,9 +105,9 @@ class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManage
     }
 
     fun register(): CloudTask {
-        if (this.task == null) throw IllegalStateException("Task must be set")
-        if (this.executors.isEmpty() && this.events.isEmpty() && this.packets.isEmpty() && !instant) {
-            throw IllegalStateException("At least one executor must be set")
+        checkNotNull(this.task) { "Task must be set" }
+        check(this.executors.isNotEmpty() || this.events.isNotEmpty() || this.packets.isNotEmpty() || instant) {
+            "At least one executor must be set"
         }
         val task = this.task!!
         executors.add(EventBasedCloudExecutor(task, manager.eventManager, events))

@@ -331,7 +331,7 @@ open class Console(
     }
 
     override fun createScreen(screen: Screen): Screen {
-        if (screen.console != this) throw IllegalArgumentException("Screen is not from this console")
+        require(screen.console == this) { "Screen is not from this console" }
         screens.add(screen)
         return screen
     }
@@ -340,7 +340,7 @@ open class Console(
         name: String
     ) {
         val screen = getScreen(name) ?: return
-        if (screen.isDefault()) throw IllegalArgumentException("Cannot delete default screen")
+        require(!screen.isDefault()) { "Cannot delete default screen" }
         if (screen.isActive()) {
             switchToDefaultScreen()
         }

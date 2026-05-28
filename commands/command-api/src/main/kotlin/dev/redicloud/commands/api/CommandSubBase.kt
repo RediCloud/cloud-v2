@@ -44,15 +44,11 @@ class CommandSubBase(
                 vararg = true
                 return@forEach
             }
-            if (it.vararg && !it.actorArgument) {
-                throw IllegalStateException(
-                    "Vararg argument of '${command.name} $path' can be only the last argument"
-                )
+            check(!it.vararg || it.actorArgument) {
+                "Vararg argument of '${command.name} $path' can be only the last argument"
             }
-            if (optionalArguments && !it.actorArgument) {
-                throw IllegalStateException(
-                    "Argument of '${command.name} $path' is required after optional argument"
-                )
+            check(!optionalArguments || it.actorArgument) {
+                "Argument of '${command.name} $path' is required after optional argument"
             }
         }
         aliasPaths = function.findAnnotation<CommandAlias>()?.aliases ?: arrayOf()

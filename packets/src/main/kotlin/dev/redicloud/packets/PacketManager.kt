@@ -40,7 +40,7 @@ class PacketManager(
     private val messageListener = createMessageListener()
 
     init {
-        if (!databaseConnection.connected) throw IllegalStateException("Database connection is not connected!")
+        check(databaseConnection.connected) { "Database connection is not connected!" }
 
         serviceTopic = databaseConnection.getCommunicationChannel(serviceId.toName())
         broadcastTopic = databaseConnection.getCommunicationChannel("broadcast")
@@ -101,7 +101,7 @@ class PacketManager(
     }
 
     suspend fun registerCategoryChannel(name: String) {
-        if (this.categoryChannelName != null) throw IllegalStateException("Category channel is already registered!")
+        check(this.categoryChannelName == null) { "Category channel is already registered!" }
         this.categoryChannelName = name
 
         categoryChannel?.subscribe(PackedPacket::class.java, messageListener)

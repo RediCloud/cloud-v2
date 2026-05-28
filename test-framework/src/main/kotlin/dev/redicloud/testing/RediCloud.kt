@@ -45,9 +45,7 @@ object RediCloud {
         val select = ProjectFileSelect("", null, "", FileSelectStrategy.LATEST_MODIFIED, false).apply(block)
         val file = select.file
         val targetDirectory = select.targetDirectory
-        if (!file.exists()) {
-            throw IllegalArgumentException("File ${file.absolutePath} does not exist")
-        }
+        require(file.exists()) { "File ${file.absolutePath} does not exist" }
         clusters.forEach { cluster ->
             cluster.nodes.forEach { node ->
                 val containerPath = "${node.workingDirectory}/$targetDirectory/${file.name}"

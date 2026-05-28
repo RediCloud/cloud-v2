@@ -53,9 +53,7 @@ object Updater {
         val response = httpClient.get {
             url(getRootAPIUrl() + "/files/$branch/$build/redicloud.zip")
         }
-        if (!response.status.isSuccess()) {
-            throw IllegalStateException("Failed to download the latest build")
-        }
+        check(response.status.isSuccess()) { "Failed to download the latest build" }
         val versionsFolder = File("versions")
         if (!versionsFolder.exists()) {
             versionsFolder.mkdir()
@@ -67,13 +65,9 @@ object Updater {
 
     fun switchVersion(branch: String, build: Int) {
         val versionsFolder = File("versions")
-        if (!versionsFolder.exists()) {
-            throw IllegalStateException("Version is not located in the versions folder")
-        }
+        check(versionsFolder.exists()) { "Version is not located in the versions folder" }
         val file = File("versions/redicloud-$branch#$build.zip")
-        if (file.extension != "zip") {
-            throw IllegalArgumentException("File must be a zip file")
-        }
+        require(file.extension == "zip") { "File must be a zip file" }
         unzipFile(file.absolutePath, File(".").absolutePath)
         var version: String = "unknown"
         updateToVersion = mainFolderJars().map { it to getJarProperties(it) }.filter {
@@ -81,7 +75,7 @@ object Updater {
         }.map {
             version = it.second["version"] ?: "unknown"
             it.first
-        }.firstOrNull() ?: throw IllegalStateException("Failed to find the version in the main folder")
+        }.firstOrNull() ?: error("Failed to find the version in the main folder")
         if (versionInfoFile.exists()) {
             versionInfoFile.delete()
         }
@@ -102,7 +96,7 @@ object Updater {
                 p.load(stream)
                 p
             }
-        } ?: throw IllegalStateException("redicloud-version.properties not found in jar file")
+        } ?: error("redicloud-version.properties not found in jar file")
         return properties.map { it.key.toString() to it.value.toString() }.toMap()
     }
 

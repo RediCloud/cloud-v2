@@ -144,5 +144,5 @@ class DatabaseConnection(
     }
 
     val client: RedissonClient
-        get() = _client ?: throw IllegalStateException("Not connected to redis!")
+        get() = _client ?: error("Not connected to redis!")
 }

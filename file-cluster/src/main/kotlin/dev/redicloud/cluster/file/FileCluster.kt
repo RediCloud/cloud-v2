@@ -149,12 +149,12 @@ class FileCluster(
             fileNode.port
         } else {
             val newPort = findFreePort(range)
-            if (!range.contains(newPort)) throw IllegalStateException("Port $newPort is not in range $range!")
+            check(range.contains(newPort)) { "Port $newPort is not in range $range!" }
             fileNode.port = newPort
             runBlocking { fileNodeRepository.updateFileNode(fileNode) }
             newPort
         }
-        if (port == -1) throw IllegalStateException("No free port found for file cluster!")
+        check(port != -1) { "No free port found for file cluster!" }
         return port
     }
 
@@ -200,7 +200,7 @@ class FileCluster(
 
     suspend fun disconnect(immediately: Boolean) {
         if (sshd == null || !sshd!!.isStarted) return
-        val thisNode = fileNodeRepository.getFileNode(serviceId) ?: throw IllegalStateException(
+        val thisNode = fileNodeRepository.getFileNode(serviceId) ?: error(
             "This file node is not registered in the file cluster!"
         )
         sshd!!.stop(immediately)
@@ -212,7 +212,7 @@ class FileCluster(
     }
 
     suspend fun createSession(serviceId: ServiceId): Session {
-        val fileNode = fileNodeRepository.getFileNode(serviceId) ?: throw IllegalStateException(
+        val fileNode = fileNodeRepository.getFileNode(serviceId) ?: error(
             "File node with service id $serviceId is not registered in the file cluster!"
         )
         val session = jsch.getSession(fileNode.username, fileNode.hostname, fileNode.port)
@@ -220,14 +220,14 @@ class FileCluster(
         session.setConfig("serviceId", serviceId.toName())
         session.setConfig("StrictHostKeyChecking", "no")
         session.connect()
-        if (!session.isConnected) throw IllegalStateException("Session is not connected!")
+        check(session.isConnected) { "Session is not connected!" }
         return session
     }
 
     suspend fun openChannel(session: Session): ChannelSftp {
         val channel = session.openChannel("sftp") as ChannelSftp
         channel.connect()
-        if (!channel.isConnected) throw IllegalStateException("Channel is not connected!")
+        check(channel.isConnected) { "Channel is not connected!" }
         return channel
     }
 
@@ -282,7 +282,7 @@ class FileCluster(
         val serviceId = ServiceId.fromString(
             channel.session.getConfig("serviceId")!!
         )
-        val fileNode = fileNodeRepository.getFileNode(serviceId) ?: throw IllegalStateException(
+        val fileNode = fileNodeRepository.getFileNode(serviceId) ?: error(
             "File node with service id $serviceId is not registered in the file cluster!"
         )
         channel.get(parsePath(targetFile), parsePath(destinationFile.absolutePath))

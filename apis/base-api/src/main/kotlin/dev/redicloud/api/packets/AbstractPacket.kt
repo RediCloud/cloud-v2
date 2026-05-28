@@ -24,8 +24,8 @@ abstract class AbstractPacket {
     }
 
     suspend fun respond(packet: AbstractPacket) {
-        if (sender == null) throw IllegalStateException("Sender is null!")
-        if (manager == null) throw IllegalStateException("PacketManager is null!")
-        manager!!.publish(packet.asAnswerOf(this), sender!!)
+        val s = checkNotNull(sender) { "Sender is null!" }
+        val m = checkNotNull(manager) { "PacketManager is null!" }
+        m.publish(packet.asAnswerOf(this), s)
     }
 }

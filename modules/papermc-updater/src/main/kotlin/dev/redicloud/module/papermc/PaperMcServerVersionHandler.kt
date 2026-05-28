@@ -72,10 +72,8 @@ class PaperMcServerVersionHandler(
 
             val url = requester.getDownloadUrl(type, targetVersion, buildId)
             val response = httpClient.get { url(url) }
-            if (!response.status.isSuccess()) {
-                throw IllegalStateException(
-                    "Download of ${targetVersion.name} is not available (${response.status.value}):\n${response.bodyAsText()}"
-                )
+            check(response.status.isSuccess()) {
+                "Download of ${targetVersion.name} is not available (${response.status.value}):\n${response.bodyAsText()}"
             }
 
             val folder = getFolder(version)

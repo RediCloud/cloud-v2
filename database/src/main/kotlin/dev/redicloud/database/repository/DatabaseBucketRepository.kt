@@ -15,10 +15,8 @@ open class DatabaseBucketRepository<I : Any, K : Any>(
 ) : DatabaseRepository<K>(connection, name) {
 
     init {
-        if (!implementationClass.isSubclassOf(interfaceClass)) {
-            throw IllegalArgumentException(
-                "Implementation class must be a subclass of interface class ($implementationClass is not a subclass of $interfaceClass)"
-            )
+        require(implementationClass.isSubclassOf(interfaceClass)) {
+            "Implementation class must be a subclass of interface class ($implementationClass is not a subclass of $interfaceClass)"
         }
         gsonInterfaceFactory.register(interfaceClass, implementationClass)
     }
@@ -27,13 +25,8 @@ open class DatabaseBucketRepository<I : Any, K : Any>(
     fun unsafe() = unsafe
 
     protected open suspend fun set(identifier: String, value: I): K {
-        if (!implementationClass.isInstance(
-                value
-            )
-        ) {
-            throw IllegalStateException(
-                "${value::class.qualifiedName} is not of type ${implementationClass.qualifiedName}"
-            )
+        check(implementationClass.isInstance(value)) {
+            "${value::class.qualifiedName} is not of type ${implementationClass.qualifiedName}"
         }
         getHandle(identifier).set(value)
         return implementationClass.cast(value)
@@ -41,13 +34,8 @@ open class DatabaseBucketRepository<I : Any, K : Any>(
 
     protected open suspend fun get(identifier: String): K? {
         val v = getHandle(identifier).get() ?: return null
-        if (!implementationClass.isInstance(
-                v
-            )
-        ) {
-            throw IllegalStateException(
-                "${v::class.qualifiedName} is not of type ${implementationClass.qualifiedName}"
-            )
+        check(implementationClass.isInstance(v)) {
+            "${v::class.qualifiedName} is not of type ${implementationClass.qualifiedName}"
         }
         return implementationClass.cast(v)
     }
@@ -61,13 +49,13 @@ open class DatabaseBucketRepository<I : Any, K : Any>(
     protected open suspend fun exists(identifier: String): Boolean = getHandle(identifier).exists
 
     private fun getHandle(identifier: String, customIdentifier: Boolean = false): IDataBucket<I> {
-        if (!connection.connected) throw IllegalStateException("Not connected to database")
+        check(connection.connected) { "Not connected to database" }
         val databaseIdentifier = "cloud:" + (if (customIdentifier) identifier else toDatabaseIdentifier(identifier))
         return connection.getBucket(databaseIdentifier)
     }
 
     private fun <X> getUnsafeHandle(identifier: String, customIdentifier: Boolean): IDataBucket<X> {
-        if (!connection.connected) throw IllegalStateException("Not connected to database")
+        check(connection.connected) { "Not connected to database" }
         val databaseIdentifier = "cloud:" + (if (customIdentifier) identifier else toDatabaseIdentifier(identifier))
         return connection.getBucket(databaseIdentifier)
     }

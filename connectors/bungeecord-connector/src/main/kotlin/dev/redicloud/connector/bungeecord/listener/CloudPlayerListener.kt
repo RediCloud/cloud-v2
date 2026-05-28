@@ -113,7 +113,7 @@ class CloudPlayerListener(
         val cloudPlayer = playerRepository.getPlayer(player.uniqueId)
         if (cloudPlayer == null) {
             player.disconnect(*ComponentBuilder().append("Player not found!").create())
-            throw IllegalStateException("Player ${player.uniqueId} not found!")
+            error("Player ${player.uniqueId} not found!")
         }
         cloudPlayer.serverId = serverRepository.getServer<CloudMinecraftServer>(event.server.info.name, ServiceType.MINECRAFT_SERVER)?.serviceId
         playerRepository.updatePlayer(cloudPlayer)
