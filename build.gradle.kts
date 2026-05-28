@@ -49,6 +49,8 @@ allprojects {
         dependency(rootLibs.kotlin.reflect)
         dependency(rootLibs.guice)
 
+        "detektPlugins"(rootLibs.detekt.formatting)
+
         testImplementation(rootLibs.testcontainers)
         testImplementation(rootLibs.gson)
         testImplementation(rootLibs.logback.core)
@@ -72,6 +74,9 @@ allprojects {
 
         withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
             jvmTarget = "1.8"
+            autoCorrect = true
+            config.setFrom(rootProject.files("detekt.yml"))
+            buildUponDefaultConfig = true
         }
 
         withType<JavaCompile> {

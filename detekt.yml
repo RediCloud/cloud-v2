@@ -1,0 +1,10 @@
+build:
+  maxIssues: 0
+
+style:
+  MaxLineLength:
+    active: false
+  WildcardImport:
+    active: false
+  NewLineAtEndOfFile:
+    active: false
