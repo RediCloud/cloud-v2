@@ -1,8 +1,8 @@
 package dev.redicloud.repository.template.file
 
 import dev.redicloud.api.template.file.ICloudFileTemplate
-import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.api.utils.TEMPLATE_FOLDER
+import dev.redicloud.cache.IClusterCacheObject
 import java.io.File
 import java.util.*
 
@@ -36,5 +36,4 @@ data class FileTemplate(
             inherited = inherited
         )
     }
-
 }
