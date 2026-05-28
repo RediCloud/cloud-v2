@@ -74,7 +74,7 @@ import kotlin.time.Duration.Companion.seconds
 
 abstract class BaseService(
     databaseConfiguration: DatabaseConfiguration,
-    _databaseConnection: DatabaseConnection?,
+    initialConnection: DatabaseConnection?,
     val serviceId: ServiceId
 ) : InjectorModule() {
 
@@ -106,8 +106,8 @@ abstract class BaseService(
             loadProperties(Thread.currentThread().contextClassLoader)
             VersionRepository.loadIfNotLoaded()
         }
-        databaseConnection = if (_databaseConnection != null && _databaseConnection.connected) {
-            _databaseConnection
+        databaseConnection = if (initialConnection != null && initialConnection.connected) {
+            initialConnection
         } else {
             DatabaseConnection(
                 databaseConfiguration,

@@ -25,7 +25,7 @@ class PaperMcUpdaterModule : CloudModule(), CloudInjectable {
 
     @ModuleTask(ModuleLifeCycle.LOAD)
     fun onLoad(
-        @Named("this") _serviceId: ServiceId,
+        @Named("this") serviceId: ServiceId,
         serverVersionRepository: ICloudServerVersionRepository,
         serverVersionTypeRepository: ICloudServerVersionTypeRepository,
         javaVersionRepository: ICloudJavaVersionRepository,

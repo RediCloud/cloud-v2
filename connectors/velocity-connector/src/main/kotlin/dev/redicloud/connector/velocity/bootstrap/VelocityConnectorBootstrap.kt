@@ -39,12 +39,12 @@ class VelocityConnectorBootstrap @Inject constructor(val proxyServer: ProxyServe
     }
 
     @Subscribe(order = PostOrder.FIRST)
-    fun onProxyInitialization(_event: ProxyInitializeEvent) {
+    fun onProxyInitialization(event: ProxyInitializeEvent) {
         connector?.onEnable()
     }
 
     @Subscribe(order = PostOrder.LAST)
-    fun onShutdown(_event: ProxyShutdownEvent) {
+    fun onShutdown(event: ProxyShutdownEvent) {
         if (connector == null) {
             exitProcess(0)
         }

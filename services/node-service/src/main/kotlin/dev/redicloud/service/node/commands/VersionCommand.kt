@@ -57,11 +57,11 @@ class VersionCommand(
     @CommandDescription("Downloads a version")
     fun download(
         actor: ConsoleActor,
-        @CommandParameter("branch", false, BranchSuggester::class) _branch: String?,
-        @CommandParameter("build", false, BuildsSuggester::class) _build: String?
+        @CommandParameter("branch", false, BranchSuggester::class) branchParam: String?,
+        @CommandParameter("build", false, BuildsSuggester::class) buildParam: String?
     ) = defaultScope.launch {
-        val branch = _branch ?: BRANCH
-        val build = _build ?: "latest"
+        val branch = branchParam ?: BRANCH
+        val build = buildParam ?: "latest"
         val buildId = if (build == "latest") {
             val builds = Updater.getBuilds(branch)
             if (builds.isEmpty()) {
@@ -112,15 +112,15 @@ class VersionCommand(
     @CommandDescription("Switch to a downloaded version")
     fun switch(
         actor: ConsoleActor,
-        @CommandParameter("branch", false, BranchSuggester::class) _branch: String?,
-        @CommandParameter("build", false, BuildsSuggester::class) _build: String?
+        @CommandParameter("branch", false, BranchSuggester::class) branchParam: String?,
+        @CommandParameter("build", false, BuildsSuggester::class) buildParam: String?
     ) = defaultScope.launch {
         if (Updater.updateToVersion != null) {
             actor.sendMessage("§cAn update was already installed! Restart the node service to apply the changes!")
             return@launch
         }
-        val branch = _branch ?: BRANCH
-        val build = _build ?: "latest"
+        val branch = branchParam ?: BRANCH
+        val build = buildParam ?: "latest"
         if (BUILD == build && BRANCH == branch) {
             actor.sendMessage("You are already running this version!")
             return@launch
@@ -199,9 +199,9 @@ class VersionCommand(
     @CommandDescription("Displays all available builds for a branch")
     fun builds(
         actor: ConsoleActor,
-        @CommandParameter("branch", false, BranchSuggester::class) _branch: String?
+        @CommandParameter("branch", false, BranchSuggester::class) branchParam: String?
     ) = defaultScope.launch {
-        val branch = _branch ?: BRANCH
+        val branch = branchParam ?: BRANCH
         val builds = mutableListOf<BuildInfo>()
         builds.addAll(Updater.getBuilds(branch))
         if (builds.isEmpty()) {
