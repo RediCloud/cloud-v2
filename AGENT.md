@@ -93,6 +93,11 @@
 - `bukkit-legacy` shades logback 1.3.x (`libs.logback.core.legacy` / `libs.logback.classic.legacy`) for Java 8 compat
 - `velocity-connector` uses `kotlin("kapt")` (not `alias()`) because the Kotlin plugin is already on the classpath
 - **Detekt** (`io.gitlab.arturbosch.detekt`) is applied to all subprojects for static analysis
+  - **detekt-formatting** plugin (wraps ktlint) handles formatting rules — configured via `.editorconfig`
+  - Config file: `detekt.yml` (builds upon default config)
+  - `autoCorrect = true` — detekt auto-fixes formatting issues on each run
+  - Run locally: `JAVA_HOME=/usr/lib/jvm/java-21-temurin-jdk ./gradlew detekt` (detekt 1.23.x does not support JDK 25)
+  - **Always run `./gradlew detekt` before pushing** — CI will reject code with detekt violations
 
 ### CI
 
