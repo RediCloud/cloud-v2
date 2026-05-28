@@ -25,8 +25,8 @@ import dev.redicloud.service.node.repository.node.connect
 import dev.redicloud.service.node.commands.*
 import dev.redicloud.service.node.repository.template.file.NodeFileTemplateRepository
 import dev.redicloud.service.node.tasks.node.NodeChooseMasterTask
-import dev.redicloud.service.node.tasks.NodePingTask
-import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
+import dev.redicloud.service.node.tasks.node.NodePingTask
+import dev.redicloud.service.node.tasks.node.NodeSelfSuspendTask
 import dev.redicloud.service.node.tasks.metrics.MetricsTask
 import dev.redicloud.api.utils.TEMP_FOLDER
 import dev.redicloud.console.Console

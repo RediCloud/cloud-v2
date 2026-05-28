@@ -1,4 +1,4 @@
-package dev.redicloud.service.node.tasks
+package dev.redicloud.service.node.tasks.node
 
 import dev.redicloud.service.base.repository.pingService
 import dev.redicloud.service.node.NodeService
