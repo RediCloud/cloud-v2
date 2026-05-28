@@ -3,7 +3,6 @@ package dev.redicloud.service.node.commands
 import dev.redicloud.api.commands.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
-import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.ServerRepository
@@ -31,7 +30,6 @@ import kotlin.time.Duration.Companion.minutes
 @CommandDescription("Manage the configuration templates")
 class ConfigurationTemplateCommand(
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
-    private val javaVersionRepository: JavaVersionRepository,
     private val serverRepository: ServerRepository,
     private val serverVersionRepository: CloudServerVersionRepository,
     private val nodeRepository: NodeRepository,
@@ -372,6 +370,7 @@ class ConfigurationTemplateCommand(
     @CommandSubPath("edit <name> environment remove <key>")
     @CommandAlias(["edit <name> env remove <key>"])
     @CommandDescription("Remove an environment variable from a configuration template")
+    @Suppress("UnusedParameter")
     fun editEnvironmentRemove(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,

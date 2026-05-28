@@ -90,6 +90,7 @@ class ModuleCommand(
 
     @CommandSubPath("reload <id>")
     @CommandDescription("Reload a module")
+    @Suppress("UnusedParameter")
     fun reload(
         actor: ConsoleActor,
         @CommandParameter("id", true, ReloadableModulesSuggester::class) id: String
@@ -223,6 +224,7 @@ class ModuleCommand(
 
     @CommandSubPath("uninstall <id>")
     @CommandDescription("Uninstall a module")
+    @Suppress("UnusedParameter")
     fun uninstall(
         actor: ConsoleActor,
         @CommandParameter("id", true, UninstallableModulesSuggester::class) id: String

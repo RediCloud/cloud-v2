@@ -21,7 +21,8 @@ class CloudPlayerBossBarPacket(
         bossBar.color().name,
         bossBar.overlay().name,
         bossBar.progress(),
-        bossBar.flags().map { it.name }
+        bossBar.flags().map { it.name },
+        hide
     )
 
     private val component: Component

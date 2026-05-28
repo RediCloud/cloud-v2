@@ -27,38 +27,40 @@ class CloudServerStartTask(
     private val serverRepository: ServerRepository
 ) : CloudTask() {
 
-    private val onNodeConnect = eventManager.listen<NodeConnectEvent> {
-        scope.launch {
-            val nodes = nodeRepository.getConnectedNodes()
-            val master = nodes.firstOrNull { it.master }
-            if (master?.serviceId != serverFactory.hostingId) return@launch
-            serverFactory.startQueue.forEach queue@{ info ->
-                info.failedStarts.removeFails(it.serviceId)
-                info.calculateStartOrder(nodes, serverRepository)
+    init {
+        eventManager.listen<NodeConnectEvent> {
+            scope.launch {
+                val nodes = nodeRepository.getConnectedNodes()
+                val master = nodes.firstOrNull { it.master }
+                if (master?.serviceId != serverFactory.hostingId) return@launch
+                serverFactory.startQueue.forEach queue@{ info ->
+                    info.failedStarts.removeFails(it.serviceId)
+                    info.calculateStartOrder(nodes, serverRepository)
+                }
             }
         }
-    }
 
-    private val onNodeDisconnect = eventManager.listen<NodeDisconnectEvent> {
-        scope.launch {
-            val nodes = nodeRepository.getConnectedNodes()
-            val master = nodes.firstOrNull { it.master }
-            if (master?.serviceId != serverFactory.hostingId) return@launch
-            serverFactory.startQueue.forEach queue@{ info ->
-                info.failedStarts.addFailedStart(it.serviceId, StartResultType.NODE_NOT_CONNECTED)
-                info.calculateStartOrder(nodes, serverRepository)
+        eventManager.listen<NodeDisconnectEvent> {
+            scope.launch {
+                val nodes = nodeRepository.getConnectedNodes()
+                val master = nodes.firstOrNull { it.master }
+                if (master?.serviceId != serverFactory.hostingId) return@launch
+                serverFactory.startQueue.forEach queue@{ info ->
+                    info.failedStarts.addFailedStart(it.serviceId, StartResultType.NODE_NOT_CONNECTED)
+                    info.calculateStartOrder(nodes, serverRepository)
+                }
             }
         }
-    }
 
-    private val onNodeSuspend = eventManager.listen<NodeSuspendedEvent> {
-        scope.launch {
-            val nodes = nodeRepository.getConnectedNodes()
-            val master = nodes.firstOrNull { it.master }
-            if (master?.serviceId != serverFactory.hostingId) return@launch
-            serverFactory.startQueue.forEach queue@{ info ->
-                info.failedStarts.addFailedStart(it.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
-                info.calculateStartOrder(nodes, serverRepository)
+        eventManager.listen<NodeSuspendedEvent> {
+            scope.launch {
+                val nodes = nodeRepository.getConnectedNodes()
+                val master = nodes.firstOrNull { it.master }
+                if (master?.serviceId != serverFactory.hostingId) return@launch
+                serverFactory.startQueue.forEach queue@{ info ->
+                    info.failedStarts.addFailedStart(it.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
+                    info.calculateStartOrder(nodes, serverRepository)
+                }
             }
         }
     }

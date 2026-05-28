@@ -158,6 +158,7 @@ class FileCluster(
     }
 
     // TODO: implement certificate-based authentication for file cluster
+    @Suppress("UnusedPrivateMember")
     private fun generateKey(): KeyPair {
         val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
         keyPairGenerator.initialize(2048)
@@ -165,6 +166,7 @@ class FileCluster(
     }
 
     // TODO: implement certificate-based authentication for file cluster
+    @Suppress("UnusedPrivateMember")
     private fun saveCertificateToFile(certificate: X509Certificate, file: File) {
         if (!file.parentFile.exists()) file.parentFile.mkdirs()
         if (file.exists()) file.delete()
@@ -175,6 +177,7 @@ class FileCluster(
     }
 
     // TODO: implement certificate-based authentication for file cluster
+    @Suppress("UnusedPrivateMember")
     private fun signCertificate(publicKey: PublicKey, privateKey: PrivateKey): X509Certificate {
         val subject = X500Name("CN=Self-Signed")
         val now = Instant.now()

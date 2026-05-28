@@ -47,7 +47,7 @@ abstract class AbstractCloudFactoryTask(
             .filter { it.configurationTemplate.uniqueId == template.uniqueId }
             .filter { it.state == CloudServerState.STOPPED }
             .toMutableList()
-        for (i in 0 until amount) {
+        repeat(amount) {
             if (targetStaticServers.isNotEmpty()) {
                 val targetServer = targetStaticServers.drop(1).first()
                 serverFactory.queueStart(targetServer.serviceId)

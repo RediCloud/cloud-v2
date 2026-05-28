@@ -8,8 +8,10 @@ abstract class AbstractScreenProvider(
     packetManager: PacketManager
 ) {
 
-    private val onPacket = packetManager.listen<ScreenCommandPacket> {
-        execute(it.command)
+    init {
+        packetManager.listen<ScreenCommandPacket> {
+            execute(it.command)
+        }
     }
 
     abstract fun execute(command: String)

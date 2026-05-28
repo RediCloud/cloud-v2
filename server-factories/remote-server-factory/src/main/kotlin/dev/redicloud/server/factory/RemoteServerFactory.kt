@@ -45,7 +45,7 @@ open class RemoteServerFactory(
         val nodes = nodeRepository.getRegisteredNodes()
         info.calculateStartOrder(nodes, serverRepository)
         val ids = mutableListOf<UUID>()
-        for (i in 1..count) {
+        repeat(count) {
             val clone = ServerQueueInformation(
                 UUID.randomUUID(),
                 configurationTemplate,

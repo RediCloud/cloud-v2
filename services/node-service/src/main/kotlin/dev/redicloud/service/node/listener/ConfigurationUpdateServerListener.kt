@@ -21,29 +21,31 @@ class ConfigurationUpdateServerListener(
     nodeRepository: ICloudNodeRepository
 ) {
 
-    private val onConfigurationTemplateUpdateEvent = eventManager.listen<ConfigurationTemplateUpdateEvent> {
-        defaultScope.launch {
-            val thisNode = nodeRepository.getNode(serviceId) ?: return@launch
-            if (!thisNode.master) {
-                return@launch
-            }
-            LOGGER.info("Updating server configuration templates")
-            val configurationTemplate =
-                configurationTemplateRepository.getTemplate(it.configurationTemplateId) ?: return@launch
-            serverRepository.getRegisteredServers()
-                .filter { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }.forEach {
-                    if (it.state == CloudServerState.STOPPED) {
-                        (it as CloudServer).configurationTemplate = configurationTemplate
-                    } else {
-                        it.configurationTemplate.fallbackServer = configurationTemplate.fallbackServer
-                        it.configurationTemplate.joinPermission = configurationTemplate.joinPermission
-                        it.configurationTemplate.maxPlayers = configurationTemplate.maxPlayers
-                        it.configurationTemplate.percentToStartNewService =
-                            configurationTemplate.percentToStartNewService
-                        it.configurationTemplate.startPriority = configurationTemplate.startPriority
-                    }
-                    serverRepository.updateServer(it)
+    init {
+        eventManager.listen<ConfigurationTemplateUpdateEvent> {
+            defaultScope.launch {
+                val thisNode = nodeRepository.getNode(serviceId) ?: return@launch
+                if (!thisNode.master) {
+                    return@launch
                 }
+                LOGGER.info("Updating server configuration templates")
+                val configurationTemplate =
+                    configurationTemplateRepository.getTemplate(it.configurationTemplateId) ?: return@launch
+                serverRepository.getRegisteredServers()
+                    .filter { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }.forEach {
+                        if (it.state == CloudServerState.STOPPED) {
+                            (it as CloudServer).configurationTemplate = configurationTemplate
+                        } else {
+                            it.configurationTemplate.fallbackServer = configurationTemplate.fallbackServer
+                            it.configurationTemplate.joinPermission = configurationTemplate.joinPermission
+                            it.configurationTemplate.maxPlayers = configurationTemplate.maxPlayers
+                            it.configurationTemplate.percentToStartNewService =
+                                configurationTemplate.percentToStartNewService
+                            it.configurationTemplate.startPriority = configurationTemplate.startPriority
+                        }
+                        serverRepository.updateServer(it)
+                    }
+            }
         }
     }
 

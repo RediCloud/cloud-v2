@@ -96,7 +96,7 @@ class VersionCommand(
         }
         console.startAnimation(animation)
         try {
-            val file = Updater.download(branch, buildId)
+            Updater.download(branch, buildId)
             downloaded = true
             actor.sendMessage("You can switch the version with the command: %hc%version switch $branch $buildId")
         }catch (e: Exception) {
@@ -167,7 +167,7 @@ class VersionCommand(
             return@launch
         }
         switchConfirms.remove(confirmIdentifier)
-        val file = Updater.switchVersion(branch, buildId)
+        Updater.switchVersion(branch, buildId)
         actor.sendMessage("Activated the version: %hc%$branch§8#%tc%$buildId")
         actor.sendMessage("§cYou have to restart the node service to apply the changes!")
     }

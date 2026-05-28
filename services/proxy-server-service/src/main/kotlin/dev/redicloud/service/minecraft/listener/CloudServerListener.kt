@@ -12,18 +12,20 @@ class CloudServerListener(
     private val proxyServerService: ProxyServerService<*, *>
 ) {
 
-    private val onServerConnectEvent = proxyServerService.eventManager.listen<CloudServerConnectedEvent> {
-        defaultScope.launch {
-            if (it.serviceId.type != ServiceType.MINECRAFT_SERVER) return@launch
-            val server = proxyServerService.serverRepository.getMinecraftServer(it.serviceId)
-                ?: error("Cant register server that is not in the repository: ${it.serviceId.toName()}")
-            proxyServerService.registerServer(server)
+    init {
+        proxyServerService.eventManager.listen<CloudServerConnectedEvent> {
+            defaultScope.launch {
+                if (it.serviceId.type != ServiceType.MINECRAFT_SERVER) return@launch
+                val server = proxyServerService.serverRepository.getMinecraftServer(it.serviceId)
+                    ?: error("Cant register server that is not in the repository: ${it.serviceId.toName()}")
+                proxyServerService.registerServer(server)
+            }
         }
-    }
 
-    private val onServerDisconnectEvent = proxyServerService.eventManager.listen<CloudServerDisconnectedEvent> {
-        if (it.serviceId.type != ServiceType.MINECRAFT_SERVER) return@listen
-        proxyServerService.unregisterServer(it.serviceId)
+        proxyServerService.eventManager.listen<CloudServerDisconnectedEvent> {
+            if (it.serviceId.type != ServiceType.MINECRAFT_SERVER) return@listen
+            proxyServerService.unregisterServer(it.serviceId)
+        }
     }
 
 }

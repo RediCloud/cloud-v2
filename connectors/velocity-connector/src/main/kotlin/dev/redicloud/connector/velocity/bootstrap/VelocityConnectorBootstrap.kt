@@ -38,11 +38,13 @@ class VelocityConnectorBootstrap @Inject constructor(val proxyServer: ProxyServe
         }
     }
 
+    @Suppress("UnusedParameter")
     @Subscribe(order = PostOrder.FIRST)
     fun onProxyInitialization(event: ProxyInitializeEvent) {
         connector?.onEnable()
     }
 
+    @Suppress("UnusedParameter")
     @Subscribe(order = PostOrder.LAST)
     fun onShutdown(event: ProxyShutdownEvent) {
         if (connector == null) {
