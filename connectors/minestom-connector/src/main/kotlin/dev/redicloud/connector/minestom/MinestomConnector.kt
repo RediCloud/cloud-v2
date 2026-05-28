@@ -15,7 +15,7 @@ class MinestomConnector(val extension: Extension) : MinecraftServerService<Exten
 
     internal var minestomShuttingDown = false
     override val screenProvider: AbstractScreenProvider =
-        MinestomScreenProvider(this.packetManager, this.extension)
+        MinestomScreenProvider(this.packetManager)
     override var playerProvider: IServerPlayerProvider =
         MinestomServerPlayerProvider()
     override val playerExecutor: BasePlayerExecutor =

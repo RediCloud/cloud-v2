@@ -7,7 +7,7 @@ open class UtilTest {
     }
 
     protected fun loopRandom(block: () -> Unit) {
-        for (i in 0 until RANDOM_LOOP_TEST) {
+        repeat(RANDOM_LOOP_TEST) {
             block()
         }
     }

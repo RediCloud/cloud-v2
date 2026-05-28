@@ -4,12 +4,10 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 
-fun getAPIUrl(): String {
-    return "${getRootAPIUrl()}/files/$BRANCH/$BUILD"
-}
+const val ROOT_API_URL = "https://api.redicloud.dev/v2"
 
-fun getRootAPIUrl(): String {
-    return "https://api.redicloud.dev/v2"
+fun getAPIUrl(): String {
+    return "$ROOT_API_URL/files/$BRANCH/$BUILD"
 }
 
 suspend fun getAPIUrlOrFallback(): String {

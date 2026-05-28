@@ -39,7 +39,7 @@ annotation class CommandParameter(
     val required: Boolean = true,
     val suggester: KClass<out AbstractCommandSuggester> = EmptySuggester::class,
     val suggesterArguments: Array<String> = []
-) // TODO: required will be automatically set to false if the type is nullable
+) // Note: required will be automatically set to false if the type is nullable
 
 /**
  * This annotation can be used to specify the description of a command or sub command.

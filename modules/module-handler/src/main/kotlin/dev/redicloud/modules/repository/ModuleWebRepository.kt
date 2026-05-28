@@ -93,7 +93,7 @@ class ModuleWebRepository(
         return lastVersion != description.version
     }
 
-    // TODO: download console animation
+    // Download console animation
     suspend fun download(moduleId: String, version: String): File {
         MODULES_FOLDER.createIfNotExists()
         val localFile = File(MODULES_FOLDER.getFile(), "$moduleId-$version.jar")

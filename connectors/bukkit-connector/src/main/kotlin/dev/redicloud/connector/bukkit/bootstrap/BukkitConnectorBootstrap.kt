@@ -23,7 +23,8 @@ class BukkitConnectorBootstrap : JavaPlugin() {
             configureLogger("io.netty", Level.INFO)
             connector = BukkitConnector(this)
         } catch (e: Exception) {
-            e.printStackTrace()
+            System.err.println("Failed to initialize BukkitConnector: ${e.message}")
+            System.err.println(e.stackTraceToString())
         }
     }
 

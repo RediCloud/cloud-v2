@@ -39,7 +39,6 @@ import java.math.BigInteger
 import java.net.InetSocketAddress
 import java.nio.file.Paths
 import java.security.*
-import java.security.KeyPair
 import java.security.cert.X509Certificate
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -158,12 +157,14 @@ class FileCluster(
         return port
     }
 
+    // TODO: implement certificate-based authentication for file cluster
     private fun generateKey(): KeyPair {
         val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
         keyPairGenerator.initialize(2048)
         return keyPairGenerator.generateKeyPair()
     }
 
+    // TODO: implement certificate-based authentication for file cluster
     private fun saveCertificateToFile(certificate: X509Certificate, file: File) {
         if (!file.parentFile.exists()) file.parentFile.mkdirs()
         if (file.exists()) file.delete()
@@ -173,16 +174,13 @@ class FileCluster(
         pemWriter.close()
     }
 
+    // TODO: implement certificate-based authentication for file cluster
     private fun signCertificate(publicKey: PublicKey, privateKey: PrivateKey): X509Certificate {
         val subject = X500Name("CN=Self-Signed")
-
         val now = Instant.now()
         val expirationTime = now.plus(31 * 3, ChronoUnit.DAYS)
-
         val serialNumber = BigInteger.valueOf(now.toEpochMilli())
-
         val publicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.encoded)
-
         val builder = X509v3CertificateBuilder(
             subject,
             serialNumber,
@@ -191,10 +189,8 @@ class FileCluster(
             subject,
             publicKeyInfo
         )
-
         val contentSigner: ContentSigner = JcaContentSignerBuilder("SHA256WithRSA").build(privateKey)
         val certificateHolder: X509CertificateHolder = builder.build(contentSigner)
-
         return JcaX509CertificateConverter().getCertificate(certificateHolder)
     }
 

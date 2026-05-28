@@ -58,7 +58,8 @@ class RestModule : CloudModule(), CloudInjectable {
         logger.info("Starting rest module on port $port...")
         app = Javalin.create()
         config = getStorage("rest-server")
-        val node = runBlocking { nodeRepository.getNode(nodeId)!! }
+        // verify the node exists before proceeding, throws if not found
+        runBlocking { nodeRepository.getNode(nodeId)!! }
 
         playerFetcher = PlayerFetcher(playerRepository)
         nodeFetcher = NodeFetcher(nodeRepository)

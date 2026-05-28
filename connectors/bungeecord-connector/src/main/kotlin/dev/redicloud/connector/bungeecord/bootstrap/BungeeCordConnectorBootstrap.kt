@@ -19,7 +19,8 @@ class BungeeCordConnectorBootstrap : Plugin() {
             Bootstrap().apply(URLClassLoaderJarLoader(this.javaClass.classLoader as URLClassLoader))
             connector = BungeeCordConnector(this)
         } catch (e: Exception) {
-            e.printStackTrace()
+            System.err.println("Failed to initialize BungeeCordConnector: ${e.message}")
+            System.err.println(e.stackTraceToString())
         }
     }
 

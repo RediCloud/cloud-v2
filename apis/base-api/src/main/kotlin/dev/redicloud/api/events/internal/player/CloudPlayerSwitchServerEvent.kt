@@ -5,6 +5,6 @@ import java.util.UUID
 
 class CloudPlayerSwitchServerEvent(
     uniqueId: UUID,
-    from: ServiceId,
-    to: ServiceId
+    val from: ServiceId,
+    val to: ServiceId
 ) : CloudPlayerEvent(uniqueId)

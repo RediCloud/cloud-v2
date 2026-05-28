@@ -51,7 +51,7 @@ object Updater {
 
     suspend fun download(branch: String, build: Int): File {
         val response = httpClient.get {
-            url(getRootAPIUrl() + "/files/$branch/$build/redicloud.zip")
+            url("$ROOT_API_URL/files/$branch/$build/redicloud.zip")
         }
         check(response.status.isSuccess()) { "Failed to download the latest build" }
         val versionsFolder = File("versions")
@@ -142,7 +142,7 @@ object Updater {
     suspend fun getBuilds(branch: String?): List<BuildInfo> {
         if (branch == null) return emptyList()
         val response = httpClient.get {
-            url(getRootAPIUrl() + "/builds/?branch=$branch")
+            url("$ROOT_API_URL/builds/?branch=$branch")
         }
         if (!response.status.isSuccess()) return emptyList()
         val builds = gson.fromJsonToList<BuildInfo>(response.bodyAsText())
@@ -151,7 +151,7 @@ object Updater {
 
     suspend fun getBranches(): List<String> {
         val response = httpClient.get {
-            url(getRootAPIUrl() + "/builds/")
+            url("$ROOT_API_URL/builds/")
         }
         if (!response.status.isSuccess()) return emptyList()
         val info = gson.fromJson(response.bodyAsText(), BranchList::class.java)

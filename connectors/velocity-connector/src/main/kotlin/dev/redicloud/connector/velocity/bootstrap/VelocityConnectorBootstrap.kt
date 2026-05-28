@@ -30,20 +30,21 @@ class VelocityConnectorBootstrap @Inject constructor(val proxyServer: ProxyServe
         try {
             loadProperties(this.javaClass.classLoader)
             Bootstrap().apply(URLClassLoaderJarLoader(this.javaClass.classLoader as URLClassLoader))
-            connector = VelocityConnector(this, proxyServer)
+            connector = VelocityConnector(proxyServer)
         } catch (e: Exception) {
-            e.printStackTrace()
+            System.err.println("Failed to initialize VelocityConnector: ${e.message}")
+            System.err.println(e.stackTraceToString())
             proxyServer.shutdown()
         }
     }
 
     @Subscribe(order = PostOrder.FIRST)
-    fun onProxyInitialization(event: ProxyInitializeEvent) {
+    fun onProxyInitialization(_event: ProxyInitializeEvent) {
         connector?.onEnable()
     }
 
     @Subscribe(order = PostOrder.LAST)
-    fun onShutdown(event: ProxyShutdownEvent) {
+    fun onShutdown(_event: ProxyShutdownEvent) {
         if (connector == null) {
             exitProcess(0)
         }

@@ -5,7 +5,6 @@ import com.velocitypowered.api.proxy.ProxyServer
 import com.velocitypowered.api.proxy.server.ServerInfo
 import dev.redicloud.api.provider.IServerPlayerProvider
 import dev.redicloud.api.service.ServiceId
-import dev.redicloud.connector.velocity.bootstrap.VelocityConnectorBootstrap
 import dev.redicloud.connector.velocity.listener.CloudNotificationListeners
 import dev.redicloud.connector.velocity.listener.CloudPlayerListener
 import dev.redicloud.connector.velocity.player.VelocityPlayerExecutor
@@ -20,7 +19,6 @@ import kotlinx.coroutines.runBlocking
 import java.net.InetSocketAddress
 
 class VelocityConnector(
-    private val bootstrap: VelocityConnectorBootstrap,
     private val proxyServer: ProxyServer
 ) : ProxyServerService<PluginContainer, ServerInfo>() {
 

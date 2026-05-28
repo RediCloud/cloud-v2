@@ -14,29 +14,29 @@ class IPFilter(
 ) {
 
     private val allowedIpCache = mutableListOf<String>()
-    private val onNodeConnect = eventManager.listen<FileNodeConnectedEvent> {
-        runBlocking {
-            val fileNode = fileNodeRepository.getFileNode(it.serviceId) ?: return@runBlocking
-            val ipAddress = fileNode.hostname
-            allowedIpCache.add(ipAddress)
-        }
-    }
-    private val onNodeDisconnect = eventManager.listen<FileNodeDisconnectedEvent> {
-        runBlocking {
-            val fileNode = fileNodeRepository.getFileNode(it.serviceId) ?: return@runBlocking
-            val ipAddress = fileNode.hostname
-            allowedIpCache.remove(ipAddress)
-        }
-    }
-    private val onNodeSuspend = eventManager.listen<NodeSuspendedEvent> {
-        runBlocking {
-            val fileNode = fileNodeRepository.getFileNode(it.serviceId) ?: return@runBlocking
-            val ipAddress = fileNode.hostname
-            allowedIpCache.remove(ipAddress)
-        }
-    }
 
     init {
+        eventManager.listen<FileNodeConnectedEvent> {
+            runBlocking {
+                val fileNode = fileNodeRepository.getFileNode(it.serviceId) ?: return@runBlocking
+                val ipAddress = fileNode.hostname
+                allowedIpCache.add(ipAddress)
+            }
+        }
+        eventManager.listen<FileNodeDisconnectedEvent> {
+            runBlocking {
+                val fileNode = fileNodeRepository.getFileNode(it.serviceId) ?: return@runBlocking
+                val ipAddress = fileNode.hostname
+                allowedIpCache.remove(ipAddress)
+            }
+        }
+        eventManager.listen<NodeSuspendedEvent> {
+            runBlocking {
+                val fileNode = fileNodeRepository.getFileNode(it.serviceId) ?: return@runBlocking
+                val ipAddress = fileNode.hostname
+                allowedIpCache.remove(ipAddress)
+            }
+        }
         runBlocking {
             System.getProperty("redicloud.filter.ip.bypass", "127.0.0.1;0.0.0.0").split(";").forEach {
                 allowedIpCache.add(it)

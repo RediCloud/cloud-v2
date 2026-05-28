@@ -27,7 +27,8 @@ class MinestomConnectorBootstrap : Extension() {
             configureLogger("io.netty", Level.INFO)
             connector = MinestomConnector(this)
         } catch (e: Exception) {
-            e.printStackTrace()
+            System.err.println("Failed to initialize MinestomConnector: ${e.message}")
+            System.err.println(e.stackTraceToString())
         }
     }
 
