@@ -15,6 +15,7 @@ import dev.redicloud.utils.coroutineExceptionHandler
 import dev.redicloud.utils.gson.fixKotlinAnnotations
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
