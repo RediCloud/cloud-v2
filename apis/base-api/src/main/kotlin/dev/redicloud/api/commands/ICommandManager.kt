@@ -2,6 +2,7 @@ package dev.redicloud.api.commands
 
 import kotlin.reflect.KClass
 
+@Suppress("TooManyFunctions")
 interface ICommandManager<K : ICommandActor<*>> {
 
     var helpFormatter: ICommandHelpFormatter

@@ -11,6 +11,7 @@ class ConsoleQuestion(
     val completer: List<String> = mutableListOf()
 ) {
 
+    @Suppress("LoopWithTooManyJumpStatements")
     suspend inline fun <reified T> ask(console: Console): T {
         console.disableCommands()
         var result: T? = null

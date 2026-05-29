@@ -21,6 +21,7 @@ import java.util.*
 @Command("svt")
 @CommandAlias(["serverversiontype", "svtype"])
 @CommandDescription("Configure server version types")
+@Suppress("TooManyFunctions")
 class CloudServerVersionTypeCommand(
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     private val configurationTemplateRepository: ConfigurationTemplateRepository,

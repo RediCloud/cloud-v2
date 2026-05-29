@@ -6,6 +6,7 @@ import dev.redicloud.cache.IClusterCacheObject
 import java.util.*
 import kotlin.time.Duration.Companion.seconds
 
+@Suppress("LongParameterList")
 class ConfigurationTemplate(
     override val uniqueId: UUID = UUID.randomUUID(),
     override var name: String,

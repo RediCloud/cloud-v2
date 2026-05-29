@@ -22,6 +22,7 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
 import kotlin.time.Duration.Companion.minutes
 
+@Suppress("TooManyFunctions") // Repository with CRUD + sync + download operations
 class CloudServerVersionTypeRepository(
     databaseConnection: DatabaseConnection,
     private val console: Console?,
@@ -152,28 +153,30 @@ class CloudServerVersionTypeRepository(
     }
 
     override suspend fun pullOnlineTypes(serverVersionRepository: ICloudServerVersionRepository, silent: Boolean) {
-
         val defaultTypes = getOnlineTypes()
         defaultTypes.forEach { onlineType ->
             if (onlineType.isUnknown()) return@forEach
             if (existsType(onlineType.uniqueId)) {
-                val current = getType(onlineType.uniqueId)!!
-                if (current.hashCode() == onlineType.hashCode()) return@forEach
+                updateExistingType(onlineType, serverVersionRepository, silent)
+            } else {
+                createType(onlineType)
                 if (!silent) LOGGER.info("Pulled server version type ${toConsoleValue(onlineType.name)} from web!")
-                updateType(onlineType)
-                serverVersionRepository.getVersions().forEach {
-                    if (it.typeId == current.uniqueId) {
-                        if (current.defaultFiles != it.defaultFiles && it.used) {
-                            val handler = IServerVersionHandler.getHandler(current)
-                            handler.update(it, onlineType)
-                        }
-                    }
-                }
-                return@forEach
             }
-            createType(onlineType)
-            if (!silent) LOGGER.info("Pulled server version type ${toConsoleValue(onlineType.name)} from web!")
         }
+    }
+
+    private suspend fun updateExistingType(
+        onlineType: CloudServerVersionType,
+        serverVersionRepository: ICloudServerVersionRepository,
+        silent: Boolean
+    ) {
+        val current = getType(onlineType.uniqueId)!!
+        if (current.hashCode() == onlineType.hashCode()) return
+        if (!silent) LOGGER.info("Pulled server version type ${toConsoleValue(onlineType.name)} from web!")
+        updateType(onlineType)
+        serverVersionRepository.getVersions()
+            .filter { it.typeId == current.uniqueId && current.defaultFiles != it.defaultFiles && it.used }
+            .forEach { IServerVersionHandler.getHandler(current).update(it, onlineType) }
     }
 
 }

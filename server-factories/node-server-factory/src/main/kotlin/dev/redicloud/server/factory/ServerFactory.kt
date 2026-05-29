@@ -45,6 +45,7 @@ import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.*
 
+@Suppress("LongParameterList", "TooManyFunctions")
 class ServerFactory(
     databaseConnection: DatabaseConnection,
     private val nodeRepository: NodeRepository,
@@ -236,6 +237,7 @@ class ServerFactory(
         copier.copyConnector()
     }
 
+    @Suppress("ThrowsCount")
     internal suspend fun unregisterServer(
         serviceId: ServiceId,
         cachedServer: CloudServer? = null,
@@ -256,6 +258,7 @@ class ServerFactory(
     }
 
 
+    @Suppress("ReturnCount")
     internal suspend fun startServer(
         serviceId: ServiceId?,
         configurationTemplate: ConfigurationTemplate?,
@@ -357,6 +360,7 @@ class ServerFactory(
         }
     }
 
+    @Suppress("ThrowsCount")
     internal suspend fun stopServer(
         serviceId: ServiceId,
         force: Boolean = true,
@@ -409,6 +413,7 @@ class ServerFactory(
         }
     }
 
+    @Suppress("ReturnCount")
     internal suspend fun transferServer(
         serverId: ServiceId,
         nodeId: ServiceId

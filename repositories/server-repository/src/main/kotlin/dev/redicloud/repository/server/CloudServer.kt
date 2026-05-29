@@ -9,6 +9,7 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import java.util.UUID
 
+@Suppress("LongParameterList")
 abstract class CloudServer(
     serviceId: ServiceId,
     override var configurationTemplate: ICloudConfigurationTemplate,

@@ -32,6 +32,7 @@ class StartDataSnapshot private constructor(
     lateinit var hostname: String
     var startResult: StartResult? = null
 
+    @Suppress("ReturnCount")
     suspend fun loadData(
         serverVersionRepository: CloudServerVersionRepository,
         serverVersionTypeRepository: CloudServerVersionTypeRepository,

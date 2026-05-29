@@ -10,6 +10,7 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.title.Title
 import java.util.UUID
 
+@Suppress("TooManyFunctions")
 interface ICloudPlayerExecutor {
 
     suspend fun sendMessage(uniqueId: UUID, component: Component)

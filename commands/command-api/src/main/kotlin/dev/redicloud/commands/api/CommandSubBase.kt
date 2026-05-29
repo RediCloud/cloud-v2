@@ -55,6 +55,7 @@ class CommandSubBase(
         permission = function.findAnnotation<CommandPermission>()?.permission
     }
 
+    @Suppress("ReturnCount")
     fun execute(actor: ICommandActor<*>, arguments: List<String>): CommandResponse {
         val parsedArguments = mutableListOf<Any?>()
         val max = this.arguments.count { !it.actorArgument }
@@ -158,6 +159,7 @@ class CommandSubBase(
         return matched.firstOrNull()
     }
 
+    @Suppress("ReturnCount")
     fun isThis(input: String, predicate: Boolean): Boolean {
         if (!command.isThis(input, predicate)) return false
         val split = if (predicate) input.split(" ") else input.removeLastSpaces().split(" ")

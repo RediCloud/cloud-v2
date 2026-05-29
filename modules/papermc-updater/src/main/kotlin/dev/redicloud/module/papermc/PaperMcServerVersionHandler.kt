@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.minutes
 
+@Suppress("TooManyFunctions")
 class PaperMcServerVersionHandler(
     private val serverVersionRepository: ICloudServerVersionRepository,
     private val serverVersionTypeRepository: ICloudServerVersionTypeRepository,
@@ -82,6 +83,7 @@ class PaperMcServerVersionHandler(
         return jar
     }
 
+    @Suppress("ThrowsCount")
     private suspend fun downloadJar(version: ICloudServerVersion, jar: File) {
         if (version.typeId == null) {
             throw NullPointerException("Cant find server version type for ${version.displayName}")

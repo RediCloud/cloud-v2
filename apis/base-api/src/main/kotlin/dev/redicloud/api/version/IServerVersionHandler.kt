@@ -6,6 +6,7 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.SimpleLock
 import java.io.File
 
+@Suppress("TooManyFunctions")
 interface IServerVersionHandler {
 
     val name: String

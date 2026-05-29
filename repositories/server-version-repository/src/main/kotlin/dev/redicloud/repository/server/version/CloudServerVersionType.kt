@@ -11,6 +11,7 @@ import java.net.URL
 import java.util.*
 
 
+@Suppress("LongParameterList")
 class CloudServerVersionType(
     override val uniqueId: UUID = UUID.randomUUID(),
     override var name: String,

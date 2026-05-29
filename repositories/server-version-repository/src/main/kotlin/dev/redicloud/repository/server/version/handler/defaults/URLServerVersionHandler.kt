@@ -25,6 +25,7 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.minutes
 
+@Suppress("TooManyFunctions")
 open class URLServerVersionHandler(
     protected val serviceId: ServiceId,
     protected val serverVersionRepository: ICloudServerVersionRepository,
@@ -87,6 +88,7 @@ open class URLServerVersionHandler(
         return jar
     }
 
+    @Suppress("ThrowsCount")
     private suspend fun downloadJar(version: ICloudServerVersion, jar: File) {
         if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
         serverVersionTypeRepository.getType(version.typeId!!)

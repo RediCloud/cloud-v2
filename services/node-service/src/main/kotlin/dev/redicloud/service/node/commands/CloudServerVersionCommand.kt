@@ -27,6 +27,7 @@ import java.util.*
 @Command("sv")
 @CommandAlias(["serverversion", "serverversion"])
 @CommandDescription("Configures the server version")
+@Suppress("LargeClass", "TooManyFunctions")
 class CloudServerVersionCommand(
     private val serverVersionRepository: CloudServerVersionRepository,
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,

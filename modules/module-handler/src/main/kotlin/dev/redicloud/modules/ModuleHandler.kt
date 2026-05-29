@@ -29,6 +29,7 @@ import kotlin.concurrent.withLock
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.javaMethod
 
+@Suppress("TooManyFunctions")
 class ModuleHandler(
     private val serviceId: ServiceId,
     repoUrls: List<String>,
@@ -148,6 +149,7 @@ class ModuleHandler(
         }
     }
 
+    @Suppress("ReturnCount")
     suspend fun install(moduleId: String, load: Boolean = true) {
         if (getModuleDescription(moduleId) != null) {
             logger.info("§cModule with id $moduleId already installed!")

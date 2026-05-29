@@ -46,6 +46,7 @@ class RestModule : CloudModule(), CloudInjectable {
     lateinit var configurationTemplateFetcher: ConfigurationTemplateFetcher
 
     @ModuleTask(ModuleLifeCycle.LOAD)
+    @Suppress("LongParameterList")
     fun load(
         @Named("this") nodeId: ServiceId,
         nodeRepository: ICloudNodeRepository,

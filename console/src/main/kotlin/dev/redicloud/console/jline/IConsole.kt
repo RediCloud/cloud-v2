@@ -6,6 +6,7 @@ import dev.redicloud.console.commands.ConsoleCommandManager
 import dev.redicloud.console.utils.Screen
 import org.fusesource.jansi.Ansi
 
+@Suppress("TooManyFunctions")
 interface IConsole {
 
     var printingEnabled: Boolean
@@ -60,6 +61,7 @@ interface IConsole {
 
     fun disableCommands()
 
+    @Suppress("LongParameterList")
     fun writeRaw(
         rawText: String,
         ensureEndsWith: String = "",

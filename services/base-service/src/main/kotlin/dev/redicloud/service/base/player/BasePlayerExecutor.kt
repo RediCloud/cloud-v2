@@ -18,6 +18,7 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.title.Title
 import java.util.*
 
+@Suppress("TooManyFunctions")
 abstract class BasePlayerExecutor(
     private val playerRepository: ICloudPlayerRepository,
     private val serverRepository: ICloudServerRepository,

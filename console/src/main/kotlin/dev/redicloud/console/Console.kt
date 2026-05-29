@@ -31,6 +31,7 @@ import java.util.logging.Level
 import java.util.logging.LogRecord
 import kotlin.system.exitProcess
 
+@Suppress("TooManyFunctions")
 open class Console(
     val host: String,
     val eventManager: IEventManager?,

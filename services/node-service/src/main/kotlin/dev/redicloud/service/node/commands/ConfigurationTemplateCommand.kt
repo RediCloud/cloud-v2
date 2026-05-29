@@ -28,6 +28,7 @@ import kotlin.time.Duration.Companion.minutes
 @Command("configurationtemplate")
 @CommandAlias(["ct", "configurationtemplates", "ctemplate"])
 @CommandDescription("Manage the configuration templates")
+@Suppress("LargeClass", "TooManyFunctions")
 class ConfigurationTemplateCommand(
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
     private val serverRepository: ServerRepository,

@@ -11,6 +11,7 @@ import dev.redicloud.utils.gson.GsonInterface
 import java.io.File
 import java.util.UUID
 
+@Suppress("LongParameterList")
 class CloudServerVersion(
     override val uniqueId: UUID,
     override var typeId: UUID?,

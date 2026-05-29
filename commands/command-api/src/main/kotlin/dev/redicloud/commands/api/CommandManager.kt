@@ -3,6 +3,7 @@ package dev.redicloud.commands.api
 import dev.redicloud.api.commands.*
 import kotlin.reflect.KClass
 
+@Suppress("TooManyFunctions")
 abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
 
     val registeredCommands = mutableListOf<CommandBase>()
@@ -227,6 +228,7 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
         }
     }
 
+    @Suppress("ReturnCount")
     fun handleInput(actor: K, input: String): CommandResponse {
         if (input.isBlank()) return CommandResponse(CommandResponseType.BLANK_INPUT, "Command cannot be blank")
         val split = input.removeLastSpaces().split(" ")

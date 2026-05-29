@@ -9,6 +9,7 @@ import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogRecord
 
+@Suppress("TooManyFunctions")
 class FallbackLogger(val javaLogger: java.util.logging.Logger) : Logger(
     javaLogger.name,
     javaLogger.resourceBundleName
