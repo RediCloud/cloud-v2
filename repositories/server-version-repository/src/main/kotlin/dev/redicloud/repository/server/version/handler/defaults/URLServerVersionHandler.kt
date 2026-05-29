@@ -1,5 +1,6 @@
 package dev.redicloud.repository.server.version.handler.defaults
 
+import dev.redicloud.api.exceptions.CloudVersionException
 import dev.redicloud.api.java.ICloudJavaVersion
 import dev.redicloud.api.java.ICloudJavaVersionRepository
 import dev.redicloud.api.service.node.ICloudNodeRepository
@@ -126,9 +127,12 @@ open class URLServerVersionHandler(
             }
 
             downloader.joinAll()
-        }catch (e: Exception) {
+        }catch (e: CloudVersionException) {
             error = true
             throw e
+        }catch (e: Exception) {
+            error = true
+            throw CloudVersionException("Failed to download version ${version.displayName}", e)
         }finally {
             downloaded = true
             if (lock) getLock(version).unlock()
@@ -264,9 +268,12 @@ open class URLServerVersionHandler(
             tempDir.copyRecursively(versionDir, true)
             tempDir.deleteRecursively()
             File(versionDir, ".patched").createNewFile()
-        }catch (e: Exception) {
+        }catch (e: CloudVersionException) {
             error = true
             throw e
+        }catch (e: Exception) {
+            error = true
+            throw CloudVersionException("Failed to patch version ${version.displayName}", e)
         } finally {
             patched = true
             if (lock) getLock(version).unlock()

@@ -1,5 +1,6 @@
 package dev.redicloud.service.node.console
 
+import dev.redicloud.api.exceptions.CloudDatabaseException
 import dev.redicloud.api.utils.DATABASE_JSON
 import dev.redicloud.api.utils.NODE_JSON
 import dev.redicloud.console.Console
@@ -311,11 +312,10 @@ class InitializeConsole : Console(
     private suspend fun testDatabase(config: DatabaseConfiguration, serviceId: ServiceId): Pair<DatabaseConnection, Throwable?> {
         emptyPrompt()
         val connection = DatabaseConnection(config, serviceId)
-        @Suppress("TooGenericExceptionCaught")
         return try {
             connection.connect()
             connection to null
-        } catch (e: Exception) {
+        } catch (e: CloudDatabaseException) {
             connection to e
         }
     }

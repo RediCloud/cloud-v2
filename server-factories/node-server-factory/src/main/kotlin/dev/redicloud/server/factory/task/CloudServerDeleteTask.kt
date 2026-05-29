@@ -1,5 +1,6 @@
 package dev.redicloud.server.factory.task
 
+import dev.redicloud.api.exceptions.CloudServerException
 import dev.redicloud.logging.LogManager
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.tasks.CloudTask
@@ -18,10 +19,9 @@ class CloudServerDeleteTask(
         serverFactory.deleteQueue.forEach { queued ->
             serverFactory.deleteQueue.remove(queued)
             actions.add {
-                @Suppress("TooGenericExceptionCaught")
                 try {
                     serverFactory.deleteServer(queued)
-                }catch (e: Exception) {
+                }catch (e: CloudServerException) {
                     LOGGER.severe("§cFailed to delete server ${queued.toName()}!", e)
                 }
             }

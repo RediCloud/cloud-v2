@@ -1,5 +1,6 @@
 package dev.redicloud.database
 
+import dev.redicloud.api.exceptions.CloudDatabaseException
 import dev.redicloud.api.database.*
 import dev.redicloud.api.database.communication.ICommunicationChannel
 import dev.redicloud.api.database.grid.bucket.IDataBucket
@@ -87,8 +88,15 @@ class DatabaseConnection(
     }
 
     override suspend fun connect() {
-        _client = Redisson.create(redissonConfig)
-        LOGGER.fine("Successfully connected to redis")
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            _client = Redisson.create(redissonConfig)
+            LOGGER.fine("Successfully connected to redis")
+        } catch (e: CloudDatabaseException) {
+            throw e
+        } catch (e: Exception) {
+            throw CloudDatabaseException("Failed to connect to database", e)
+        }
     }
 
     override suspend fun disconnect() {

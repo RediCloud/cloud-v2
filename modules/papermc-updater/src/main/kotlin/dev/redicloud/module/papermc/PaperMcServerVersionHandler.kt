@@ -1,5 +1,6 @@
 package dev.redicloud.module.papermc
 
+import dev.redicloud.api.exceptions.CloudVersionException
 import dev.redicloud.api.java.ICloudJavaVersion
 import dev.redicloud.api.java.ICloudJavaVersionRepository
 import dev.redicloud.api.utils.ProcessConfiguration
@@ -142,9 +143,12 @@ class PaperMcServerVersionHandler(
             downloader.joinAll()
 
             lastUpdateChecks[version] = System.currentTimeMillis()
-        } catch (e: Exception) {
+        } catch (e: CloudVersionException) {
             error = true
             throw e
+        } catch (e: Exception) {
+            error = true
+            throw CloudVersionException("Failed to download version ${version.displayName}", e)
         } finally {
             downloaded = true
             if (lock) getLock(version).unlock()
@@ -309,9 +313,12 @@ class PaperMcServerVersionHandler(
             tempDir.copyRecursively(versionDir, true)
             tempDir.deleteRecursively()
             File(versionDir, ".patched").createNewFile()
-        } catch (e: Exception) {
+        } catch (e: CloudVersionException) {
             error = true
             throw e
+        } catch (e: Exception) {
+            error = true
+            throw CloudVersionException("Failed to patch version ${version.displayName}", e)
         } finally {
             patched = true
             if (lock) getLock(version).unlock()

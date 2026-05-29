@@ -1,5 +1,6 @@
 package dev.redicloud.server.factory.task
 
+import dev.redicloud.api.exceptions.CloudServerException
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.logging.LogManager
@@ -115,7 +116,6 @@ class CloudServerStopTask(
         val actions = MultiAsyncAction()
         serverFactory.stopQueue.forEach {
             actions.add {
-                @Suppress("TooGenericExceptionCaught")
                 try {
                     val server = serverRepository.getServer<CloudServer>(it)
                     if (server == null) {
@@ -126,7 +126,7 @@ class CloudServerStopTask(
                         serverFactory.stopQueue.remove(it)
                         serverFactory.stopServer(it)
                     }
-                } catch (e: Exception) {
+                } catch (e: CloudServerException) {
                     logger.severe("Failed to stop server ${it.toName()}", e)
                 }
             }

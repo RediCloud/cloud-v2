@@ -1,5 +1,6 @@
 package dev.redicloud.server.factory.task
 
+import dev.redicloud.api.exceptions.CloudServerException
 import dev.redicloud.logging.LogManager
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.tasks.CloudTask
@@ -17,11 +18,10 @@ class CloudServerTransferTask(
         val actions = MultiAsyncAction()
         serverFactory.transferQueue.forEach {
             actions.add {
-                @Suppress("TooGenericExceptionCaught")
                 try {
                     serverFactory.transferQueue.remove(it)
                     serverFactory.transferServer(it.serverId, it.targetNodeId)
-                }catch (e: Exception) {
+                }catch (e: CloudServerException) {
                     logger.severe("§cError while transferring server ${it.serverId.toName()} to node ${it.targetNodeId.toName()}", e)
                 }
             }

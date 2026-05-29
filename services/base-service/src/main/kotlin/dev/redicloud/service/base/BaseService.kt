@@ -3,6 +3,7 @@ package dev.redicloud.service.base
 import com.google.inject.Guice
 import com.google.inject.name.Names
 import dev.redicloud.api.database.IDatabaseConnection
+import dev.redicloud.api.exceptions.CloudDatabaseException
 import dev.redicloud.api.events.IEventManager
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.cache.tasks.InvalidCacheTask
@@ -114,10 +115,9 @@ abstract class BaseService(
                 serviceId
             )
         }
-        @Suppress("TooGenericExceptionCaught")
         try {
             if (!databaseConnection.connected) runBlocking { databaseConnection.connect() }
-        } catch (e: Exception) {
+        } catch (e: CloudDatabaseException) {
             LOGGER.severe("Failed to connect to database", e)
             exitProcess(-1)
         }

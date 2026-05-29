@@ -2,6 +2,7 @@ package dev.redicloud.modules
 
 import com.google.inject.Key
 import com.google.inject.name.Named
+import dev.redicloud.api.exceptions.CloudModuleException
 import dev.redicloud.api.events.internal.module.ModuleHandlerInitializedEvent
 import dev.redicloud.api.events.internal.module.ModuleLifeCycleChangedEvent
 import dev.redicloud.api.modules.*
@@ -70,7 +71,11 @@ class ModuleHandler(
     suspend fun loadModules() {
         detectModules()
         moduleFiles.forEach {
-            loadModule(it)
+            try {
+                loadModule(it)
+            } catch (e: CloudModuleException) {
+                logger.warning("Failed to load module ${it.name}", e)
+            }
         }
         eventManager.fireEvent(ModuleHandlerInitializedEvent(this))
     }
@@ -124,7 +129,7 @@ class ModuleHandler(
         logger.info("Uninstalling module %hc%$moduleId%tc%...")
         val file = getModuleData(moduleId).also { data ->
             if (data == null) return@also
-            if (data.loaded) unloadModule(data.id)
+            if (data.loaded) try { unloadModule(data.id) } catch (e: CloudModuleException) { logger.warning("Failed to unload module ${data.id}", e) }
             moduleFiles.removeIf { it.name == data.description.name }
         }?.file ?: cachedDescriptions.firstOrNull { it.id == moduleId }?.cachedFile
         if (file == null) {
@@ -183,7 +188,11 @@ class ModuleHandler(
 
     fun unloadModules() {
         loaders.map { it.value.data.id }.toList().forEach {
-            unloadModule(it)
+            try {
+                unloadModule(it)
+            } catch (e: CloudModuleException) {
+                logger.warning("Failed to unload module $it", e)
+            }
         }
     }
 
@@ -290,8 +299,7 @@ class ModuleHandler(
                 moduleIdField.isAccessible = false
             }
         } catch (e: Exception) {
-            logger.warning("§cFailed to load module ${description.id}!", e)
-            return@withLock
+            throw CloudModuleException("Failed to instantiate module ${description.name}", e)
         }
         moduleData.init(moduleInstance)
 
@@ -317,8 +325,7 @@ class ModuleHandler(
         } catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
             eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleInstance))
-            logger.warning("§cFailed to load module ${description.id}!", e)
-            return@withLock
+            throw CloudModuleException("Failed to execute LOAD tasks for module ${moduleData.id}", e)
         }
     }
 
@@ -345,8 +352,7 @@ class ModuleHandler(
         } catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
             eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance))
-            logger.warning("§cFailed to reload module ${moduleData.id}!", e)
-            return@withLock
+            throw CloudModuleException("Failed to reload module ${moduleData.id}", e)
         }
     }
 
@@ -368,8 +374,7 @@ class ModuleHandler(
             JarFile(file).close()
             logger.info("Unloaded module %hc%$moduleId%tc% with %hc%$tasksCount%tc% unload tasks!")
         } catch (e: Exception) {
-            logger.warning("§cFailed to unload module $moduleId!", e)
-            return@withLock
+            throw CloudModuleException("Failed to unload module $moduleId", e)
         }
     }
 
