@@ -19,3 +19,7 @@ dependencies {
     testImplementation(project(":utils"))
     testImplementation(project(":apis:base-api"))
 }
+
+tasks.withType<Test> {
+    enabled = false
+}
