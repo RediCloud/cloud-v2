@@ -16,7 +16,8 @@ open class DatabaseBucketRepository<I : Any, K : Any>(
 
     init {
         require(implementationClass.isSubclassOf(interfaceClass)) {
-            "Implementation class must be a subclass of interface class ($implementationClass is not a subclass of $interfaceClass)"
+            "Implementation class must be a subclass of interface class " +
+                "($implementationClass is not a subclass of $interfaceClass)"
         }
         gsonInterfaceFactory.register(interfaceClass, implementationClass)
     }

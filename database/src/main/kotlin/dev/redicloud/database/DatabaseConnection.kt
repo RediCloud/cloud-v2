@@ -1,7 +1,6 @@
 package dev.redicloud.database
 
-import dev.redicloud.api.exceptions.CloudDatabaseException
-import dev.redicloud.api.database.*
+import dev.redicloud.api.database.IDatabaseConnection
 import dev.redicloud.api.database.communication.ICommunicationChannel
 import dev.redicloud.api.database.grid.bucket.IDataBucket
 import dev.redicloud.api.database.grid.list.ISyncedList
@@ -11,6 +10,7 @@ import dev.redicloud.api.database.grid.map.ISyncedMap
 import dev.redicloud.api.database.grid.map.ISyncedMutableMap
 import dev.redicloud.api.database.grid.map.cache.ISyncedCacheMap
 import dev.redicloud.api.database.grid.map.cache.ISyncedCacheMutableMap
+import dev.redicloud.api.exceptions.CloudDatabaseException
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.database.codec.GsonCodec
@@ -32,10 +32,18 @@ import org.redisson.config.Config
 class DatabaseConnection(
     config: DatabaseConfiguration,
     override val serviceId: ServiceId,
-    connectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) DEFAULT_CONNECTION_POOL_SIZE / 2 else DEFAULT_CONNECTION_POOL_SIZE,
-    connectionMinimumIdleSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) DEFAULT_MIN_IDLE_CONNECTIONS / 2 else DEFAULT_MIN_IDLE_CONNECTIONS,
-    subscriptionConnectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) DEFAULT_SUBSCRIPTION_POOL_SIZE / 2 else DEFAULT_SUBSCRIPTION_POOL_SIZE,
-    subscriptionConnectionMinimumIdleSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 2 / 2 else 2
+    connectionPoolSize: Int =
+        if (serviceId.type == ServiceType.MINECRAFT_SERVER) DEFAULT_CONNECTION_POOL_SIZE / 2
+        else DEFAULT_CONNECTION_POOL_SIZE,
+    connectionMinimumIdleSize: Int =
+        if (serviceId.type == ServiceType.MINECRAFT_SERVER) DEFAULT_MIN_IDLE_CONNECTIONS / 2
+        else DEFAULT_MIN_IDLE_CONNECTIONS,
+    subscriptionConnectionPoolSize: Int =
+        if (serviceId.type == ServiceType.MINECRAFT_SERVER) DEFAULT_SUBSCRIPTION_POOL_SIZE / 2
+        else DEFAULT_SUBSCRIPTION_POOL_SIZE,
+    subscriptionConnectionMinimumIdleSize: Int =
+        if (serviceId.type == ServiceType.MINECRAFT_SERVER) 2 / 2
+        else 2
 ) : IDatabaseConnection {
 
     companion object {

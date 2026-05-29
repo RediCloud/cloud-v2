@@ -7,12 +7,39 @@ import dev.redicloud.api.utils.LOG_FOLDER
 import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.commands.ConsoleCommandManager
 import dev.redicloud.console.events.ConsoleRunEvent
-import dev.redicloud.console.jline.*
-import dev.redicloud.console.utils.*
-import dev.redicloud.logging.*
-import dev.redicloud.logging.handler.*
-import dev.redicloud.utils.*
-import kotlinx.coroutines.*
+import dev.redicloud.console.jline.ConsoleCompleter
+import dev.redicloud.console.jline.ConsoleInputReader
+import dev.redicloud.console.jline.ConsoleLineReader
+import dev.redicloud.console.jline.ConsoleQuestion
+import dev.redicloud.console.jline.IConsole
+import dev.redicloud.console.utils.AnsiInstaller
+import dev.redicloud.console.utils.ColoredConsoleLogFormatter
+import dev.redicloud.console.utils.ConsoleColor
+import dev.redicloud.console.utils.Screen
+import dev.redicloud.console.utils.getLevelColor
+import dev.redicloud.console.utils.getNormedLevelName
+import dev.redicloud.logging.LogManager
+import dev.redicloud.logging.LogOutputStream
+import dev.redicloud.logging.Logger
+import dev.redicloud.logging.clearHandlers
+import dev.redicloud.logging.getDefaultLogLevel
+import dev.redicloud.logging.handler.AcceptingLogHandler
+import dev.redicloud.logging.handler.FILE_LOG_FORMATTER
+import dev.redicloud.logging.handler.LogFileHandler
+import dev.redicloud.logging.handler.LogFormatter
+import dev.redicloud.logging.handler.ThreadRecordDispatcher
+import dev.redicloud.utils.BRANCH
+import dev.redicloud.utils.BUILD
+import dev.redicloud.utils.CLOUD_VERSION
+import dev.redicloud.utils.DEV_BUILD
+import dev.redicloud.utils.USER_NAME
+import dev.redicloud.utils.coroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.AnsiConsole
 import org.jline.reader.EndOfFileException
@@ -24,7 +51,8 @@ import org.jline.utils.InfoCmp
 import org.jline.utils.StyleResolver
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.UUID
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
@@ -237,7 +265,14 @@ open class Console(
         return reader.readNextInput()
     }
 
-    fun formatText(input: String, ensureEndsWith: String, useLineFormat: Boolean = true, level: String = "§f INFO", ansi: Ansi? = null, restoreCursor: Boolean = false): String {
+    fun formatText(
+        input: String,
+        ensureEndsWith: String,
+        useLineFormat: Boolean = true,
+        level: String = "§f INFO",
+        ansi: Ansi? = null,
+        restoreCursor: Boolean = false
+    ): String {
         val l = if (useLineFormat) lineFormat.replace("%message%", input) else input
         val formatted = l
             .replace("%level%", level)
@@ -409,7 +444,17 @@ open class Console(
         }
     }
 
-    override fun writeRaw(rawText: String, ensureEndsWith: String, level: String, lineFormat: Boolean, cursorUp: Boolean, eraseLine: Boolean, ansi: Ansi?, restoreCursor: Boolean, printDirectly: Boolean): Console {
+    override fun writeRaw(
+        rawText: String,
+        ensureEndsWith: String,
+        level: String,
+        lineFormat: Boolean,
+        cursorUp: Boolean,
+        eraseLine: Boolean,
+        ansi: Ansi?,
+        restoreCursor: Boolean,
+        printDirectly: Boolean
+    ): Console {
         printLock.lock()
         try {
             if (printDirectly) {

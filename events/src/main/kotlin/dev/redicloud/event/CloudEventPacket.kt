@@ -5,7 +5,11 @@ import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.utils.gson.gson
 
-class CloudEventPacket(val eventData: String, val eventClazz: String, val managerIdentifier: String) : AbstractPacket() {
+class CloudEventPacket(
+    val eventData: String,
+    val eventClazz: String,
+    val managerIdentifier: String
+) : AbstractPacket() {
 
     override fun received(manager: IPacketManager) {
         super.received(manager)

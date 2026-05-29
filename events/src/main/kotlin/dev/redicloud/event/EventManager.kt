@@ -1,6 +1,10 @@
 package dev.redicloud.event
 
-import dev.redicloud.api.events.*
+import dev.redicloud.api.events.CloudEvent
+import dev.redicloud.api.events.CloudEventListener
+import dev.redicloud.api.events.EventFireType
+import dev.redicloud.api.events.IEventManager
+import dev.redicloud.api.events.InlineEventCaller
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
@@ -97,10 +101,15 @@ class EventManager(
             EventFireType.GLOBAL -> publishEventBroadcast(event)
             EventFireType.CLIENT -> publishEventToServices(event, "client", ServiceType.CLIENT)
             EventFireType.SERVER -> publishEventToServices(
-                event, "server", ServiceType.MINECRAFT_SERVER, ServiceType.PROXY_SERVER
+                event,
+                "server",
+                ServiceType.MINECRAFT_SERVER,
+                ServiceType.PROXY_SERVER
             )
             EventFireType.MINECRAFT_SERVER -> publishEventToServices(
-                event, "minecraft server", ServiceType.MINECRAFT_SERVER
+                event,
+                "minecraft server",
+                ServiceType.MINECRAFT_SERVER
             )
             EventFireType.PROXY_SERVER -> publishEventToServices(event, "proxy server", ServiceType.PROXY_SERVER)
             EventFireType.NODE -> publishEventToServices(event, "node", ServiceType.NODE)
