@@ -1,7 +1,29 @@
 build:
   maxIssues: 0
 
+complexity:
+  LongMethod:
+    threshold: 80
+  LongParameterList:
+    functionThreshold: 8
+    constructorThreshold: 10
+  TooManyFunctions:
+    thresholdInClasses: 15
+    thresholdInInterfaces: 15
+  CyclomaticComplexMethod:
+    threshold: 20
+  NestedBlockDepth:
+    threshold: 5
+  ComplexCondition:
+    threshold: 5
+
+performance:
+  SpreadOperator:
+    active: false
+
 style:
+  ReturnCount:
+    max: 5
   ForbiddenComment:
     active: false
   MagicNumber:
