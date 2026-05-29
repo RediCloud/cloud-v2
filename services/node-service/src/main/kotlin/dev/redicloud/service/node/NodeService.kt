@@ -401,8 +401,7 @@ class NodeService(
                 this.serverVersionTypeRepository,
                 this.configurationTemplateRepository,
                 this.serverRepository,
-                this.javaVersionRepository,
-                this.console
+                this.javaVersionRepository
             )
         )
         register(
@@ -417,7 +416,6 @@ class NodeService(
         register(
             ConfigurationTemplateCommand(
                 this.configurationTemplateRepository,
-                this.javaVersionRepository,
                 this.serverRepository,
                 this.serverVersionRepository,
                 this.nodeRepository,
