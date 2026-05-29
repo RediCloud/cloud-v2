@@ -1,10 +1,10 @@
 package dev.redicloud.repository.java.version
 
 import dev.redicloud.api.java.ICloudJavaVersion
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.utils.OSType
 import dev.redicloud.utils.getOperatingSystemType
-import dev.redicloud.api.service.ServiceId
 import java.io.File
 import java.util.*
 
@@ -41,5 +41,4 @@ class CloudJavaVersion(
             }
         }.firstOrNull()
     }
-
 }

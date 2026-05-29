@@ -13,7 +13,6 @@ import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.getOperatingSystemType
 import dev.redicloud.utils.toSymbol
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.*
 
@@ -124,5 +123,4 @@ class JavaVersionCommand(
         javaVersionRepository.updateVersion(version)
         actor.sendMessage("Located version ${toConsoleValue(version.name)} at ${toConsoleValue(path)}")
     }
-
 }

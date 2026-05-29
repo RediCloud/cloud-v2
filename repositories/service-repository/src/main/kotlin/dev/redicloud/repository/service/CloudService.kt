@@ -2,8 +2,8 @@ package dev.redicloud.repository.service
 
 import dev.redicloud.api.service.ICloudService
 import dev.redicloud.api.service.ICloudServiceSession
-import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.utils.isIpv4
 import dev.redicloud.utils.isIpv6
 
@@ -14,8 +14,8 @@ abstract class CloudService(
     override var connected: Boolean = false
 ) : IClusterCacheObject, ICloudService {
 
-    override fun identifyName(colored: Boolean): String
-        = if (colored) "%hc%$name§8#%tc%${serviceId.id}" else "$name#${serviceId.id}"
+    override fun identifyName(colored: Boolean): String =
+        if (colored) "%hc%$name§8#%tc%${serviceId.id}" else "$name#${serviceId.id}"
 
     override val currentSession: ServiceSession?
         get() {
@@ -60,7 +60,7 @@ abstract class CloudService(
         sessions.currentSession = session
         if (registrationSession == null) {
             sessions.registrationSession = session
-        }else {
+        } else {
             sessions.sessionHistory.add(session)
             while (sessions.sessionHistory.size > 5) {
                 sessions.sessionHistory.removeAt(0)
@@ -68,5 +68,4 @@ abstract class CloudService(
         }
         return session
     }
-
 }

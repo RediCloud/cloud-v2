@@ -1,18 +1,17 @@
 package dev.redicloud.repository.java.version
 
-import com.google.gson.reflect.TypeToken
-import dev.redicloud.api.java.ICloudJavaVersionRepository
 import dev.redicloud.api.java.ICloudJavaVersion
 import dev.redicloud.api.java.ICloudJavaVersionInfo
+import dev.redicloud.api.java.ICloudJavaVersionRepository
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.utils.*
+import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.api.service.ServiceType
-import dev.redicloud.utils.gson.fromJsonToList
 import java.io.File
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
@@ -29,7 +28,8 @@ class JavaVersionRepository(
     5.minutes,
     packetManager,
     ServiceType.NODE,
-), ICloudJavaVersionRepository {
+),
+    ICloudJavaVersionRepository {
 
     companion object {
         val ONLINE_VERSION_CACHE = EasyCache<List<CloudJavaVersion>, Unit>(1.minutes) {
@@ -97,5 +97,4 @@ class JavaVersionRepository(
             )
         }
     }
-
 }

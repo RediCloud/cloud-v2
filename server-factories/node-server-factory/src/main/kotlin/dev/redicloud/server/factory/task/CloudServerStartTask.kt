@@ -1,5 +1,10 @@
 package dev.redicloud.server.factory.task
 
+import dev.redicloud.api.events.internal.node.NodeConnectEvent
+import dev.redicloud.api.events.internal.node.NodeDisconnectEvent
+import dev.redicloud.api.events.internal.node.NodeSuspendedEvent
+import dev.redicloud.api.events.listen
+import dev.redicloud.api.utils.factory.*
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
@@ -7,11 +12,6 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.server.factory.*
 import dev.redicloud.server.factory.utils.*
-import dev.redicloud.api.events.internal.node.NodeConnectEvent
-import dev.redicloud.api.events.internal.node.NodeDisconnectEvent
-import dev.redicloud.api.events.internal.node.NodeSuspendedEvent
-import dev.redicloud.api.events.listen
-import dev.redicloud.api.utils.factory.*
 import dev.redicloud.tasks.CloudTask
 import dev.redicloud.utils.MultiAsyncAction
 import dev.redicloud.utils.coroutineExceptionHandler
@@ -101,7 +101,11 @@ class CloudServerStartTask(
             StartResultType.ALREADY_RUNNING -> {
                 markFailedAndRemove(info, StartResultType.ALREADY_RUNNING)
                 result as AlreadyRunningStartResult
-                logger.severe("§cServer ${result.server.identifyName(false)} was removed from the start queue because it is already running!")
+                logger.severe(
+                    "§cServer ${result.server.identifyName(
+                        false
+                    )} was removed from the start queue because it is already running!"
+                )
             }
             StartResultType.RAM_USAGE_TOO_HIGH -> {
                 markFailedAndRequeue(info, StartResultType.RAM_USAGE_TOO_HIGH)
@@ -112,37 +116,61 @@ class CloudServerStartTask(
                 if (result is TooMuchServicesOfTemplateOnNodeStartResult) {
                     info.addFailedNode(serverFactory.hostingId)
                     serverFactory.startQueue.add(info)
-                    logger.warning("§cCan´t start server ${toConsoleValue(name, false)} on this node because there are too much services of this template!")
+                    logger.warning(
+                        "§cCan´t start server ${toConsoleValue(
+                            name,
+                            false
+                        )} on this node because there are too much services of this template!"
+                    )
                 }
             }
             StartResultType.UNKNOWN_SERVER_VERSION -> {
                 markFailedAndRemove(info, StartResultType.UNKNOWN_SERVER_VERSION)
-                logger.warning("§cCan´t start server ${toConsoleValue(name, false)} because the server version is not set!")
+                logger.warning(
+                    "§cCan´t start server ${toConsoleValue(name, false)} because the server version is not set!"
+                )
             }
             StartResultType.NODE_IS_NOT_ALLOWED -> markFailedAndRequeue(info, StartResultType.NODE_IS_NOT_ALLOWED)
             StartResultType.NODE_NOT_CONNECTED -> markFailedAndRequeue(info, StartResultType.NODE_NOT_CONNECTED)
             StartResultType.UNKNOWN_JAVA_VERSION -> {
                 markFailedAndRemove(info, StartResultType.UNKNOWN_JAVA_VERSION)
-                logger.severe("§cCan´t start server ${toConsoleValue(name, false)} because the java version is not set!")
+                logger.severe(
+                    "§cCan´t start server ${toConsoleValue(name, false)} because the java version is not set!"
+                )
             }
             StartResultType.JAVA_VERSION_NOT_INSTALLED -> {
                 markFailedAndRemove(info, StartResultType.JAVA_VERSION_NOT_INSTALLED)
                 result as JavaVersionNotInstalledStartResult
-                logger.severe("§cCan´t start server ${toConsoleValue(name, false)} because the java version '${result.javaVersion.name} is not installed!")
+                logger.severe(
+                    "§cCan´t start server ${toConsoleValue(
+                        name,
+                        false
+                    )} because the java version '${result.javaVersion.name} is not installed!"
+                )
             }
             StartResultType.UNKNOWN_SERVER_TYPE_VERSION -> {
                 markFailedAndRemove(info, StartResultType.UNKNOWN_SERVER_TYPE_VERSION)
-                logger.severe("§cCan´t start server ${toConsoleValue(name, false)} because the server type version is not set!")
+                logger.severe(
+                    "§cCan´t start server ${toConsoleValue(name, false)} because the server type version is not set!"
+                )
             }
             StartResultType.UNKNOWN_CONFIGURATION_TEMPLATE -> {
                 markFailed(info, StartResultType.UNKNOWN_CONFIGURATION_TEMPLATE)
                 serverFactory.startQueue.remove(info)
-                logger.severe("§cCan´t start static server ${toConsoleValue(name, false)} because the configuration template is unknown?!")
+                logger.severe(
+                    "§cCan´t start static server ${toConsoleValue(
+                        name,
+                        false
+                    )} because the configuration template is unknown?!"
+                )
             }
             StartResultType.UNKNOWN_ERROR -> {
                 markFailedAndRequeue(info, StartResultType.UNKNOWN_ERROR)
                 val errorResult = result as UnknownErrorStartResult
-                logger.severe("§cAn unknown error occurred while starting server ${toConsoleValue(name, false)}!", errorResult.throwable)
+                logger.severe(
+                    "§cAn unknown error occurred while starting server ${toConsoleValue(name, false)}!",
+                    errorResult.throwable
+                )
             }
             else -> {}
         }
@@ -163,5 +191,4 @@ class CloudServerStartTask(
         info.addFailedNode(serverFactory.hostingId)
         serverFactory.startQueue.add(info)
     }
-
 }

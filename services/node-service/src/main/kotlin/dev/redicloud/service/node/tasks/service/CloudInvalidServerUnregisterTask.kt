@@ -36,7 +36,10 @@ class CloudInvalidServerUnregisterTask(
                 stopOrUnregister(server)
                 return@forEach
             }
-            if (thisNodeId == hostId && state != CloudServerState.STOPPED && serverFactory.hostedProcesses.none { it.serverId == server.serviceId }) {
+            if (thisNodeId == hostId && state != CloudServerState.STOPPED && serverFactory.hostedProcesses.none {
+                    it.serverId == server.serviceId
+                }
+            ) {
                 stopOrUnregister(server)
                 return@forEach
             }
@@ -53,9 +56,8 @@ class CloudInvalidServerUnregisterTask(
     private suspend fun stopOrUnregister(server: ICloudServer) {
         if (server.configurationTemplate.static) {
             serverFactory.queueStop(server.serviceId, true)
-        }else {
+        } else {
             serverFactory.queueUnregister(server.serviceId)
         }
     }
-
 }

@@ -21,8 +21,11 @@ class CloudServerTransferTask(
                 try {
                     serverFactory.transferQueue.remove(it)
                     serverFactory.transferServer(it.serverId, it.targetNodeId)
-                }catch (e: CloudServerException) {
-                    logger.severe("§cError while transferring server ${it.serverId.toName()} to node ${it.targetNodeId.toName()}", e)
+                } catch (e: CloudServerException) {
+                    logger.severe(
+                        "§cError while transferring server ${it.serverId.toName()} to node ${it.targetNodeId.toName()}",
+                        e
+                    )
                 }
             }
         }
@@ -30,5 +33,4 @@ class CloudServerTransferTask(
 
         return false
     }
-
 }

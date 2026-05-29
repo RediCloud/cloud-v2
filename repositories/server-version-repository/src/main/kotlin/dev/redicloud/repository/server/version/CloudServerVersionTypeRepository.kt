@@ -1,6 +1,6 @@
 package dev.redicloud.repository.server.version
 
-import com.google.gson.reflect.TypeToken
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.version.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
@@ -11,10 +11,9 @@ import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.repository.server.version.serverversion.ServerVersion
 import dev.redicloud.utils.*
+import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
-import dev.redicloud.api.service.ServiceType
-import dev.redicloud.utils.gson.fromJsonToList
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import java.util.*
@@ -35,7 +34,8 @@ class CloudServerVersionTypeRepository(
     5.minutes,
     packetManager,
     ServiceType.NODE
-), ICloudServerVersionTypeRepository {
+),
+    ICloudServerVersionTypeRepository {
 
     init {
         gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
@@ -49,7 +49,9 @@ class CloudServerVersionTypeRepository(
         val DEFAULT_TYPES_CACHE = SingleCache(1.minutes) {
             gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
             val json = getTextOfAPIWithFallback("api-files/server-version-types.json")
-            val list: MutableList<CloudServerVersionType> = gson.fromJsonToList<CloudServerVersionType>(json).toMutableList()
+            val list: MutableList<CloudServerVersionType> = gson.fromJsonToList<CloudServerVersionType>(
+                json
+            ).toMutableList()
             list.add(
                 CloudServerVersionType(
                     UUID.fromString("188507b4-37b9-45b5-b977-73ed6f6192a9"),
@@ -100,7 +102,6 @@ class CloudServerVersionTypeRepository(
     override suspend fun getOnlineTypes(): List<CloudServerVersionType> = DEFAULT_TYPES_CACHE.get() ?: emptyList()
 
     override suspend fun downloadConnector(serverVersionType: ICloudServerVersionType, force: Boolean, lock: Boolean) {
-
         val connectorFile = serverVersionType.getParsedConnectorFile(true)
         if (connectorFile.exists() && !force) return
         var canceled = false
@@ -131,7 +132,9 @@ class CloudServerVersionTypeRepository(
         if (lock) getLock(serverVersionType).lock()
         @Suppress("TooGenericExceptionCaught")
         try {
-            check(serverVersionType.getParsedConnectorURL().isValid()) { "Connector download url of ${serverVersionType.connectorPluginName} is null!" }
+            check(
+                serverVersionType.getParsedConnectorURL().isValid()
+            ) { "Connector download url of ${serverVersionType.connectorPluginName} is null!" }
             httpClient.get {
                 url(serverVersionType.getParsedConnectorURL().toExternalForm())
             }.readBytes().let {
@@ -178,5 +181,4 @@ class CloudServerVersionTypeRepository(
             .filter { it.typeId == current.uniqueId && current.defaultFiles != it.defaultFiles && it.used }
             .forEach { IServerVersionHandler.getHandler(current).update(it, onlineType) }
     }
-
 }

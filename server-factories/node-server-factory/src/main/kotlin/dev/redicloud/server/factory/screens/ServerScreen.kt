@@ -2,12 +2,12 @@ package dev.redicloud.server.factory.screens
 
 import dev.redicloud.api.events.internal.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.events.listen
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.console.Console
 import dev.redicloud.console.utils.Screen
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.service.base.packets.ScreenCommandPacket
 import dev.redicloud.utils.defaultScope
-import dev.redicloud.api.service.ServiceId
 import kotlinx.coroutines.launch
 
 class ServerScreen(
@@ -39,5 +39,4 @@ class ServerScreen(
     fun executeCommand(command: String) {
         defaultScope.launch { packetManager?.publish(ScreenCommandPacket(command), serviceId) }
     }
-
 }

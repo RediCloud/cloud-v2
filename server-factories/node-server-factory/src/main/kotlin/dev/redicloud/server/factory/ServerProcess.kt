@@ -61,7 +61,7 @@ class ServerProcess(
     init {
         port = if (configurationTemplate.startPort == -1) {
             findFreePort(DEFAULT_START_PORT, true)
-        }else {
+        } else {
             findFreePort(configurationTemplate.startPort, false)
         }
         blockPort(port)
@@ -71,7 +71,11 @@ class ServerProcess(
      * Starts the server process
      * @param cloudServer the cloud server instance
      */
-    suspend fun start(cloudServer: CloudServer, serverScreen: ServerScreen, snapshotData: StartDataSnapshot): StartResult {
+    suspend fun start(
+        cloudServer: CloudServer,
+        serverScreen: ServerScreen,
+        snapshotData: StartDataSnapshot
+    ): StartResult {
         if (stopped) return StoppedStartResult()
         this.cloudServer = cloudServer
         processConfiguration = ProcessConfiguration.collect(
@@ -108,7 +112,7 @@ class ServerProcess(
         }
         // create handler and listen for exit
         processHandler = ScreenProcessHandler(process!!, serverScreen)
-        processHandler!!.onExit { runBlocking { stop(internalCall =  true) } }
+        processHandler!!.onExit { runBlocking { stop(internalCall = true) } }
 
         cloudServer.state = CloudServerState.STARTING
         cloudServer.port = port
@@ -128,7 +132,9 @@ class ServerProcess(
         if (!serverRepository.existsServer<CloudServer>(serverId)) return
         cloudServer = serverRepository.getServer(serverId) ?: return
 
-        val unexpectedlyStop = if (internalCall) handleInternalStop() else {
+        val unexpectedlyStop = if (internalCall) {
+            handleInternalStop()
+        } else {
             logger.fine("Stopped server process ${cloudServer?.serviceId?.toName() ?: configurationTemplate.uniqueId}")
             false
         }
@@ -178,10 +184,20 @@ class ServerProcess(
                 cloudServer = serverRepository.getServer(serverId)
             }
             if (cloudServer?.connected == true) {
-                logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stop request timed out. Stopping process manually!")
+                logger.warning(
+                    "§cServer ${toConsoleValue(
+                        cloudServer!!.name,
+                        false
+                    )} stop request timed out. Stopping process manually!"
+                )
             }
         } else {
-            logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} does not respond to stop request. Stopping process manually!")
+            logger.warning(
+                "§cServer ${toConsoleValue(
+                    cloudServer!!.name,
+                    false
+                )} does not respond to stop request. Stopping process manually!"
+            )
         }
     }
 
@@ -204,7 +220,11 @@ class ServerProcess(
      * Creates the command to start the server with based server version type configurations
      * provide also placeholders like %PORT% or %SERVICE_ID%
      */
-    private fun startCommand(type: CloudServerVersionType, javaPath: String, snapshotData: StartDataSnapshot): List<String> {
+    private fun startCommand(
+        type: CloudServerVersionType,
+        javaPath: String,
+        snapshotData: StartDataSnapshot
+    ): List<String> {
         if (!snapshotData.javaVersion.isLocated(hostServiceId)) {
             snapshotData.javaVersion.located[hostServiceId.id] = snapshotData.javaVersion.autoLocate()?.absolutePath
                 ?: error("Java version ${snapshotData.javaVersion.id} not found")
@@ -245,6 +265,8 @@ class ServerProcess(
             .replace("%SERVICE_NAME%", cloudServer?.serviceId?.toName() ?: "unknown")
             .replace("%HOSTNAME%", snapshotData.hostname)
             .replace("%PROXY_SECRET%", clusterConfiguration.get("proxy-secret") ?: "redicloud_secret")
-            .replace("%MAX_PLAYERS%", (cloudServer?.maxPlayers ?: snapshotData.configurationTemplate.maxPlayers).toString())
-
+            .replace(
+                "%MAX_PLAYERS%",
+                (cloudServer?.maxPlayers ?: snapshotData.configurationTemplate.maxPlayers).toString()
+            )
 }

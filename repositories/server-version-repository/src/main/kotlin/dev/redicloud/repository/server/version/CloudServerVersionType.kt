@@ -1,7 +1,7 @@
 package dev.redicloud.repository.server.version
 
-import dev.redicloud.api.version.ICloudServerVersionType
 import dev.redicloud.api.utils.CONNECTORS_FOLDER
+import dev.redicloud.api.version.ICloudServerVersionType
 import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
@@ -9,7 +9,6 @@ import dev.redicloud.utils.*
 import java.io.File
 import java.net.URL
 import java.util.*
-
 
 @Suppress("LongParameterList")
 class CloudServerVersionType(
@@ -36,26 +35,30 @@ class CloudServerVersionType(
     override fun getParsedConnectorFile(nodeFolder: Boolean): File {
         return if (nodeFolder) {
             File(
-                CONNECTORS_FOLDER.getFile(), connectorPluginName
-                .replace("%cloud_version%", CLOUD_VERSION)
-                .replace("%build%", BUILD)
-                .replace("%branch%", BRANCH)
+                CONNECTORS_FOLDER.getFile(),
+                connectorPluginName
+                    .replace("%cloud_version%", CLOUD_VERSION)
+                    .replace("%build%", BUILD)
+                    .replace("%branch%", BRANCH)
             )
-        }else {
-            File(connectorFolder, connectorPluginName
-                .replace("%cloud_version%", CLOUD_VERSION)
-                .replace("%build%", BUILD)
-                .replace("%branch%", BRANCH)
+        } else {
+            File(
+                connectorFolder,
+                connectorPluginName
+                    .replace("%cloud_version%", CLOUD_VERSION)
+                    .replace("%build%", BUILD)
+                    .replace("%branch%", BRANCH)
             )
         }
     }
 
     override fun getParsedConnectorURL(): URL {
-        return URL(connectorDownloadUrl
-            ?.replace("%cloud_version%", CLOUD_VERSION)
-            ?.replace("%build%", BUILD)
-            ?.replace("%branch%", BRANCH)
-            ?: error("Connector download url is null!")
+        return URL(
+            connectorDownloadUrl
+                ?.replace("%cloud_version%", CLOUD_VERSION)
+                ?.replace("%build%", BUILD)
+                ?.replace("%branch%", BRANCH)
+                ?: error("Connector download url is null!")
         )
     }
 
@@ -70,14 +73,21 @@ class CloudServerVersionType(
             }
             val editor = ConfigurationFileEditor.ofFile(fileToEdit)
             if (editor == null) {
-                logger.warning("§cFile ${toConsoleValue(fileToEdit, false)} is not a configuration file! So it can not be edited!")
+                logger.warning(
+                    "§cFile ${toConsoleValue(fileToEdit, false)} is not a configuration file! So it can not be edited!"
+                )
                 return@forEach
             }
             editInfo.forEach { (key, value) ->
                 try {
                     editor.setValue(key, action(value))
-                }catch (_: IllegalStateException) {
-                    logger.warning("§cKey ${toConsoleValue(key, false)} does not exist in file ${toConsoleValue(fileToEdit, false)}!")
+                } catch (_: IllegalStateException) {
+                    logger.warning(
+                        "§cKey ${toConsoleValue(
+                            key,
+                            false
+                        )} does not exist in file ${toConsoleValue(fileToEdit, false)}!"
+                    )
                 }
             }
             editor.saveToFile(fileToEdit)
@@ -134,5 +144,4 @@ class CloudServerVersionType(
             fileEdits = fileEdits.toMutableMap()
         )
     }
-
 }

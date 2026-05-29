@@ -31,5 +31,4 @@ class CloudPlayerSoundPacket(
     fun createSound(): Sound {
         return Sound.sound(key, source, volume, pitch)
     }
-
 }

@@ -35,7 +35,9 @@ class CloudPlayerListener(
         val player = event.player
         if (playerRepository.existsPlayer(player.uniqueId)) {
             val cloudPlayer = playerRepository.getPlayer(player.uniqueId)!!
-            if (cloudPlayer.connected && (cloudPlayer.serverId != null || (cloudPlayer.proxyId == serviceId && event.player.currentServer.isPresent))) {
+            val alreadyConnected = cloudPlayer.serverId != null ||
+                (cloudPlayer.proxyId == serviceId && event.player.currentServer.isPresent)
+            if (cloudPlayer.connected && alreadyConnected) {
                 event.player.disconnect(Component.text("You are already connected to the network!"))
                 return@runBlocking
             }
@@ -109,7 +111,10 @@ class CloudPlayerListener(
         val player = event.player
         val cloudPlayer = playerRepository.getPlayer(player.uniqueId)
         if (cloudPlayer != null) {
-            cloudPlayer.serverId = serverRepository.getServer<CloudMinecraftServer>(event.server.serverInfo.name, ServiceType.MINECRAFT_SERVER)?.serviceId
+            cloudPlayer.serverId = serverRepository.getServer<CloudMinecraftServer>(
+                event.server.serverInfo.name,
+                ServiceType.MINECRAFT_SERVER
+            )?.serviceId
             playerRepository.updatePlayer(cloudPlayer)
         }
         val kickedFromServer = serverRepository.getServer<CloudMinecraftServer>(

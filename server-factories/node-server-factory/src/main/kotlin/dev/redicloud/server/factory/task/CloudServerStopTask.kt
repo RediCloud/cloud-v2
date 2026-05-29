@@ -84,7 +84,7 @@ class CloudServerStopTask(
                         actions.add {
                             serverFactory.queueStop(it.serviceId)
                         }
-                }
+                    }
                 return@forEach
             }
         }
@@ -108,7 +108,7 @@ class CloudServerStopTask(
                 actions.add {
                     serverFactory.queueStop(it.serviceId)
                 }
-        }
+            }
         actions.joinAll()
     }
 
@@ -133,5 +133,4 @@ class CloudServerStopTask(
         }
         actions.joinAll()
     }
-
 }

@@ -13,5 +13,4 @@ class JavaVersionInfo(
         get() {
             return toVersionId(major)
         }
-
 }

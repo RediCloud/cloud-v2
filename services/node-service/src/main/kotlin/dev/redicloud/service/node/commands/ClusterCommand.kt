@@ -1,8 +1,10 @@
 package dev.redicloud.service.node.commands
 
 import dev.redicloud.api.commands.*
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.ConsoleActor
+import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.service.base.repository.pingService
@@ -10,8 +12,6 @@ import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
 import dev.redicloud.service.node.NodeService
 import dev.redicloud.service.node.repository.node.suspendNode
 import dev.redicloud.utils.*
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.console.utils.toConsoleValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -38,23 +38,37 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
                 actor.sendHeader("Nodes")
                 nodes.forEach { node ->
                     actor.sendMessage("")
-                    actor.sendMessage("§8> §a${if (node.master) node.identifyName() + " §8(§6master§8)" else node.identifyName()}")
-                    actor.sendMessage("   - Status§8: %hc%${
-                        if (node.suspended) "§4● §8(§fsuspended§8)"
-                        else if (node.connected) "§2● §8(§fconnected§8)"
-                        else "§c● §8(§fdisconnected§8)"
-                    }")
+                    actor.sendMessage(
+                        "§8> §a${if (node.master) node.identifyName() + " §8(§6master§8)" else node.identifyName()}"
+                    )
+                    actor.sendMessage(
+                        "   - Status§8: %hc%${
+                            if (node.suspended) {
+                                "§4● §8(§fsuspended§8)"
+                            } else if (node.connected) {
+                                "§2● §8(§fconnected§8)"
+                            } else {
+                                "§c● §8(§fdisconnected§8)"
+                            }
+                        }"
+                    )
                     actor.sendMessage("   - Memory§8: %hc%${node.currentMemoryUsage} §8/ %hc%${node.maxMemory}")
                     actor.sendMessage("   - IP§8: %hc%${node.currentOrLastSession()?.ipAddress ?: "Unknown"}")
                     if (node.connected) {
                         sendPingMessage(node, actor, "   - Ping§8: ")
-                        val server = node.hostedServers.mapNotNull { nodeService.serverRepository.getServer<CloudServer>(it)?.name }
-                        actor.sendMessage("   - Server§8: %hc%${if (server.isEmpty()) "None" else server.joinToString(", ")}")
+                        val server = node.hostedServers.mapNotNull {
+                            nodeService.serverRepository.getServer<CloudServer>(
+                                it
+                            )?.name
+                        }
+                        actor.sendMessage(
+                            "   - Server§8: %hc%${if (server.isEmpty()) "None" else server.joinToString(", ")}"
+                        )
                     }
                 }
                 actor.sendMessage("")
                 actor.sendHeader("Nodes")
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
@@ -87,6 +101,7 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
     }
 
     private val suspendConfirm = mutableMapOf<ServiceId, Long>()
+
     @CommandSubPath("suspend <node>")
     @CommandDescription("Suspend a node")
     fun suspend(
@@ -102,7 +117,12 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
             actor.sendHeader("Suspend")
             actor.sendMessage("")
             actor.sendMessage("Node§8: %hc%${node.identifyName()}")
-            actor.sendMessage("Servers§8: %hc%${node.hostedServers.mapNotNull { nodeService.serverRepository.getServer<CloudServer>(it)?.name }.joinToString(", ")}")
+            actor.sendMessage(
+                "Servers§8: %hc%${node.hostedServers.mapNotNull { nodeService.serverRepository.getServer<CloudServer>(
+                    it
+                )?.name
+                }.joinToString(", ")}"
+            )
             sendPingMessage(node, actor, "Ping§8: %hc%")
             actor.sendMessage("")
             actor.sendMessage("§cThis will suspend the node and all hosted servers will be stopped!")
@@ -131,6 +151,7 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
     }
 
     private val deleteConfirm = mutableMapOf<ServiceId, Long>()
+
     @CommandSubPath("delete <node>")
     @CommandDescription("Delete a node")
     fun delete(
@@ -164,10 +185,10 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
         val pingAnimation = AnimatedLineAnimation(actor.console, ANIMATION_TICK_MS) {
             if (cancel) {
                 null
-            }else if(local){
+            } else if (local) {
                 cancel = true
                 "$prefix%hc%this node"
-            }else if (ping == PING_PENDING) {
+            } else if (ping == PING_PENDING) {
                 "$prefix%hc%%loading% §8(%tc%pinging§8)"
             } else if (ping == -1L) {
                 cancel = true
@@ -185,5 +206,4 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
             block(ping)
         }
     }
-
 }

@@ -15,5 +15,4 @@ abstract class AbstractScreenProvider(
     }
 
     abstract fun execute(command: String)
-
 }

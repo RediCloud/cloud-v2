@@ -11,5 +11,4 @@ class ConfigurationTemplateParser(
 
     override fun parse(parameter: String): ConfigurationTemplate? =
         runBlocking { configurationTemplateRepository.getTemplate(parameter) }
-
 }

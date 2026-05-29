@@ -54,7 +54,9 @@ class ServerCommand(
         @CommandParameter("template", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("count", false, IntegerSuggester::class) count: Int?
     ) = defaultScope.launch {
-        actor.sendMessage("Queued ${toConsoleValue(count ?: 1)} server with template ${toConsoleValue(template.name)}...")
+        actor.sendMessage(
+            "Queued ${toConsoleValue(count ?: 1)} server with template ${toConsoleValue(template.name)}..."
+        )
         serverFactory.queueStart(template, count ?: 1)
     }
 
@@ -69,11 +71,18 @@ class ServerCommand(
             it.configurationTemplate.name.lowercase() == name.lowercase() && it.id == id
         }
         if (server == null) {
-            actor.sendMessage("§cThere is no registered static server with name ${toConsoleValue(name, false)} and id ${toConsoleValue(id, false)}!")
+            actor.sendMessage(
+                "§cThere is no registered static server with name ${toConsoleValue(
+                    name,
+                    false
+                )} and id ${toConsoleValue(id, false)}!"
+            )
             return@launch
         }
         if (!server.configurationTemplate.static) {
-            actor.sendMessage("§cThe server ${toConsoleValue(server.identifyName(false), false)} is not a static server!")
+            actor.sendMessage(
+                "§cThe server ${toConsoleValue(server.identifyName(false), false)} is not a static server!"
+            )
             return@launch
         }
         if (server.state == CloudServerState.STARTING || server.state == CloudServerState.PREPARING) {
@@ -99,7 +108,9 @@ class ServerCommand(
             return@runBlocking
         }
         actor.sendMessage("Queued deletion of server ${server.identifyName()}...")
-        actor.sendMessage("Note: If the hosted node is not connected to the cluster, the server will be deleted when the node connects to the cluster!")
+        actor.sendMessage(
+            "Note: If the hosted node is not connected to the cluster, the server will be deleted when the node connects to the cluster!"
+        )
         serverFactory.queueDelete(server.serviceId)
     }
 
@@ -129,11 +140,20 @@ class ServerCommand(
             return@runBlocking
         }
         if (server.hostNodeId == node.serviceId) {
-            actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is already hosted on node ${toConsoleValue(node.name, false)}!")
+            actor.sendMessage(
+                "§cThe server ${toConsoleValue(
+                    server.name,
+                    false
+                )} is already hosted on node ${toConsoleValue(node.name, false)}!"
+            )
             return@runBlocking
         }
-        actor.sendMessage("Queued transfer of static server ${server.identifyName()} to node ${toConsoleValue(node.name, false)}...")
-        actor.sendMessage("Note: If the hosted node is not connected to the cluster, the server will be transferred when the node connects to the cluster!")
+        actor.sendMessage(
+            "Queued transfer of static server ${server.identifyName()} to node ${toConsoleValue(node.name, false)}..."
+        )
+        actor.sendMessage(
+            "Note: If the hosted node is not connected to the cluster, the server will be transferred when the node connects to the cluster!"
+        )
         serverFactory.queueTransfer(server.serviceId, node.serviceId)
     }
 
@@ -218,6 +238,4 @@ class ServerCommand(
         actor.sendMessage("")
         actor.sendHeader("Server information")
     }
-
-
 }

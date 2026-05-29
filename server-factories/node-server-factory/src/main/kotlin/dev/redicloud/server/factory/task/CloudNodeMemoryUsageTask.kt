@@ -27,6 +27,4 @@ class CloudNodeMemoryUsageTask(
         nodeRepository.updateNode(thisNode)
         return false
     }
-
-
 }

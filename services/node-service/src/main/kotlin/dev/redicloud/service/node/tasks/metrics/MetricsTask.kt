@@ -1,5 +1,6 @@
 package dev.redicloud.service.node.tasks.metrics
 
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.java.version.getJavaVersion
 import dev.redicloud.repository.player.PlayerRepository
@@ -8,7 +9,6 @@ import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.tasks.CloudTask
 import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.gson
-import dev.redicloud.api.service.ServiceId
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -58,15 +58,16 @@ class MetricsTask(
             }
             if (response.status.isSuccess()) {
                 logger.fine("Sent metrics to redicloud api")
-            }else {
-                logger.fine("Failed to send metrics to redicloud api: ${response.status.value} ${response.bodyAsText()}")
+            } else {
+                logger.fine(
+                    "Failed to send metrics to redicloud api: ${response.status.value} ${response.bodyAsText()}"
+                )
             }
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             logger.fine("Failed to send metrics to redicloud api", e)
         }
         return false
     }
-
 }
 
 data class Metric(

@@ -1,9 +1,6 @@
 package dev.redicloud.repository.server.version.serverversion
 
 import dev.redicloud.api.version.IServerVersion
-import dev.redicloud.logging.LogManager
-import dev.redicloud.logging.Logger
-import dev.redicloud.logging.LoggerFactory
 import dev.redicloud.repository.server.version.serverversion.VersionRepository.versionComparator
 
 class ServerVersion(
@@ -57,6 +54,4 @@ class ServerVersion(
     override fun compareTo(other: IServerVersion): Int {
         return versionComparator.compare(this, other)
     }
-
 }
-

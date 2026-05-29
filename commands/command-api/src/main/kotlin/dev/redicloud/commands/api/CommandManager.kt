@@ -143,8 +143,11 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
             .filter { actor.hasPermission(it.permission) }
             .filter { !isDisabled(it) }
             .flatMap {
-                if (input.isBlank()) mutableListOf(it.name)
-                else mutableListOf(it.name, *it.aliases)
+                if (input.isBlank()) {
+                    mutableListOf(it.name)
+                } else {
+                    mutableListOf(it.name, *it.aliases)
+                }
             }
             .filter { it.lowercase().startsWith(firstWord.lowercase()) }
     }

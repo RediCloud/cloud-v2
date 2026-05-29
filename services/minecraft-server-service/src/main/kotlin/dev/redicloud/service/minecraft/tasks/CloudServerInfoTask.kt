@@ -1,11 +1,11 @@
 package dev.redicloud.service.minecraft.tasks
 
 import dev.redicloud.api.provider.IServerPlayerProvider
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
-import dev.redicloud.tasks.CloudTask
-import dev.redicloud.api.service.ServiceId
 import dev.redicloud.service.minecraft.utils.CurrentServerData
+import dev.redicloud.tasks.CloudTask
 
 class CloudServerInfoTask(
     private val serviceId: ServiceId,
@@ -33,5 +33,4 @@ class CloudServerInfoTask(
         if (update) serverRepository.updateServer(cloudServer)
         return false
     }
-
 }

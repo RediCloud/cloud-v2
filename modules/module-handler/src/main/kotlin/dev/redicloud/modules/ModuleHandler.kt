@@ -2,9 +2,9 @@ package dev.redicloud.modules
 
 import com.google.inject.Key
 import com.google.inject.name.Named
-import dev.redicloud.api.exceptions.CloudModuleException
 import dev.redicloud.api.events.internal.module.ModuleHandlerInitializedEvent
 import dev.redicloud.api.events.internal.module.ModuleLifeCycleChangedEvent
+import dev.redicloud.api.exceptions.CloudModuleException
 import dev.redicloud.api.modules.*
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.utils.CloudInjectable
@@ -131,7 +131,11 @@ class ModuleHandler(
         logger.info("Uninstalling module %hc%$moduleId%tc%...")
         val file = getModuleData(moduleId).also { data ->
             if (data == null) return@also
-            if (data.loaded) try { unloadModule(data.id) } catch (e: CloudModuleException) { logger.warning("Failed to unload module ${data.id}", e) }
+            if (data.loaded) {
+                try {
+                    unloadModule(data.id)
+                } catch (e: CloudModuleException) { logger.warning("Failed to unload module ${data.id}", e) }
+            }
             moduleFiles.removeIf { it.name == data.description.name }
         }?.file ?: cachedDescriptions.firstOrNull { it.id == moduleId }?.cachedFile
         if (file == null) {

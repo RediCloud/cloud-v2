@@ -21,7 +21,7 @@ class CloudServerDeleteTask(
             actions.add {
                 try {
                     serverFactory.deleteServer(queued)
-                }catch (e: CloudServerException) {
+                } catch (e: CloudServerException) {
                     LOGGER.severe("§cFailed to delete server ${queued.toName()}!", e)
                 }
             }
@@ -31,5 +31,4 @@ class CloudServerDeleteTask(
 
         return false
     }
-
 }

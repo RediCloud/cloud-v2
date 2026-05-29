@@ -68,5 +68,4 @@ class PlayerExecutorListener(
             playerExecutor.showTitle(it.uniqueId, it.createTitle())
         }
     }
-
 }

@@ -98,7 +98,10 @@ suspend fun ServerQueueInformation.calculateStartPriority(cloudNode: ICloudNode,
     if (serviceId != null) {
         val server = serverRepository.getServer<ICloudServer>(serviceId)
         val storedConfigurationTemplate = server?.configurationTemplate
-        if (storedConfigurationTemplate != null && storedConfigurationTemplate.nodeIds.isNotEmpty() && !storedConfigurationTemplate.nodeIds.contains(cloudNode.serviceId)) {
+        val nodeNotAllowed = storedConfigurationTemplate != null &&
+            storedConfigurationTemplate.nodeIds.isNotEmpty() &&
+            !storedConfigurationTemplate.nodeIds.contains(cloudNode.serviceId)
+        if (nodeNotAllowed) {
             addFailedStart(cloudNode.serviceId, StartResultType.NODE_IS_NOT_ALLOWED)
             addFailedNode(cloudNode.serviceId)
             return -1

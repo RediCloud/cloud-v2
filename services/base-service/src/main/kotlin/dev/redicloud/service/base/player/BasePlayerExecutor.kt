@@ -238,5 +238,4 @@ abstract class BasePlayerExecutor(
     abstract fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer)
 
     abstract fun executeKick(cloudPlayer: ICloudPlayer, reason: Component)
-
 }

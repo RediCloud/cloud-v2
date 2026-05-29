@@ -1,12 +1,11 @@
 package dev.redicloud.repository.server
 
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.api.service.server.ICloudServer
+import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import dev.redicloud.repository.service.CloudService
 import dev.redicloud.repository.service.ServiceSessions
-import dev.redicloud.repository.template.configuration.ConfigurationTemplate
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import java.util.UUID
 
 @Suppress("LongParameterList")
@@ -25,7 +24,8 @@ abstract class CloudServer(
     serviceId,
     "${configurationTemplate.name}${configurationTemplate.serverSplitter}$id",
     serviceSessions
-), ICloudServer {
+),
+    ICloudServer {
 
     override var state: CloudServerState = initState
         set(value) {
@@ -36,9 +36,7 @@ abstract class CloudServer(
         }
     internal var oldState = initState
 
-
     override fun unregisterAfterDisconnect(): Boolean {
         return super<CloudService>.unregisterAfterDisconnect() && !configurationTemplate.static
     }
-
 }

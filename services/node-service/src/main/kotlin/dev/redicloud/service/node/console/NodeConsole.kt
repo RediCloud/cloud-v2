@@ -1,26 +1,26 @@
 package dev.redicloud.service.node.console
 
-import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.api.events.internal.node.NodeConnectEvent
+import dev.redicloud.api.events.internal.node.NodeDisconnectEvent
+import dev.redicloud.api.events.internal.node.NodeMasterChangedEvent
+import dev.redicloud.api.events.internal.node.NodeSuspendedEvent
 import dev.redicloud.api.events.internal.server.CloudServerConnectedEvent
 import dev.redicloud.api.events.internal.server.CloudServerDeleteEvent
 import dev.redicloud.api.events.internal.server.CloudServerDisconnectedEvent
+import dev.redicloud.api.events.internal.server.CloudServerStateChangeEvent
 import dev.redicloud.api.events.internal.server.CloudServerTransferredEvent
+import dev.redicloud.api.events.listen
+import dev.redicloud.api.service.server.CloudServerState
+import dev.redicloud.commands.api.PARSERS
 import dev.redicloud.console.Console
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.console.utils.Screen
 import dev.redicloud.console.utils.ScreenParser
+import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.event.EventManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.service.node.NodeConfiguration
-import dev.redicloud.api.events.internal.node.NodeConnectEvent
-import dev.redicloud.api.events.internal.node.NodeDisconnectEvent
-import dev.redicloud.api.events.internal.node.NodeMasterChangedEvent
-import dev.redicloud.api.events.internal.node.NodeSuspendedEvent
-import dev.redicloud.api.events.internal.server.CloudServerStateChangeEvent
-import dev.redicloud.api.events.listen
-import dev.redicloud.commands.api.PARSERS
 import kotlinx.coroutines.runBlocking
 
 class NodeConsole(
@@ -35,7 +35,11 @@ class NodeConsole(
             runBlocking {
                 val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
                 val suspender = nodeRepository.getNode(it.suspender)
-                writeLine("${node.identifyName()}§8: §4● §8(%tc%suspended by ${suspender?.identifyName(false) ?: toConsoleValue("unknown")} because node is reachable§8)")
+                writeLine(
+                    "${node.identifyName()}§8: §4● §8(%tc%suspended by " +
+                        "${suspender?.identifyName(false) ?: toConsoleValue("unknown")} " +
+                        "because node is reachable§8)"
+                )
             }
         }
 
@@ -104,5 +108,4 @@ class NodeConsole(
     override fun handleUserInterrupt(e: Exception) {
         commandManager.getCommand("exit")!!.getSubCommand("")!!.execute(commandManager.defaultActor, emptyList())
     }
-
 }

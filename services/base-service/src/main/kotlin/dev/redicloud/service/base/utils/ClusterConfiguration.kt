@@ -18,7 +18,8 @@ class ClusterConfiguration(
     init {
         if (!contains("id")) set("id", UUID.randomUUID().toString())
         if (!contains("proxy-secret")) {
-            set("proxy-secret",
+            set(
+                "proxy-secret",
                 (1..PROXY_SECRET_LENGTH).map { "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".random() }
                     .joinToString("")
             )
@@ -59,5 +60,4 @@ class ClusterConfiguration(
     fun clear() {
         map.clear()
     }
-
 }

@@ -14,6 +14,4 @@ class JavaVersionParser(
             javaVersionRepository.getVersions().firstOrNull { it.name.lowercase() == parameter.lowercase() }
         }
     }
-
-
 }

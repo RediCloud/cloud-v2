@@ -2,10 +2,10 @@ package dev.redicloud.server.factory
 
 import com.jcraft.jsch.ChannelSftp
 import com.jcraft.jsch.Session
-import dev.redicloud.api.exceptions.CloudServerException
 import dev.redicloud.api.events.internal.server.CloudServerDeleteEvent
 import dev.redicloud.api.events.internal.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.events.internal.server.CloudServerTransferredEvent
+import dev.redicloud.api.exceptions.CloudServerException
 import dev.redicloud.api.server.factory.ICloudServerFactory
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
@@ -78,23 +78,27 @@ class ServerFactory(
     }
 
     suspend fun getStartList(): List<ServerQueueInformation> {
-        return startQueue.toMutableList().sortedWith(compareByDescending<ServerQueueInformation>
-        {
-            if (it.serviceId != null) {
-                val configuration = runBlocking {
-                    serverRepository.getServer<CloudServer>(it.serviceId!!)?.configurationTemplate
-                }
-                configuration?.startPriority ?: DEFAULT_START_PRIORITY
-            } else {
-                it.configurationTemplate.startPriority
-            }
-        }.thenByDescending { it.queueTime }).toList()
+        return startQueue.toMutableList().sortedWith(
+            compareByDescending<ServerQueueInformation>
+                {
+                    if (it.serviceId != null) {
+                        val configuration = runBlocking {
+                            serverRepository.getServer<CloudServer>(it.serviceId!!)?.configurationTemplate
+                        }
+                        configuration?.startPriority ?: DEFAULT_START_PRIORITY
+                    } else {
+                        it.configurationTemplate.startPriority
+                    }
+                }.thenByDescending { it.queueTime }
+        ).toList()
     }
 
     internal suspend fun deleteServer(serviceId: ServiceId): Boolean {
         @Suppress("TooGenericExceptionCaught")
         try {
-            require(serviceId.type.isServer()) { "Service id that was queued for deletion is not a server: ${serviceId.toName()}" }
+            require(
+                serviceId.type.isServer()
+            ) { "Service id that was queued for deletion is not a server: ${serviceId.toName()}" }
             val server = serverRepository.getServer<CloudServer>(serviceId) ?: return false
             if (server.hostNodeId != hostingId) {
                 return false
@@ -102,7 +106,9 @@ class ServerFactory(
             if (server.state != CloudServerState.STOPPED) {
                 return false
             }
-            require(server.configurationTemplate.static) { "Service id that was queued for deletion is not static: ${serviceId.toName()}" }
+            require(server.configurationTemplate.static) {
+                "Service id that was queued for deletion is not static: ${serviceId.toName()}"
+            }
             this.unregisterServer(serviceId, server)
             val workDir = File(STATIC_FOLDER.getFile(), "${server.name}-${server.serviceId.id}")
             if (workDir.exists() && workDir.isDirectory) {
@@ -179,8 +185,14 @@ class ServerFactory(
         serviceId: ServiceId
     ): ServerProcess {
         return ServerProcess(
-            configurationTemplate, serverRepository, packetManager, eventManager,
-            bindHost, clusterConfiguration, serviceId, hostingId
+            configurationTemplate,
+            serverRepository,
+            packetManager,
+            eventManager,
+            bindHost,
+            clusterConfiguration,
+            serviceId,
+            hostingId
         )
     }
 
@@ -215,8 +227,8 @@ class ServerFactory(
     }
 
     private suspend fun ensurePatched(snapshotData: StartDataSnapshot) {
-        if (!snapshotData.versionHandler.isPatched(snapshotData.version)
-            && snapshotData.versionHandler.isPatchVersion(snapshotData.version)
+        if (!snapshotData.versionHandler.isPatched(snapshotData.version) &&
+            snapshotData.versionHandler.isPatchVersion(snapshotData.version)
         ) {
             snapshotData.versionHandler.patch(snapshotData.version)
         }
@@ -228,7 +240,11 @@ class ServerFactory(
         snapshotData: StartDataSnapshot
     ) {
         val copier = FileCopier(
-            serverProcess, cloudServer, serverVersionTypeRepository, fileTemplateRepository, snapshotData
+            serverProcess,
+            cloudServer,
+            serverVersionTypeRepository,
+            fileTemplateRepository,
+            snapshotData
         )
         serverProcess.fileCopier = copier
         copier.copyTemplates()
@@ -247,7 +263,7 @@ class ServerFactory(
         try {
             if (!serverRepository.databaseConnection.connected) return
             val server = cachedServer ?: serverRepository.getServer(serviceId)
-            ?: throw NullPointerException("Server ${serviceId.toName()} not found")
+                ?: throw NullPointerException("Server ${serviceId.toName()} not found")
             require(force || server.state == CloudServerState.STOPPED) { "Server ${serviceId.toName()} is not stopped" }
             serverRepository.deleteServer(server)
         } catch (e: CloudServerException) {
@@ -256,7 +272,6 @@ class ServerFactory(
             throw CloudServerException("Failed to unregister server: ${serviceId.toName()}", e)
         }
     }
-
 
     @Suppress("ReturnCount")
     internal suspend fun startServer(
@@ -313,8 +328,8 @@ class ServerFactory(
             server.port = -1
             serverRepository.updateServer(server)
 
-            if (!snapshotData.versionHandler.isPatched(snapshotData.version)
-                && snapshotData.versionHandler.isPatchVersion(snapshotData.version)
+            if (!snapshotData.versionHandler.isPatched(snapshotData.version) &&
+                snapshotData.versionHandler.isPatchVersion(snapshotData.version)
             ) {
                 snapshotData.versionHandler.patch(snapshotData.version)
             }
@@ -442,7 +457,9 @@ class ServerFactory(
             fileCluster.shareFile(channel, zip, toUniversalPath(workFolder), "data.zip")
             val response = fileCluster.unzip(nodeId, toUniversalPath(zip), toUniversalPath(STATIC_FOLDER.getFile()))
             if (response == null) {
-                logger.warning("§cUnzip process does not response of transferring server ${serverId.toName()} to node ${nodeId.toName()}")
+                logger.warning(
+                    "§cUnzip process does not response of transferring server ${serverId.toName()} to node ${nodeId.toName()}"
+                )
             }
             fileCluster.deleteFolderRecursive(channel, toUniversalPath(workFolder))
             workFolder.deleteRecursively()
@@ -548,7 +565,9 @@ class ServerFactory(
                 .filter { !it.hidden }
                 .filter { it.state != CloudServerState.STOPPED }
                 .count { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }
-        if (startedAmountOfTemplateOnNode >= configurationTemplate.maxStartedServicesPerNode && configurationTemplate.maxStartedServicesPerNode != -1) {
+        if (startedAmountOfTemplateOnNode >= configurationTemplate.maxStartedServicesPerNode &&
+            configurationTemplate.maxStartedServicesPerNode != -1
+        ) {
             return TooMuchServicesOfTemplateOnNodeStartResult()
         }
         return null

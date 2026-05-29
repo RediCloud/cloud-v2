@@ -45,5 +45,4 @@ class ExitCommand(private val nodeService: NodeService) : ICommand {
         }
         nodeService.shutdown(true)
     }
-
 }

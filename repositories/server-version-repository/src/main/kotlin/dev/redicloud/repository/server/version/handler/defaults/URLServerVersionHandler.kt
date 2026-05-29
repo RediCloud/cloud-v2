@@ -3,25 +3,23 @@ package dev.redicloud.repository.server.version.handler.defaults
 import dev.redicloud.api.exceptions.CloudVersionException
 import dev.redicloud.api.java.ICloudJavaVersion
 import dev.redicloud.api.java.ICloudJavaVersionRepository
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.node.ICloudNodeRepository
-import dev.redicloud.api.version.*
 import dev.redicloud.api.utils.ProcessConfiguration
 import dev.redicloud.api.utils.TEMP_SERVER_VERSION_FOLDER
+import dev.redicloud.api.version.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.console.utils.ScreenProcessHandler
+import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.*
-import dev.redicloud.api.service.ServiceId
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReentrantLock
 import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.minutes
 
@@ -90,10 +88,18 @@ open class URLServerVersionHandler(
 
     @Suppress("ThrowsCount")
     private suspend fun downloadJar(version: ICloudServerVersion, jar: File) {
-        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
+        if (version.typeId == null) {
+            throw NullPointerException(
+                "Cant find server version type for ${version.displayName}"
+            )
+        }
         serverVersionTypeRepository.getType(version.typeId!!)
             ?: throw NullPointerException("Cant find server version type ${version.typeId}")
-        if (version.customDownloadUrl == null) throw NullPointerException("Download url of ${version.displayName} is null")
+        if (version.customDownloadUrl == null) {
+            throw NullPointerException(
+                "Download url of ${version.displayName} is null"
+            )
+        }
 
         val targetVersion = if (version.version.latest) version.version.dynamicVersion() else version.version
         val downloadUrl = version.customDownloadUrl!!
@@ -102,10 +108,12 @@ open class URLServerVersionHandler(
             .replace("%branch%", BRANCH)
 
         val response = httpClient.get { url(downloadUrl) }
-        if (!response.status.isSuccess()) throw IllegalStateException(
-            "Download of ${version.displayName} is not available ($downloadUrl -> ${response.status.value}):\n" +
+        if (!response.status.isSuccess()) {
+            throw IllegalStateException(
+                "Download of ${version.displayName} is not available ($downloadUrl -> ${response.status.value}):\n" +
                     response.bodyAsText()
-        )
+            )
+        }
 
         val folder = getFolder(version)
         if (folder.exists()) folder.deleteRecursively()
@@ -136,7 +144,12 @@ open class URLServerVersionHandler(
         @Suppress("TooGenericExceptionCaught")
         try {
             if (!isValidUrl(url)) {
-                logger.warning("§cInvalid default file with url ${toConsoleValue(url, false)} for ${toConsoleValue(version.displayName, false)}")
+                logger.warning(
+                    "§cInvalid default file with url ${toConsoleValue(
+                        url,
+                        false
+                    )} for ${toConsoleValue(version.displayName, false)}"
+                )
                 return
             }
             val file = File(folder, path)
@@ -152,7 +165,13 @@ open class URLServerVersionHandler(
             file.createNewFile()
             file.writeBytes(response.readBytes())
         } catch (e: Exception) {
-            logger.warning("§cFailed to download default file ${toConsoleValue(url, false)} for ${toConsoleValue(version.displayName, false)}", e)
+            logger.warning(
+                "§cFailed to download default file ${toConsoleValue(
+                    url,
+                    false
+                )} for ${toConsoleValue(version.displayName, false)}",
+                e
+            )
         }
     }
 
@@ -185,7 +204,7 @@ open class URLServerVersionHandler(
         javaVersion: ICloudJavaVersion,
         jarToExecute: File
     ): List<String> {
-        if(!javaVersion.isLocated(serviceId)) {
+        if (!javaVersion.isLocated(serviceId)) {
             javaVersion.located[serviceId.id] = javaVersion.autoLocate()?.absolutePath ?: error("Java version ${javaVersion.id} not found")
         }
         val javaPath = javaVersion.located[serviceId.id]
@@ -256,13 +275,21 @@ open class URLServerVersionHandler(
     }
 
     private suspend fun resolveVersionType(version: ICloudServerVersion): ICloudServerVersionType {
-        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
+        if (version.typeId == null) {
+            throw NullPointerException(
+                "Cant find server version type for ${version.displayName}"
+            )
+        }
         return serverVersionTypeRepository.getType(version.typeId!!)
             ?: throw NullPointerException("Cant find server version type ${version.typeId}")
     }
 
     private suspend fun resolveJavaVersion(version: ICloudServerVersion): ICloudJavaVersion {
-        if (version.javaVersionId == null) throw NullPointerException("Cant find java version for ${version.displayName}")
+        if (version.javaVersionId == null) {
+            throw NullPointerException(
+                "Cant find java version for ${version.displayName}"
+            )
+        }
         return javaVersionRepository.getVersion(version.javaVersionId!!)
             ?: throw NullPointerException("Cant find java version for ${version.displayName}")
     }

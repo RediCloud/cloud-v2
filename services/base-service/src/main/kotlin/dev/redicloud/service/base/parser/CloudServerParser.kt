@@ -1,10 +1,10 @@
 package dev.redicloud.service.base.parser
 
 import dev.redicloud.api.commands.ICommandArgumentParser
-import dev.redicloud.repository.server.CloudServer
-import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.isServiceId
+import dev.redicloud.repository.server.CloudServer
+import dev.redicloud.repository.server.ServerRepository
 import kotlinx.coroutines.runBlocking
 
 class CloudServerParser(private val serverRepository: ServerRepository) : ICommandArgumentParser<CloudServer> {
@@ -17,11 +17,10 @@ class CloudServerParser(private val serverRepository: ServerRepository) : IComma
                     return@runBlocking serverRepository.getServer(serviceId)
                 }
                 return@runBlocking serverRepository.getRegisteredServers()
-                    .firstOrNull() { it.name.lowercase() == parameter.lowercase() }
-            }catch (_: Exception) {
+                    .firstOrNull { it.name.lowercase() == parameter.lowercase() }
+            } catch (_: Exception) {
                 return@runBlocking null
             }
         }
     }
-
 }

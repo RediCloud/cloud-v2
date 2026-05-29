@@ -1,6 +1,6 @@
 package dev.redicloud.repository.server.version
 
-import com.google.gson.reflect.TypeToken
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.version.*
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.database.DatabaseConnection
@@ -10,10 +10,9 @@ import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.repository.server.version.serverversion.ServerVersion
 import dev.redicloud.utils.SingleCache
 import dev.redicloud.utils.getTextOfAPIWithFallback
+import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
-import dev.redicloud.api.service.ServiceType
-import dev.redicloud.utils.gson.fromJsonToList
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
 
@@ -28,7 +27,8 @@ class CloudServerVersionRepository(
     5.minutes,
     packetManager,
     ServiceType.NODE
-), ICloudServerVersionRepository {
+),
+    ICloudServerVersionRepository {
 
     companion object {
         val LOGGER = LogManager.logger(CloudServerVersionRepository::class)
@@ -103,15 +103,14 @@ class CloudServerVersionRepository(
                 if (
                     version.used &&
                     (
-                            version.customDownloadUrl != it.customDownloadUrl ||
-                                    handler.isUpdateAvailable(it) ||
-                                    version.defaultFiles != it.defaultFiles
-                            )
+                        version.customDownloadUrl != it.customDownloadUrl ||
+                            handler.isUpdateAvailable(it) ||
+                            version.defaultFiles != it.defaultFiles
+                        )
                 ) {
                     handler.update(it, type)
                 }
             }
         }
     }
-
 }

@@ -46,5 +46,4 @@ class CloudPlayerBossBarPacket(
             flags.toSet()
         )
     }
-
 }

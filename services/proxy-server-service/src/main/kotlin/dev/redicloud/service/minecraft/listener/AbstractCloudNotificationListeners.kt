@@ -35,7 +35,9 @@ abstract class AbstractCloudNotificationListeners(
                         Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
                         Component.text().content("● ").color(NamedTextColor.RED),
                         Component.text().content("(").color(NamedTextColor.DARK_GRAY),
-                        Component.text().content("%tc%suspended by ${suspender?.identifyName()}").color(NamedTextColor.RED),
+                        Component.text().content(
+                            "%tc%suspended by ${suspender?.identifyName()}"
+                        ).color(NamedTextColor.RED),
                         Component.text().content(")").color(NamedTextColor.DARK_GRAY)
                     )
                 }
@@ -147,5 +149,4 @@ abstract class AbstractCloudNotificationListeners(
     }
 
     abstract fun sendMessage(permission: String, clickCommand: String? = null, lambda: (TextComponent.Builder) -> Unit)
-
 }

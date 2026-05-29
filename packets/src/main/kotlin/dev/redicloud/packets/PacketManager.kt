@@ -14,11 +14,9 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.coroutineExceptionHandler
 import dev.redicloud.utils.gson.fixKotlinAnnotations
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds

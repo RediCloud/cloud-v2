@@ -18,5 +18,4 @@ class NodeSelfSuspendTask(val nodeService: NodeService) : CloudTask() {
         nodeService.shutdown()
         return false
     }
-
 }

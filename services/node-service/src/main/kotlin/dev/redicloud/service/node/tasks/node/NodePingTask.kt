@@ -1,10 +1,10 @@
 package dev.redicloud.service.node.tasks.node
 
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.service.base.repository.pingService
 import dev.redicloud.service.node.NodeService
 import dev.redicloud.service.node.repository.node.suspendNode
 import dev.redicloud.tasks.CloudTask
-import dev.redicloud.api.service.ServiceId
 import kotlinx.coroutines.delay
 
 class NodePingTask(val nodeService: NodeService) : CloudTask() {
@@ -30,7 +30,6 @@ class NodePingTask(val nodeService: NodeService) : CloudTask() {
 
     private suspend fun unreachableNodes(vararg serviceIds: ServiceId): List<ServiceId> {
         return serviceIds.map { it to nodeService.nodeRepository.pingService(it) }
-            .filter { it.second == -1L}.map { it.first }
+            .filter { it.second == -1L }.map { it.first }
     }
-
 }

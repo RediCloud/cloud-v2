@@ -98,7 +98,7 @@ fun locateAllJavaVersions(): List<File> {
         val state = it.exists()
         state
     }.filter { it.isDirectory }
-    .forEach { it.listFiles()?.forEach { f -> versionFolders.add(f) } }
+        .forEach { it.listFiles()?.forEach { f -> versionFolders.add(f) } }
 
     val suffix = "bin" + File.separator + (if (getOperatingSystemType() == OSType.WINDOWS) "java.exe" else "java")
     return versionFolders.filter {

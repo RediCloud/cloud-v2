@@ -1,9 +1,9 @@
 package dev.redicloud.repository.service
 
 import dev.redicloud.api.database.grid.list.ISyncedMutableList
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
-import dev.redicloud.api.service.ServiceId
 import kotlinx.coroutines.runBlocking
 
 abstract class ServiceRepository(
@@ -32,5 +32,4 @@ abstract class ServiceRepository(
             }
         }
     }
-
 }

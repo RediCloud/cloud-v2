@@ -1,8 +1,8 @@
 package dev.redicloud.service.base.parser
 
 import dev.redicloud.api.commands.ICommandArgumentParser
-import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
+import dev.redicloud.repository.template.file.FileTemplate
 import kotlinx.coroutines.runBlocking
 
 class FileTemplateParser(

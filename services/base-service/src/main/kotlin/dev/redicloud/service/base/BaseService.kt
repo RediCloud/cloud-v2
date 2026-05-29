@@ -3,30 +3,39 @@ package dev.redicloud.service.base
 import com.google.inject.Guice
 import com.google.inject.name.Names
 import dev.redicloud.api.database.IDatabaseConnection
-import dev.redicloud.api.exceptions.CloudDatabaseException
 import dev.redicloud.api.events.IEventManager
-import dev.redicloud.api.packets.IPacketManager
-import dev.redicloud.cache.tasks.InvalidCacheTask
-import dev.redicloud.api.packets.PacketListener
+import dev.redicloud.api.exceptions.CloudDatabaseException
 import dev.redicloud.api.java.ICloudJavaVersionRepository
+import dev.redicloud.api.packets.IPacketManager
+import dev.redicloud.api.packets.PacketListener
 import dev.redicloud.api.player.ICloudPlayerExecutor
 import dev.redicloud.api.player.ICloudPlayerRepository
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.api.service.server.ICloudServerRepository
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplateRepository
+import dev.redicloud.api.template.file.ICloudFileTemplateRepository
+import dev.redicloud.api.utils.injector
 import dev.redicloud.api.version.ICloudServerVersionRepository
 import dev.redicloud.api.version.ICloudServerVersionTypeRepository
+import dev.redicloud.api.version.IServerVersionHandler
+import dev.redicloud.api.version.IVersionRepository
+import dev.redicloud.cache.tasks.InvalidCacheTask
 import dev.redicloud.commands.api.PARSERS
 import dev.redicloud.commands.api.SUGGESTERS
-import dev.redicloud.repository.node.NodeRepository
+import dev.redicloud.console.Console
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
+import dev.redicloud.logging.Logger
+import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.node.CloudNode
+import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.player.PlayerRepository
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
@@ -34,16 +43,21 @@ import dev.redicloud.repository.server.version.CloudServerVersion
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.api.version.IServerVersionHandler
-import dev.redicloud.logging.Logger
 import dev.redicloud.repository.server.version.serverversion.ServerVersion
+import dev.redicloud.repository.server.version.serverversion.VersionRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
-import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
+import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.service.base.packets.*
 import dev.redicloud.service.base.packets.listener.CloudServiceShutdownPacketListener
+import dev.redicloud.service.base.packets.ping.ServicePingPacket
+import dev.redicloud.service.base.packets.ping.ServicePingResponse
+import dev.redicloud.service.base.packets.player.*
+import dev.redicloud.service.base.packets.service.CloudServiceShutdownPacket
+import dev.redicloud.service.base.packets.service.CloudServiceShutdownResponse
 import dev.redicloud.service.base.parser.*
+import dev.redicloud.service.base.player.BasePlayerExecutor
 import dev.redicloud.service.base.suggester.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.tasks.CloudTaskManager
@@ -51,20 +65,6 @@ import dev.redicloud.utils.InjectorModule
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.ioScope
 import dev.redicloud.utils.loadProperties
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.api.service.ServiceType
-import dev.redicloud.api.template.file.ICloudFileTemplateRepository
-import dev.redicloud.api.utils.injector
-import dev.redicloud.api.version.IVersionRepository
-import dev.redicloud.console.Console
-import dev.redicloud.modules.ModuleHandler
-import dev.redicloud.repository.server.version.serverversion.VersionRepository
-import dev.redicloud.service.base.packets.ping.ServicePingPacket
-import dev.redicloud.service.base.packets.ping.ServicePingResponse
-import dev.redicloud.service.base.packets.player.*
-import dev.redicloud.service.base.packets.service.CloudServiceShutdownPacket
-import dev.redicloud.service.base.packets.service.CloudServiceShutdownResponse
-import dev.redicloud.service.base.player.BasePlayerExecutor
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -126,7 +126,7 @@ abstract class BaseService(
 
         packetManager = PacketManager(databaseConnection, serviceId)
         eventManager = EventManager("base-event-manager", packetManager)
-        val taskThreads = when(serviceId.type) {
+        val taskThreads = when (serviceId.type) {
             ServiceType.NODE -> 4
             ServiceType.MINECRAFT_SERVER -> 1
             ServiceType.PROXY_SERVER -> 2
@@ -149,8 +149,14 @@ abstract class BaseService(
     }
 
     protected fun loadModuleRepositoryUrls(): List<String> {
-        val moduleRepositoryUrls = clusterConfiguration.getList<String>("module-repositories", emptyList()).toMutableList()
-        val defaultRepoUrl = System.getProperty("redicloud.modules.default.repo", "https://api.redicloud.dev/module-repository")
+        val moduleRepositoryUrls = clusterConfiguration.getList<String>(
+            "module-repositories",
+            emptyList()
+        ).toMutableList()
+        val defaultRepoUrl = System.getProperty(
+            "redicloud.modules.default.repo",
+            "https://api.redicloud.dev/module-repository"
+        )
         if (!moduleRepositoryUrls.contains(defaultRepoUrl)) {
             moduleRepositoryUrls.add(defaultRepoUrl)
             clusterConfiguration.set("module-repositories", moduleRepositoryUrls)
@@ -168,7 +174,7 @@ abstract class BaseService(
         this.registerDefaultSuggesters()
     }
 
-    open fun plattformShutdown(){}
+    open fun plattformShutdown() {}
 
     open fun shutdown(force: Boolean = false) {
         SHUTTINGDOWN = true
@@ -272,5 +278,4 @@ abstract class BaseService(
         bind(IDatabaseConnection::class).toInstance(databaseConnection)
         bind(ICloudPlayerExecutor::class).toInstance(playerExecutor)
     }
-
 }

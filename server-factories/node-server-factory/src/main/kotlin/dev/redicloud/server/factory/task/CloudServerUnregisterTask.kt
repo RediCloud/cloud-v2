@@ -34,7 +34,7 @@ class CloudServerUnregisterTask(
             actions.add {
                 try {
                     serverFactory.unregisterServer(serviceId, force = true)
-                }catch (e: CloudServerException) {
+                } catch (e: CloudServerException) {
                     LOGGER.severe("§cFailed to unregister server ${serviceId.toName()}!", e)
                 }
             }
@@ -44,5 +44,4 @@ class CloudServerUnregisterTask(
 
         return false
     }
-
 }

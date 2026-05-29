@@ -141,7 +141,10 @@ class PaperMcServerVersionHandler(
         try {
             if (!isValidUrl(url)) {
                 logger.warning(
-                    "§cInvalid default file with url ${toConsoleValue(url, false)} for ${toConsoleValue(version.displayName, false)}"
+                    "§cInvalid default file with url ${toConsoleValue(
+                        url,
+                        false
+                    )} for ${toConsoleValue(version.displayName, false)}"
                 )
                 return
             }
@@ -160,7 +163,10 @@ class PaperMcServerVersionHandler(
             file.writeBytes(response.readBytes())
         } catch (e: Exception) {
             logger.warning(
-                "§cFailed to download default file ${toConsoleValue(url, false)} for ${toConsoleValue(version.displayName, false)}",
+                "§cFailed to download default file ${toConsoleValue(
+                    url,
+                    false
+                )} for ${toConsoleValue(version.displayName, false)}",
                 e
             )
         }

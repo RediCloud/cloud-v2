@@ -54,7 +54,8 @@ class CommandArgument(
             clazz = if (vararg) parameter.type.componentType.kotlin else parameter.type.kotlin
             parser = PARSERS.filter {
                 it.key.qualifiedName!!.replace("?", "") == clazz.qualifiedName!!.replace("?", "")
-            }.values.firstOrNull() ?: error("No parser found for ${clazz.qualifiedName} in arguments of '${subCommand.command.name} ${subCommand.path}'")
+            }.values.firstOrNull()
+                ?: error("No parser found for ${clazz.qualifiedName} in arguments of '${subCommand.command.name} ${subCommand.path}'")
         }
         suggester = CommandArgumentSuggester(this)
         check(!vararg || required) {

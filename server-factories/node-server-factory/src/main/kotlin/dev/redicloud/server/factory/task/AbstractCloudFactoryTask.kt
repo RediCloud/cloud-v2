@@ -100,5 +100,4 @@ abstract class AbstractCloudFactoryTask(
         }
         return unassigned
     }
-
 }

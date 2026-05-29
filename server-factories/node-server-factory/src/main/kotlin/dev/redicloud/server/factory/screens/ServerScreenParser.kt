@@ -12,5 +12,4 @@ class ServerScreenParser(
         if (screen !is ServerScreen) return null
         return screen
     }
-
 }
