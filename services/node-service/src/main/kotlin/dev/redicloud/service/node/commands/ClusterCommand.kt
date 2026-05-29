@@ -25,6 +25,7 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
     @CommandDescription("List all nodes")
     fun list(actor: ConsoleActor) {
         runBlocking {
+            @Suppress("TooGenericExceptionCaught")
             try {
                 val nodes = nodeService.nodeRepository.getRegisteredNodes()
                 actor.sendHeader("Nodes")

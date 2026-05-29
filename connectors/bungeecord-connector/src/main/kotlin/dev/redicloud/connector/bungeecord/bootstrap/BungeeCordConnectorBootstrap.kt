@@ -14,6 +14,7 @@ class BungeeCordConnectorBootstrap : Plugin() {
     private var connector: BungeeCordConnector? = null
 
     override fun onLoad() {
+        @Suppress("TooGenericExceptionCaught")
         try {
             loadProperties(this.javaClass.classLoader)
             Bootstrap().apply(URLClassLoaderJarLoader(this.javaClass.classLoader as URLClassLoader))

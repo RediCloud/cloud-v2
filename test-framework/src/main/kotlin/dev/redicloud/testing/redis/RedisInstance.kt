@@ -26,18 +26,15 @@ class RedisInstance(
     }
 
     fun execute(vararg commands: String): String {
-        if (!isRunning) {
-            throw RuntimeException("Container is not running")
-        }
+        check(isRunning) { "Container is not running" }
         val c = mutableListOf("redis-cli").also { it.addAll(commands) }
+        @Suppress("TooGenericExceptionCaught")
         try {
             val result = execInContainer(*c.toTypedArray())
-            if (result.stderr.isNotEmpty()) {
-                throw RuntimeException("Failed to execute command: $commands")
-            }
+            check(result.stderr.isEmpty()) { "Failed to execute command: $commands" }
             return result.stdout
         } catch (e: Exception) {
-            throw RuntimeException("Failed to execute command: $commands", e)
+            throw IllegalStateException("Failed to execute command: $commands", e)
         }
     }
 }

@@ -17,6 +17,7 @@ class CloudServerTransferTask(
         val actions = MultiAsyncAction()
         serverFactory.transferQueue.forEach {
             actions.add {
+                @Suppress("TooGenericExceptionCaught")
                 try {
                     serverFactory.transferQueue.remove(it)
                     serverFactory.transferServer(it.serverId, it.targetNodeId)

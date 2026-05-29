@@ -115,6 +115,7 @@ class CloudServerStopTask(
         val actions = MultiAsyncAction()
         serverFactory.stopQueue.forEach {
             actions.add {
+                @Suppress("TooGenericExceptionCaught")
                 try {
                     val server = serverRepository.getServer<CloudServer>(it)
                     if (server == null) {

@@ -22,7 +22,7 @@ object DockerUtils {
             testContainer.start()
             testContainer.stop()
             return Futures.immediateFuture(imageName)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             logger.info("Building image $imageName...")
             return ImageFromDockerfile(NODE_IMAGE_NAME, false)
                 .withDockerfileFromBuilder { builder ->

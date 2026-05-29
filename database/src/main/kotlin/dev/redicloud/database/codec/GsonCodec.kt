@@ -15,6 +15,7 @@ object GsonCodec : BaseCodec() {
 
     private val charset: Charset = Charsets.UTF_8
 
+    @Suppress("TooGenericExceptionCaught")
     private val encoder: Encoder = Encoder { `in`: Any ->
         val out = ByteBufAllocator.DEFAULT.buffer()
         try {
@@ -33,7 +34,7 @@ object GsonCodec : BaseCodec() {
             val str = buf.toString(charset)
             val p = gson.fromJson(str, GsonPackage::class.java)
             return@Decoder gson.fromJson(p.json, Class.forName(p.clazz))
-        } catch (e: ClassNotFoundException) {
+        } catch (_: ClassNotFoundException) {
             return@Decoder null
         }
     }

@@ -192,7 +192,7 @@ class InitializeConsole : Console(
         return try {
             Class.forName("org.redisson.Redisson")
             "§2✓ §8(§fLibs %hc%loaded§8)"
-        } catch (e: ClassNotFoundException) {
+        } catch (_: ClassNotFoundException) {
             "§4✘ §8§l(§c§lMissing libs!§8§l)"
         }
     }
@@ -232,7 +232,7 @@ class InitializeConsole : Console(
             writeLine("")
             writeLine("")
             config
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             writeLine("§cError while reading node file! Starting node setup in 5 seconds...")
             Thread.sleep(5000)
             nodeSetup()
@@ -279,6 +279,7 @@ class InitializeConsole : Console(
             Thread.sleep(5000)
             return databaseSetup()
         }
+        @Suppress("TooGenericExceptionCaught")
         try {
             databaseConfiguration = DatabaseConfiguration.fromFile(databaseFile)
             val p = testDatabase(databaseConfiguration!!, serviceId)
@@ -310,6 +311,7 @@ class InitializeConsole : Console(
     private suspend fun testDatabase(config: DatabaseConfiguration, serviceId: ServiceId): Pair<DatabaseConnection, Throwable?> {
         emptyPrompt()
         val connection = DatabaseConnection(config, serviceId)
+        @Suppress("TooGenericExceptionCaught")
         return try {
             connection.connect()
             connection to null

@@ -15,7 +15,7 @@ class ServerFetcher(
         return try {
             val uuid = UUID.fromString(id)
             serverRepository.getMinecraftServer(ServiceId(uuid, ServiceType.MINECRAFT_SERVER))
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             null
         }
     }
@@ -24,7 +24,7 @@ class ServerFetcher(
         return try {
             val uuid = UUID.fromString(id)
             serverRepository.getProxyServer(ServiceId(uuid, ServiceType.PROXY_SERVER))
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             null
         }
     }

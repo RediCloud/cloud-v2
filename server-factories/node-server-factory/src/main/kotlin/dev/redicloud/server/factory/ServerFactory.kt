@@ -144,6 +144,7 @@ class ServerFactory(
 
         hostedProcesses.add(serverProcess)
         val cloudServer: CloudServer?
+        @Suppress("TooGenericExceptionCaught")
         try {
 
             val thisNode = nodeRepository.getNode(hostingId)!!
@@ -288,6 +289,7 @@ class ServerFactory(
             hostingId
         )
         hostedProcesses.add(serverProcess)
+        @Suppress("TooGenericExceptionCaught")
         try {
             val thisNode = nodeRepository.getNode(hostingId)!!
             if (!force) {
@@ -410,6 +412,7 @@ class ServerFactory(
         if (server.hostNodeId == nodeId) return false
         var session: Session? = null
         var channel: ChannelSftp? = null
+        @Suppress("TooGenericExceptionCaught")
         try {
             session = fileCluster.createSession(nodeId)
             channel = fileCluster.openChannel(session)
@@ -452,9 +455,11 @@ class ServerFactory(
         val actions = MultiAsyncAction()
         hostedProcesses.toList().forEach {
             actions.add {
+                @Suppress("TooGenericExceptionCaught")
                 try {
                     stopServer(it.cloudServer!!.serviceId, force)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
+                    @Suppress("TooGenericExceptionCaught")
                     try {
                         stopServer(it.cloudServer!!.serviceId, true)
                     } catch (e1: Exception) {

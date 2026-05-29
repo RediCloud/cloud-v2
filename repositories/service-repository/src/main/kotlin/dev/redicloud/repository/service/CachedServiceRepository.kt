@@ -40,7 +40,7 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
             shutdownCalled = true
             runBlocking {
                 if (!databaseConnection.connected) {
-                    throw Exception("Database connection is not connected! Cannot remove service from cluster")
+                    error("Database connection is not connected! Cannot remove service from cluster")
                 }
                 val serviceId = databaseConnection.serviceId
                 if (serviceId.type != targetServiceType) return@runBlocking

@@ -31,6 +31,7 @@ class CloudServerUnregisterTask(
                 return@forEach
             }
             actions.add {
+                @Suppress("TooGenericExceptionCaught")
                 try {
                     serverFactory.unregisterServer(serviceId, force = true)
                 }catch (e: Exception) {

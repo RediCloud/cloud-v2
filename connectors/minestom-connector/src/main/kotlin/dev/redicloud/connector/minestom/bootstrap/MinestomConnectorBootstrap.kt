@@ -17,6 +17,7 @@ class MinestomConnectorBootstrap : Extension() {
     lateinit var classLoader: ExtensionClassLoader
 
     override fun preInitialize() {
+        @Suppress("TooGenericExceptionCaught")
         try {
             classLoader = this.javaClass.classLoader as ExtensionClassLoader
             loadProperties(this::class.java.classLoader)

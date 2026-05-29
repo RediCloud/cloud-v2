@@ -95,6 +95,7 @@ class VersionCommand(
             }
         }
         console.startAnimation(animation)
+        @Suppress("TooGenericExceptionCaught")
         try {
             Updater.download(branch, buildId)
             downloaded = true

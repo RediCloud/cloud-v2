@@ -50,6 +50,7 @@ class ModuleHandler(
 
     init {
         repoUrls.forEach { url ->
+            @Suppress("TooGenericExceptionCaught")
             try {
                 ModuleWebRepository(url, this).also {
                     repositories.add(it)
@@ -77,6 +78,7 @@ class ModuleHandler(
     override suspend fun updateModules(silent: Boolean, loadModules: Boolean) = lock.withLock {
         runBlocking {
             cachedDescriptions.forEach { description ->
+                @Suppress("TooGenericExceptionCaught")
                 try {
                     val targetRepositories = if (description.cachedFile != null) {
                         repositories.filter { it.isUpdateAvailable(description.id) }
@@ -173,7 +175,7 @@ class ModuleHandler(
             } else {
                 logger.info("Use 'module load $moduleId' to load the module!")
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             logger.warning("§cFailed to install module with id $moduleId!")
             return
         }
@@ -264,6 +266,7 @@ class ModuleHandler(
         }
         loaders[description.id] = loader
         val moduleInstance: CloudModule?
+        @Suppress("TooGenericExceptionCaught")
         try {
             moduleInstance = if (moduleClass.isSubclassOf(CloudInjectable::class)) {
                 injector.getInstance(moduleClass.java)
@@ -306,6 +309,7 @@ class ModuleHandler(
             logger.warning("§cModule ${description.id} has no tasks!")
         }
 
+        @Suppress("TooGenericExceptionCaught")
         try {
             val tasksCount = callTasks(moduleData.id, ModuleLifeCycle.LOAD)
             logger.info("Loaded module %hc%${description.id}%tc% with %hc%$tasksCount%tc% load tasks!")
@@ -332,6 +336,7 @@ class ModuleHandler(
             logger.warning("§cTried to reload module ${moduleData.id} that is not reloadable!")
             return
         }
+        @Suppress("TooGenericExceptionCaught")
         try {
             val tasksCount = callTasks(moduleData.id, ModuleLifeCycle.RELOAD)
             moduleData.lifeCycle = ModuleLifeCycle.LOAD
@@ -350,6 +355,7 @@ class ModuleHandler(
             logger.warning("§cTried to unload module $moduleId that is not loaded!")
             return
         }
+        @Suppress("TooGenericExceptionCaught")
         try {
             val file = getModuleData(moduleId)!!.file
             getModuleData(moduleId)!!.loaded = false

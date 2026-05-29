@@ -7,7 +7,7 @@ fun String.isUUID(): Boolean {
     return try {
         UUID.fromString(this)
         true
-    } catch (e: IllegalArgumentException) {
+    } catch (_: IllegalArgumentException) {
         false
     }
 }

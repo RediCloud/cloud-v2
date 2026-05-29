@@ -54,7 +54,7 @@ abstract class AbstractFileTemplateRepository(
     override suspend fun deleteTemplate(uniqueId: UUID): Boolean {
         val templates = getTemplates()
         val template =
-            templates.firstOrNull { it.uniqueId == uniqueId } ?: throw Exception("Template $uniqueId not found!")
+            templates.firstOrNull { it.uniqueId == uniqueId } ?: error("Template $uniqueId not found!")
         templates.filter { it.inherited.contains(template.uniqueId) }.forEach {
             it.inherited.remove(template.uniqueId)
             updateTemplate(it)
@@ -89,7 +89,7 @@ abstract class AbstractFileTemplateRepository(
         val collectedTemplates = mutableListOf<FileTemplate>()
         templates.forEach { fileTemplate ->
             val template = getTemplate(fileTemplate.uniqueId)
-                ?: throw Exception("Template ${fileTemplate.uniqueId} not found!")
+                ?: error("Template ${fileTemplate.uniqueId} not found!")
             collectedTemplates.add(template)
             collectedTemplates.addAll(
                 collectTemplates(

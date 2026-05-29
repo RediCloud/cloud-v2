@@ -172,9 +172,7 @@ class RediCloudNode(
 
     fun execute(command: String): String {
         LOGGER.info("Executing command: {}", command)
-        if (!isRunning) {
-            throw RuntimeException("Container is not running")
-        }
+        check(isRunning) { "Container is not running" }
         val commands = mutableListOf(
             "screen",
             "-xr",
@@ -183,14 +181,13 @@ class RediCloudNode(
             "stuff",
             "$command\\r"
         )
+        @Suppress("TooGenericExceptionCaught")
         try {
             val result = execInContainer(*commands.toTypedArray())
-            if (result.stderr.isNotEmpty()) {
-                throw RuntimeException("Failed to execute command: $commands")
-            }
+            check(result.stderr.isEmpty()) { "Failed to execute command: $commands" }
             return result.stdout
         } catch (e: Exception) {
-            throw RuntimeException("Failed to execute command: $commands", e)
+            throw IllegalStateException("Failed to execute command: $commands", e)
         }
     }
 }

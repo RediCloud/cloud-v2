@@ -33,7 +33,7 @@ fun findClasses(file: File, packageName: String, classes: MutableList<Class<*>>)
             if (className.startsWith(packageName)) {
                 classes.add(clazz)
             }
-        } catch (e: ClassNotFoundException) {
+        } catch (_: ClassNotFoundException) {
             // Fehler beim Laden der Klasse
         }
     }

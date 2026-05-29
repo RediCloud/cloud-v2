@@ -74,12 +74,14 @@ class NodeService(
             Updater.check()
 
             nodeRepository.connect(this@NodeService)
+            @Suppress("TooGenericExceptionCaught")
             try { memoryCheck() } catch (e: Exception) {
                 LOGGER.severe("Error while checking memory", e)
                 shutdown()
                 return@runBlocking
             }
 
+            @Suppress("TooGenericExceptionCaught")
             try { this@NodeService.checkJavaVersions() } catch (e: Exception) {
                 LOGGER.warning("Error while checking java versions", e)
             }
@@ -249,6 +251,7 @@ class NodeService(
     }
 
     private suspend fun connectFileCluster() {
+        @Suppress("TooGenericExceptionCaught")
         try {
             this.fileCluster.connect()
             LOGGER.info("Connected to file cluster on port ${this.fileCluster.port}!")

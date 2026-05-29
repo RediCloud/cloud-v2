@@ -127,6 +127,7 @@ class CloudServerVersionTypeRepository(
             "Downloading connector for ${toConsoleValue(serverVersionType.name)}..."
         )
         if (lock) getLock(serverVersionType).lock()
+        @Suppress("TooGenericExceptionCaught")
         try {
             check(serverVersionType.getParsedConnectorURL().isValid()) { "Connector download url of ${serverVersionType.connectorPluginName} is null!" }
             httpClient.get {

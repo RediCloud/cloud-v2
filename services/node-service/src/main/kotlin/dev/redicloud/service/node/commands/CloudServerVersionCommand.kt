@@ -663,6 +663,7 @@ class CloudServerVersionCommand(
                 actor.sendMessage("§cThis version is not patchable! Set the lib pattern with '/sv edit ${version.displayName} patchh true'")
                 return@launch
             }
+            @Suppress("TooGenericExceptionCaught")
             try {
                 handler.patch(version)
             } catch (e: Exception) {
@@ -689,6 +690,7 @@ class CloudServerVersionCommand(
                 actor.sendMessage("§c'${version.displayName}' can´t be downloaded! Check the version type and the download url!")
                 return@launch
             }
+            @Suppress("TooGenericExceptionCaught")
             try {
                 handler.download(version, true)
             } catch (e: Exception) {

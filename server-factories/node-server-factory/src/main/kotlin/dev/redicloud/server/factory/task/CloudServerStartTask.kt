@@ -80,6 +80,7 @@ class CloudServerStartTask(
             val name = if (info.serviceId == null) info.configurationTemplate.name else info.serviceId?.toName() ?: "unknown"
 
             actions.add {
+                @Suppress("TooGenericExceptionCaught")
                 try {
                     serverFactory.startQueue.remove(info)
                     val result = if (info.serviceId == null) {

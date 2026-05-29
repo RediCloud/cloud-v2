@@ -114,6 +114,7 @@ class CommandSubBase(
             parsedArguments.add(array)
         }
         val final = parsedArguments.toTypedArray()
+        @Suppress("TooGenericExceptionCaught")
         return try {
             if (suspend) {
                 runBlocking { function.callSuspend(command.commandImpl, *final) } // TODO fix this

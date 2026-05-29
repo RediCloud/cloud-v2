@@ -14,7 +14,7 @@ class CloudServerVersionParser(private val serverVersionRepository: CloudServerV
             try {
                 val uniqueId = UUID.fromString(parameter)
                 serverVersionRepository.getVersion(uniqueId)
-            } catch (e: IllegalArgumentException) {
+            } catch (_: IllegalArgumentException) {
                 serverVersionRepository.getVersion(parameter)
             }
         }

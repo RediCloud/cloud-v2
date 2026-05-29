@@ -27,7 +27,7 @@ class ClusterConfiguration(
 
     inline fun <reified T> getList(key: String, defaultValue: List<T>? = null): List<T> {
         if (!contains(key)) {
-            return defaultValue ?: throw Exception("Key $key not found")
+            return defaultValue ?: error("Key $key not found")
         }
         return gson.fromJsonToList(map[key]!!)
     }

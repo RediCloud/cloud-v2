@@ -19,7 +19,7 @@ class FileTemplateFetcher(
         return try {
             val uuid = UUID.fromString(id)
             fileTemplateRepository.getTemplate(uuid)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             null
         }
     }

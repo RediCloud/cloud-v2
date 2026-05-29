@@ -55,7 +55,7 @@ class CloudServerVersion(
             editInfo.forEach { (key, value) ->
                 try {
                     editor.setValue(key, action(value))
-                }catch (e: IllegalStateException) {
+                }catch (_: IllegalStateException) {
                     logger.warning("§cKey ${toConsoleValue(key, false)} does not exist in file ${toConsoleValue(fileToEdit, false)}!")
                 }
             }

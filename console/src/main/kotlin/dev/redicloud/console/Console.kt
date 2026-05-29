@@ -190,6 +190,7 @@ open class Console(
 
                 if (CURRENT_CONSOLE?.commandManager?.areCommandsDisabled() == false) {
                     val commandManager = CURRENT_CONSOLE?.commandManager ?: continue
+                    @Suppress("TooGenericExceptionCaught")
                     try {
                         val response = commandManager.handleInput(commandManager.defaultActor, line)
                         if (response.type == CommandResponseType.HELP_SENT) continue

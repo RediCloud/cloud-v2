@@ -29,6 +29,7 @@ class ScreenProcessHandler(
     override fun run() {
         var stopped = false
         while (!stopped) {
+            @Suppress("TooGenericExceptionCaught")
             try {
                 val inputReader = InputStreamReader(inputStream)
                 val bufferedReader = BufferedReader(inputReader)

@@ -18,6 +18,7 @@ class CloudServerDeleteTask(
         serverFactory.deleteQueue.forEach { queued ->
             serverFactory.deleteQueue.remove(queued)
             actions.add {
+                @Suppress("TooGenericExceptionCaught")
                 try {
                     serverFactory.deleteServer(queued)
                 }catch (e: Exception) {

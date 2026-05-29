@@ -161,7 +161,7 @@ class ModuleCommand(
             clusterConfiguration.set("module-repositories", repositoryUrls)
             moduleHandler.repositories.add(repo)
             actor.sendMessage("§aRepository with url $url added!")
-        }catch (e: Exception) {
+        }catch (_: Exception) {
             actor.sendMessage("§cRepository with url $url is not a valid repository!")
         }
     }

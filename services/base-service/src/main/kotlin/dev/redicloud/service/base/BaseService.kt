@@ -114,6 +114,7 @@ abstract class BaseService(
                 serviceId
             )
         }
+        @Suppress("TooGenericExceptionCaught")
         try {
             if (!databaseConnection.connected) runBlocking { databaseConnection.connect() }
         } catch (e: Exception) {

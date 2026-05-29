@@ -70,6 +70,7 @@ class FileCopier(
                     logger.warning("You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'")
                     return
                 }
+                @Suppress("TooGenericExceptionCaught")
                 try {
                     runBlocking { serverVersionTypeRepository.downloadConnector(snapshot.versionType, lock = false) }
                     if (!connectorFile.exists()) {

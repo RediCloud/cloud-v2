@@ -17,7 +17,7 @@ class NodeFetcher(
         return try {
             val uuid = UUID.fromString(id)
             nodeRepository.getNode(ServiceId(uuid, ServiceType.NODE))
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             null
         }
     }

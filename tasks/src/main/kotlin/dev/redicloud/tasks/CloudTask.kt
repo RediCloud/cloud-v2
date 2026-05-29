@@ -29,6 +29,7 @@ abstract class CloudTask(private val useLock: Boolean = true) {
             if (useLock) {
                 lock.lock()
             }
+            @Suppress("TooGenericExceptionCaught")
             try {
                 CloudTaskManager.LOGGER.log(
                     Level.FINEST,

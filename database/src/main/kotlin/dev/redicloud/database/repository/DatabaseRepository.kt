@@ -8,7 +8,7 @@ abstract class DatabaseRepository<T>(
 ) {
 
     init {
-        if (!connection.connected) throw Exception("Database connection is not connected")
+        if (!connection.connected) error("Database connection is not connected")
     }
 
     fun toDatabaseIdentifier(identifier: String): String = "${this.name}:$identifier"

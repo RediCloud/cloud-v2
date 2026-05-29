@@ -97,6 +97,7 @@ class EventManager(
         when (event.fireType) {
             EventFireType.GLOBAL -> {
                 runBlocking {
+                    @Suppress("TooGenericExceptionCaught")
                     try {
                         packetManager?.publishBroadcast(
                             CloudEventPacket(
@@ -118,6 +119,7 @@ class EventManager(
 
             EventFireType.CLIENT -> {
                 runBlocking {
+                    @Suppress("TooGenericExceptionCaught")
                     try {
                         packetManager?.publish(
                             CloudEventPacket(
@@ -140,6 +142,7 @@ class EventManager(
 
             EventFireType.SERVER -> {
                 runBlocking {
+                    @Suppress("TooGenericExceptionCaught")
                     try {
                         packetManager?.publish(
                             CloudEventPacket(
@@ -170,6 +173,7 @@ class EventManager(
 
             EventFireType.MINECRAFT_SERVER -> {
                 runBlocking {
+                    @Suppress("TooGenericExceptionCaught")
                     try {
                         packetManager?.publish(
                             CloudEventPacket(
@@ -192,6 +196,7 @@ class EventManager(
 
             EventFireType.PROXY_SERVER -> {
                 runBlocking {
+                    @Suppress("TooGenericExceptionCaught")
                     try {
                         packetManager?.publish(
                             CloudEventPacket(
@@ -214,6 +219,7 @@ class EventManager(
 
             EventFireType.NODE -> {
                 runBlocking {
+                    @Suppress("TooGenericExceptionCaught")
                     try {
                         packetManager?.publish(
                             CloudEventPacket(
@@ -244,6 +250,7 @@ class EventManager(
         val eventType = event::class
         lock.withLock {
             handlers[eventType]?.forEach { handlerMethod ->
+                @Suppress("TooGenericExceptionCaught")
                 try {
                     handlerMethod.function.call(handlerMethod.listener, event)
                 } catch (e: Exception) {

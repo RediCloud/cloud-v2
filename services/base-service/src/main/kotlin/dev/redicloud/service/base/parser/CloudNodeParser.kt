@@ -18,7 +18,7 @@ class CloudNodeParser(private val nodeRepository: NodeRepository) : ICommandArgu
                 }
                 return@runBlocking nodeRepository.getRegisteredNodes()
                     .firstOrNull() { it.name.lowercase() == parameter.lowercase() }
-            }catch (e: Exception) {
+            }catch (_: Exception) {
                 return@runBlocking null
             }
         }

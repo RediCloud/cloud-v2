@@ -68,7 +68,7 @@ class NodeFileTemplateRepository(
     }
 
     override suspend fun updateTemplate(template: ICloudFileTemplate): FileTemplate {
-        val storedTemplate = getTemplate(template.uniqueId) ?: throw Exception("Template ${template.uniqueId} not found!")
+        val storedTemplate = getTemplate(template.uniqueId) ?: error("Template ${template.uniqueId} not found!")
         return set(template.uniqueId.toString(), template).apply {
             if (storedTemplate.displayName != template.displayName) {
                 val folder = storedTemplate.folder

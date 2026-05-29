@@ -16,6 +16,7 @@ class BukkitConnectorBootstrap : JavaPlugin() {
     private var connector: BukkitConnector? = null
 
     override fun onLoad() {
+        @Suppress("TooGenericExceptionCaught")
         try {
             loadProperties(this::class.java.classLoader)
             Bootstrap().apply(URLClassLoaderJarLoader(this::class.java.classLoader as URLClassLoader))

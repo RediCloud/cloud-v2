@@ -18,7 +18,7 @@ class CloudServerParser(private val serverRepository: ServerRepository) : IComma
                 }
                 return@runBlocking serverRepository.getRegisteredServers()
                     .firstOrNull() { it.name.lowercase() == parameter.lowercase() }
-            }catch (e: Exception) {
+            }catch (_: Exception) {
                 return@runBlocking null
             }
         }

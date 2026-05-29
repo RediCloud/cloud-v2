@@ -76,6 +76,7 @@ abstract class MinecraftServerService<T> : BaseService(
         return serverRepository.getServer(serviceId) ?: error("Server not found!")
     }
 
+    @Suppress("TooGenericExceptionCaught")
     open fun onEnable() = runBlocking {
         try {
             val server = serverRepository.getServer<CloudServer>(serviceId) ?: error("Server not found!")

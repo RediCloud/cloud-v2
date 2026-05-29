@@ -65,6 +65,7 @@ open class URLServerVersionHandler(
         console.startAnimation(animation)
         if (lock) getLock(version).lock()
         val jar = getJar(version)
+        @Suppress("TooGenericExceptionCaught")
         try {
             if (jar.exists() && !force) return jar
             if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
@@ -102,6 +103,7 @@ open class URLServerVersionHandler(
                         .replace("%cloud_version%", CLOUD_VERSION)
                         .replace("%branch%", BRANCH)
                     val path = it.key
+                    @Suppress("TooGenericExceptionCaught")
                     try {
                         if (!isValidUrl(url1)) {
                             logger.warning("§cInvalid default file with url ${toConsoleValue(url1, false)} for ${toConsoleValue(version.displayName, false)}")
@@ -199,6 +201,7 @@ open class URLServerVersionHandler(
         }
         console.startAnimation(animation)
         if (lock) getLock(version).lock()
+        @Suppress("TooGenericExceptionCaught")
         try {
             val jar = getJar(version)
             if (!jar.exists()) download(version, true, lock = false)

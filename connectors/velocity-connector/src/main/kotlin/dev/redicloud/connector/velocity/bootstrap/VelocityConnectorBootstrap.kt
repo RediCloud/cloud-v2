@@ -27,6 +27,7 @@ class VelocityConnectorBootstrap @Inject constructor(val proxyServer: ProxyServe
     private var connector: VelocityConnector? = null
 
     init {
+        @Suppress("TooGenericExceptionCaught")
         try {
             loadProperties(this.javaClass.classLoader)
             Bootstrap().apply(URLClassLoaderJarLoader(this.javaClass.classLoader as URLClassLoader))

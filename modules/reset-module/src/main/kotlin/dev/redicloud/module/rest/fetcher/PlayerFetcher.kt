@@ -18,7 +18,7 @@ class PlayerFetcher(
         return try {
             val uuid = UUID.fromString(id)
             playerRepository.getPlayer(uuid)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             null
         }
     }

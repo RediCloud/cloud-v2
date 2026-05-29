@@ -12,7 +12,7 @@ suspend fun URL.isValid(): Boolean {
         val responseCode = connection.responseCode
         connection.disconnect()
         responseCode == HttpURLConnection.HTTP_OK
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         false
     }
 }
@@ -28,7 +28,7 @@ suspend fun isValidUrl(url: String?): Boolean {
             return httpClient.get { url(url) }.status.isSuccess()
         }
         responseCode == HttpURLConnection.HTTP_OK
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         false
     }
 }

@@ -28,7 +28,7 @@ class ConsoleHighlighter(private val console: Console) : DefaultHighlighter() {
         .associate {
             Pattern.compile(it[0]) to try {
                 ConsoleColor.valueOf(it[1].uppercase()).ansiCode
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 it[1]
             }
         }

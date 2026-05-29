@@ -73,6 +73,7 @@ class PacketManager(
                     packetsOfLast3Seconds.remove(packet)
                 }
                 ArrayList(packetResponses).filterNotNull().forEach {
+                    @Suppress("TooGenericExceptionCaught")
                     try {
                         it.handle(packet)
                     } catch (e: Exception) {
@@ -81,6 +82,7 @@ class PacketManager(
                 }
                 listeners.forEach {
                     if (packet::class == it.packetClazz) {
+                        @Suppress("TooGenericExceptionCaught")
                         try {
                             (it as PacketListener<AbstractPacket>).listener(packet)
                         } catch (e: Exception) {

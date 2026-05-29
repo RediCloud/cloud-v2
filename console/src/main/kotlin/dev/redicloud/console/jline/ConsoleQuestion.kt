@@ -32,7 +32,7 @@ class ConsoleQuestion(
                 ?: throw IllegalArgumentException("No parser found for class ${T::class.simpleName}")
             try {
                 result = parser.parse(input) as T?
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 console.writeLine("$linePrefix §cError while parsing input! Please try again!")
             }
         }

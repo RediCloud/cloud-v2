@@ -55,6 +55,7 @@ class PaperMcServerVersionHandler(
         }
         if (lock) getLock(version).lock()
         val jar = getJar(version)
+        @Suppress("TooGenericExceptionCaught")
         try {
             if (jar.exists() && !force) return jar
             if (version.typeId == null) {
@@ -97,6 +98,7 @@ class PaperMcServerVersionHandler(
                         .replace("%cloud_version%", CLOUD_VERSION)
                         .replace("%branch%", BRANCH)
                     val path = it.key
+                    @Suppress("TooGenericExceptionCaught")
                     try {
                         if (!isValidUrl(url1)) {
                             logger.warning(
@@ -234,6 +236,7 @@ class PaperMcServerVersionHandler(
             console.startAnimation(animation)
         }
         if (lock) getLock(version).lock()
+        @Suppress("TooGenericExceptionCaught")
         try {
             val jar = getJar(version)
             if (!jar.exists()) download(version, true, lock = false)
