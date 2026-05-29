@@ -21,6 +21,12 @@ performance:
   SpreadOperator:
     active: false
 
+# detekt-formatting (ktlint) rules are disabled for now.
+# The codebase has ~450 pre-existing formatting violations.
+# Enable incrementally in a dedicated formatting PR.
+formatting:
+  active: false
+
 style:
   ReturnCount:
     max: 5
