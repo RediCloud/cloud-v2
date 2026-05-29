@@ -33,17 +33,29 @@ class DatabaseConnection(
     config: DatabaseConfiguration,
     override val serviceId: ServiceId,
     connectionPoolSize: Int =
-        if (serviceId.type == ServiceType.MINECRAFT_SERVER) DEFAULT_CONNECTION_POOL_SIZE / 2
-        else DEFAULT_CONNECTION_POOL_SIZE,
+        if (serviceId.type == ServiceType.MINECRAFT_SERVER) {
+            DEFAULT_CONNECTION_POOL_SIZE / 2
+        } else {
+            DEFAULT_CONNECTION_POOL_SIZE
+        },
     connectionMinimumIdleSize: Int =
-        if (serviceId.type == ServiceType.MINECRAFT_SERVER) DEFAULT_MIN_IDLE_CONNECTIONS / 2
-        else DEFAULT_MIN_IDLE_CONNECTIONS,
+        if (serviceId.type == ServiceType.MINECRAFT_SERVER) {
+            DEFAULT_MIN_IDLE_CONNECTIONS / 2
+        } else {
+            DEFAULT_MIN_IDLE_CONNECTIONS
+        },
     subscriptionConnectionPoolSize: Int =
-        if (serviceId.type == ServiceType.MINECRAFT_SERVER) DEFAULT_SUBSCRIPTION_POOL_SIZE / 2
-        else DEFAULT_SUBSCRIPTION_POOL_SIZE,
+        if (serviceId.type == ServiceType.MINECRAFT_SERVER) {
+            DEFAULT_SUBSCRIPTION_POOL_SIZE / 2
+        } else {
+            DEFAULT_SUBSCRIPTION_POOL_SIZE
+        },
     subscriptionConnectionMinimumIdleSize: Int =
-        if (serviceId.type == ServiceType.MINECRAFT_SERVER) 2 / 2
-        else 2
+        if (serviceId.type == ServiceType.MINECRAFT_SERVER) {
+            2 / 2
+        } else {
+            2
+        }
 ) : IDatabaseConnection {
 
     companion object {

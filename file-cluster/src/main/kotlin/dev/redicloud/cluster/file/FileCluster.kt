@@ -1,7 +1,9 @@
 package dev.redicloud.cluster.file
 
-import com.jcraft.jsch.*
+import com.jcraft.jsch.ChannelSftp
 import com.jcraft.jsch.ChannelSftp.LsEntry
+import com.jcraft.jsch.JSch
+import com.jcraft.jsch.Session
 import dev.redicloud.api.events.internal.node.file.FileNodeConnectedEvent
 import dev.redicloud.api.events.internal.node.file.FileNodeDisconnectedEvent
 import dev.redicloud.api.packets.AbstractPacket
@@ -15,7 +17,8 @@ import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.node.NodeRepository
-import dev.redicloud.utils.*
+import dev.redicloud.utils.findFreePort
+import dev.redicloud.utils.isPortFree
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.sshd.common.file.virtualfs.VirtualFileSystemFactory
@@ -38,7 +41,10 @@ import java.io.FileWriter
 import java.math.BigInteger
 import java.net.InetSocketAddress
 import java.nio.file.Paths
-import java.security.*
+import java.security.KeyPair
+import java.security.KeyPairGenerator
+import java.security.PrivateKey
+import java.security.PublicKey
 import java.security.cert.X509Certificate
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -99,7 +105,11 @@ class FileCluster(
         this.port = generatePort(thisNode)
 
         sshd = SshServer.setUpDefaultServer()
-        sshd!!.host = if (hostname.startsWith("[") && hostname.endsWith("]")) hostname.substring(1, hostname.length - 1) else hostname
+        sshd!!.host = if (hostname.startsWith("[") && hostname.endsWith("]")) {
+            hostname.substring(1, hostname.length - 1)
+        } else {
+            hostname
+        }
         sshd!!.port = port
 
         val cloudPath = Paths.get(CLOUD_PATH)
@@ -120,7 +130,10 @@ class FileCluster(
                     }
 
                     else -> {
-                        LOGGER.warning("Unknown client address type tried to connect to the file cluster: ${clientAddress::class.simpleName}")
+                        LOGGER.warning(
+                            "Unknown client address type tried to connect to the file cluster: " +
+                                "${clientAddress::class.simpleName}"
+                        )
                         return@runBlocking false
                     }
                 }
