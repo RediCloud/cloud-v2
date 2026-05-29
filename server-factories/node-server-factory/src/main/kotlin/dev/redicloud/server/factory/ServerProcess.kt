@@ -125,72 +125,79 @@ class ServerProcess(
         if (stopped) return
         freePort(port)
         stopped = true
-        var unexpectedlyStop = false
         if (!serverRepository.existsServer<CloudServer>(serverId)) return
         cloudServer = serverRepository.getServer(serverId) ?: return
-        val identifier = cloudServer?.serviceId?.toName() ?: configurationTemplate.uniqueId
-        if (internalCall) {
-            logger.fine("Detected process exit of $identifier")
-            if (cloudServer?.connected == true) {
-                unexpectedlyStop = true
-                logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stopped unexpectedly!")
-                logger.warning("§cCheck the server logs for more information! The server directory will not be deleted!")
-            }
-            cloudServer!!.state = CloudServerState.STOPPED
-            cloudServer!!.port = -1
-            cloudServer!!.connected = false
-            cloudServer!!.connectedPlayers.clear()
-            serverRepository.updateServer(cloudServer!!)
-            eventManager.fireEvent(CloudServerDisconnectedEvent(serverId))
 
-            if (cloudServer!!.unregisterAfterDisconnect()) {
-                serverRepository.deleteServer(cloudServer!!)
-            }
-        }else {
-            logger.fine("Stopped server process $identifier")
+        val unexpectedlyStop = if (internalCall) handleInternalStop() else {
+            logger.fine("Stopped server process ${cloudServer?.serviceId?.toName() ?: configurationTemplate.uniqueId}")
+            false
         }
 
         if (cloudServer != null && !internalCall) {
-            cloudServer!!.state = CloudServerState.STOPPING
-            serverRepository.updateServer(cloudServer!!)
-            val response = packetManager.publish(CloudServiceShutdownPacket(), cloudServer!!.serviceId)
-            val answer = response.withTimeOut(4.seconds).waitBlocking()
-            if (answer != null) {
-                var seconds = 0
-                while (cloudServer != null && cloudServer?.connected == true && seconds < SERVER_STOP_TIMEOUT) {
-                    withContext(Dispatchers.IO) {
-                        Thread.sleep(STOP_POLL_INTERVAL_MS)
-                    }
-                    seconds++
-                    cloudServer = serverRepository.getServer(serverId)
-                }
-                if (cloudServer?.connected == true) {
-                    logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stop request timed out. Stopping process manually!")
-                }
-            } else {
-                logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} does not respond to stop request. Stopping process manually!")
-            }
+            sendStopRequestAndWait()
         }
 
-        if (process != null && process!!.isAlive) {
-            if (force) {
-                process!!.destroyForcibly()
-            } else {
-                process!!.destroy()
-            }
-        }
-
-        if (System.getProperty("redicloud.server.delete-directory", "true").toBooleanStrictOrNull() == true) {
-            if (!configurationTemplate.static && !unexpectedlyStop) {
-                fileCopier.workDirectory.deleteRecursively()
-            }else if (unexpectedlyStop && !configurationTemplate.static) {
-                fileCopier.workDirectory.deleteOnExit()
-            }
-        }
-
-
-
+        destroyProcess(force)
+        cleanupWorkDirectory(unexpectedlyStop)
         logger.fine("Stopped server process ${configurationTemplate.uniqueId}")
+    }
+
+    private suspend fun handleInternalStop(): Boolean {
+        val identifier = cloudServer?.serviceId?.toName() ?: configurationTemplate.uniqueId
+        logger.fine("Detected process exit of $identifier")
+        var unexpectedlyStop = false
+        if (cloudServer?.connected == true) {
+            unexpectedlyStop = true
+            logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stopped unexpectedly!")
+            logger.warning("§cCheck the server logs for more information! The server directory will not be deleted!")
+        }
+        cloudServer!!.state = CloudServerState.STOPPED
+        cloudServer!!.port = -1
+        cloudServer!!.connected = false
+        cloudServer!!.connectedPlayers.clear()
+        serverRepository.updateServer(cloudServer!!)
+        eventManager.fireEvent(CloudServerDisconnectedEvent(serverId))
+        if (cloudServer!!.unregisterAfterDisconnect()) {
+            serverRepository.deleteServer(cloudServer!!)
+        }
+        return unexpectedlyStop
+    }
+
+    private suspend fun sendStopRequestAndWait() {
+        cloudServer!!.state = CloudServerState.STOPPING
+        serverRepository.updateServer(cloudServer!!)
+        val response = packetManager.publish(CloudServiceShutdownPacket(), cloudServer!!.serviceId)
+        val answer = response.withTimeOut(4.seconds).waitBlocking()
+        if (answer != null) {
+            var seconds = 0
+            while (cloudServer != null && cloudServer?.connected == true && seconds < SERVER_STOP_TIMEOUT) {
+                withContext(Dispatchers.IO) {
+                    Thread.sleep(STOP_POLL_INTERVAL_MS)
+                }
+                seconds++
+                cloudServer = serverRepository.getServer(serverId)
+            }
+            if (cloudServer?.connected == true) {
+                logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stop request timed out. Stopping process manually!")
+            }
+        } else {
+            logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} does not respond to stop request. Stopping process manually!")
+        }
+    }
+
+    private fun destroyProcess(force: Boolean) {
+        if (process != null && process!!.isAlive) {
+            if (force) process!!.destroyForcibly() else process!!.destroy()
+        }
+    }
+
+    private fun cleanupWorkDirectory(unexpectedlyStop: Boolean) {
+        if (System.getProperty("redicloud.server.delete-directory", "true").toBooleanStrictOrNull() != true) return
+        if (!configurationTemplate.static && !unexpectedlyStop) {
+            fileCopier.workDirectory.deleteRecursively()
+        } else if (unexpectedlyStop && !configurationTemplate.static) {
+            fileCopier.workDirectory.deleteOnExit()
+        }
     }
 
     /**

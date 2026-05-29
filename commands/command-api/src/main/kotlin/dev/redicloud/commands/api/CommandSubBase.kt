@@ -165,20 +165,28 @@ class CommandSubBase(
         if (split.size < 2 && predicate) return input.endsWith(" ")
         val parameters = split.drop(1)
         if (parameters.isEmpty()) return predicate
-        val possibleFullPaths = getSubPaths()
-        val matched = possibleFullPaths.toMutableList()
-        var index = -1
+
+        val counts = buildParameterCounts(parameters)
+        if (counts.none { it == parameters.size } && !predicate) return false
+
+        return matchParameters(parameters, predicate)
+    }
+
+    private fun buildParameterCounts(parameters: List<String>): List<Int> {
         val counts = mutableListOf<Int>()
         val vararg = arguments.firstOrNull { it.vararg }
         mutableListOf(path, *aliasPaths).forEach {
             val maxLength = it.split(" ").size
             val minLength = it.split(" ").count { !it.isOptionalArgument() }
-            for (i in minLength..maxLength) {
-                counts.add(i)
-            }
+            for (i in minLength..maxLength) { counts.add(i) }
             if (vararg != null && parameters.size >= minLength) counts.add(parameters.size)
         }
-        if (counts.none { it == parameters.size } && !predicate) return false
+        return counts
+    }
+
+    private fun matchParameters(parameters: List<String>, predicate: Boolean): Boolean {
+        val matched = getSubPaths().toMutableList()
+        var index = -1
         parameters.forEach {
             index++
             val possible = matched.filter { path ->
@@ -186,18 +194,11 @@ class CommandSubBase(
                 if (parameterSplit.size <= index) return@filter arguments.isNotEmpty() && arguments.last().vararg
                 val parameter = parameterSplit[index].lowercase()
                 if (parameter.isOptionalArgument() || parameter.isRequiredArgument()) return@filter true
-                if (predicate) {
-                    parameter.lowercase().startsWith(
-                        it.lowercase()
-                    )
-                } else {
-                    parameter.lowercase() == it.lowercase()
-                }
+                if (predicate) parameter.startsWith(it.lowercase()) else parameter == it.lowercase()
             }
             matched.clear()
             matched.addAll(possible)
         }
-
         return matched.isNotEmpty()
     }
 

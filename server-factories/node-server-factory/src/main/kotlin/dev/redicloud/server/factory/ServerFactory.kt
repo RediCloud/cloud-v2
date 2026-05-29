@@ -140,23 +140,10 @@ class ServerFactory(
             if (snapshotData.versionType.proxy) ServiceType.PROXY_SERVER else ServiceType.MINECRAFT_SERVER
         )
 
-        // create the server process
-        val serverProcess = ServerProcess(
-            configurationTemplate,
-            serverRepository,
-            packetManager,
-            eventManager,
-            bindHost,
-            clusterConfiguration,
-            serviceId,
-            hostingId
-        )
-
+        val serverProcess = createServerProcess(configurationTemplate, serviceId)
         hostedProcesses.add(serverProcess)
-        val cloudServer: CloudServer?
         @Suppress("TooGenericExceptionCaught")
         try {
-
             val thisNode = nodeRepository.getNode(hostingId)!!
             if (!force) {
                 canStartOnNode(thisNode, configurationTemplate).let {
@@ -166,89 +153,87 @@ class ServerFactory(
                     }
                 }
             }
-            idLock.lock()
-            try {
-                // get the next id for the server and create it
-                cloudServer = if (snapshotData.versionType.proxy) {
-                    serverRepository.createServer(
-                        CloudProxyServer(
-                            serviceId,
-                            configurationTemplate,
-                            getIdForServer(configurationTemplate),
-                            thisNode.serviceId,
-                            ServiceSessions(),
-                            false,
-                            CloudServerState.PREPARING,
-                            -1,
-                            configurationTemplate.maxPlayers
-                        )
-                    )
-                } else {
-                    serverRepository.createServer(
-                        CloudMinecraftServer(
-                            serviceId,
-                            configurationTemplate,
-                            getIdForServer(configurationTemplate),
-                            thisNode.serviceId,
-                            ServiceSessions(),
-                            false,
-                            CloudServerState.PREPARING,
-                            -1,
-                            configurationTemplate.maxPlayers
-                        )
-                    )
-                }
-            } finally {
-                Thread.sleep(LOCK_RELEASE_DELAY_MS)
-                idLock.unlock()
-            }
-            serverProcess.cloudServer = cloudServer!!
 
-            // Create server screen
+            val cloudServer = createAndRegisterServer(serviceId, configurationTemplate, snapshotData, thisNode)
+            serverProcess.cloudServer = cloudServer
+
             val serverScreen = ServerScreen(cloudServer.serviceId, cloudServer.name, this.console, this.packetManager)
             console.createScreen(serverScreen)
+            ensurePatched(snapshotData)
 
-            if (!snapshotData.versionHandler.isPatched(snapshotData.version)
-                && snapshotData.versionHandler.isPatchVersion(snapshotData.version)
-            ) {
-                snapshotData.versionHandler.patch(snapshotData.version)
-            }
-
-            // Add service to node database object
             thisNode.hostedServers.add(cloudServer.serviceId)
             nodeRepository.updateNode(thisNode)
 
-            // copy the files to copy server necessary files
-            val copier = FileCopier(
-                serverProcess,
-                cloudServer,
-                serverVersionTypeRepository,
-                fileTemplateRepository,
-                snapshotData
-            )
-            serverProcess.fileCopier = copier
-
-            // copy all templates
-            copier.copyTemplates()
-            // copy all version files
-            copier.copyVersionFiles { serverProcess.replacePlaceholders(it, snapshotData) }
-            // delete old connector files
-            copier.deleteConnectors()
-            // copy connector
-            copier.copyConnector()
-
-            // start the server
+            copyServerFiles(serverProcess, cloudServer, snapshotData)
             return serverProcess.start(cloudServer, serverScreen, snapshotData)
         } catch (e: Exception) {
-            // Make sure to remove the server process from the hosted processes so no memory will be blocked
             hostedProcesses.remove(serverProcess)
-            // delete the server if it is created and not static
-            try {
-                stopServer(serviceId, internalCall = true)
-            } catch (_: NullPointerException) {
-            }
+            try { stopServer(serviceId, internalCall = true) } catch (_: NullPointerException) { }
             return UnknownErrorStartResult(e)
         }
+    }
+
+    private fun createServerProcess(
+        configurationTemplate: ICloudConfigurationTemplate,
+        serviceId: ServiceId
+    ): ServerProcess {
+        return ServerProcess(
+            configurationTemplate, serverRepository, packetManager, eventManager,
+            bindHost, clusterConfiguration, serviceId, hostingId
+        )
+    }
+
+    private suspend fun createAndRegisterServer(
+        serviceId: ServiceId,
+        configurationTemplate: ICloudConfigurationTemplate,
+        snapshotData: StartDataSnapshot,
+        thisNode: CloudNode
+    ): CloudServer {
+        idLock.lock()
+        try {
+            val serverId = getIdForServer(configurationTemplate)
+            return if (snapshotData.versionType.proxy) {
+                serverRepository.createServer(
+                    CloudProxyServer(
+                        serviceId, configurationTemplate, serverId, thisNode.serviceId,
+                        ServiceSessions(), false, CloudServerState.PREPARING, -1, configurationTemplate.maxPlayers
+                    )
+                )
+            } else {
+                serverRepository.createServer(
+                    CloudMinecraftServer(
+                        serviceId, configurationTemplate, serverId, thisNode.serviceId,
+                        ServiceSessions(), false, CloudServerState.PREPARING, -1, configurationTemplate.maxPlayers
+                    )
+                )
+            }
+        } finally {
+            Thread.sleep(LOCK_RELEASE_DELAY_MS)
+            idLock.unlock()
+        }
+    }
+
+    private suspend fun ensurePatched(snapshotData: StartDataSnapshot) {
+        if (!snapshotData.versionHandler.isPatched(snapshotData.version)
+            && snapshotData.versionHandler.isPatchVersion(snapshotData.version)
+        ) {
+            snapshotData.versionHandler.patch(snapshotData.version)
+        }
+    }
+
+    private suspend fun copyServerFiles(
+        serverProcess: ServerProcess,
+        cloudServer: CloudServer,
+        snapshotData: StartDataSnapshot
+    ) {
+        val copier = FileCopier(
+            serverProcess, cloudServer, serverVersionTypeRepository, fileTemplateRepository, snapshotData
+        )
+        serverProcess.fileCopier = copier
+        copier.copyTemplates()
+        copier.copyVersionFiles { serverProcess.replacePlaceholders(it, snapshotData) }
+        copier.deleteConnectors()
+        copier.copyConnector()
     }
 
     internal suspend fun unregisterServer(

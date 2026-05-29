@@ -63,73 +63,74 @@ class CommandArgument(
     }
 
     fun isThis(input: String, predict: Boolean): Boolean {
-        if (!subCommand.isThis(input, predict)) {
-            return false
-        }
-        if (actorArgument) {
-            return false
-        }
-        if (input.isEmpty()) {
-            return false
-        }
+        if (!subCommand.isThis(input, predict) || actorArgument || input.isEmpty()) return false
 
-        val optimalCurrentPaths = listOf(subCommand.path, *subCommand.aliasPaths)
+        val optimalCurrentPaths = buildOptimalPaths()
+        return optimalCurrentPaths.any { matchesOptimalPath(it, input, predict) }
+    }
+
+    private fun buildOptimalPaths(): Set<String> {
+        return listOf(subCommand.path, *subCommand.aliasPaths)
             .flatMap { subCommandPaths ->
                 listOf(subCommand.command.name, *subCommand.command.aliases)
                     .map { commandPath -> "$commandPath $subCommandPaths".removeLastSpaces() }
             }.toSet()
+    }
 
-        optimalCurrentPaths.forEach optimalPathForEach@{ optimalPath ->
-            var index = -1
-            var argumentIndex = -1
-            var currentBuild = ""
-            var lastWasThis = false
-            var alreadyIndexed = false
-            optimalPath.split(" ").forEach optimalParameterForEach@{
-                index++
-                if (input.split(" ").size < index + 1) {
-                    return@optimalParameterForEach
-                }
-                lastWasThis = false
-                val inputCurrent = input.split(" ")[index]
-                if (it.isArgument()) {
-                    argumentIndex++
-                    if (pathFormat.lowercase() == it.lowercase() || it.isEmpty() && predict) {
-                        lastWasThis = true
-                        alreadyIndexed = true
-                    }
-                    if (currentBuild.isNotEmpty()) currentBuild += " "
-                    currentBuild += inputCurrent
-                    return@optimalParameterForEach
-                }
-                if (inputCurrent.lowercase() == it.lowercase()) {
-                    if (currentBuild.isNotEmpty()) currentBuild += " "
-                    currentBuild += inputCurrent
-                    return@optimalParameterForEach
-                }
-            }
-            if (!alreadyIndexed) {
-                val aIndex = optimalPath.split(" ").indexOf(pathFormat)
-                if (aIndex != -1) {
-                    if (input.removeLastSpaces().endsWith(" ") && predict && aIndex == index) {
-                        return true
-                    }
-                }
-            }
-            if (predict &&
-                currentBuild.endsWith(" ") &&
-                optimalPath.lowercase().startsWith(currentBuild.lowercase()) &&
-                currentBuild.split(" ").size == input.split(" ").size &&
-                argumentIndex + 1 == this.index
-            ) {
-                return true
-            }
-            if (currentBuild.lowercase() == input.lowercase() && lastWasThis) {
+    private data class PathMatchState(
+        var index: Int = -1,
+        var argumentIndex: Int = -1,
+        var currentBuild: String = "",
+        var lastWasThis: Boolean = false,
+        var alreadyIndexed: Boolean = false
+    )
+
+    private fun matchesOptimalPath(optimalPath: String, input: String, predict: Boolean): Boolean {
+        val inputParts = input.split(" ")
+        val pathParts = optimalPath.split(" ")
+        val state = buildMatchState(pathParts, inputParts, predict)
+
+        if (!state.alreadyIndexed) {
+            val aIndex = pathParts.indexOf(pathFormat)
+            if (aIndex != -1 && input.removeLastSpaces().endsWith(" ") && predict && aIndex == state.index) {
                 return true
             }
         }
 
-        return false
+        val predictMatch = predict &&
+            state.currentBuild.endsWith(" ") &&
+            optimalPath.lowercase().startsWith(state.currentBuild.lowercase()) &&
+            state.currentBuild.split(" ").size == inputParts.size &&
+            state.argumentIndex + 1 == this.index
+        if (predictMatch) return true
+
+        return state.currentBuild.lowercase() == input.lowercase() && state.lastWasThis
+    }
+
+    private fun buildMatchState(pathParts: List<String>, inputParts: List<String>, predict: Boolean): PathMatchState {
+        val state = PathMatchState()
+        pathParts.forEach { part ->
+            state.index++
+            if (inputParts.size < state.index + 1) return@forEach
+            state.lastWasThis = false
+            val inputCurrent = inputParts[state.index]
+            if (part.isArgument()) {
+                state.argumentIndex++
+                if (pathFormat.lowercase() == part.lowercase() || part.isEmpty() && predict) {
+                    state.lastWasThis = true
+                    state.alreadyIndexed = true
+                }
+                if (state.currentBuild.isNotEmpty()) state.currentBuild += " "
+                state.currentBuild += inputCurrent
+                return@forEach
+            }
+            if (inputCurrent.lowercase() == part.lowercase()) {
+                if (state.currentBuild.isNotEmpty()) state.currentBuild += " "
+                state.currentBuild += inputCurrent
+                return@forEach
+            }
+        }
+        return state
     }
 
     fun parse(input: String): Any? = parser?.parse(input)

@@ -170,46 +170,50 @@ open class Console(
 
     private fun run() {
         CONSOLE_THREAD = Thread({
-            fun readLineInput(): String? {
-                try {
-                    return LINE_READER.readLine(CURRENT_CONSOLE?.prompt ?: "")
-                } catch (_: EndOfFileException) {
-                } catch (e: UserInterruptException) {
-                    handleUserInterrupt(e)
-                }
-                return null
-            }
             CURRENT_CONSOLE?.eventManager?.fireEvent(ConsoleRunEvent(this@Console))
-            var line: String? = null
             while (!Thread.currentThread().isInterrupted) {
-                line = readLineInput() ?: continue
+                val line = readLineInput() ?: continue
                 CURRENT_CONSOLE?.defaultScreen?.addLine((CURRENT_CONSOLE?.prompt ?: "") + line + "\r\n")
                 CURRENT_CONSOLE?.runningAnimations?.forEach { (_, animation) -> animation.second.addToCursorUp(1) }
 
                 CURRENT_CONSOLE?.inputReader?.forEach { it.acceptInput(line) }
                 CURRENT_CONSOLE?.inputReader?.clear()
 
-                if (CURRENT_CONSOLE?.commandManager?.areCommandsDisabled() == false) {
-                    val commandManager = CURRENT_CONSOLE?.commandManager ?: continue
-                    @Suppress("TooGenericExceptionCaught")
-                    try {
-                        val response = commandManager.handleInput(commandManager.defaultActor, line)
-                        if (response.type == CommandResponseType.HELP_SENT) continue
-                        if (response.message != null && response.type != CommandResponseType.BLANK_INPUT &&
-                            response.type != CommandResponseType.ERROR
-                        ) {
-                            commandManager.defaultActor.sendMessage(response.message!!)
-                        }
-                        if (response.throwable != null && response.type == CommandResponseType.ERROR) {
-                            LOGGER.severe(response.message!!, response.throwable!!)
-                        }
-                    } catch (e: Exception) {
-                        LOGGER.severe("Error while routing/processing command", e)
-                    }
-                }
+                handleCommandInput(line)
             }
         }, "RC Console")
         CONSOLE_THREAD!!.start()
+    }
+
+    private fun readLineInput(): String? {
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            return LINE_READER.readLine(CURRENT_CONSOLE?.prompt ?: "")
+        } catch (_: EndOfFileException) {
+        } catch (e: UserInterruptException) {
+            handleUserInterrupt(e)
+        }
+        return null
+    }
+
+    private fun handleCommandInput(line: String) {
+        if (CURRENT_CONSOLE?.commandManager?.areCommandsDisabled() != false) return
+        val commandManager = CURRENT_CONSOLE?.commandManager ?: return
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            val response = commandManager.handleInput(commandManager.defaultActor, line)
+            if (response.type == CommandResponseType.HELP_SENT) return
+            if (response.message != null && response.type != CommandResponseType.BLANK_INPUT &&
+                response.type != CommandResponseType.ERROR
+            ) {
+                commandManager.defaultActor.sendMessage(response.message!!)
+            }
+            if (response.throwable != null && response.type == CommandResponseType.ERROR) {
+                LOGGER.severe(response.message!!, response.throwable!!)
+            }
+        } catch (e: Exception) {
+            LOGGER.severe("Error while routing/processing command", e)
+        }
     }
 
     private fun print(text: String) {

@@ -228,46 +228,18 @@ class ModuleHandler(
     }
 
     fun loadModule(file: File) = lock.withLock {
-        if (!file.exists()) {
-            logger.warning("§cTried to load module that does not exist: ${file.name}")
-            return
-        }
-        if (file.extension != "jar") {
-            logger.warning("§cTried to load module that is not a jar file: ${file.name}")
-            return
-        }
-        if (loaders.any { it.value.data.file == file }) {
-            logger.warning("§cTried to load module that is already loaded: ${file.name}")
-            return
-        }
-
+        if (!validateModuleFile(file)) return
         val description = loadDescription(file)
-
         if (loaders.any { it.value.data.id == description.id }) {
             logger.warning("§cTried to load module that is already loaded: ${description.id}")
             return
         }
 
-        val identifierTypes = mutableListOf<String>()
-        identifierTypes.add(serviceId.type.name.lowercase())
-        if (serverVersionType != null) {
-            identifierTypes.add(
-                "${serviceId.type.name}_${serverVersionType.name}".lowercase()
-            )
-        }
-
-        val matchedMain: String = description.mainClasses
-            .filter { identifierTypes.contains(it.key.lowercase()) }
-            .values.firstOrNull() ?: return@withLock
+        val matchedMain = findMatchingMainClass(description) ?: return@withLock
 
         val moduleData = ModuleData(description.id, file, description, ModuleLifeCycle.UNLOAD, false)
         val loader = ModuleClassLoader(moduleData, file, this.javaClass.classLoader)
-
-        try {
-            Bootstrap().apply(loader, loader, JarResourceLoader(description.id, file))
-        } catch (_: Exception) {
-            // No library loader found, can be ignored
-        }
+        applyLibraryLoader(loader, description, file)
 
         val moduleClass = loader.loadClass(matchedMain).kotlin
         if (!moduleClass.isSubclassOf(CloudModule::class)) {
@@ -275,49 +247,95 @@ class ModuleHandler(
             return@withLock
         }
         loaders[description.id] = loader
-        val moduleInstance: CloudModule?
-        @Suppress("TooGenericExceptionCaught")
-        try {
-            moduleInstance = if (moduleClass.isSubclassOf(CloudInjectable::class)) {
-                injector.getInstance(moduleClass.java)
-            } else {
-                moduleClass.createInstance()
-            } as CloudModule
-            val moduleHandlerField = CloudModule::class.java.declaredFields.firstOrNull { it.type == IModuleHandler::class.java }
-            if (moduleHandlerField == null) {
-                logger.warning("§cModule ${description.id} has no moduleHandler property!")
-            } else {
-                moduleHandlerField.isAccessible = true
-                moduleHandlerField.set(moduleInstance, this)
-                moduleHandlerField.isAccessible = false
-            }
-            val moduleIdField = CloudModule::class.java.declaredFields.firstOrNull { it.name == "moduleId" }
-            if (moduleIdField == null) {
-                logger.warning("§cModule ${description.id} has no moduleId property!")
-            } else {
-                moduleIdField.isAccessible = true
-                moduleIdField.set(moduleInstance, description.id)
-                moduleIdField.isAccessible = false
-            }
-        } catch (e: Exception) {
-            throw CloudModuleException("Failed to instantiate module ${description.name}", e)
-        }
+
+        val moduleInstance = instantiateModule(moduleClass, description)
         moduleData.init(moduleInstance)
 
-        val tasks = mutableListOf<ModuleTaskData>()
-        (moduleClass.declaredMemberFunctions + moduleClass.declaredMemberExtensionFunctions).filter {
-            it.hasAnnotation<ModuleTask>()
-        }.forEach {
-            val annotation = it.findAnnotation<ModuleTask>()!!
-            tasks.add(ModuleTaskData(it, annotation.lifeCycle, annotation.order))
-        }
-
+        val tasks = discoverModuleTasks(moduleClass)
         loader.init(tasks)
-
         if (tasks.isEmpty()) {
             logger.warning("§cModule ${description.id} has no tasks!")
         }
 
+        executeLoadTasks(moduleData, description, moduleInstance)
+    }
+
+    private fun validateModuleFile(file: File): Boolean {
+        if (!file.exists()) {
+            logger.warning("§cTried to load module that does not exist: ${file.name}")
+            return false
+        }
+        if (file.extension != "jar") {
+            logger.warning("§cTried to load module that is not a jar file: ${file.name}")
+            return false
+        }
+        if (loaders.any { it.value.data.file == file }) {
+            logger.warning("§cTried to load module that is already loaded: ${file.name}")
+            return false
+        }
+        return true
+    }
+
+    private fun findMatchingMainClass(description: ModuleDescription): String? {
+        val identifierTypes = mutableListOf(serviceId.type.name.lowercase())
+        if (serverVersionType != null) {
+            identifierTypes.add("${serviceId.type.name}_${serverVersionType.name}".lowercase())
+        }
+        return description.mainClasses
+            .filter { identifierTypes.contains(it.key.lowercase()) }
+            .values.firstOrNull()
+    }
+
+    private fun applyLibraryLoader(loader: ModuleClassLoader, description: ModuleDescription, file: File) {
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            Bootstrap().apply(loader, loader, JarResourceLoader(description.id, file))
+        } catch (_: Exception) {
+            // No library loader found, can be ignored
+        }
+    }
+
+    private fun instantiateModule(moduleClass: kotlin.reflect.KClass<*>, description: ModuleDescription): CloudModule {
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            val moduleInstance = if (moduleClass.isSubclassOf(CloudInjectable::class)) {
+                injector.getInstance(moduleClass.java)
+            } else {
+                moduleClass.createInstance()
+            } as CloudModule
+            injectModuleField(moduleInstance, description, IModuleHandler::class.java, "moduleHandler", this)
+            injectModuleField(moduleInstance, description, null, "moduleId", description.id)
+            return moduleInstance
+        } catch (e: Exception) {
+            throw CloudModuleException("Failed to instantiate module ${description.name}", e)
+        }
+    }
+
+    private fun injectModuleField(instance: CloudModule, description: ModuleDescription, type: Class<*>?, fieldName: String, value: Any) {
+        val field = if (type != null) {
+            CloudModule::class.java.declaredFields.firstOrNull { it.type == type }
+        } else {
+            CloudModule::class.java.declaredFields.firstOrNull { it.name == fieldName }
+        }
+        if (field == null) {
+            logger.warning("§cModule ${description.id} has no $fieldName property!")
+        } else {
+            field.isAccessible = true
+            field.set(instance, value)
+            field.isAccessible = false
+        }
+    }
+
+    private fun discoverModuleTasks(moduleClass: kotlin.reflect.KClass<*>): List<ModuleTaskData> {
+        return (moduleClass.declaredMemberFunctions + moduleClass.declaredMemberExtensionFunctions)
+            .filter { it.hasAnnotation<ModuleTask>() }
+            .map {
+                val annotation = it.findAnnotation<ModuleTask>()!!
+                ModuleTaskData(it, annotation.lifeCycle, annotation.order)
+            }
+    }
+
+    private fun executeLoadTasks(moduleData: ModuleData, description: ModuleDescription, moduleInstance: CloudModule) {
         @Suppress("TooGenericExceptionCaught")
         try {
             val tasksCount = callTasks(moduleData.id, ModuleLifeCycle.LOAD)
