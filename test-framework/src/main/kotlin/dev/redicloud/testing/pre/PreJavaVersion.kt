@@ -9,5 +9,4 @@ enum class PreJavaVersion(
     JAVA_11("java-11-openjdk", "openjdk11"),
     JAVA_17("java-17-openjdk", "openjdk17"),
     JAVA_21("java-21-openjdk", "openjdk21")
-
 }

@@ -4,8 +4,8 @@ import dev.redicloud.api.commands.*
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.node.CloudNode
-import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
+import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
 import dev.redicloud.service.base.suggester.FileTemplateSuggester
 import dev.redicloud.utils.defaultScope
@@ -29,15 +29,27 @@ class FileTemplateCommand(
     ) = defaultScope.launch {
         val newTemplate = template.copy(newName ?: "${template.name}_copy")
         if (fileTemplateRepository.existsTemplate(newTemplate.name, newTemplate.prefix)) {
-            actor.sendMessage("§cA file template with the name ${toConsoleValue(newTemplate.name)} and prefix ${toConsoleValue(newTemplate.prefix)} already exists!")
+            actor.sendMessage(
+                "§cA file template with the name ${toConsoleValue(
+                    newTemplate.name
+                )} and prefix ${toConsoleValue(newTemplate.prefix)} already exists!"
+            )
             return@launch
         }
-        actor.sendMessage("File template ${toConsoleValue(template.displayName)} will be duplicated to ${toConsoleValue(newTemplate.displayName)}...")
+        actor.sendMessage(
+            "File template ${toConsoleValue(
+                template.displayName
+            )} will be duplicated to ${toConsoleValue(newTemplate.displayName)}..."
+        )
         if (!newTemplate.folder.exists() && template.folder.exists()) {
             template.folder.copyRecursively(newTemplate.folder)
         }
         fileTemplateRepository.createTemplate(newTemplate)
-        actor.sendMessage("File template ${toConsoleValue(template.displayName)} was duplicated to ${toConsoleValue(newTemplate.displayName)}!")
+        actor.sendMessage(
+            "File template ${toConsoleValue(
+                template.displayName
+            )} was duplicated to ${toConsoleValue(newTemplate.displayName)}!"
+        )
     }
 
     @CommandSubPath("list")
@@ -79,7 +91,7 @@ class FileTemplateCommand(
         actor.sendMessage("")
         actor.sendMessage("§8- %tc%Name§8: %hc%${template.name}")
         actor.sendMessage("§8- %tc%Prefix§8: %hc%${template.prefix}")
-        actor.sendMessage("§8- %tc%Inherited§8:${if(inherited.isEmpty()) " %hc%None" else ""}")
+        actor.sendMessage("§8- %tc%Inherited§8:${if (inherited.isEmpty()) " %hc%None" else ""}")
         inherited.forEach {
             actor.sendMessage("  §8➥ %tc%${it.displayName}")
         }
@@ -95,7 +107,11 @@ class FileTemplateCommand(
         @CommandParameter("prefix") prefix: String
     ) = defaultScope.launch {
         if (fileTemplateRepository.existsTemplate(name, prefix)) {
-            actor.sendMessage("§cA file template with the name ${toConsoleValue(name)} and prefix ${toConsoleValue(prefix)} already exists!")
+            actor.sendMessage(
+                "§cA file template with the name ${toConsoleValue(
+                    name
+                )} and prefix ${toConsoleValue(prefix)} already exists!"
+            )
             return@launch
         }
         val template = FileTemplate(
@@ -128,18 +144,36 @@ class FileTemplateCommand(
         @CommandParameter("inherit", true, FileTemplateSuggester::class) inherit: FileTemplate
     ) = runBlocking {
         if (template.inherited.contains(inherit.uniqueId)) {
-            actor.sendMessage("§cThe file template ${toConsoleValue(template.displayName, false)} already inherits from ${toConsoleValue(inherit.displayName, false)}!")
+            actor.sendMessage(
+                "§cThe file template ${toConsoleValue(
+                    template.displayName,
+                    false
+                )} already inherits from ${toConsoleValue(inherit.displayName, false)}!"
+            )
             return@runBlocking
         }
         val allTemplates = fileTemplateRepository.collectTemplates(template)
         if (allTemplates.contains(inherit)) {
-            actor.sendMessage("§cThe file template ${toConsoleValue(template.displayName, false)} already inherits from ${toConsoleValue(inherit.displayName, false)}!")
+            actor.sendMessage(
+                "§cThe file template ${toConsoleValue(
+                    template.displayName,
+                    false
+                )} already inherits from ${toConsoleValue(inherit.displayName, false)}!"
+            )
             return@runBlocking
         }
-        actor.sendMessage("File template ${toConsoleValue(template.displayName)} will inherit from ${toConsoleValue(inherit.displayName)}...")
+        actor.sendMessage(
+            "File template ${toConsoleValue(
+                template.displayName
+            )} will inherit from ${toConsoleValue(inherit.displayName)}..."
+        )
         template.inherited.add(template.uniqueId)
         fileTemplateRepository.updateTemplate(template)
-        actor.sendMessage("File template ${toConsoleValue(template.displayName)} now inherits from ${toConsoleValue(inherit.displayName)}!")
+        actor.sendMessage(
+            "File template ${toConsoleValue(
+                template.displayName
+            )} now inherits from ${toConsoleValue(inherit.displayName)}!"
+        )
     }
 
     @CommandSubPath("edit <name> inherit remove <inherit>")
@@ -150,13 +184,26 @@ class FileTemplateCommand(
         @CommandParameter("inherit", true, FileTemplateSuggester::class) inherit: FileTemplate
     ) = runBlocking {
         if (!template.inherited.contains(inherit.uniqueId)) {
-            actor.sendMessage("§cThe file template ${toConsoleValue(template.displayName, false)} does not inherit from ${toConsoleValue(inherit.displayName, false)}!")
+            actor.sendMessage(
+                "§cThe file template ${toConsoleValue(
+                    template.displayName,
+                    false
+                )} does not inherit from ${toConsoleValue(inherit.displayName, false)}!"
+            )
             return@runBlocking
         }
-        actor.sendMessage("File template ${toConsoleValue(template.displayName)} will no longer inherit from ${toConsoleValue(inherit.displayName)}...")
+        actor.sendMessage(
+            "File template ${toConsoleValue(
+                template.displayName
+            )} will no longer inherit from ${toConsoleValue(inherit.displayName)}..."
+        )
         template.inherited.remove(template.uniqueId)
         fileTemplateRepository.updateTemplate(template)
-        actor.sendMessage("File template ${toConsoleValue(template.displayName)} no longer inherits from ${toConsoleValue(inherit.displayName)}!")
+        actor.sendMessage(
+            "File template ${toConsoleValue(
+                template.displayName
+            )} no longer inherits from ${toConsoleValue(inherit.displayName)}!"
+        )
     }
 
     @CommandSubPath("edit <name> name <new-name>")
@@ -167,13 +214,21 @@ class FileTemplateCommand(
         @CommandParameter("new-name") newName: String
     ) = defaultScope.launch {
         if (fileTemplateRepository.existsTemplate(newName, template.prefix)) {
-            actor.sendMessage("§cA file template with the name ${toConsoleValue(newName)} and prefix ${toConsoleValue(template.prefix)} already exists!")
+            actor.sendMessage(
+                "§cA file template with the name ${toConsoleValue(
+                    newName
+                )} and prefix ${toConsoleValue(template.prefix)} already exists!"
+            )
             return@launch
         }
-        actor.sendMessage("File template ${toConsoleValue(template.displayName)} will be renamed to ${toConsoleValue(newName)}...")
+        actor.sendMessage(
+            "File template ${toConsoleValue(template.displayName)} will be renamed to ${toConsoleValue(newName)}..."
+        )
         template.name = newName
         fileTemplateRepository.updateTemplate(template)
-        actor.sendMessage("File template ${toConsoleValue(template.displayName)} was renamed to ${toConsoleValue(newName)}!")
+        actor.sendMessage(
+            "File template ${toConsoleValue(template.displayName)} was renamed to ${toConsoleValue(newName)}!"
+        )
     }
 
     @CommandSubPath("edit <name> prefix <new-prefix>")
@@ -184,13 +239,21 @@ class FileTemplateCommand(
         @CommandParameter("new-prefix") newPrefix: String
     ) = defaultScope.launch {
         if (fileTemplateRepository.existsTemplate(template.name, newPrefix)) {
-            actor.sendMessage("§cA file template with the name ${toConsoleValue(template.name)} and prefix ${toConsoleValue(newPrefix)} already exists!")
+            actor.sendMessage(
+                "§cA file template with the name ${toConsoleValue(
+                    template.name
+                )} and prefix ${toConsoleValue(newPrefix)} already exists!"
+            )
             return@launch
         }
-        actor.sendMessage("File template ${toConsoleValue(template.displayName)} will be renamed to ${toConsoleValue(newPrefix)}...")
+        actor.sendMessage(
+            "File template ${toConsoleValue(template.displayName)} will be renamed to ${toConsoleValue(newPrefix)}..."
+        )
         template.prefix = newPrefix
         fileTemplateRepository.updateTemplate(template)
-        actor.sendMessage("File template ${toConsoleValue(template.displayName)} was renamed to ${toConsoleValue(newPrefix)}!")
+        actor.sendMessage(
+            "File template ${toConsoleValue(template.displayName)} was renamed to ${toConsoleValue(newPrefix)}!"
+        )
     }
 
     @CommandSubPath("publish <node>")
@@ -205,5 +268,4 @@ class FileTemplateCommand(
         }
         fileTemplateRepository.pushTemplates(node.serviceId)
     }
-
 }

@@ -27,6 +27,9 @@ class RediCloudNode(
     companion object {
         internal val LOGGER = LoggerFactory.getLogger(RediCloudNode::class.java)
         val CONSOLE_COMMAND_DELAY = 20.milliseconds
+        private const val POST_START_DELAY_MS = 4000L
+        private const val STOP_COMMAND_DELAY_MS = 500L
+        private const val POST_STOP_DELAY_MS = 2000L
     }
 
     val localWorkingDirectory = File(cluster.workingDirectory, config.name)
@@ -98,12 +101,13 @@ class RediCloudNode(
             )
         }
         val timeout = if (localLibs.exists()) 45.seconds else 5.minutes
-        waitingFor(Wait
-            .forLogMessage(".*${config.name}#$id: .*(connected to the cluster)*.", 1)
-            .withStartupTimeout(Duration.ofMillis(timeout.inWholeMilliseconds))
+        waitingFor(
+            Wait
+                .forLogMessage(".*${config.name}#$id: .*(connected to the cluster)*.", 1)
+                .withStartupTimeout(Duration.ofMillis(timeout.inWholeMilliseconds))
         )
         waitUntilContainerStarted()
-        Thread.sleep(4000)
+        Thread.sleep(POST_START_DELAY_MS)
         execute("cluster edit ${config.name} maxMemory ${config.maxMemory}")
         config.startUpCommands.forEach { execute(it) }
         LOGGER.info("Node {} in cluster {} started", config.name, cluster.config.name)
@@ -127,9 +131,9 @@ class RediCloudNode(
         }
 
         execute("stop")
-        Thread.sleep(500)
+        Thread.sleep(STOP_COMMAND_DELAY_MS)
         execute("stop")
-        Thread.sleep(2000)
+        Thread.sleep(POST_STOP_DELAY_MS)
         terminal?.destroy()
 
         super.stop()
@@ -145,7 +149,9 @@ class RediCloudNode(
     }
 
     fun saveFileToTemplate(containerPath: String, destination: File, folder: Boolean): Boolean {
-        LOGGER.info("Saving folder $containerPath to ${destination.absolutePath} (${config.name}@${cluster.config.name})...")
+        LOGGER.info(
+            "Saving folder $containerPath to ${destination.absolutePath} (${config.name}@${cluster.config.name})..."
+        )
         if (!existsFolder(containerPath)) return false
         LOGGER.info("Copying folder from container to local folder...")
         var tempFolder = tempDirectory
@@ -169,9 +175,7 @@ class RediCloudNode(
 
     fun execute(command: String): String {
         LOGGER.info("Executing command: {}", command)
-        if (!isRunning) {
-            throw RuntimeException("Container is not running")
-        }
+        check(isRunning) { "Container is not running" }
         val commands = mutableListOf(
             "screen",
             "-xr",
@@ -180,15 +184,13 @@ class RediCloudNode(
             "stuff",
             "$command\\r"
         )
+        @Suppress("TooGenericExceptionCaught")
         try {
             val result = execInContainer(*commands.toTypedArray())
-            if (result.stderr.isNotEmpty()) {
-                throw RuntimeException("Failed to execute command: $commands")
-            }
+            check(result.stderr.isEmpty()) { "Failed to execute command: $commands" }
             return result.stdout
         } catch (e: Exception) {
-            throw RuntimeException("Failed to execute command: $commands", e)
+            throw IllegalStateException("Failed to execute command: $commands", e)
         }
     }
-
 }

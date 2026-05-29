@@ -6,10 +6,11 @@ import net.kyori.adventure.bossbar.BossBar
 import net.kyori.adventure.inventory.Book
 import net.kyori.adventure.resource.ResourcePackRequest
 import net.kyori.adventure.sound.Sound
-import java.util.UUID
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.title.Title
+import java.util.UUID
 
+@Suppress("TooManyFunctions")
 interface ICloudPlayerExecutor {
 
     suspend fun sendMessage(uniqueId: UUID, component: Component)
@@ -47,5 +48,4 @@ interface ICloudPlayerExecutor {
 
     suspend fun kick(uniqueId: UUID, reason: Component)
     suspend fun kick(cloudPlayer: ICloudPlayer, reason: Component)
-
 }

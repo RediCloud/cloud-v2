@@ -1,5 +1,8 @@
 package dev.redicloud.service.node.console
 
+import dev.redicloud.api.exceptions.CloudDatabaseException
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.utils.DATABASE_JSON
 import dev.redicloud.api.utils.NODE_JSON
 import dev.redicloud.console.Console
@@ -17,19 +20,23 @@ import dev.redicloud.repository.java.version.isJavaVersionNotTested
 import dev.redicloud.repository.java.version.isJavaVersionSupported
 import dev.redicloud.service.node.NodeConfiguration
 import dev.redicloud.utils.*
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import java.util.*
 import java.util.logging.Filter
 import java.util.logging.Level
 
 class InitializeConsole : Console(
-    "unknown", null, logLevel = getLogLevelByProperty() ?: Level.SEVERE, uninstallAnsiOnClose = false
+    "unknown",
+    null,
+    logLevel = getLogLevelByProperty() ?: Level.SEVERE,
+    uninstallAnsiOnClose = false
 ) {
 
     companion object {
         private val logger = LogManager.logger(InitializeConsole::class)
+        private const val SETUP_RETRY_DELAY_MS = 5000L
+        private const val SETUP_COMPLETE_DELAY_MS = 2000L
+        private const val DB_RETRY_DELAY_MS = 10000L
     }
 
     var firstStartDetected = false
@@ -95,7 +102,9 @@ class InitializeConsole : Console(
                 if (fail) writeLine("§cThe password of the database can't contain spaces!")
                 return fail
             }
-        }, default = "")
+        },
+        default = ""
+    )
 
     private val databaseIdQuestion = ConsoleQuestion(
         question = "What is the id of the database?",
@@ -149,8 +158,8 @@ class InitializeConsole : Console(
 
     private val databaseNodeTokenQuestion = ConsoleQuestion(
         question = "Do you have a cluster token for the cloud cluster? (yes/no)\n" +
-                "If you don´t have one, you can create one with the command 'token create' in a other cloud node console.\n" +
-                "Or you can type 'no' and enter the redis credentials manually.",
+            "If you don´t have one, you can create one with the command 'token create' in a other cloud node console.\n" +
+            "Or you can type 'no' and enter the redis credentials manually.",
     )
 
     internal var serviceId: ServiceId? = null
@@ -192,7 +201,7 @@ class InitializeConsole : Console(
         return try {
             Class.forName("org.redisson.Redisson")
             "§2✓ §8(§fLibs %hc%loaded§8)"
-        } catch (e: ClassNotFoundException) {
+        } catch (_: ClassNotFoundException) {
             "§4✘ §8§l(§c§lMissing libs!§8§l)"
         }
     }
@@ -219,7 +228,7 @@ class InitializeConsole : Console(
         val nodeFile = NODE_JSON.getFile()
         if (!nodeFile.exists()) {
             writeLine("Node file not found! Starting node setup in 5 seconds...")
-            Thread.sleep(5000)
+            Thread.sleep(SETUP_RETRY_DELAY_MS)
             return nodeSetup()
         }
         return try {
@@ -232,9 +241,9 @@ class InitializeConsole : Console(
             writeLine("")
             writeLine("")
             config
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             writeLine("§cError while reading node file! Starting node setup in 5 seconds...")
-            Thread.sleep(5000)
+            Thread.sleep(SETUP_RETRY_DELAY_MS)
             nodeSetup()
         }
     }
@@ -243,7 +252,7 @@ class InitializeConsole : Console(
         firstStartDetected = true
         if (getCurrentScreen().name == "node-setup") {
             clearScreen()
-        }else {
+        } else {
             switchScreen(createScreen("node-setup"))
         }
         clearScreen()
@@ -267,7 +276,7 @@ class InitializeConsole : Console(
         switchToDefaultScreen()
         emptyPrompt()
         writeLine("You finished the node setup!")
-        Thread.sleep(2000)
+        Thread.sleep(SETUP_COMPLETE_DELAY_MS)
         return config
     }
 
@@ -276,9 +285,10 @@ class InitializeConsole : Console(
         val databaseFile = DATABASE_JSON.getFile()
         if (!databaseFile.exists()) {
             writeLine("Database file not found! Starting database setup in 5 seconds...")
-            Thread.sleep(5000)
+            Thread.sleep(SETUP_RETRY_DELAY_MS)
             return databaseSetup()
         }
+        @Suppress("TooGenericExceptionCaught")
         try {
             databaseConfiguration = DatabaseConfiguration.fromFile(databaseFile)
             val p = testDatabase(databaseConfiguration!!, serviceId)
@@ -295,14 +305,14 @@ class InitializeConsole : Console(
                 }
                 emptyPrompt()
                 writeLine("Retrying in 10 seconds...")
-                Thread.sleep(10000)
+                Thread.sleep(DB_RETRY_DELAY_MS)
                 return checkDatabase(serviceId)
             }
             return p.first
         } catch (e: Exception) {
             writeLine("§cError while reading database file! Starting database setup in 5 seconds...")
             logger.log(Level.FINE, "Reading file error: ${databaseFile.absolutePath}", e)
-            Thread.sleep(5000)
+            Thread.sleep(SETUP_RETRY_DELAY_MS)
             return databaseSetup()
         }
     }
@@ -313,7 +323,7 @@ class InitializeConsole : Console(
         return try {
             connection.connect()
             connection to null
-        } catch (e: Exception) {
+        } catch (e: CloudDatabaseException) {
             connection to e
         }
     }
@@ -322,7 +332,7 @@ class InitializeConsole : Console(
         firstStartDetected = true
         if (getCurrentScreen().name == "database-setup") {
             clearScreen()
-        }else {
+        } else {
             switchScreen(createScreen("database-setup"))
         }
         writeLine("")
@@ -336,7 +346,7 @@ class InitializeConsole : Console(
         if (useToken) {
             writeLine("§cIts currently not possible to use a token!")
             writeLine("Please enter your redis credentials manually!")
-            Thread.sleep(2000)
+            Thread.sleep(SETUP_COMPLETE_DELAY_MS)
         }
         val username: String = databaseUsernameQuestion.ask(this)
         val password: String = databasePasswordQuestion.ask(this)
@@ -351,16 +361,20 @@ class InitializeConsole : Console(
         val ssl = databaseSSLQuestion.ask<Boolean>(this)
         writeLine("")
         writeLine("")
-        val config = DatabaseConfiguration(username, password, nodes.map {
-            DatabaseNode(it.split(":")[0], it.split(":")[1].toInt(), ssl)
-        }, databaseId)
+        val config = DatabaseConfiguration(
+            username,
+            password,
+            nodes.map {
+                DatabaseNode(it.split(":")[0], it.split(":")[1].toInt(), ssl)
+            },
+            databaseId
+        )
         DATABASE_JSON.create()
         config.toFile(DATABASE_JSON.getFile())
         switchToDefaultScreen()
         emptyPrompt()
         writeLine("You finished the database setup!")
-        Thread.sleep(2000)
+        Thread.sleep(SETUP_COMPLETE_DELAY_MS)
         return checkDatabase(ServiceId(UUID.randomUUID(), ServiceType.NODE))
     }
-
 }

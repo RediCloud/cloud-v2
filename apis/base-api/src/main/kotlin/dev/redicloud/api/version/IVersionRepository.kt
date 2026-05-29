@@ -9,5 +9,4 @@ interface IVersionRepository {
     suspend fun loadIfNotLoaded()
 
     fun parse(s: String, strict: Boolean = true): IServerVersion?
-
 }

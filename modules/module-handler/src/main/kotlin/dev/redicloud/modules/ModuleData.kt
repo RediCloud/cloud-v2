@@ -17,5 +17,4 @@ data class ModuleData(
     fun init(instance: CloudModule) {
         this.instance = instance
     }
-
 }

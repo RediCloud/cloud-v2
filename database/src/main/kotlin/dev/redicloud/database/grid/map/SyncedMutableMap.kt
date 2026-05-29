@@ -38,5 +38,4 @@ class SyncedMutableMap<K, V>(
     override fun put(key: K, value: V): V? {
         return handle.put(key, value)
     }
-
 }

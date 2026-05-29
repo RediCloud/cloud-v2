@@ -1,5 +1,6 @@
 package dev.redicloud.server.factory.task
 
+import dev.redicloud.api.exceptions.CloudServerException
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.logging.LogManager
@@ -83,7 +84,7 @@ class CloudServerStopTask(
                         actions.add {
                             serverFactory.queueStop(it.serviceId)
                         }
-                }
+                    }
                 return@forEach
             }
         }
@@ -107,7 +108,7 @@ class CloudServerStopTask(
                 actions.add {
                     serverFactory.queueStop(it.serviceId)
                 }
-        }
+            }
         actions.joinAll()
     }
 
@@ -125,12 +126,11 @@ class CloudServerStopTask(
                         serverFactory.stopQueue.remove(it)
                         serverFactory.stopServer(it)
                     }
-                } catch (e: Exception) {
+                } catch (e: CloudServerException) {
                     logger.severe("Failed to stop server ${it.toName()}", e)
                 }
             }
         }
         actions.joinAll()
     }
-
 }

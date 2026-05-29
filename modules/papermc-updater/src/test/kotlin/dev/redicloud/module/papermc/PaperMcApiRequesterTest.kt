@@ -55,7 +55,7 @@ class PaperMcApiRequesterTest {
         versions.filter { it.typeId != null }
             .map { version -> version to types.firstOrNull { it.uniqueId == version.typeId } }
             .filter { it.second != null }
-            .filter { it.second!!.versionHandlerName == "papermc"}
+            .filter { it.second!!.versionHandlerName == "papermc" }
             .filterNot { it.first.version.latest }
             .takeFirstLastRandom(REQUEST_LIMIT_PER_TEST).toList()
             .forEach { (version, type) ->
@@ -80,7 +80,7 @@ class PaperMcApiRequesterTest {
         versions.filter { it.typeId != null }
             .map { version -> version to types.firstOrNull { it.uniqueId == version.typeId } }
             .filter { it.second != null }
-            .filter { it.second!!.versionHandlerName == "papermc"}
+            .filter { it.second!!.versionHandlerName == "papermc" }
             .filterNot { it.first.version.latest }
             .takeFirstLastRandom(REQUEST_LIMIT_PER_TEST).toList()
             .forEach { (version, type) ->
@@ -101,7 +101,7 @@ class PaperMcApiRequesterTest {
         val versions = versions.asSequence().filter { it.typeId != null }
             .map { version -> version to types.firstOrNull { it.uniqueId == version.typeId } }
             .filter { it.second != null }
-            .filter { it.second!!.versionHandlerName == "papermc"}
+            .filter { it.second!!.versionHandlerName == "papermc" }
             .filterNot { it.first.version.latest }.toList()
             .toSet()
             .takeFirstLastRandom(REQUEST_LIMIT_PER_TEST).toList()
@@ -111,5 +111,4 @@ class PaperMcApiRequesterTest {
             println("Latest-build for ${version.displayName}: $latestBuild")
         }
     }
-
 }

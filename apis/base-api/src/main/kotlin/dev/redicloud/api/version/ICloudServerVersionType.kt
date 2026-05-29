@@ -22,5 +22,4 @@ interface ICloudServerVersionType : ProcessConfiguration {
     fun getParsedConnectorURL(): URL
 
     fun isUnknown(): Boolean
-
 }

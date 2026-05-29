@@ -19,5 +19,4 @@ class ServiceSession(
     override val sessionId: UUID = UUID.randomUUID()
     override var endTime: Long = -1L
     override var suspended: Boolean = false
-
 }

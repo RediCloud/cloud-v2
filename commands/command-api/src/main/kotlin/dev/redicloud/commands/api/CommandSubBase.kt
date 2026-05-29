@@ -19,7 +19,7 @@ class CommandSubBase(
     override val description: String
     override val arguments: List<CommandArgument>
     override val aliasPaths: Array<String>
-    override  val permission: String?
+    override val permission: String?
 
     init {
         suspend = function.isSuspend
@@ -44,26 +44,38 @@ class CommandSubBase(
                 vararg = true
                 return@forEach
             }
-            if (it.vararg && !it.actorArgument) throw IllegalStateException("Vararg argument of '${command.name} ${path}' can be only the last argument")
-            if (optionalArguments && !it.actorArgument) throw IllegalStateException("Argument of '${command.name} ${path}' is required after optional argument")
+            check(!it.vararg || it.actorArgument) {
+                "Vararg argument of '${command.name} $path' can be only the last argument"
+            }
+            check(!optionalArguments || it.actorArgument) {
+                "Argument of '${command.name} $path' is required after optional argument"
+            }
         }
         aliasPaths = function.findAnnotation<CommandAlias>()?.aliases ?: arrayOf()
         permission = function.findAnnotation<CommandPermission>()?.permission
     }
 
+    @Suppress("ReturnCount")
     fun execute(actor: ICommandActor<*>, arguments: List<String>): CommandResponse {
         val parsedArguments = mutableListOf<Any?>()
         val max = this.arguments.count { !it.actorArgument }
         val min = this.arguments.count { it.required && !it.actorArgument }
         val lastArgument = this.arguments.lastOrNull { !it.actorArgument }
         if (arguments.size < min) {
-            return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT,
-                "Not enough arguments (min: $min, max: $max)", usage = getUsage())
+            return CommandResponse(
+                CommandResponseType.INVALID_ARGUMENT_COUNT,
+                "Not enough arguments (min: $min, max: $max)",
+                usage = getUsage()
+            )
         }
-        if (arguments.size > max
-            && lastArgument?.vararg == false) {
-            return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT,
-                "Too many arguments (min: $min, max: $max)", usage = getUsage())
+        if (arguments.size > max &&
+            lastArgument?.vararg == false
+        ) {
+            return CommandResponse(
+                CommandResponseType.INVALID_ARGUMENT_COUNT,
+                "Too many arguments (min: $min, max: $max)",
+                usage = getUsage()
+            )
         }
         var index = -1
         this.arguments.forEach {
@@ -73,7 +85,12 @@ class CommandSubBase(
             }
             index++
             if (index >= arguments.count()) {
-                if (it.required) return CommandResponse(CommandResponseType.INVALID_ARGUMENT_COUNT, "Not enough arguments (min: $min, max: $max)")
+                if (it.required) {
+                    return CommandResponse(
+                        CommandResponseType.INVALID_ARGUMENT_COUNT,
+                        "Not enough arguments (min: $min, max: $max)"
+                    )
+                }
                 parsedArguments.add(null)
                 return@forEach
             }
@@ -98,17 +115,21 @@ class CommandSubBase(
             parsedArguments.add(array)
         }
         val final = parsedArguments.toTypedArray()
+        @Suppress("TooGenericExceptionCaught")
         return try {
             if (suspend) {
-                runBlocking { function.callSuspend(command.commandImpl, *final) } //TODO fix this
-            }else {
+                runBlocking { function.callSuspend(command.commandImpl, *final) } // TODO fix this
+            } else {
                 // function.call(command.commandImpl, *final) //TODO fix this
                 function.javaMethod!!.invoke(command.commandImpl, *final)
             }
             CommandResponse(CommandResponseType.SUCCESS, null)
-        }catch (e: Exception) {
-            CommandResponse(CommandResponseType.ERROR,
-                "Error while executing command: ${command.name} $path", e)
+        } catch (e: Exception) {
+            CommandResponse(
+                CommandResponseType.ERROR,
+                "Error while executing command: ${command.name} $path",
+                e
+            )
         }
     }
 
@@ -138,6 +159,7 @@ class CommandSubBase(
         return matched.firstOrNull()
     }
 
+    @Suppress("ReturnCount")
     fun isThis(input: String, predicate: Boolean): Boolean {
         if (!command.isThis(input, predicate)) return false
         val split = if (predicate) input.split(" ") else input.removeLastSpaces().split(" ")
@@ -145,20 +167,28 @@ class CommandSubBase(
         if (split.size < 2 && predicate) return input.endsWith(" ")
         val parameters = split.drop(1)
         if (parameters.isEmpty()) return predicate
-        val possibleFullPaths = getSubPaths()
-        val matched = possibleFullPaths.toMutableList()
-        var index = -1
+
+        val counts = buildParameterCounts(parameters)
+        if (counts.none { it == parameters.size } && !predicate) return false
+
+        return matchParameters(parameters, predicate)
+    }
+
+    private fun buildParameterCounts(parameters: List<String>): List<Int> {
         val counts = mutableListOf<Int>()
         val vararg = arguments.firstOrNull { it.vararg }
         mutableListOf(path, *aliasPaths).forEach {
             val maxLength = it.split(" ").size
             val minLength = it.split(" ").count { !it.isOptionalArgument() }
-            for (i in minLength..maxLength) {
-                counts.add(i)
-            }
+            for (i in minLength..maxLength) { counts.add(i) }
             if (vararg != null && parameters.size >= minLength) counts.add(parameters.size)
         }
-        if (counts.none { it == parameters.size } && !predicate) return false
+        return counts
+    }
+
+    private fun matchParameters(parameters: List<String>, predicate: Boolean): Boolean {
+        val matched = getSubPaths().toMutableList()
+        var index = -1
         parameters.forEach {
             index++
             val possible = matched.filter { path ->
@@ -166,12 +196,11 @@ class CommandSubBase(
                 if (parameterSplit.size <= index) return@filter arguments.isNotEmpty() && arguments.last().vararg
                 val parameter = parameterSplit[index].lowercase()
                 if (parameter.isOptionalArgument() || parameter.isRequiredArgument()) return@filter true
-                if (predicate) parameter.lowercase().startsWith(it.lowercase()) else parameter.lowercase() == it.lowercase()
+                if (predicate) parameter.startsWith(it.lowercase()) else parameter == it.lowercase()
             }
             matched.clear()
             matched.addAll(possible)
         }
-
         return matched.isNotEmpty()
     }
 
@@ -180,5 +209,4 @@ class CommandSubBase(
     fun getSubPaths(): List<String> {
         return listOf(*aliasPaths, path).map { it.removeLastSpaces() }
     }
-
 }

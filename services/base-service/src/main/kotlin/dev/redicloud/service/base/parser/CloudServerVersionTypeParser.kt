@@ -14,6 +14,4 @@ class CloudServerVersionTypeParser(
             serverVersionTypeRepository.getTypes().firstOrNull { it.name.lowercase() == parameter.lowercase() }
         }
     }
-
-
 }

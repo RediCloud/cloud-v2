@@ -5,6 +5,7 @@ import com.jcraft.jsch.Session
 import dev.redicloud.api.events.internal.server.CloudServerDeleteEvent
 import dev.redicloud.api.events.internal.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.events.internal.server.CloudServerTransferredEvent
+import dev.redicloud.api.exceptions.CloudServerException
 import dev.redicloud.api.server.factory.ICloudServerFactory
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
@@ -44,6 +45,7 @@ import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.*
 
+@Suppress("LongParameterList", "TooManyFunctions")
 class ServerFactory(
     databaseConnection: DatabaseConnection,
     private val nodeRepository: NodeRepository,
@@ -63,6 +65,8 @@ class ServerFactory(
 
     companion object {
         private val logger = LogManager.logger(ServerFactory::class)
+        private const val DEFAULT_START_PRIORITY = 50
+        private const val LOCK_RELEASE_DELAY_MS = 50L
     }
 
     override val hostedProcesses: MutableList<ServerProcess> = mutableListOf()
@@ -74,42 +78,51 @@ class ServerFactory(
     }
 
     suspend fun getStartList(): List<ServerQueueInformation> {
-        return startQueue.toMutableList().sortedWith(compareByDescending<ServerQueueInformation>
-        {
-            if (it.serviceId != null) {
-                val configuration = runBlocking {
-                    serverRepository.getServer<CloudServer>(it.serviceId!!)?.configurationTemplate
-                }
-                configuration?.startPriority ?: 50
-            } else {
-                it.configurationTemplate.startPriority
-            }
-        }.thenByDescending { it.queueTime }).toList()
+        return startQueue.toMutableList().sortedWith(
+            compareByDescending<ServerQueueInformation>
+                {
+                    if (it.serviceId != null) {
+                        val configuration = runBlocking {
+                            serverRepository.getServer<CloudServer>(it.serviceId!!)?.configurationTemplate
+                        }
+                        configuration?.startPriority ?: DEFAULT_START_PRIORITY
+                    } else {
+                        it.configurationTemplate.startPriority
+                    }
+                }.thenByDescending { it.queueTime }
+        ).toList()
     }
 
     internal suspend fun deleteServer(serviceId: ServiceId): Boolean {
-        if (!serviceId.type.isServer()) {
-            throw IllegalArgumentException("Service id that was queued for deletion is not a server: ${serviceId.toName()}")
-        }
-        val server = serverRepository.getServer<CloudServer>(serviceId) ?: return false
-        if (server.hostNodeId != hostingId) {
-            return false
-        }
-        if (server.state != CloudServerState.STOPPED) {
-            return false
-        }
-        if (!server.configurationTemplate.static) {
-            throw IllegalArgumentException("Service id that was queued for deletion is not static: ${serviceId.toName()}")
-        }
-        this.unregisterServer(serviceId, server)
-        val workDir = File(STATIC_FOLDER.getFile(), "${server.name}-${server.serviceId.id}")
-        if (workDir.exists() && workDir.isDirectory) {
-            if (!workDir.deleteRecursively()) {
-                workDir.deleteOnExit()
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            require(
+                serviceId.type.isServer()
+            ) { "Service id that was queued for deletion is not a server: ${serviceId.toName()}" }
+            val server = serverRepository.getServer<CloudServer>(serviceId) ?: return false
+            if (server.hostNodeId != hostingId) {
+                return false
             }
+            if (server.state != CloudServerState.STOPPED) {
+                return false
+            }
+            require(server.configurationTemplate.static) {
+                "Service id that was queued for deletion is not static: ${serviceId.toName()}"
+            }
+            this.unregisterServer(serviceId, server)
+            val workDir = File(STATIC_FOLDER.getFile(), "${server.name}-${server.serviceId.id}")
+            if (workDir.exists() && workDir.isDirectory) {
+                if (!workDir.deleteRecursively()) {
+                    workDir.deleteOnExit()
+                }
+            }
+            eventManager.fireEvent(CloudServerDeleteEvent(server.serviceId, server.name))
+            return true
+        } catch (e: CloudServerException) {
+            throw e
+        } catch (e: Exception) {
+            throw CloudServerException("Failed to delete server: ${serviceId.toName()}", e)
         }
-        eventManager.fireEvent(CloudServerDeleteEvent(server.serviceId, server.name))
-        return true
     }
 
     /**
@@ -134,22 +147,10 @@ class ServerFactory(
             if (snapshotData.versionType.proxy) ServiceType.PROXY_SERVER else ServiceType.MINECRAFT_SERVER
         )
 
-        // create the server process
-        val serverProcess = ServerProcess(
-            configurationTemplate,
-            serverRepository,
-            packetManager,
-            eventManager,
-            bindHost,
-            clusterConfiguration,
-            serviceId,
-            hostingId
-        )
-
+        val serverProcess = createServerProcess(configurationTemplate, serviceId)
         hostedProcesses.add(serverProcess)
-        val cloudServer: CloudServer?
+        @Suppress("TooGenericExceptionCaught")
         try {
-
             val thisNode = nodeRepository.getNode(hostingId)!!
             if (!force) {
                 canStartOnNode(thisNode, configurationTemplate).let {
@@ -159,106 +160,120 @@ class ServerFactory(
                     }
                 }
             }
-            idLock.lock()
-            try {
-                // get the next id for the server and create it
-                cloudServer = if (snapshotData.versionType.proxy) {
-                    serverRepository.createServer(
-                        CloudProxyServer(
-                            serviceId,
-                            configurationTemplate,
-                            getIdForServer(configurationTemplate),
-                            thisNode.serviceId,
-                            ServiceSessions(),
-                            false,
-                            CloudServerState.PREPARING,
-                            -1,
-                            configurationTemplate.maxPlayers
-                        )
-                    )
-                } else {
-                    serverRepository.createServer(
-                        CloudMinecraftServer(
-                            serviceId,
-                            configurationTemplate,
-                            getIdForServer(configurationTemplate),
-                            thisNode.serviceId,
-                            ServiceSessions(),
-                            false,
-                            CloudServerState.PREPARING,
-                            -1,
-                            configurationTemplate.maxPlayers
-                        )
-                    )
-                }
-            } finally {
-                Thread.sleep(50)
-                idLock.unlock()
-            }
-            serverProcess.cloudServer = cloudServer!!
 
-            // Create server screen
+            val cloudServer = createAndRegisterServer(serviceId, configurationTemplate, snapshotData, thisNode)
+            serverProcess.cloudServer = cloudServer
+
             val serverScreen = ServerScreen(cloudServer.serviceId, cloudServer.name, this.console, this.packetManager)
             console.createScreen(serverScreen)
+            ensurePatched(snapshotData)
 
-            if (!snapshotData.versionHandler.isPatched(snapshotData.version)
-                && snapshotData.versionHandler.isPatchVersion(snapshotData.version)
-            ) {
-                snapshotData.versionHandler.patch(snapshotData.version)
-            }
-
-            // Add service to node database object
             thisNode.hostedServers.add(cloudServer.serviceId)
             nodeRepository.updateNode(thisNode)
 
-            // copy the files to copy server necessary files
-            val copier = FileCopier(
-                serverProcess,
-                cloudServer,
-                serverVersionTypeRepository,
-                fileTemplateRepository,
-                snapshotData
-            )
-            serverProcess.fileCopier = copier
-
-            // copy all templates
-            copier.copyTemplates()
-            // copy all version files
-            copier.copyVersionFiles { serverProcess.replacePlaceholders(it, snapshotData) }
-            // delete old connector files
-            copier.deleteConnectors()
-            // copy connector
-            copier.copyConnector()
-
-            // start the server
+            copyServerFiles(serverProcess, cloudServer, snapshotData)
             return serverProcess.start(cloudServer, serverScreen, snapshotData)
         } catch (e: Exception) {
-            // Make sure to remove the server process from the hosted processes so no memory will be blocked
             hostedProcesses.remove(serverProcess)
-            // delete the server if it is created and not static
-            try {
-                stopServer(serviceId, internalCall = true)
-            } catch (_: NullPointerException) {
-            }
+            try { stopServer(serviceId, internalCall = true) } catch (_: NullPointerException) { }
             return UnknownErrorStartResult(e)
         }
     }
 
+    private fun createServerProcess(
+        configurationTemplate: ICloudConfigurationTemplate,
+        serviceId: ServiceId
+    ): ServerProcess {
+        return ServerProcess(
+            configurationTemplate,
+            serverRepository,
+            packetManager,
+            eventManager,
+            bindHost,
+            clusterConfiguration,
+            serviceId,
+            hostingId
+        )
+    }
+
+    private suspend fun createAndRegisterServer(
+        serviceId: ServiceId,
+        configurationTemplate: ICloudConfigurationTemplate,
+        snapshotData: StartDataSnapshot,
+        thisNode: CloudNode
+    ): CloudServer {
+        idLock.lock()
+        try {
+            val serverId = getIdForServer(configurationTemplate)
+            return if (snapshotData.versionType.proxy) {
+                serverRepository.createServer(
+                    CloudProxyServer(
+                        serviceId, configurationTemplate, serverId, thisNode.serviceId,
+                        ServiceSessions(), false, CloudServerState.PREPARING, -1, configurationTemplate.maxPlayers
+                    )
+                )
+            } else {
+                serverRepository.createServer(
+                    CloudMinecraftServer(
+                        serviceId, configurationTemplate, serverId, thisNode.serviceId,
+                        ServiceSessions(), false, CloudServerState.PREPARING, -1, configurationTemplate.maxPlayers
+                    )
+                )
+            }
+        } finally {
+            Thread.sleep(LOCK_RELEASE_DELAY_MS)
+            idLock.unlock()
+        }
+    }
+
+    private suspend fun ensurePatched(snapshotData: StartDataSnapshot) {
+        if (!snapshotData.versionHandler.isPatched(snapshotData.version) &&
+            snapshotData.versionHandler.isPatchVersion(snapshotData.version)
+        ) {
+            snapshotData.versionHandler.patch(snapshotData.version)
+        }
+    }
+
+    private suspend fun copyServerFiles(
+        serverProcess: ServerProcess,
+        cloudServer: CloudServer,
+        snapshotData: StartDataSnapshot
+    ) {
+        val copier = FileCopier(
+            serverProcess,
+            cloudServer,
+            serverVersionTypeRepository,
+            fileTemplateRepository,
+            snapshotData
+        )
+        serverProcess.fileCopier = copier
+        copier.copyTemplates()
+        copier.copyVersionFiles { serverProcess.replacePlaceholders(it, snapshotData) }
+        copier.deleteConnectors()
+        copier.copyConnector()
+    }
+
+    @Suppress("ThrowsCount")
     internal suspend fun unregisterServer(
         serviceId: ServiceId,
         cachedServer: CloudServer? = null,
         force: Boolean = false
     ) {
-        if (!serverRepository.databaseConnection.connected) return
-        val server = cachedServer ?: serverRepository.getServer(serviceId)
-        ?: throw NullPointerException("Server ${serviceId.toName()} not found")
-        if (!force && server.state != CloudServerState.STOPPED) {
-            throw IllegalArgumentException("Server ${serviceId.toName()} is not stopped")
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            if (!serverRepository.databaseConnection.connected) return
+            val server = cachedServer ?: serverRepository.getServer(serviceId)
+                ?: throw NullPointerException("Server ${serviceId.toName()} not found")
+            require(force || server.state == CloudServerState.STOPPED) { "Server ${serviceId.toName()} is not stopped" }
+            serverRepository.deleteServer(server)
+        } catch (e: CloudServerException) {
+            throw e
+        } catch (e: Exception) {
+            throw CloudServerException("Failed to unregister server: ${serviceId.toName()}", e)
         }
-        serverRepository.deleteServer(server)
     }
 
-
+    @Suppress("ReturnCount")
     internal suspend fun startServer(
         serviceId: ServiceId?,
         configurationTemplate: ConfigurationTemplate?,
@@ -270,9 +285,7 @@ class ServerFactory(
         if (serviceId == null) {
             return startServer(configurationTemplate!!, force)
         }
-        if (!serviceId.type.isServer()) {
-            throw IllegalArgumentException("Queued service id to start a server must be a server!")
-        }
+        require(serviceId.type.isServer()) { "Queued service id to start a server must be a server!" }
         logger.fine("Prepare static server ${serviceId.toName()}...")
         val server = serverRepository.getServer<CloudServer>(serviceId)
             ?: throw NullPointerException("Static server ${serviceId.toName()} not found")
@@ -296,6 +309,7 @@ class ServerFactory(
             hostingId
         )
         hostedProcesses.add(serverProcess)
+        @Suppress("TooGenericExceptionCaught")
         try {
             val thisNode = nodeRepository.getNode(hostingId)!!
             if (!force) {
@@ -314,8 +328,8 @@ class ServerFactory(
             server.port = -1
             serverRepository.updateServer(server)
 
-            if (!snapshotData.versionHandler.isPatched(snapshotData.version)
-                && snapshotData.versionHandler.isPatchVersion(snapshotData.version)
+            if (!snapshotData.versionHandler.isPatched(snapshotData.version) &&
+                snapshotData.versionHandler.isPatchVersion(snapshotData.version)
             ) {
                 snapshotData.versionHandler.patch(snapshotData.version)
             }
@@ -361,53 +375,60 @@ class ServerFactory(
         }
     }
 
+    @Suppress("ThrowsCount")
     internal suspend fun stopServer(
         serviceId: ServiceId,
         force: Boolean = true,
         internalCall: Boolean = false
     ) {
-        if (!serverRepository.databaseConnection.connected) {
-            return
-        }
-        val server = serverRepository.getServer<CloudServer>(serviceId)
-            ?: throw NullPointerException("Server not found")
-        if (server.hostNodeId != hostingId) {
-            throw IllegalArgumentException("Server is not on this node")
-        }
-        if (server.state == CloudServerState.STOPPED && !force || server.state == CloudServerState.STOPPING && !force) {
-            return
-        }
-
-        val thisNode = nodeRepository.getNode(hostingId)
-        if (thisNode != null) {
-            thisNode.currentMemoryUsage = hostedProcesses.toList()
-                .filter { it.serverId != serviceId }
-                .sumOf { it.configurationTemplate.maxMemory }
-            if (thisNode.currentMemoryUsage < 0) thisNode.currentMemoryUsage = 0
-            thisNode.hostedServers.remove(hostingId)
-            nodeRepository.updateNode(thisNode)
-        }
-
-        val process = hostedProcesses.firstOrNull { it.serverId == serviceId }
-        if (process != null) {
-            process.stop(force, internalCall)
-            hostedProcesses.remove(process)
-        }
-
-        if (!internalCall) {
-            server.state = CloudServerState.STOPPED
-            server.port = -1
-            server.connected = false
-            server.connectedPlayers.clear()
-            serverRepository.updateServer(server)
-            eventManager.fireEvent(CloudServerDisconnectedEvent(server.serviceId))
-
-            if (server.unregisterAfterDisconnect()) {
-                this.unregisterServer(server.serviceId, server)
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            if (!serverRepository.databaseConnection.connected) {
+                return
             }
+            val server = serverRepository.getServer<CloudServer>(serviceId)
+                ?: throw NullPointerException("Server not found")
+            require(server.hostNodeId == hostingId) { "Server is not on this node" }
+            if (server.state == CloudServerState.STOPPED && !force || server.state == CloudServerState.STOPPING && !force) {
+                return
+            }
+
+            val thisNode = nodeRepository.getNode(hostingId)
+            if (thisNode != null) {
+                thisNode.currentMemoryUsage = hostedProcesses.toList()
+                    .filter { it.serverId != serviceId }
+                    .sumOf { it.configurationTemplate.maxMemory }
+                if (thisNode.currentMemoryUsage < 0) thisNode.currentMemoryUsage = 0
+                thisNode.hostedServers.remove(hostingId)
+                nodeRepository.updateNode(thisNode)
+            }
+
+            val process = hostedProcesses.firstOrNull { it.serverId == serviceId }
+            if (process != null) {
+                process.stop(force, internalCall)
+                hostedProcesses.remove(process)
+            }
+
+            if (!internalCall) {
+                server.state = CloudServerState.STOPPED
+                server.port = -1
+                server.connected = false
+                server.connectedPlayers.clear()
+                serverRepository.updateServer(server)
+                eventManager.fireEvent(CloudServerDisconnectedEvent(server.serviceId))
+
+                if (server.unregisterAfterDisconnect()) {
+                    this.unregisterServer(server.serviceId, server)
+                }
+            }
+        } catch (e: CloudServerException) {
+            throw e
+        } catch (e: Exception) {
+            throw CloudServerException("Failed to stop server: ${serviceId.toName()}", e)
         }
     }
 
+    @Suppress("ReturnCount")
     internal suspend fun transferServer(
         serverId: ServiceId,
         nodeId: ServiceId
@@ -420,6 +441,7 @@ class ServerFactory(
         if (server.hostNodeId == nodeId) return false
         var session: Session? = null
         var channel: ChannelSftp? = null
+        @Suppress("TooGenericExceptionCaught")
         try {
             session = fileCluster.createSession(nodeId)
             channel = fileCluster.openChannel(session)
@@ -435,7 +457,9 @@ class ServerFactory(
             fileCluster.shareFile(channel, zip, toUniversalPath(workFolder), "data.zip")
             val response = fileCluster.unzip(nodeId, toUniversalPath(zip), toUniversalPath(STATIC_FOLDER.getFile()))
             if (response == null) {
-                logger.warning("§cUnzip process does not response of transferring server ${serverId.toName()} to node ${nodeId.toName()}")
+                logger.warning(
+                    "§cUnzip process does not response of transferring server ${serverId.toName()} to node ${nodeId.toName()}"
+                )
             }
             fileCluster.deleteFolderRecursive(channel, toUniversalPath(workFolder))
             workFolder.deleteRecursively()
@@ -444,13 +468,14 @@ class ServerFactory(
             serverRepository.updateServer(server)
             eventManager.fireEvent(event)
             return true
+        } catch (e: CloudServerException) {
+            throw e
         } catch (e: Exception) {
-            logger.severe("§cError while transferring server ${serverId.toName()} to node ${nodeId.toName()}", e)
+            throw CloudServerException("Failed to transfer server: ${serverId.toName()}", e)
         } finally {
             channel?.disconnect()
             session?.disconnect()
         }
-        return false
     }
 
     /**
@@ -464,10 +489,10 @@ class ServerFactory(
             actions.add {
                 try {
                     stopServer(it.cloudServer!!.serviceId, force)
-                } catch (e: Exception) {
+                } catch (_: CloudServerException) {
                     try {
                         stopServer(it.cloudServer!!.serviceId, true)
-                    } catch (e1: Exception) {
+                    } catch (e1: CloudServerException) {
                         if (e1 is NullPointerException) return@add
                         logger.severe("Error while stopping server ${it.cloudServer!!.serviceId.toName()}", e1)
                     }
@@ -540,7 +565,9 @@ class ServerFactory(
                 .filter { !it.hidden }
                 .filter { it.state != CloudServerState.STOPPED }
                 .count { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }
-        if (startedAmountOfTemplateOnNode >= configurationTemplate.maxStartedServicesPerNode && configurationTemplate.maxStartedServicesPerNode != -1) {
+        if (startedAmountOfTemplateOnNode >= configurationTemplate.maxStartedServicesPerNode &&
+            configurationTemplate.maxStartedServicesPerNode != -1
+        ) {
             return TooMuchServicesOfTemplateOnNodeStartResult()
         }
         return null

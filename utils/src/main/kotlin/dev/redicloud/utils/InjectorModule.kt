@@ -9,5 +9,4 @@ abstract class InjectorModule : AbstractModule() {
     protected fun <T : Any> bind(clazz: KClass<T>): AnnotatedBindingBuilder<T> {
         return bind(clazz.java)
     }
-
 }

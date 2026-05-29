@@ -13,9 +13,11 @@ class BukkitScreenProvider(
 
     override fun execute(command: String) {
         LogManager.rootLogger().info("Executing command: $command")
-        Bukkit.getScheduler().runTask(plugin, Runnable {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command)
-        })
+        Bukkit.getScheduler().runTask(
+            plugin,
+            Runnable {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command)
+            }
+        )
     }
-
 }

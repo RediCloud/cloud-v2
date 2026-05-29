@@ -19,5 +19,4 @@ class VelocityServerPlayerProvider(
     override fun getMaxPlayerCount(): Int {
         return proxyServer.configuration.showMaxPlayers
     }
-
 }

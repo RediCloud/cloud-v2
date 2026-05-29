@@ -17,5 +17,4 @@ interface ICloudNodeRepository {
     suspend fun getConnectedNodes(): List<ICloudNode>
 
     suspend fun getRegisteredNodes(): List<ICloudNode>
-
 }

@@ -52,13 +52,16 @@ class ServerProcess(
 
     companion object {
         private val logger = LogManager.logger(ServerProcess::class)
+        private const val DEFAULT_START_PORT = 40000
+        private const val STOP_POLL_INTERVAL_MS = 1000L
+        private const val JAVA_8_MAJOR_VERSION = 8
         val SERVER_STOP_TIMEOUT = System.getProperty("redicloud.server.stop.timeout", "20").toInt()
     }
 
     init {
         port = if (configurationTemplate.startPort == -1) {
-            findFreePort(40000, true)
-        }else {
+            findFreePort(DEFAULT_START_PORT, true)
+        } else {
             findFreePort(configurationTemplate.startPort, false)
         }
         blockPort(port)
@@ -68,7 +71,11 @@ class ServerProcess(
      * Starts the server process
      * @param cloudServer the cloud server instance
      */
-    suspend fun start(cloudServer: CloudServer, serverScreen: ServerScreen, snapshotData: StartDataSnapshot): StartResult {
+    suspend fun start(
+        cloudServer: CloudServer,
+        serverScreen: ServerScreen,
+        snapshotData: StartDataSnapshot
+    ): StartResult {
         if (stopped) return StoppedStartResult()
         this.cloudServer = cloudServer
         processConfiguration = ProcessConfiguration.collect(
@@ -105,7 +112,7 @@ class ServerProcess(
         }
         // create handler and listen for exit
         processHandler = ScreenProcessHandler(process!!, serverScreen)
-        processHandler!!.onExit { runBlocking { stop(internalCall =  true) } }
+        processHandler!!.onExit { runBlocking { stop(internalCall = true) } }
 
         cloudServer.state = CloudServerState.STARTING
         cloudServer.port = port
@@ -122,89 +129,112 @@ class ServerProcess(
         if (stopped) return
         freePort(port)
         stopped = true
-        var unexpectedlyStop = false
         if (!serverRepository.existsServer<CloudServer>(serverId)) return
         cloudServer = serverRepository.getServer(serverId) ?: return
-        val identifier = cloudServer?.serviceId?.toName() ?: configurationTemplate.uniqueId
-        if (internalCall) {
-            logger.fine("Detected process exit of $identifier")
-            if (cloudServer?.connected == true) {
-                unexpectedlyStop = true
-                logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stopped unexpectedly!")
-                logger.warning("§cCheck the server logs for more information! The server directory will not be deleted!")
-            }
-            cloudServer!!.state = CloudServerState.STOPPED
-            cloudServer!!.port = -1
-            cloudServer!!.connected = false
-            cloudServer!!.connectedPlayers.clear()
-            serverRepository.updateServer(cloudServer!!)
-            eventManager.fireEvent(CloudServerDisconnectedEvent(serverId))
 
-            if (cloudServer!!.unregisterAfterDisconnect()) {
-                serverRepository.deleteServer(cloudServer!!)
-            }
-        }else {
-            logger.fine("Stopped server process $identifier")
+        val unexpectedlyStop = if (internalCall) {
+            handleInternalStop()
+        } else {
+            logger.fine("Stopped server process ${cloudServer?.serviceId?.toName() ?: configurationTemplate.uniqueId}")
+            false
         }
 
         if (cloudServer != null && !internalCall) {
-            cloudServer!!.state = CloudServerState.STOPPING
-            serverRepository.updateServer(cloudServer!!)
-            val response = packetManager.publish(CloudServiceShutdownPacket(), cloudServer!!.serviceId)
-            val answer = response.withTimeOut(4.seconds).waitBlocking()
-            if (answer != null) {
-                var seconds = 0
-                while (cloudServer != null && cloudServer?.connected == true && seconds < SERVER_STOP_TIMEOUT) {
-                    withContext(Dispatchers.IO) {
-                        Thread.sleep(1000)
-                    }
-                    seconds++
-                    cloudServer = serverRepository.getServer(serverId)
-                }
-                if (cloudServer?.connected == true) {
-                    logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stop request timed out. Stopping process manually!")
-                }
-            } else {
-                logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} does not respond to stop request. Stopping process manually!")
-            }
+            sendStopRequestAndWait()
         }
 
-        if (process != null && process!!.isAlive) {
-            if (force) {
-                process!!.destroyForcibly()
-            } else {
-                process!!.destroy()
-            }
-        }
-
-        if (System.getProperty("redicloud.server.delete-directory", "true").toBooleanStrictOrNull() == true) {
-            if (!configurationTemplate.static && !unexpectedlyStop) {
-                fileCopier.workDirectory.deleteRecursively()
-            }else if (unexpectedlyStop && !configurationTemplate.static) {
-                fileCopier.workDirectory.deleteOnExit()
-            }
-        }
-
-
-
+        destroyProcess(force)
+        cleanupWorkDirectory(unexpectedlyStop)
         logger.fine("Stopped server process ${configurationTemplate.uniqueId}")
+    }
+
+    private suspend fun handleInternalStop(): Boolean {
+        val identifier = cloudServer?.serviceId?.toName() ?: configurationTemplate.uniqueId
+        logger.fine("Detected process exit of $identifier")
+        var unexpectedlyStop = false
+        if (cloudServer?.connected == true) {
+            unexpectedlyStop = true
+            logger.warning("§cServer ${toConsoleValue(cloudServer!!.name, false)} stopped unexpectedly!")
+            logger.warning("§cCheck the server logs for more information! The server directory will not be deleted!")
+        }
+        cloudServer!!.state = CloudServerState.STOPPED
+        cloudServer!!.port = -1
+        cloudServer!!.connected = false
+        cloudServer!!.connectedPlayers.clear()
+        serverRepository.updateServer(cloudServer!!)
+        eventManager.fireEvent(CloudServerDisconnectedEvent(serverId))
+        if (cloudServer!!.unregisterAfterDisconnect()) {
+            serverRepository.deleteServer(cloudServer!!)
+        }
+        return unexpectedlyStop
+    }
+
+    private suspend fun sendStopRequestAndWait() {
+        cloudServer!!.state = CloudServerState.STOPPING
+        serverRepository.updateServer(cloudServer!!)
+        val response = packetManager.publish(CloudServiceShutdownPacket(), cloudServer!!.serviceId)
+        val answer = response.withTimeOut(4.seconds).waitBlocking()
+        if (answer != null) {
+            var seconds = 0
+            while (cloudServer != null && cloudServer?.connected == true && seconds < SERVER_STOP_TIMEOUT) {
+                withContext(Dispatchers.IO) {
+                    Thread.sleep(STOP_POLL_INTERVAL_MS)
+                }
+                seconds++
+                cloudServer = serverRepository.getServer(serverId)
+            }
+            if (cloudServer?.connected == true) {
+                logger.warning(
+                    "§cServer ${toConsoleValue(
+                        cloudServer!!.name,
+                        false
+                    )} stop request timed out. Stopping process manually!"
+                )
+            }
+        } else {
+            logger.warning(
+                "§cServer ${toConsoleValue(
+                    cloudServer!!.name,
+                    false
+                )} does not respond to stop request. Stopping process manually!"
+            )
+        }
+    }
+
+    private fun destroyProcess(force: Boolean) {
+        if (process != null && process!!.isAlive) {
+            if (force) process!!.destroyForcibly() else process!!.destroy()
+        }
+    }
+
+    private fun cleanupWorkDirectory(unexpectedlyStop: Boolean) {
+        if (System.getProperty("redicloud.server.delete-directory", "true").toBooleanStrictOrNull() != true) return
+        if (!configurationTemplate.static && !unexpectedlyStop) {
+            fileCopier.workDirectory.deleteRecursively()
+        } else if (unexpectedlyStop && !configurationTemplate.static) {
+            fileCopier.workDirectory.deleteOnExit()
+        }
     }
 
     /**
      * Creates the command to start the server with based server version type configurations
      * provide also placeholders like %PORT% or %SERVICE_ID%
      */
-    private fun startCommand(type: CloudServerVersionType, javaPath: String, snapshotData: StartDataSnapshot): List<String> {
+    private fun startCommand(
+        type: CloudServerVersionType,
+        javaPath: String,
+        snapshotData: StartDataSnapshot
+    ): List<String> {
         if (!snapshotData.javaVersion.isLocated(hostServiceId)) {
             snapshotData.javaVersion.located[hostServiceId.id] = snapshotData.javaVersion.autoLocate()?.absolutePath
-                ?: throw IllegalStateException("Java version ${snapshotData.javaVersion.id} not found")
+                ?: error("Java version ${snapshotData.javaVersion.id} not found")
         }
 
         val list = mutableListOf(
             javaPath,
         )
 
-        if ((snapshotData.javaVersion.info?.major ?: -1) > 8) {
+        if ((snapshotData.javaVersion.info?.major ?: -1) > JAVA_8_MAJOR_VERSION) {
             list.apply {
                 add("--add-opens=java.base/java.lang=ALL-UNNAMED")
                 add("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED")
@@ -235,6 +265,8 @@ class ServerProcess(
             .replace("%SERVICE_NAME%", cloudServer?.serviceId?.toName() ?: "unknown")
             .replace("%HOSTNAME%", snapshotData.hostname)
             .replace("%PROXY_SECRET%", clusterConfiguration.get("proxy-secret") ?: "redicloud_secret")
-            .replace("%MAX_PLAYERS%", (cloudServer?.maxPlayers ?: snapshotData.configurationTemplate.maxPlayers).toString())
-
+            .replace(
+                "%MAX_PLAYERS%",
+                (cloudServer?.maxPlayers ?: snapshotData.configurationTemplate.maxPlayers).toString()
+            )
 }

@@ -8,9 +8,11 @@ class CloudPlayerMessagePacket(
     uniqueId: UUID,
     private val jsonComponent: String
 ) : CloudPlayerPacket(uniqueId) {
-    constructor(uniqueId: UUID, component: Component) : this(uniqueId, GsonComponentSerializer.gson().serialize(component))
+    constructor(
+        uniqueId: UUID,
+        component: Component
+    ) : this(uniqueId, GsonComponentSerializer.gson().serialize(component))
 
     val component: Component
         get() = GsonComponentSerializer.gson().deserialize(jsonComponent)
-
 }

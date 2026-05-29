@@ -1,7 +1,6 @@
 package dev.redicloud.module.rest
 
 import com.google.inject.name.Named
-import dev.redicloud.api.commands.ICommandManager
 import dev.redicloud.api.modules.CloudModule
 import dev.redicloud.api.modules.IModuleStorage
 import dev.redicloud.api.modules.ModuleLifeCycle
@@ -30,10 +29,11 @@ class RestModule : CloudModule(), CloudInjectable {
 
     companion object {
         private val logger = LogManager.logger(RestModule::class)
+        private const val DEFAULT_REST_PORT = 8787
     }
 
     var app: Javalin? = null
-    val port: Int = System.getProperty("redicloud.rest.port", "8787").toIntOrNull() ?: 8787
+    val port: Int = System.getProperty("redicloud.rest.port", DEFAULT_REST_PORT.toString()).toIntOrNull() ?: DEFAULT_REST_PORT
 
     lateinit var config: IModuleStorage
 
@@ -46,6 +46,7 @@ class RestModule : CloudModule(), CloudInjectable {
     lateinit var configurationTemplateFetcher: ConfigurationTemplateFetcher
 
     @ModuleTask(ModuleLifeCycle.LOAD)
+    @Suppress("LongParameterList")
     fun load(
         @Named("this") nodeId: ServiceId,
         nodeRepository: ICloudNodeRepository,
@@ -59,7 +60,8 @@ class RestModule : CloudModule(), CloudInjectable {
         logger.info("Starting rest module on port $port...")
         app = Javalin.create()
         config = getStorage("rest-server")
-        val node = runBlocking { nodeRepository.getNode(nodeId)!! }
+        // verify the node exists before proceeding, throws if not found
+        runBlocking { nodeRepository.getNode(nodeId)!! }
 
         playerFetcher = PlayerFetcher(playerRepository)
         nodeFetcher = NodeFetcher(nodeRepository)
@@ -87,5 +89,4 @@ class RestModule : CloudModule(), CloudInjectable {
     private fun register(handler: RestHandler) {
         app!!.get(handler.path, handler)
     }
-
 }

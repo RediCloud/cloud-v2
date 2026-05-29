@@ -14,12 +14,14 @@ class BungeeCordConnectorBootstrap : Plugin() {
     private var connector: BungeeCordConnector? = null
 
     override fun onLoad() {
+        @Suppress("TooGenericExceptionCaught")
         try {
             loadProperties(this.javaClass.classLoader)
             Bootstrap().apply(URLClassLoaderJarLoader(this.javaClass.classLoader as URLClassLoader))
             connector = BungeeCordConnector(this)
-        }catch (e: Exception) {
-            e.printStackTrace()
+        } catch (e: Exception) {
+            System.err.println("Failed to initialize BungeeCordConnector: ${e.message}")
+            System.err.println(e.stackTraceToString())
         }
     }
 
@@ -35,5 +37,4 @@ class BungeeCordConnectorBootstrap : Plugin() {
         connector!!.bungeecordShuttingDown = true
         connector!!.onDisable()
     }
-
 }

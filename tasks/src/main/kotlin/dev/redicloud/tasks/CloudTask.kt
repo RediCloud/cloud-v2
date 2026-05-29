@@ -29,6 +29,7 @@ abstract class CloudTask(private val useLock: Boolean = true) {
             if (useLock) {
                 lock.lock()
             }
+            @Suppress("TooGenericExceptionCaught")
             try {
                 CloudTaskManager.LOGGER.log(
                     Level.FINEST,
@@ -40,7 +41,8 @@ abstract class CloudTask(private val useLock: Boolean = true) {
             } catch (e: Exception) {
                 CloudTaskManager.LOGGER.log(
                     Level.SEVERE,
-                    "Error while executing cloud task (${this@CloudTask::class.simpleName}) by ${source::class.simpleName}",
+                    "Error while executing cloud task " +
+                        "(${this@CloudTask::class.simpleName}) by ${source::class.simpleName}",
                     e
                 )
             } finally {
@@ -82,5 +84,4 @@ abstract class CloudTask(private val useLock: Boolean = true) {
     fun onFinished(block: () -> Unit) {
         finishListener.add(block)
     }
-
 }

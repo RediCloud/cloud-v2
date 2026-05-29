@@ -23,5 +23,4 @@ interface ICloudPlayerRepository {
     suspend fun getRegisteredPlayers(): List<ICloudPlayer>
 
     suspend fun getConnectedPlayers(): List<ICloudPlayer>
-
 }

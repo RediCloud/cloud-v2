@@ -32,6 +32,4 @@ class MinestomPlayerExecutor(
     override fun executeKick(cloudPlayer: ICloudPlayer, reason: Component) {
         runBlocking { this@MinestomPlayerExecutor.executeKick(cloudPlayer, reason) }
     }
-
-
 }

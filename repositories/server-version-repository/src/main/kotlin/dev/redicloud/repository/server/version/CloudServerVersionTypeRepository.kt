@@ -1,6 +1,6 @@
 package dev.redicloud.repository.server.version
 
-import com.google.gson.reflect.TypeToken
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.version.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
@@ -11,10 +11,9 @@ import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.repository.server.version.serverversion.ServerVersion
 import dev.redicloud.utils.*
+import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
-import dev.redicloud.api.service.ServiceType
-import dev.redicloud.utils.gson.fromJsonToList
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import java.util.*
@@ -22,6 +21,7 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
 import kotlin.time.Duration.Companion.minutes
 
+@Suppress("TooManyFunctions") // Repository with CRUD + sync + download operations
 class CloudServerVersionTypeRepository(
     databaseConnection: DatabaseConnection,
     private val console: Console?,
@@ -34,7 +34,8 @@ class CloudServerVersionTypeRepository(
     5.minutes,
     packetManager,
     ServiceType.NODE
-), ICloudServerVersionTypeRepository {
+),
+    ICloudServerVersionTypeRepository {
 
     init {
         gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
@@ -43,11 +44,14 @@ class CloudServerVersionTypeRepository(
     private val locks = mutableMapOf<UUID, ReentrantLock>()
 
     companion object {
+        private const val ANIMATION_TICK_MS = 200L
         val LOGGER = LogManager.logger(CloudServerVersionTypeRepository::class)
         val DEFAULT_TYPES_CACHE = SingleCache(1.minutes) {
             gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
             val json = getTextOfAPIWithFallback("api-files/server-version-types.json")
-            val list: MutableList<CloudServerVersionType> = gson.fromJsonToList<CloudServerVersionType>(json).toMutableList()
+            val list: MutableList<CloudServerVersionType> = gson.fromJsonToList<CloudServerVersionType>(
+                json
+            ).toMutableList()
             list.add(
                 CloudServerVersionType(
                     UUID.fromString("188507b4-37b9-45b5-b977-73ed6f6192a9"),
@@ -98,7 +102,6 @@ class CloudServerVersionTypeRepository(
     override suspend fun getOnlineTypes(): List<CloudServerVersionType> = DEFAULT_TYPES_CACHE.get() ?: emptyList()
 
     override suspend fun downloadConnector(serverVersionType: ICloudServerVersionType, force: Boolean, lock: Boolean) {
-
         val connectorFile = serverVersionType.getParsedConnectorFile(true)
         if (connectorFile.exists() && !force) return
         var canceled = false
@@ -107,7 +110,7 @@ class CloudServerVersionTypeRepository(
         val animation = if (console != null) {
             AnimatedLineAnimation(
                 console,
-                200
+                ANIMATION_TICK_MS
             ) {
                 if (canceled) {
                     null
@@ -127,8 +130,11 @@ class CloudServerVersionTypeRepository(
             "Downloading connector for ${toConsoleValue(serverVersionType.name)}..."
         )
         if (lock) getLock(serverVersionType).lock()
+        @Suppress("TooGenericExceptionCaught")
         try {
-            if (!serverVersionType.getParsedConnectorURL().isValid()) throw IllegalStateException("Connector download url of ${serverVersionType.connectorPluginName} is null!")
+            check(
+                serverVersionType.getParsedConnectorURL().isValid()
+            ) { "Connector download url of ${serverVersionType.connectorPluginName} is null!" }
             httpClient.get {
                 url(serverVersionType.getParsedConnectorURL().toExternalForm())
             }.readBytes().let {
@@ -150,28 +156,29 @@ class CloudServerVersionTypeRepository(
     }
 
     override suspend fun pullOnlineTypes(serverVersionRepository: ICloudServerVersionRepository, silent: Boolean) {
-
         val defaultTypes = getOnlineTypes()
         defaultTypes.forEach { onlineType ->
             if (onlineType.isUnknown()) return@forEach
             if (existsType(onlineType.uniqueId)) {
-                val current = getType(onlineType.uniqueId)!!
-                if (current.hashCode() == onlineType.hashCode()) return@forEach
+                updateExistingType(onlineType, serverVersionRepository, silent)
+            } else {
+                createType(onlineType)
                 if (!silent) LOGGER.info("Pulled server version type ${toConsoleValue(onlineType.name)} from web!")
-                updateType(onlineType)
-                serverVersionRepository.getVersions().forEach {
-                    if (it.typeId == current.uniqueId) {
-                        if (current.defaultFiles != it.defaultFiles && it.used) {
-                            val handler = IServerVersionHandler.getHandler(current)
-                            handler.update(it, onlineType)
-                        }
-                    }
-                }
-                return@forEach
             }
-            createType(onlineType)
-            if (!silent) LOGGER.info("Pulled server version type ${toConsoleValue(onlineType.name)} from web!")
         }
     }
 
+    private suspend fun updateExistingType(
+        onlineType: CloudServerVersionType,
+        serverVersionRepository: ICloudServerVersionRepository,
+        silent: Boolean
+    ) {
+        val current = getType(onlineType.uniqueId)!!
+        if (current.hashCode() == onlineType.hashCode()) return
+        if (!silent) LOGGER.info("Pulled server version type ${toConsoleValue(onlineType.name)} from web!")
+        updateType(onlineType)
+        serverVersionRepository.getVersions()
+            .filter { it.typeId == current.uniqueId && current.defaultFiles != it.defaultFiles && it.used }
+            .forEach { IServerVersionHandler.getHandler(current).update(it, onlineType) }
+    }
 }

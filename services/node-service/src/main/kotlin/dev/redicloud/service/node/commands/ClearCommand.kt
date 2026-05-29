@@ -19,5 +19,4 @@ class ClearCommand(private val console: Console) : ICommand {
         }
         actor.sendMessage("Your console has been cleared!")
     }
-
 }

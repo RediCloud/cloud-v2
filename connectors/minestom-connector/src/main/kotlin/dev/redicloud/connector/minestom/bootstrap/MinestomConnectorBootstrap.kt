@@ -17,6 +17,7 @@ class MinestomConnectorBootstrap : Extension() {
     lateinit var classLoader: ExtensionClassLoader
 
     override fun preInitialize() {
+        @Suppress("TooGenericExceptionCaught")
         try {
             classLoader = this.javaClass.classLoader as ExtensionClassLoader
             loadProperties(this::class.java.classLoader)
@@ -27,7 +28,8 @@ class MinestomConnectorBootstrap : Extension() {
             configureLogger("io.netty", Level.INFO)
             connector = MinestomConnector(this)
         } catch (e: Exception) {
-            e.printStackTrace()
+            System.err.println("Failed to initialize MinestomConnector: ${e.message}")
+            System.err.println(e.stackTraceToString())
         }
     }
 
@@ -44,6 +46,4 @@ class MinestomConnectorBootstrap : Extension() {
         connector?.minestomShuttingDown = true
         connector?.onDisable()
     }
-
-
 }

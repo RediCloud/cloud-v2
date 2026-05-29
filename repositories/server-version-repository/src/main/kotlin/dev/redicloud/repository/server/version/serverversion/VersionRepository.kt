@@ -1,6 +1,5 @@
 package dev.redicloud.repository.server.version.serverversion
 
-import com.google.gson.reflect.TypeToken
 import dev.redicloud.api.version.IServerVersion
 import dev.redicloud.api.version.IVersionRepository
 import dev.redicloud.utils.getTextOfAPIWithFallback
@@ -11,7 +10,7 @@ object VersionRepository : IVersionRepository {
 
     val mcVersionRegex = Regex("(\\d+(\\.\\d+)+)")
 
-    val cachedVersions = mutableListOf<ServerVersion>() //TODO private add
+    val cachedVersions = mutableListOf<ServerVersion>() // TODO private add
 
     val versionComparator = compareBy<IServerVersion> { if (it.latest) 1000 else it.protocolId }
     override fun versions(): MutableList<ServerVersion> = cachedVersions
@@ -36,7 +35,12 @@ object VersionRepository : IVersionRepository {
 
     override fun parse(s: String, strict: Boolean): ServerVersion? {
         val t = if (strict) s else s.split("-")[0]
-        return if (strict) versions().firstOrNull { it.name == t } else versions().firstOrNull { it.name.lowercase() == t.lowercase() }
+        return if (strict) {
+            versions().firstOrNull {
+                it.name == t
+            }
+        } else {
+            versions().firstOrNull { it.name.lowercase() == t.lowercase() }
+        }
     }
-
 }

@@ -3,6 +3,7 @@ package dev.redicloud.module.rest.handler.server
 import dev.redicloud.api.modules.IModuleStorage
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.service.server.ICloudServerRepository
+import dev.redicloud.module.rest.HTTP_NOT_FOUND
 import dev.redicloud.module.rest.RestHandler
 import dev.redicloud.module.rest.fetcher.ServerFetcher
 import io.javalin.http.Context
@@ -17,7 +18,7 @@ class ProxyServerInfoHandler(
         if (!ctx.queryParam("id").isNullOrEmpty()) {
             val server = serverFetcher.fetchProxyServerById(ctx.queryParam("id")!!)
             if (server == null) {
-                ctx.status(404)
+                ctx.status(HTTP_NOT_FOUND)
                 ctx.json(mapOf("error" to "Proxy server not found"))
                 return
             }
@@ -32,5 +33,4 @@ class ProxyServerInfoHandler(
 
         ctx.json(servers)
     }
-
 }

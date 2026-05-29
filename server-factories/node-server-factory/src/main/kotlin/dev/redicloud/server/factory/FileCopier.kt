@@ -1,20 +1,19 @@
 package dev.redicloud.server.factory
 
-import dev.redicloud.logging.LogManager
-import dev.redicloud.repository.server.CloudServer
-import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.api.version.IServerVersionHandler
-import dev.redicloud.repository.template.file.FileTemplate
-import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
-import dev.redicloud.server.factory.utils.StartDataSnapshot
 import dev.redicloud.api.utils.CONNECTORS_FOLDER
 import dev.redicloud.api.utils.STATIC_FOLDER
 import dev.redicloud.api.utils.TEMP_SERVER_FOLDER
+import dev.redicloud.api.version.IServerVersionHandler
+import dev.redicloud.logging.LogManager
+import dev.redicloud.repository.server.CloudServer
+import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
+import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
+import dev.redicloud.repository.template.file.FileTemplate
+import dev.redicloud.server.factory.utils.StartDataSnapshot
 import dev.redicloud.utils.JarView
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.concurrent.withLock
-
 
 class FileCopier(
     serverProcess: ServerProcess,
@@ -38,9 +37,9 @@ class FileCopier(
         templates = configurationTemplate.fileTemplateIds.mapNotNull { runBlocking { fileTemplateRepository.getTemplate(it) } }
             .flatMap { runBlocking { fileTemplateRepository.collectTemplates(it) } }
         // create work directory
-        workDirectory = if(configurationTemplate.static) {
+        workDirectory = if (configurationTemplate.static) {
             File(STATIC_FOLDER.getFile().absolutePath, "${cloudServer.name}-${serviceId.id}")
-        }else {
+        } else {
             File(TEMP_SERVER_FOLDER.getFile().absolutePath, "${cloudServer.name}-${serviceId.id}")
         }
         if (!workDirectory.exists()) workDirectory.mkdirs()
@@ -66,21 +65,36 @@ class FileCopier(
             val connectorFile = snapshot.versionType.getParsedConnectorFile(true)
             if (!connectorFile.exists()) {
                 if (snapshot.versionType.connectorDownloadUrl == null) {
-                    logger.warning("Connector download url for ${snapshot.versionType.name} is not set! The server will not connect to the cloud cluster!")
-                    logger.warning("You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'")
+                    logger.warning(
+                        "Connector download url for ${snapshot.versionType.name} is not set! The server will not connect to the cloud cluster!"
+                    )
+                    logger.warning(
+                        "You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'"
+                    )
                     return
                 }
+                @Suppress("TooGenericExceptionCaught")
                 try {
                     runBlocking { serverVersionTypeRepository.downloadConnector(snapshot.versionType, lock = false) }
                     if (!connectorFile.exists()) {
-                        logger.warning("Connector file for ${snapshot.versionType.name} does not exist! The server will not connect to the cloud cluster!")
-                        logger.warning("You can set the connector file in the server version type settings with: 'svt edit <name> connector jar <connector>'")
+                        logger.warning(
+                            "Connector file for ${snapshot.versionType.name} does not exist! The server will not connect to the cloud cluster!"
+                        )
+                        logger.warning(
+                            "You can set the connector file in the server version type settings with: 'svt edit <name> connector jar <connector>'"
+                        )
                         return
                     }
-                }catch (e: Exception) {
-                    logger.warning("Failed to download connector for ${snapshot.versionType.name} from ${snapshot.versionType.getParsedConnectorURL().toExternalForm()}", e)
+                } catch (e: Exception) {
+                    logger.warning(
+                        "Failed to download connector for ${snapshot.versionType.name} " +
+                            "from ${snapshot.versionType.getParsedConnectorURL().toExternalForm()}",
+                        e
+                    )
                     logger.warning("The server will not connect to the cloud cluster!")
-                    logger.warning("You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'")
+                    logger.warning(
+                        "You can set the connector download url in the server version type settings with: 'svt edit <name> connector url <url>'"
+                    )
                     return
                 }
             }
@@ -100,12 +114,12 @@ class FileCopier(
             runBlocking {
                 if (!versionHandler.isPatched(snapshot.version) && versionHandler.isPatchVersion(snapshot.version)) {
                     versionHandler.patch(snapshot.version, lock = false)
-                }else if(!versionHandler.isDownloaded(snapshot.version)) {
+                } else if (!versionHandler.isDownloaded(snapshot.version)) {
                     versionHandler.download(snapshot.version, lock = false)
                 }
                 if (force && configurationTemplate.static || !configurationTemplate.static) {
                     versionHandler.getFolder(snapshot.version).copyRecursively(workDirectory)
-                }else {
+                } else {
                     val jar = versionHandler.getJar(snapshot.version)
                     if (jar.exists()) {
                         jar.copyTo(File(workDirectory, jar.name), overwrite = true)
@@ -127,5 +141,4 @@ class FileCopier(
             it.folder.copyRecursively(workDirectory, overwrite = false)
         }
     }
-
 }

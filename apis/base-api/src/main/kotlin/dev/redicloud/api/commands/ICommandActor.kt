@@ -24,5 +24,4 @@ interface ICommandActor<T> {
      * Sends a header to the actor
      */
     fun sendHeader(text: String)
-
 }

@@ -1,13 +1,13 @@
 package dev.redicloud.cache
 
 import dev.redicloud.api.packets.IPacketManager
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.cache.packets.CacheMultiUpdatePacket
 import dev.redicloud.cache.packets.CacheResetPacket
 import dev.redicloud.cache.packets.CacheUpdatePacket
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.gson.gson
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
@@ -24,7 +24,9 @@ class ClusterCache<V : Any>(
 ) {
 
     init {
-        if (!cacheClass.isSubclassOf(IClusterCacheObject::class)) throw IllegalArgumentException("Cache class must implement IClusterCacheObject (class: ${cacheClass.qualifiedName})")
+        require(cacheClass.isSubclassOf(IClusterCacheObject::class)) {
+            "Cache class must implement IClusterCacheObject (class: ${cacheClass.qualifiedName})"
+        }
         if (!packetManager.isPacketRegistered(CacheUpdatePacket::class)) {
             packetManager.registerPacket(CacheUpdatePacket::class)
         }
@@ -119,13 +121,12 @@ class ClusterCache<V : Any>(
             cache.remove(key)
             return
         }
-        if (value::class != cacheClass) throw IllegalArgumentException("Value is not of type ${cacheClass.simpleName}")
+        require(value::class == cacheClass) { "Value is not of type ${cacheClass.simpleName}" }
         cache[key] = System.currentTimeMillis() to value as V
     }
 
     internal fun isCacheValid(key: String): Boolean {
         return isCached(key) &&
-                System.currentTimeMillis() - cache[key]!!.first < cacheDuration.inWholeMilliseconds
+            System.currentTimeMillis() - cache[key]!!.first < cacheDuration.inWholeMilliseconds
     }
-
 }

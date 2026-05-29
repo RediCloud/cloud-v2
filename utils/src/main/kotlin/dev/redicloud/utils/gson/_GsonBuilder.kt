@@ -25,7 +25,6 @@ fun GsonBuilder.addInterfaceImpl(factory: InterfaceTypeAdapterFactory): GsonBuil
         override fun shouldSkipClass(clazz: Class<*>?): Boolean {
             return false
         }
-
     })
     return registerTypeAdapterFactory(factory)
 }
@@ -38,7 +37,6 @@ fun GsonBuilder.fixKotlinAnnotations(): GsonBuilder {
 
         override fun shouldSkipClass(p0: Class<*>?): Boolean =
             p0?.getAnnotation(Expose::class.java)?.serialize == false
-
     }).addDeserializationExclusionStrategy(object : ExclusionStrategy {
 
         override fun shouldSkipField(f: FieldAttributes?): Boolean =
@@ -46,7 +44,6 @@ fun GsonBuilder.fixKotlinAnnotations(): GsonBuilder {
 
         override fun shouldSkipClass(clazz: Class<*>?): Boolean =
             clazz?.getAnnotation(Expose::class.java)?.deserialize == false
-
     }).serializeNulls()
     return this
 }

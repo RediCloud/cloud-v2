@@ -2,7 +2,6 @@ package dev.redicloud.commands.api
 
 import dev.redicloud.api.commands.*
 
-
 val SUGGESTERS = mutableListOf(
     EmptySuggester(),
     MemorySuggester(),
@@ -18,7 +17,7 @@ class CommandSuggester(val command: CommandBase) : AbstractCommandSuggester() {
     override fun suggest(context: CommandContext): Array<String> {
         return if (context.input.isEmpty()) {
             arrayOf(command.name)
-        }else {
+        } else {
             arrayOf(command.name, *command.aliases)
         }
     }
@@ -40,5 +39,4 @@ class CommandArgumentSuggester(val commandArgument: CommandArgument) : AbstractC
             .filter { it.lowercase().startsWith(lastArgument.lowercase()) }
             .toTypedArray()
     }
-
 }

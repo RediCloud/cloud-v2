@@ -4,7 +4,6 @@ import dev.redicloud.api.player.ICloudPlayer
 import dev.redicloud.api.player.ICloudPlayerRepository
 import java.util.*
 
-
 class PlayerFetcher(
     private val playerRepository: ICloudPlayerRepository
 ) {
@@ -19,9 +18,8 @@ class PlayerFetcher(
         return try {
             val uuid = UUID.fromString(id)
             playerRepository.getPlayer(uuid)
-        }catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             null
         }
     }
-
 }

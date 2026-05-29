@@ -1,13 +1,13 @@
 package dev.redicloud.cluster.file
 
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.service.file.IFileNode
 import dev.redicloud.api.service.file.IFileNodeRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.CachedServiceRepository
 import dev.redicloud.repository.service.ServiceRepository
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.api.service.ServiceType
 import kotlin.time.Duration.Companion.minutes
 
 class FileNodeRepository(
@@ -16,7 +16,8 @@ class FileNodeRepository(
 ) : ServiceRepository(
     databaseConnection,
     packetManager
-), IFileNodeRepository {
+),
+    IFileNodeRepository {
 
     private val internalRepository = object : CachedServiceRepository<IFileNode, FileNode>(
         databaseConnection,
@@ -30,7 +31,7 @@ class FileNodeRepository(
         override suspend fun transformShutdownable(service: FileNode): FileNode = service
     }
 
-     fun migrateId(serviceId: ServiceId): ServiceId {
+    fun migrateId(serviceId: ServiceId): ServiceId {
         return when (serviceId.type) {
             ServiceType.NODE -> ServiceId(serviceId.id, ServiceType.FILE_NODE)
             ServiceType.FILE_NODE -> serviceId
@@ -61,5 +62,4 @@ class FileNodeRepository(
     override suspend fun getConnectedFileNodes(): List<FileNode> {
         return internalRepository.getConnectedServices()
     }
-
 }

@@ -1,13 +1,13 @@
 package dev.redicloud.service.node.commands
 
 import dev.redicloud.api.commands.*
+import dev.redicloud.api.utils.CONNECTORS_FOLDER
+import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.api.version.IServerVersionHandler
-import dev.redicloud.api.utils.CONNECTORS_FOLDER
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.service.base.suggester.CloudConnectorFileNameSelector
 import dev.redicloud.service.base.suggester.CloudServerVersionTypeSuggester
@@ -21,6 +21,7 @@ import java.util.*
 @Command("svt")
 @CommandAlias(["serverversiontype", "svtype"])
 @CommandDescription("Configure server version types")
+@Suppress("TooManyFunctions")
 class CloudServerVersionTypeCommand(
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
@@ -41,7 +42,11 @@ class CloudServerVersionTypeCommand(
                 return@runBlocking
             }
             serverVersionTypeRepository.createType(newType)
-            actor.sendMessage("Successfully duplicated server version type ${toConsoleValue(type.name)} to ${toConsoleValue(newType.name)}")
+            actor.sendMessage(
+                "Successfully duplicated server version type ${toConsoleValue(
+                    type.name
+                )} to ${toConsoleValue(newType.name)}"
+            )
         }
     }
 
@@ -95,10 +100,12 @@ class CloudServerVersionTypeCommand(
         actor.sendMessage("")
         actor.sendMessage("Name§8: %hc%${type.name}")
         val handler = IServerVersionHandler.getHandlerStrict(type.versionHandlerName)
-        actor.sendMessage("Handler§8: %hc%${
-            handler?.name
-                ?: (IServerVersionHandler.getDefaultHandler().name + " §8(§ccan´t found '${type.versionHandlerName}'§8)")
-        }")
+        actor.sendMessage(
+            "Handler§8: %hc%${
+                handler?.name
+                    ?: (IServerVersionHandler.getDefaultHandler().name + " §8(§ccan´t found '${type.versionHandlerName}'§8)")
+            }"
+        )
         actor.sendMessage("Default§8: %hc%${type.defaultType.toSymbol()}")
         actor.sendMessage("Proxy§8: %hc%${type.proxy.toSymbol()}")
         actor.sendMessage(
@@ -173,7 +180,9 @@ class CloudServerVersionTypeCommand(
     }
 
     @CommandSubPath("edit <version> libPattern <pattern>")
-    @CommandDescription("Set the lib pattern for the files that should be stored after the patch. Set to 'null' to disable the patching")
+    @CommandDescription(
+        "Set the lib pattern for the files that should be stored after the patch. Set to 'null' to disable the patching"
+    )
     fun onEditLibPattern(
         actor: ConsoleActor,
         @CommandParameter("version", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
@@ -182,7 +191,9 @@ class CloudServerVersionTypeCommand(
         runBlocking {
             type.libPattern = if (pattern != "null") pattern else null
             serverVersionTypeRepository.updateType(type)
-            actor.sendMessage("Updated lib pattern of ${toConsoleValue(type.name)} to ${toConsoleValue(type.libPattern!!)}")
+            actor.sendMessage(
+                "Updated lib pattern of ${toConsoleValue(type.name)} to ${toConsoleValue(type.libPattern!!)}"
+            )
         }
     }
 
@@ -195,7 +206,9 @@ class CloudServerVersionTypeCommand(
     ) {
         runBlocking {
             if (type.defaultFiles.none { it.value.lowercase() == url.lowercase() }) {
-                actor.sendMessage("§cThe file with the url '$url' is not added to the version ${toConsoleValue(type.name)}!")
+                actor.sendMessage(
+                    "§cThe file with the url '$url' is not added to the version ${toConsoleValue(type.name)}!"
+                )
                 return@runBlocking
             }
             type.defaultFiles.remove(url)
@@ -243,9 +256,10 @@ class CloudServerVersionTypeCommand(
             }.filter { it.typeId != null }
             if (versions.any { it.typeId == type.uniqueId }) {
                 actor.sendMessage("§cYou can't delete a server version type which is used by a server version:")
-                actor.sendMessage("§c${
-                    versions.filter { it.typeId == type.uniqueId }.joinToString(", ") { it.displayName }
-                }"
+                actor.sendMessage(
+                    "§c${
+                        versions.filter { it.typeId == type.uniqueId }.joinToString(", ") { it.displayName }
+                    }"
                 )
                 return@runBlocking
             }
@@ -290,7 +304,9 @@ class CloudServerVersionTypeCommand(
             }
             type.versionHandlerName = newHandler.name
             serverVersionTypeRepository.updateType(type)
-            actor.sendMessage("Successfully edited handler of server version type to ${toConsoleValue(type.versionHandlerName)}")
+            actor.sendMessage(
+                "Successfully edited handler of server version type to ${toConsoleValue(type.versionHandlerName)}"
+            )
         }
     }
 
@@ -331,7 +347,9 @@ class CloudServerVersionTypeCommand(
             }
             type.connectorPluginName = connector
             serverVersionTypeRepository.updateType(type)
-            actor.sendMessage("Successfully edited connector of server version type to ${toConsoleValue(type.connectorPluginName)}")
+            actor.sendMessage(
+                "Successfully edited connector of server version type to ${toConsoleValue(type.connectorPluginName)}"
+            )
         }
     }
 
@@ -378,10 +396,11 @@ class CloudServerVersionTypeCommand(
             }
             type.connectorFolder = folder
             serverVersionTypeRepository.updateType(type)
-            actor.sendMessage("Successfully edited connector folder of server version type to ${toConsoleValue(type.connectorFolder)}")
+            actor.sendMessage(
+                "Successfully edited connector folder of server version type to ${toConsoleValue(type.connectorFolder)}"
+            )
         }
     }
-
 
     @CommandSubPath("edit <name> jvmargument add <argument>")
     @CommandAlias(["edit <name> jvmarg add <argument>"])
@@ -505,5 +524,4 @@ class CloudServerVersionTypeCommand(
             actor.sendMessage("Successfully removed file edit from server version type!")
         }
     }
-
 }

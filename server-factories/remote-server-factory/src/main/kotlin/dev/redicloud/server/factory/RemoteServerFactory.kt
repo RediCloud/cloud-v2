@@ -5,7 +5,6 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.api.service.server.factory.ICloudRemoteServerFactory
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
-import dev.redicloud.api.utils.factory.FailedStarts
 import dev.redicloud.api.utils.factory.ServerQueueInformation
 import dev.redicloud.api.utils.factory.TransferServerQueueInformation
 import dev.redicloud.api.utils.factory.calculateStartOrder
@@ -41,11 +40,17 @@ open class RemoteServerFactory(
     var shutdown = false
 
     override suspend fun queueStart(configurationTemplate: ICloudConfigurationTemplate, count: Int, targetNodeId: ServiceId?): List<UUID> {
-        val info = ServerQueueInformation(UUID.randomUUID(), configurationTemplate, null, queueTime = System.currentTimeMillis())
+        val info =
+            ServerQueueInformation(
+                UUID.randomUUID(),
+                configurationTemplate,
+                null,
+                queueTime = System.currentTimeMillis()
+            )
         val nodes = nodeRepository.getRegisteredNodes()
         info.calculateStartOrder(nodes, serverRepository)
         val ids = mutableListOf<UUID>()
-        for (i in 1..count) {
+        repeat(count) {
             val clone = ServerQueueInformation(
                 UUID.randomUUID(),
                 configurationTemplate,
@@ -63,7 +68,13 @@ open class RemoteServerFactory(
 
     override suspend fun queueStart(serverId: ServiceId) {
         val server = serverRepository.getServer<CloudServer>(serverId) ?: throw IllegalArgumentException("Server with id $serverId not found")
-        val info = ServerQueueInformation(UUID.randomUUID(), server.configurationTemplate, serverId, queueTime = System.currentTimeMillis())
+        val info =
+            ServerQueueInformation(
+                UUID.randomUUID(),
+                server.configurationTemplate,
+                serverId,
+                queueTime = System.currentTimeMillis()
+            )
         val nodes = nodeRepository.getRegisteredNodes()
         info.calculateStartOrder(nodes, serverRepository)
         startQueue.add(info)
@@ -107,5 +118,4 @@ open class RemoteServerFactory(
     override suspend fun getUnregisterQueue(): List<ServiceId> {
         return unregisterQueue.toList()
     }
-
 }

@@ -1,11 +1,10 @@
 package dev.redicloud.repository.server
 
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.api.service.server.ICloudProxyServer
-import dev.redicloud.repository.service.ServiceSessions
-import dev.redicloud.repository.template.configuration.ConfigurationTemplate
-import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
+import dev.redicloud.repository.service.ServiceSessions
 
 class CloudProxyServer(
     serviceId: ServiceId,
@@ -28,4 +27,5 @@ class CloudProxyServer(
     port,
     maxPlayers,
     mutableListOf()
-), ICloudProxyServer
+),
+    ICloudProxyServer

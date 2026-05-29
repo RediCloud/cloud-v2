@@ -11,10 +11,14 @@ class CloudNodeMemoryUsageTask(
     private val hostingId: ServiceId
 ) : CloudTask() {
 
+    companion object {
+        private const val MEMORY_UPDATE_INTERVAL_MS = 1500
+    }
+
     private var lastUpdate = -1L
 
     override suspend fun execute(): Boolean {
-        if (lastUpdate + 1500 > System.currentTimeMillis()) return false
+        if (lastUpdate + MEMORY_UPDATE_INTERVAL_MS > System.currentTimeMillis()) return false
         lastUpdate = System.currentTimeMillis()
         val hostedProcesses = serverFactory.hostedProcesses.toList()
         val memoryUsage = hostedProcesses.sumOf { it.configurationTemplate.maxMemory }
@@ -23,6 +27,4 @@ class CloudNodeMemoryUsageTask(
         nodeRepository.updateNode(thisNode)
         return false
     }
-
-
 }

@@ -11,6 +11,7 @@ import dev.redicloud.utils.gson.GsonInterface
 import java.io.File
 import java.util.UUID
 
+@Suppress("LongParameterList")
 class CloudServerVersion(
     override val uniqueId: UUID,
     override var typeId: UUID?,
@@ -49,14 +50,21 @@ class CloudServerVersion(
             }
             val editor = ConfigurationFileEditor.ofFile(fileToEdit)
             if (editor == null) {
-                logger.warning("§cFile ${toConsoleValue(fileToEdit, false)} is not a configuration file! So it can not be edited!")
+                logger.warning(
+                    "§cFile ${toConsoleValue(fileToEdit, false)} is not a configuration file! So it can not be edited!"
+                )
                 return@forEach
             }
             editInfo.forEach { (key, value) ->
                 try {
                     editor.setValue(key, action(value))
-                }catch (e: IllegalStateException) {
-                    logger.warning("§cKey ${toConsoleValue(key, false)} does not exist in file ${toConsoleValue(fileToEdit, false)}!")
+                } catch (_: IllegalStateException) {
+                    logger.warning(
+                        "§cKey ${toConsoleValue(
+                            key,
+                            false
+                        )} does not exist in file ${toConsoleValue(fileToEdit, false)}!"
+                    )
                 }
             }
             editor.saveToFile(fileToEdit)
@@ -65,14 +73,14 @@ class CloudServerVersion(
 
     fun isSimilar(other: CloudServerVersion): Boolean {
         return typeId == other.typeId &&
-                projectName == other.projectName &&
-                customDownloadUrl == other.customDownloadUrl &&
-                version.name == other.version.name &&
-                libPattern == other.libPattern &&
-                patch == other.patch &&
-                online == other.online &&
-                defaultFiles == other.defaultFiles &&
-                fileEdits == other.fileEdits
+            projectName == other.projectName &&
+            customDownloadUrl == other.customDownloadUrl &&
+            version.name == other.version.name &&
+            libPattern == other.libPattern &&
+            patch == other.patch &&
+            online == other.online &&
+            defaultFiles == other.defaultFiles &&
+            fileEdits == other.fileEdits
     }
 
     override fun compareTo(other: CloudServerVersion): Int {
@@ -99,5 +107,4 @@ class CloudServerVersion(
             fileEdits.toMutableMap()
         )
     }
-
 }

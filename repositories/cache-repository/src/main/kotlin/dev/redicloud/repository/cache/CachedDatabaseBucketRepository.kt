@@ -1,10 +1,10 @@
 package dev.redicloud.repository.cache
 
 import dev.redicloud.api.database.IDatabaseConnection
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.cache.ClusterCache
 import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.packets.PacketManager
-import dev.redicloud.api.service.ServiceType
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
@@ -23,7 +23,8 @@ open class CachedDatabaseBucketRepository<I : Any, K : Any> (
     cacheClass
 ) {
 
-    protected val cache = ClusterCache(name, connection.serviceId, cacheClass, cacheDuration, packetManager, *cacheTypes)
+    protected val cache =
+        ClusterCache(name, connection.serviceId, cacheClass, cacheDuration, packetManager, *cacheTypes)
 
     override suspend fun get(identifier: String): K? {
         if (cache.isCached(identifier)) return cache.get(identifier)
@@ -64,5 +65,4 @@ open class CachedDatabaseBucketRepository<I : Any, K : Any> (
         cache.updateCache(toUpdate)
         return cache.getCache().values.toList() + toUpdate.values.toList()
     }
-
 }

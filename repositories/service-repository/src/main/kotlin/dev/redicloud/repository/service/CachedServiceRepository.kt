@@ -2,11 +2,11 @@ package dev.redicloud.repository.service
 
 import dev.redicloud.api.database.grid.list.ISyncedMutableList
 import dev.redicloud.api.service.ICloudService
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.api.service.ServiceType
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
@@ -40,7 +40,7 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
             shutdownCalled = true
             runBlocking {
                 if (!databaseConnection.connected) {
-                    throw Exception("Database connection is not connected! Cannot remove service from cluster")
+                    error("Database connection is not connected! Cannot remove service from cluster")
                 }
                 val serviceId = databaseConnection.serviceId
                 if (serviceId.type != targetServiceType) return@runBlocking
@@ -51,7 +51,7 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
                 if (service.canSelfUnregister() && service.unregisterAfterDisconnect()) {
                     registeredServices.remove(serviceId)
                     deleteService(interfaceClass.cast(transformShutdownable(service)))
-                }else {
+                } else {
                     updateService(interfaceClass.cast(transformShutdownable(service)))
                 }
             }
@@ -69,7 +69,9 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
         }
 
     suspend fun getService(serviceId: ServiceId): K? {
-        if (serviceId.type != targetServiceType) throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${serviceId.type.name})")
+        require(serviceId.type == targetServiceType) {
+            "Service type does not match (expected ${targetServiceType.name}, got ${serviceId.type.name})"
+        }
         return get(serviceId.id.toString())
     }
 
@@ -78,19 +80,19 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
     }
 
     suspend fun existsService(serviceId: ServiceId): Boolean {
-        if (serviceId.type != targetServiceType) {
-            throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${serviceId.type.name})")
+        require(serviceId.type == targetServiceType) {
+            "Service type does not match (expected ${targetServiceType.name}, got ${serviceId.type.name})"
         }
         return exists(serviceId.id.toString())
     }
 
     suspend fun createService(cloudService: I): K {
-        if (cloudService.serviceId.type != targetServiceType) {
-            throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})")
+        require(cloudService.serviceId.type == targetServiceType) {
+            "Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})"
         }
         if (cloudService.connected && !connectedServices.contains(cloudService.serviceId)) {
             connectedServices.add(cloudService.serviceId)
-        }else if(!cloudService.connected) {
+        } else if (!cloudService.connected) {
             connectedServices.remove(cloudService.serviceId)
         }
         if (!registeredServices.contains(cloudService.serviceId)) {
@@ -100,12 +102,12 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
     }
 
     suspend fun updateService(cloudService: I): K {
-        if (cloudService.serviceId.type != targetServiceType) {
-            throw IllegalArgumentException("Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})")
+        require(cloudService.serviceId.type == targetServiceType) {
+            "Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})"
         }
         if (cloudService.connected && !connectedServices.contains(cloudService.serviceId)) {
             connectedServices.add(cloudService.serviceId)
-        }else if(!cloudService.connected) {
+        } else if (!cloudService.connected) {
             connectedServices.remove(cloudService.serviceId)
         }
         if (!registeredServices.contains(cloudService.serviceId)) {
@@ -138,5 +140,4 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
     }
 
     abstract suspend fun transformShutdownable(service: K): K
-
 }

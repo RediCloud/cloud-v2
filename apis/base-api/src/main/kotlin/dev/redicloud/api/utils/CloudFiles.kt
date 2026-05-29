@@ -30,7 +30,9 @@ fun toUniversalPath(file: File, forceSeperator: String = File.separator): String
         .replace(File.separator, forceSeperator)
     return if (path.startsWith(forceSeperator)) {
         path.replaceFirst(forceSeperator, "")
-    } else path
+    } else {
+        path
+    }
 }
 
 class CloudFile(val name: String, val parent: String = "", val folder: Boolean = false) {
@@ -39,7 +41,7 @@ class CloudFile(val name: String, val parent: String = "", val folder: Boolean =
         val prefixPath = cloudFolder?.absolutePath ?: CLOUD_PATH
         return if (parent.isEmpty()) {
             prefixPath + separator + name
-        }else {
+        } else {
             prefixPath + separator + parent + separator + name
         }
     }
@@ -54,7 +56,7 @@ class CloudFile(val name: String, val parent: String = "", val folder: Boolean =
         if (!file.parentFile.exists()) file.parentFile.mkdirs()
         if (folder) {
             file.mkdir()
-        }else {
+        } else {
             file.createNewFile()
         }
         return file
@@ -68,10 +70,9 @@ class CloudFile(val name: String, val parent: String = "", val folder: Boolean =
         if (!file.parentFile.exists()) file.parentFile.mkdirs()
         if (folder) {
             file.mkdir()
-        }else {
+        } else {
             file.createNewFile()
         }
         return file
     }
-
 }

@@ -31,5 +31,4 @@ class CloudPlayerBookPacket(
     fun createBook(): Book {
         return Book.book(title, author, pages)
     }
-
 }

@@ -1,5 +1,6 @@
 package dev.redicloud.module.papermc
 
+import dev.redicloud.api.exceptions.CloudVersionException
 import dev.redicloud.api.java.ICloudJavaVersion
 import dev.redicloud.api.java.ICloudJavaVersionRepository
 import dev.redicloud.api.utils.ProcessConfiguration
@@ -17,10 +18,10 @@ import io.ktor.http.*
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantLock
 import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.minutes
 
+@Suppress("TooManyFunctions")
 class PaperMcServerVersionHandler(
     private val serverVersionRepository: ICloudServerVersionRepository,
     private val serverVersionTypeRepository: ICloudServerVersionTypeRepository,
@@ -29,6 +30,12 @@ class PaperMcServerVersionHandler(
     private val console: Console?,
     private val logger: Logger
 ) : IServerVersionHandler {
+
+    companion object {
+        private const val ANIMATION_TICK_MS = 200L
+        private const val PATCH_PORT_RANGE_START = 40000
+        private const val PATCH_PORT_RANGE_END = 60000
+    }
 
     override val name: String = "papermc"
     override val default: Boolean = false
@@ -41,7 +48,7 @@ class PaperMcServerVersionHandler(
         console?.let {
             val animation = AnimatedLineAnimation(
                 console,
-                200
+                ANIMATION_TICK_MS
             ) {
                 if (canceled) {
                     null
@@ -56,87 +63,18 @@ class PaperMcServerVersionHandler(
         }
         if (lock) getLock(version).lock()
         val jar = getJar(version)
+        @Suppress("TooGenericExceptionCaught")
         try {
             if (jar.exists() && !force) return jar
-            if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
-
-            val type = serverVersionTypeRepository.getType(version.typeId!!)
-                ?: throw NullPointerException("Cant find server version type ${version.typeId}")
-
-            val targetVersion = if (version.version.latest) version.version.dynamicVersion() else version.version
-            val buildId = requester.getLatestBuild(type, targetVersion)
-            if (buildId == -1) throw NullPointerException("Cant find build for ${version.displayName}")
-
-            val url = requester.getDownloadUrl(type, targetVersion, buildId)
-            val response = httpClient.get { url(url) }
-            if (!response.status.isSuccess()) throw IllegalStateException("Download of ${targetVersion.name} is not available (${response.status.value}):\n${response.bodyAsText()}")
-
-            val folder = getFolder(version)
-            if (folder.exists()) folder.deleteRecursively()
-            folder.mkdirs()
-            if (jar.exists()) jar.delete()
-            jar.writeBytes(response.readBytes())
-
-            version.buildId = buildId.toString()
-            serverVersionRepository.updateVersion(version)
-
-            val downloader = MultiAsyncAction()
-
-            val defaultFiles = mutableMapOf<String, String>()
-            defaultFiles.putAll(version.defaultFiles)
-            defaultFiles.putAll(type.defaultFiles)
-            defaultFiles.forEach {
-                downloader.add {
-                    val url1 = it.value
-                        .replace("%build%", BUILD)
-                        .replace("%cloud_version%", CLOUD_VERSION)
-                        .replace("%branch%", BRANCH)
-                    val path = it.key
-                    try {
-                        if (!isValidUrl(url1)) {
-                            logger.warning(
-                                "§cInvalid default file with url ${
-                                    toConsoleValue(
-                                        url1,
-                                        false
-                                    )
-                                } for ${toConsoleValue(version.displayName, false)}"
-                            )
-                            return@add
-                        }
-                        val file = File(folder, path)
-                        if (!file.parentFile.exists()) file.parentFile.mkdirs()
-                        val response1 = httpClient.get { url(url1) }
-                        if (!response1.status.isSuccess()) {
-                            logger.warning(
-                                "§cDownload of default file " +
-                                        "${toConsoleValue(url1, false)} for " +
-                                        "${toConsoleValue(version.displayName, false)} is not available " +
-                                        "(${response.status.value}):\n${response.bodyAsText()}"
-                            )
-                            return@add
-                        }
-                        file.createNewFile()
-                        file.writeBytes(response1.readBytes())
-                    } catch (e: Exception) {
-                        logger.warning(
-                            "§cFailed to download default file ${
-                                toConsoleValue(
-                                    url1,
-                                    false
-                                )
-                            } for ${toConsoleValue(version.displayName, false)}", e
-                        )
-                    }
-                }
-            }
-
-            downloader.joinAll()
-
+            downloadJar(version, jar)
+            downloadDefaultFiles(version, getFolder(version), logger)
             lastUpdateChecks[version] = System.currentTimeMillis()
-        } catch (e: Exception) {
+        } catch (e: CloudVersionException) {
             error = true
             throw e
+        } catch (e: Exception) {
+            error = true
+            throw CloudVersionException("Failed to download version ${version.displayName}", e)
         } finally {
             downloaded = true
             if (lock) getLock(version).unlock()
@@ -145,8 +83,101 @@ class PaperMcServerVersionHandler(
         return jar
     }
 
+    @Suppress("ThrowsCount")
+    private suspend fun downloadJar(version: ICloudServerVersion, jar: File) {
+        if (version.typeId == null) {
+            throw NullPointerException("Cant find server version type for ${version.displayName}")
+        }
+        val type = serverVersionTypeRepository.getType(version.typeId!!)
+            ?: throw NullPointerException("Cant find server version type ${version.typeId}")
+
+        val targetVersion = if (version.version.latest) version.version.dynamicVersion() else version.version
+        val buildId = requester.getLatestBuild(type, targetVersion)
+        if (buildId == -1) throw NullPointerException("Cant find build for ${version.displayName}")
+
+        val url = requester.getDownloadUrl(type, targetVersion, buildId)
+        val response = httpClient.get { url(url) }
+        check(response.status.isSuccess()) {
+            "Download of ${targetVersion.name} is not available (${response.status.value}):\n${response.bodyAsText()}"
+        }
+
+        val folder = getFolder(version)
+        if (folder.exists()) folder.deleteRecursively()
+        folder.mkdirs()
+        if (jar.exists()) jar.delete()
+        jar.writeBytes(response.readBytes())
+
+        version.buildId = buildId.toString()
+        serverVersionRepository.updateVersion(version)
+    }
+
+    private suspend fun downloadDefaultFiles(version: ICloudServerVersion, folder: File, logger: Logger) {
+        val type = serverVersionTypeRepository.getType(version.typeId!!) ?: return
+        val downloader = MultiAsyncAction()
+        val defaultFiles = mutableMapOf<String, String>()
+        defaultFiles.putAll(version.defaultFiles)
+        defaultFiles.putAll(type.defaultFiles)
+        defaultFiles.forEach {
+            downloader.add {
+                val url = it.value
+                    .replace("%build%", BUILD)
+                    .replace("%cloud_version%", CLOUD_VERSION)
+                    .replace("%branch%", BRANCH)
+                val path = it.key
+                downloadSingleDefaultFile(url, path, folder, version, logger)
+            }
+        }
+        downloader.joinAll()
+    }
+
+    private suspend fun downloadSingleDefaultFile(
+        url: String,
+        path: String,
+        folder: File,
+        version: ICloudServerVersion,
+        logger: Logger
+    ) {
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            if (!isValidUrl(url)) {
+                logger.warning(
+                    "§cInvalid default file with url ${toConsoleValue(
+                        url,
+                        false
+                    )} for ${toConsoleValue(version.displayName, false)}"
+                )
+                return
+            }
+            val file = File(folder, path)
+            if (!file.parentFile.exists()) file.parentFile.mkdirs()
+            val response = httpClient.get { url(url) }
+            if (!response.status.isSuccess()) {
+                logger.warning(
+                    "§cDownload of default file ${toConsoleValue(url, false)} for " +
+                        "${toConsoleValue(version.displayName, false)} is not available " +
+                        "(${response.status.value}):\n${response.bodyAsText()}"
+                )
+                return
+            }
+            file.createNewFile()
+            file.writeBytes(response.readBytes())
+        } catch (e: Exception) {
+            logger.warning(
+                "§cFailed to download default file ${toConsoleValue(
+                    url,
+                    false
+                )} for ${toConsoleValue(version.displayName, false)}",
+                e
+            )
+        }
+    }
+
     override suspend fun canDownload(version: ICloudServerVersion): Boolean {
-        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
+        if (version.typeId == null) {
+            throw NullPointerException(
+                "Cant find server version type for ${version.displayName}"
+            )
+        }
         val type = serverVersionTypeRepository.getType(version.typeId!!)
             ?: throw NullPointerException("Cant find server version type ${version.typeId}")
         val targetVersion = if (version.version.latest) version.version.dynamicVersion() else version.version
@@ -157,7 +188,11 @@ class PaperMcServerVersionHandler(
     }
 
     override suspend fun isUpdateAvailable(version: ICloudServerVersion, force: Boolean): Boolean {
-        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
+        if (version.typeId == null) {
+            throw NullPointerException(
+                "Cant find server version type for ${version.displayName}"
+            )
+        }
         if (!force && System.currentTimeMillis() - (lastUpdateChecks[version] ?: -1) < 5.minutes.inWholeMilliseconds) return false
         val currentId = version.buildId ?: return true
         val type = serverVersionTypeRepository.getType(version.typeId!!)
@@ -170,14 +205,22 @@ class PaperMcServerVersionHandler(
     }
 
     override suspend fun getVersions(version: ICloudServerVersion): List<IServerVersion> {
-        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
+        if (version.typeId == null) {
+            throw NullPointerException(
+                "Cant find server version type for ${version.displayName}"
+            )
+        }
         val type = serverVersionTypeRepository.getType(version.typeId!!)
             ?: throw NullPointerException("Cant find server version type ${version.typeId}")
         return requester.getVersions(type)
     }
 
     override suspend fun getBuilds(version: ICloudServerVersion, mcVersion: IServerVersion): List<String> {
-        if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
+        if (version.typeId == null) {
+            throw NullPointerException(
+                "Cant find server version type for ${version.displayName}"
+            )
+        }
         val type = serverVersionTypeRepository.getType(version.typeId!!)
             ?: throw NullPointerException("Cant find server version type ${version.typeId}")
         return requester.getBuilds(type, mcVersion).map { it.toString() }
@@ -198,7 +241,7 @@ class PaperMcServerVersionHandler(
         console?.let {
             val animation = AnimatedLineAnimation(
                 console,
-                200
+                ANIMATION_TICK_MS
             ) {
                 if (canceled) {
                     null
@@ -212,6 +255,7 @@ class PaperMcServerVersionHandler(
             console.startAnimation(animation)
         }
         if (lock) getLock(version).lock()
+        @Suppress("TooGenericExceptionCaught")
         try {
             val jar = getJar(version)
             if (!jar.exists()) download(version, true, lock = false)
@@ -222,67 +266,101 @@ class PaperMcServerVersionHandler(
             versionDir.copyRecursively(tempDir, true)
             val tempJar = File(tempDir, jar.name)
 
-            if (version.typeId == null) throw NullPointerException("Cant find server version type for ${version.displayName}")
-            val type = serverVersionTypeRepository.getType(version.typeId!!)
-                ?: throw NullPointerException("Cant find server version type ${version.typeId}")
-            if (version.javaVersionId == null) throw NullPointerException("Cant find java version for ${version.displayName}")
-            val javaVersion = javaVersionRepository.getVersion(version.javaVersionId!!)
-                ?: throw NullPointerException("Cant find java version for ${version.displayName}")
-            findFreePort(40000..60000)
-
-            val processBuilder = ProcessBuilder(patchCommand(type, javaVersion, tempJar))
-            processBuilder.directory(tempDir)
-            val process = processBuilder.start()
-            console?.let {
-                val screen = console.createScreen("patch_${version.displayName}")
-                ScreenProcessHandler(process, screen)
-            }
-            process.waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+            val type = resolveVersionType(version)
+            val javaVersion = resolveJavaVersion(version)
+            executePatchProcess(version, type, javaVersion, tempDir, tempJar)
 
             if (!versionDir.exists()) versionDir.mkdirs()
-
             tempJar.copyTo(jar, true)
-            val processConfiguration = ProcessConfiguration.collect(
-                version,
-                type
-            )
-            val patterns = processConfiguration.getLibPatterns().toMutableList()
-            if (version.libPattern != null) patterns.add(Pattern.compile(version.libPattern!!))
-            if (type.libPattern != null) patterns.add(Pattern.compile(type.libPattern!!))
-            if (patterns.isNotEmpty()) {
-                patterns.add(Pattern.compile("(${tempJar.name})"))
-
-                fun deleteFiles(file: File): Boolean {
-                    val paths = processConfiguration.defaultFiles.values
-                    var workDirPath = file.absolutePath.replace(tempDir.absolutePath, "").replace("\\", "/")
-                    if (workDirPath.startsWith("/")) workDirPath = workDirPath.substring(1)
-                    if (paths.any { file.absolutePath.endsWith(it) }) return false
-                    if (patterns.none { it.matcher(workDirPath).find() }) {
-                        if (file.isDirectory) {
-                            if (file.listFiles()?.all { deleteFiles(it) } == true) file.deleteRecursively()
-                        } else {
-                            file.delete()
-                            return true
-                        }
-                    }
-                    return false
-                }
-
-                tempDir.listFiles()?.forEach {
-                    deleteFiles(it)
-                }
-            }
+            cleanupPatchedFiles(version, type, tempDir, tempJar)
             versionDir.deleteRecursively()
             tempDir.copyRecursively(versionDir, true)
             tempDir.deleteRecursively()
             File(versionDir, ".patched").createNewFile()
-        }catch (e: Exception) {
+        } catch (e: CloudVersionException) {
             error = true
             throw e
+        } catch (e: Exception) {
+            error = true
+            throw CloudVersionException("Failed to patch version ${version.displayName}", e)
         } finally {
             patched = true
             if (lock) getLock(version).unlock()
         }
+    }
+
+    private suspend fun resolveVersionType(version: ICloudServerVersion): ICloudServerVersionType {
+        if (version.typeId == null) {
+            throw NullPointerException("Cant find server version type for ${version.displayName}")
+        }
+        return serverVersionTypeRepository.getType(version.typeId!!)
+            ?: throw NullPointerException("Cant find server version type ${version.typeId}")
+    }
+
+    private suspend fun resolveJavaVersion(version: ICloudServerVersion): ICloudJavaVersion {
+        if (version.javaVersionId == null) {
+            throw NullPointerException("Cant find java version for ${version.displayName}")
+        }
+        return javaVersionRepository.getVersion(version.javaVersionId!!)
+            ?: throw NullPointerException("Cant find java version for ${version.displayName}")
+    }
+
+    private suspend fun executePatchProcess(
+        version: ICloudServerVersion,
+        type: ICloudServerVersionType,
+        javaVersion: ICloudJavaVersion,
+        tempDir: File,
+        tempJar: File
+    ) {
+        findFreePort(PATCH_PORT_RANGE_START..PATCH_PORT_RANGE_END)
+        val processBuilder = ProcessBuilder(patchCommand(type, javaVersion, tempJar))
+        processBuilder.directory(tempDir)
+        val process = processBuilder.start()
+        console?.let {
+            val screen = console.createScreen("patch_${version.displayName}")
+            ScreenProcessHandler(process, screen)
+        }
+        process.waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+    }
+
+    private fun cleanupPatchedFiles(
+        version: ICloudServerVersion,
+        type: ICloudServerVersionType,
+        tempDir: File,
+        tempJar: File
+    ) {
+        val processConfiguration = ProcessConfiguration.collect(version, type)
+        val patterns = processConfiguration.getLibPatterns().toMutableList()
+        if (version.libPattern != null) patterns.add(Pattern.compile(version.libPattern!!))
+        if (type.libPattern != null) patterns.add(Pattern.compile(type.libPattern!!))
+        if (patterns.isEmpty()) return
+
+        patterns.add(Pattern.compile("(${tempJar.name})"))
+        val defaultFilePaths = processConfiguration.defaultFiles.values
+
+        tempDir.listFiles()?.forEach { deleteNonLibFiles(it, tempDir, defaultFilePaths, patterns) }
+    }
+
+    private fun deleteNonLibFiles(
+        file: File,
+        baseDir: File,
+        defaultFilePaths: Collection<String>,
+        patterns: List<Pattern>
+    ): Boolean {
+        var workDirPath = file.absolutePath.replace(baseDir.absolutePath, "").replace("\\", "/")
+        if (workDirPath.startsWith("/")) workDirPath = workDirPath.substring(1)
+        if (defaultFilePaths.any { file.absolutePath.endsWith(it) }) return false
+        if (patterns.none { it.matcher(workDirPath).find() }) {
+            if (file.isDirectory) {
+                if (file.listFiles()?.all { deleteNonLibFiles(it, baseDir, defaultFilePaths, patterns) } == true) {
+                    file.deleteRecursively()
+                }
+            } else {
+                file.delete()
+                return true
+            }
+        }
+        return false
     }
 
     override suspend fun patchCommand(
@@ -296,5 +374,4 @@ class PaperMcServerVersionHandler(
     override fun getLock(version: ICloudServerVersion): SimpleLock {
         return IServerVersionHandler.getDefaultHandler().getLock(version)
     }
-
 }

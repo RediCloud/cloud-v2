@@ -4,6 +4,7 @@ import com.google.inject.Key
 import com.google.inject.name.Named
 import dev.redicloud.api.events.internal.module.ModuleHandlerInitializedEvent
 import dev.redicloud.api.events.internal.module.ModuleLifeCycleChangedEvent
+import dev.redicloud.api.exceptions.CloudModuleException
 import dev.redicloud.api.modules.*
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.utils.CloudInjectable
@@ -28,6 +29,7 @@ import kotlin.concurrent.withLock
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.javaMethod
 
+@Suppress("TooManyFunctions")
 class ModuleHandler(
     private val serviceId: ServiceId,
     repoUrls: List<String>,
@@ -39,6 +41,7 @@ class ModuleHandler(
 
     companion object {
         private val logger = LogManager.logger(ModuleHandler::class)
+        private const val MIN_MODULE_FILE_SIZE = 1000L
     }
 
     private val loaders = mutableMapOf<String, ModuleClassLoader>()
@@ -50,11 +53,12 @@ class ModuleHandler(
 
     init {
         repoUrls.forEach { url ->
+            @Suppress("TooGenericExceptionCaught")
             try {
                 ModuleWebRepository(url, this).also {
                     repositories.add(it)
                 }
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 logger.severe("Failed to add module repository $url!", e)
             }
         }
@@ -69,7 +73,11 @@ class ModuleHandler(
     suspend fun loadModules() {
         detectModules()
         moduleFiles.forEach {
-            loadModule(it)
+            try {
+                loadModule(it)
+            } catch (e: CloudModuleException) {
+                logger.warning("Failed to load module ${it.name}", e)
+            }
         }
         eventManager.fireEvent(ModuleHandlerInitializedEvent(this))
     }
@@ -77,16 +85,25 @@ class ModuleHandler(
     override suspend fun updateModules(silent: Boolean, loadModules: Boolean) = lock.withLock {
         runBlocking {
             cachedDescriptions.forEach { description ->
+                @Suppress("TooGenericExceptionCaught")
                 try {
                     val targetRepositories = if (description.cachedFile != null) {
                         repositories.filter { it.isUpdateAvailable(description.id) }
-                    }else emptyList()
+                    } else {
+                        emptyList()
+                    }
 
                     if (targetRepositories.isEmpty()) return@forEach
 
                     if (targetRepositories.size > 2) {
-                        logger.warning("§cFound more than 2 repositories that have an update for module ${description.id}!")
-                        targetRepositories.forEach { logger.warning("§c - ${it.repoUrl} | ${it.getLatestVersion(description.id)}") }
+                        logger.warning(
+                            "§cFound more than 2 repositories that have an update for module ${description.id}!"
+                        )
+                        targetRepositories.forEach {
+                            logger.warning(
+                                "§c - ${it.repoUrl} | ${it.getLatestVersion(description.id)}"
+                            )
+                        }
                         return@forEach
                     }
 
@@ -103,7 +120,7 @@ class ModuleHandler(
                         return@forEach
                     }
                     if (loadModules) loadModule(file)
-                }catch (e: Exception) {
+                } catch (e: Exception) {
                     logger.severe("Failed to update module ${description.id}!", e)
                 }
             }
@@ -114,7 +131,11 @@ class ModuleHandler(
         logger.info("Uninstalling module %hc%$moduleId%tc%...")
         val file = getModuleData(moduleId).also { data ->
             if (data == null) return@also
-            if (data.loaded) unloadModule(data.id)
+            if (data.loaded) {
+                try {
+                    unloadModule(data.id)
+                } catch (e: CloudModuleException) { logger.warning("Failed to unload module ${data.id}", e) }
+            }
             moduleFiles.removeIf { it.name == data.description.name }
         }?.file ?: cachedDescriptions.firstOrNull { it.id == moduleId }?.cachedFile
         if (file == null) {
@@ -132,6 +153,7 @@ class ModuleHandler(
         }
     }
 
+    @Suppress("ReturnCount")
     suspend fun install(moduleId: String, load: Boolean = true) {
         if (getModuleDescription(moduleId) != null) {
             logger.info("§cModule with id $moduleId already installed!")
@@ -152,20 +174,20 @@ class ModuleHandler(
             logger.warning("§cModule with id $moduleId not found!")
             return
         }
-        logger.info("Installing module %hc%${info.id} §8(%tc%${latest}§8)%tc%...")
+        logger.info("Installing module %hc%${info.id} §8(%tc%$latest§8)%tc%...")
         try {
             val file = repository.download(info.id, latest)
-            if (file.length() < 1000) {
+            if (file.length() < MIN_MODULE_FILE_SIZE) {
                 logger.warning("§cFailed to install module with id $moduleId!")
                 return
             }
             logger.info("Module with id %hc%$moduleId%tc% installed!")
             if (load) {
                 loadModule(file)
-            }else {
+            } else {
                 logger.info("Use 'module load $moduleId' to load the module!")
             }
-        }catch (e: Exception) {
+        } catch (_: Exception) {
             logger.warning("§cFailed to install module with id $moduleId!")
             return
         }
@@ -173,7 +195,11 @@ class ModuleHandler(
 
     fun unloadModules() {
         loaders.map { it.value.data.id }.toList().forEach {
-            unloadModule(it)
+            try {
+                unloadModule(it)
+            } catch (e: CloudModuleException) {
+                logger.warning("Failed to unload module $it", e)
+            }
         }
     }
 
@@ -187,7 +213,9 @@ class ModuleHandler(
             if (moduleInfo == null) {
                 logger.warning("Found jar file without module.json: ${it.name}")
                 return@filter false
-            }else true
+            } else {
+                true
+            }
         }?.forEach {
             moduleFiles.add(it)
             loadDescription(it)
@@ -206,42 +234,18 @@ class ModuleHandler(
     }
 
     fun loadModule(file: File) = lock.withLock {
-        if (!file.exists()) {
-            logger.warning("§cTried to load module that does not exist: ${file.name}")
-            return
-        }
-        if (file.extension != "jar") {
-            logger.warning("§cTried to load module that is not a jar file: ${file.name}")
-            return
-        }
-        if (loaders.any { it.value.data.file == file }) {
-            logger.warning("§cTried to load module that is already loaded: ${file.name}")
-            return
-        }
-
+        if (!validateModuleFile(file)) return
         val description = loadDescription(file)
-
         if (loaders.any { it.value.data.id == description.id }) {
             logger.warning("§cTried to load module that is already loaded: ${description.id}")
             return
         }
 
-        val identifierTypes = mutableListOf<String>()
-        identifierTypes.add(serviceId.type.name.lowercase())
-        if (serverVersionType != null) identifierTypes.add("${serviceId.type.name}_${serverVersionType.name}".lowercase())
-
-        val matchedMain: String = description.mainClasses
-            .filter { identifierTypes.contains(it.key.lowercase()) }
-            .values.firstOrNull() ?: return@withLock
+        val matchedMain = findMatchingMainClass(description) ?: return@withLock
 
         val moduleData = ModuleData(description.id, file, description, ModuleLifeCycle.UNLOAD, false)
         val loader = ModuleClassLoader(moduleData, file, this.javaClass.classLoader)
-
-        try {
-            Bootstrap().apply(loader, loader, JarResourceLoader(description.id, file))
-        }catch (_: Exception) {
-            // No library loader found, can be ignored
-        }
+        applyLibraryLoader(loader, description, file)
 
         val moduleClass = loader.loadClass(matchedMain).kotlin
         if (!moduleClass.isSubclassOf(CloudModule::class)) {
@@ -249,58 +253,104 @@ class ModuleHandler(
             return@withLock
         }
         loaders[description.id] = loader
-        val moduleInstance: CloudModule?
-        try {
-            moduleInstance = if (moduleClass.isSubclassOf(CloudInjectable::class)) {
-                injector.getInstance(moduleClass.java)
-            }else {
-                moduleClass.createInstance()
-            } as CloudModule
-            val moduleHandlerField = CloudModule::class.java.declaredFields.firstOrNull { it.type == IModuleHandler::class.java}
-            if (moduleHandlerField == null) {
-                logger.warning("§cModule ${description.id} has no moduleHandler property!")
-            }else {
-                moduleHandlerField.isAccessible = true
-                moduleHandlerField.set(moduleInstance, this)
-                moduleHandlerField.isAccessible = false
-            }
-            val moduleIdField = CloudModule::class.java.declaredFields.firstOrNull { it.name == "moduleId" }
-            if (moduleIdField == null) {
-                logger.warning("§cModule ${description.id} has no moduleId property!")
-            }else {
-                moduleIdField.isAccessible = true
-                moduleIdField.set(moduleInstance, description.id)
-                moduleIdField.isAccessible = false
-            }
-        }catch (e: Exception) {
-            logger.warning("§cFailed to load module ${description.id}!", e)
-            return@withLock
-        }
+
+        val moduleInstance = instantiateModule(moduleClass, description)
         moduleData.init(moduleInstance)
 
-        val tasks = mutableListOf<ModuleTaskData>()
-        (moduleClass.declaredMemberFunctions + moduleClass.declaredMemberExtensionFunctions).filter {
-            it.hasAnnotation<ModuleTask>()
-        }.forEach {
-            val annotation = it.findAnnotation<ModuleTask>()!!
-            tasks.add(ModuleTaskData(it, annotation.lifeCycle, annotation.order))
-        }
-
+        val tasks = discoverModuleTasks(moduleClass)
         loader.init(tasks)
-
         if (tasks.isEmpty()) {
             logger.warning("§cModule ${description.id} has no tasks!")
         }
 
+        executeLoadTasks(moduleData, description, moduleInstance)
+    }
+
+    private fun validateModuleFile(file: File): Boolean {
+        if (!file.exists()) {
+            logger.warning("§cTried to load module that does not exist: ${file.name}")
+            return false
+        }
+        if (file.extension != "jar") {
+            logger.warning("§cTried to load module that is not a jar file: ${file.name}")
+            return false
+        }
+        if (loaders.any { it.value.data.file == file }) {
+            logger.warning("§cTried to load module that is already loaded: ${file.name}")
+            return false
+        }
+        return true
+    }
+
+    private fun findMatchingMainClass(description: ModuleDescription): String? {
+        val identifierTypes = mutableListOf(serviceId.type.name.lowercase())
+        if (serverVersionType != null) {
+            identifierTypes.add("${serviceId.type.name}_${serverVersionType.name}".lowercase())
+        }
+        return description.mainClasses
+            .filter { identifierTypes.contains(it.key.lowercase()) }
+            .values.firstOrNull()
+    }
+
+    private fun applyLibraryLoader(loader: ModuleClassLoader, description: ModuleDescription, file: File) {
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            Bootstrap().apply(loader, loader, JarResourceLoader(description.id, file))
+        } catch (_: Exception) {
+            // No library loader found, can be ignored
+        }
+    }
+
+    private fun instantiateModule(moduleClass: kotlin.reflect.KClass<*>, description: ModuleDescription): CloudModule {
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            val moduleInstance = if (moduleClass.isSubclassOf(CloudInjectable::class)) {
+                injector.getInstance(moduleClass.java)
+            } else {
+                moduleClass.createInstance()
+            } as CloudModule
+            injectModuleField(moduleInstance, description, IModuleHandler::class.java, "moduleHandler", this)
+            injectModuleField(moduleInstance, description, null, "moduleId", description.id)
+            return moduleInstance
+        } catch (e: Exception) {
+            throw CloudModuleException("Failed to instantiate module ${description.name}", e)
+        }
+    }
+
+    private fun injectModuleField(instance: CloudModule, description: ModuleDescription, type: Class<*>?, fieldName: String, value: Any) {
+        val field = if (type != null) {
+            CloudModule::class.java.declaredFields.firstOrNull { it.type == type }
+        } else {
+            CloudModule::class.java.declaredFields.firstOrNull { it.name == fieldName }
+        }
+        if (field == null) {
+            logger.warning("§cModule ${description.id} has no $fieldName property!")
+        } else {
+            field.isAccessible = true
+            field.set(instance, value)
+            field.isAccessible = false
+        }
+    }
+
+    private fun discoverModuleTasks(moduleClass: kotlin.reflect.KClass<*>): List<ModuleTaskData> {
+        return (moduleClass.declaredMemberFunctions + moduleClass.declaredMemberExtensionFunctions)
+            .filter { it.hasAnnotation<ModuleTask>() }
+            .map {
+                val annotation = it.findAnnotation<ModuleTask>()!!
+                ModuleTaskData(it, annotation.lifeCycle, annotation.order)
+            }
+    }
+
+    private fun executeLoadTasks(moduleData: ModuleData, description: ModuleDescription, moduleInstance: CloudModule) {
+        @Suppress("TooGenericExceptionCaught")
         try {
             val tasksCount = callTasks(moduleData.id, ModuleLifeCycle.LOAD)
             logger.info("Loaded module %hc%${description.id}%tc% with %hc%$tasksCount%tc% load tasks!")
             moduleData.loaded = true
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
             eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleInstance))
-            logger.warning("§cFailed to load module ${description.id}!", e)
-            return@withLock
+            throw CloudModuleException("Failed to execute LOAD tasks for module ${moduleData.id}", e)
         }
     }
 
@@ -318,16 +368,16 @@ class ModuleHandler(
             logger.warning("§cTried to reload module ${moduleData.id} that is not reloadable!")
             return
         }
+        @Suppress("TooGenericExceptionCaught")
         try {
             val tasksCount = callTasks(moduleData.id, ModuleLifeCycle.RELOAD)
             moduleData.lifeCycle = ModuleLifeCycle.LOAD
             eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance))
             logger.info("Reloaded module %hc%${moduleData.id}%tc% with %hc%$tasksCount%tc% reload tasks!")
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
             eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance))
-            logger.warning("§cFailed to reload module ${moduleData.id}!", e)
-            return@withLock
+            throw CloudModuleException("Failed to reload module ${moduleData.id}", e)
         }
     }
 
@@ -336,6 +386,7 @@ class ModuleHandler(
             logger.warning("§cTried to unload module $moduleId that is not loaded!")
             return
         }
+        @Suppress("TooGenericExceptionCaught")
         try {
             val file = getModuleData(moduleId)!!.file
             getModuleData(moduleId)!!.loaded = false
@@ -347,9 +398,8 @@ class ModuleHandler(
             }
             JarFile(file).close()
             logger.info("Unloaded module %hc%$moduleId%tc% with %hc%$tasksCount%tc% unload tasks!")
-        }catch (e: Exception) {
-            logger.warning("§cFailed to unload module $moduleId!", e)
-            return@withLock
+        } catch (e: Exception) {
+            throw CloudModuleException("Failed to unload module $moduleId", e)
         }
     }
 
@@ -370,13 +420,15 @@ class ModuleHandler(
                 val type = it.type.kotlin
                 val key = if (it.isAnnotationPresent(Named::class.java)) {
                     Key.get(type.java, it.getAnnotation(Named::class.java))
-                }else Key.get(type.java)
+                } else {
+                    Key.get(type.java)
+                }
                 val instance = injector.getInstance(key)
                 injectParameters.add(instance)
             }
-            if (function.isSuspend) { //TODO test suspend
+            if (function.isSuspend) { // TODO test suspend
                 runBlocking { function.callSuspend(moduleData.instance, *injectParameters.toTypedArray()) }
-            }else {
+            } else {
                 function.javaMethod!!.invoke(moduleData.instance, *injectParameters.toTypedArray())
             }
             tasksCount++
@@ -419,5 +471,4 @@ class ModuleHandler(
     override fun getDescription(moduleId: String): IModuleDescription {
         return getModuleDescription(moduleId) ?: throw NullPointerException("Module with id $moduleId not found!")
     }
-
 }

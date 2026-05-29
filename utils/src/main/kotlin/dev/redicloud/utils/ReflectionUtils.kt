@@ -2,7 +2,6 @@ package dev.redicloud.utils
 
 import java.io.File
 
-
 fun getClassesWithPrefix(packagePrefix: String): List<Class<*>> {
     val classLoader = Thread.currentThread().contextClassLoader
     val packageName = packagePrefix.substringBeforeLast(".")
@@ -34,7 +33,7 @@ fun findClasses(file: File, packageName: String, classes: MutableList<Class<*>>)
             if (className.startsWith(packageName)) {
                 classes.add(clazz)
             }
-        } catch (e: ClassNotFoundException) {
+        } catch (_: ClassNotFoundException) {
             // Fehler beim Laden der Klasse
         }
     }

@@ -13,5 +13,4 @@ class ConsoleCommandManager(val console: Console) : CommandManager<ConsoleActor>
     val defaultActor = ConsoleActor(console, UUID.randomUUID())
 
     override fun getActor(identifier: Any): ConsoleActor = defaultActor
-
 }

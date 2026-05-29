@@ -90,6 +90,7 @@ class ModuleCommand(
 
     @CommandSubPath("reload <id>")
     @CommandDescription("Reload a module")
+    @Suppress("UnusedParameter")
     fun reload(
         actor: ConsoleActor,
         @CommandParameter("id", true, ReloadableModulesSuggester::class) id: String
@@ -114,13 +115,17 @@ class ModuleCommand(
         actor.sendMessage("Name§8: %hc%${data.description.name}")
         actor.sendMessage("ID§8: %hc%${data.description.id}")
         actor.sendMessage("Repository§8: %hc%${targetRepository?.repoUrl ?: "None"}")
-        actor.sendMessage("Update available§8: %hc%${(targetRepository?.isUpdateAvailable(data.id) ?: false).toSymbol()}")
+        actor.sendMessage(
+            "Update available§8: %hc%${(targetRepository?.isUpdateAvailable(data.id) ?: false).toSymbol()}"
+        )
         actor.sendMessage("Loaded§8: %hc%${data.loaded.toSymbol()}")
         actor.sendMessage("Version§8: %hc%${data.description.version}")
         actor.sendMessage("Description§8: %hc%${data.description.description}")
         actor.sendMessage("Website§8: %hc%${data.description.website}")
         actor.sendMessage("Authors§8: %hc%${data.description.authors.joinToString("§8, %hc%")}")
-        actor.sendMessage("Supported services§8: %hc%${data.description.mainClasses.keys.joinToString("§8, %hc%") { it }}")
+        actor.sendMessage(
+            "Supported services§8: %hc%${data.description.mainClasses.keys.joinToString("§8, %hc%") { it }}"
+        )
         actor.sendHeader("Module Info")
     }
 
@@ -160,7 +165,7 @@ class ModuleCommand(
             clusterConfiguration.set("module-repositories", repositoryUrls)
             moduleHandler.repositories.add(repo)
             actor.sendMessage("§aRepository with url $url added!")
-        }catch (e: Exception) {
+        } catch (_: Exception) {
             actor.sendMessage("§cRepository with url $url is not a valid repository!")
         }
     }
@@ -216,18 +221,18 @@ class ModuleCommand(
         actor.sendMessage("Module with id ${toConsoleValue(id)} updated!")
         if (file != null) {
             moduleHandler.loadModule(file)
-        }else {
+        } else {
             actor.sendMessage("Use 'module load $id' to load the module!")
         }
     }
 
     @CommandSubPath("uninstall <id>")
     @CommandDescription("Uninstall a module")
+    @Suppress("UnusedParameter")
     fun uninstall(
         actor: ConsoleActor,
         @CommandParameter("id", true, UninstallableModulesSuggester::class) id: String
     ) = defaultScope.launch {
         moduleHandler.uninstall(id)
     }
-
 }

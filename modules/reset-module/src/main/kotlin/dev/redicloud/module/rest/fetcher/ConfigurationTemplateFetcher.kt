@@ -19,9 +19,8 @@ class ConfigurationTemplateFetcher(
         return try {
             val uuid = UUID.fromString(id)
             configurationTemplateRepository.getTemplate(uuid)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             return null
         }
     }
-
 }

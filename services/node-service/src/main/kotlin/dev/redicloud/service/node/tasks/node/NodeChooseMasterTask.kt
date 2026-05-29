@@ -1,10 +1,10 @@
 package dev.redicloud.service.node.tasks.node
 
-import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.api.events.internal.node.NodeMasterChangedEvent
-import dev.redicloud.event.EventManager
-import dev.redicloud.tasks.CloudTask
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.event.EventManager
+import dev.redicloud.repository.node.NodeRepository
+import dev.redicloud.tasks.CloudTask
 
 class NodeChooseMasterTask(
     private val serviceId: ServiceId,
@@ -25,5 +25,4 @@ class NodeChooseMasterTask(
         eventManager.fireEvent(NodeMasterChangedEvent(node.serviceId, null))
         return false
     }
-
 }

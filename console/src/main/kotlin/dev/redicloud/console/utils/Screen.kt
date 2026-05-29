@@ -74,8 +74,9 @@ open class Screen(
         history.add(text)
     }
 
-    fun isCommandAllowed(command: IRegisteredCommand): Boolean = allowedCommands.contains("*")
-            || allowedCommands.any { it.lowercase() == command.name.lowercase()
-                ||  command.aliases.any { alias -> alias.lowercase() == it.lowercase() }}
-
+    fun isCommandAllowed(command: IRegisteredCommand): Boolean = allowedCommands.contains("*") ||
+        allowedCommands.any {
+            it.lowercase() == command.name.lowercase() ||
+                command.aliases.any { alias -> alias.lowercase() == it.lowercase() }
+        }
 }

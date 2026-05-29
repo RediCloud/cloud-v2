@@ -55,5 +55,4 @@ open class SyncedList<E>(
     override fun contains(element: E): Boolean {
         return handle.contains(element)
     }
-
 }

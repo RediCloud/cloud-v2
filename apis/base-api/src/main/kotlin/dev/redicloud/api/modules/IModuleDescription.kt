@@ -1,6 +1,5 @@
 package dev.redicloud.api.modules
 
-
 interface IModuleDescription {
     val name: String
     val id: String

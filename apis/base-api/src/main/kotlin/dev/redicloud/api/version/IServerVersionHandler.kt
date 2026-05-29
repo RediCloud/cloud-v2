@@ -1,11 +1,12 @@
 package dev.redicloud.api.version
 
 import dev.redicloud.api.java.ICloudJavaVersion
-import dev.redicloud.logging.LogManager
 import dev.redicloud.api.utils.MINECRAFT_VERSIONS_FOLDER
-import java.io.File
+import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.SimpleLock
+import java.io.File
 
+@Suppress("TooManyFunctions")
 interface IServerVersionHandler {
 
     val name: String
@@ -51,7 +52,7 @@ interface IServerVersionHandler {
                     LOGGER.warning("Server version ${it.displayName} currently updating, waiting for it to finish...")
                     lock.lock()
                     lock.unlock()
-                }else {
+                } else {
                     LOGGER.warning("Server version ${it.displayName} currently updating, but forcing shutdown...")
                 }
             }
@@ -71,8 +72,9 @@ interface IServerVersionHandler {
             CACHE_HANDLERS.firstOrNull { it.name.lowercase() == name.lowercase() }
 
         fun registerHandler(serverVersionHandler: IServerVersionHandler): IServerVersionHandler {
-            if (CACHE_HANDLERS.any { it.name.lowercase() == serverVersionHandler.name.lowercase() })
+            if (CACHE_HANDLERS.any { it.name.lowercase() == serverVersionHandler.name.lowercase() }) {
                 return CACHE_HANDLERS.first { it.name.lowercase() == serverVersionHandler.name.lowercase() }
+            }
             CACHE_HANDLERS.add(serverVersionHandler)
             return serverVersionHandler
         }
@@ -88,7 +90,5 @@ interface IServerVersionHandler {
         fun unregisterHandler(name: String) {
             CACHE_HANDLERS.removeIf { it.name.lowercase() == name.lowercase() }
         }
-
     }
-
 }

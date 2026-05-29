@@ -22,7 +22,6 @@ class LogFormatter(private val lineSeparator: Boolean) : Formatter() {
         }
         return builder.toString()
     }
-
 }
 
 class FileLogFormatter : Formatter() {
@@ -55,5 +54,4 @@ class FileLogFormatter : Formatter() {
         }
         return builder.toString()
     }
-
 }

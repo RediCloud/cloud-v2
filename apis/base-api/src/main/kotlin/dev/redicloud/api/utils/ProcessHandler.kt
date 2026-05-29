@@ -13,5 +13,4 @@ interface ProcessHandler {
     fun onExit(block: (Int) -> Unit)
 
     fun onLine(block: (String) -> Unit)
-
 }

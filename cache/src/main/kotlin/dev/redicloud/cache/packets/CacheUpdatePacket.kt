@@ -20,5 +20,4 @@ class CacheUpdatePacket(
         val value = gson.fromJson(valueJson, clazz.java)
         cache!!.setCached(key, value)
     }
-
 }

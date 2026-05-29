@@ -1,12 +1,12 @@
 package dev.redicloud.testing.executables
 
-import dev.redicloud.api.utils.TEMPLATE_FOLDER
-import dev.redicloud.api.utils.toUniversalPath
 import dev.redicloud.testing.RediCloudCluster
 import dev.redicloud.testing.RediCloudNode
 import dev.redicloud.testing.pre.PreServerVersion
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+
+private const val DEFAULT_START_PRIORITY = 50
 
 data class ConfigurationTemplate(
     var name: String,
@@ -21,7 +21,7 @@ data class ConfigurationTemplate(
     var percentToStartNewService: Double = 100.0,
     var serverSplitter: String = "-",
     var fallback: Boolean = false,
-    var startPriority: Int = if (fallback) 0 else 50,
+    var startPriority: Int = if (fallback) 0 else DEFAULT_START_PRIORITY,
     var static: Boolean = false,
     var startPort: Int = 4000,
     var joinPermission: String? = null,
@@ -86,12 +86,11 @@ data class ConfigurationTemplate(
 
     fun exposePortRange(hostStartPort: Int, range: Int) {
         for (i in 0 until range) {
-            exposedPorts["${hostStartPort+i}"] = startPort + i
+            exposedPorts["${hostStartPort + i}"] = startPort + i
         }
     }
 
     fun exposePort(containerPort: Int, hostPort: Int = containerPort) {
         exposedPorts["$hostPort"] = containerPort
     }
-
 }

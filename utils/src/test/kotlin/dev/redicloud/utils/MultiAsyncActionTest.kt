@@ -3,7 +3,6 @@ package dev.redicloud.utils
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 
-
 class MultiAsyncActionTest : UtilTest() {
 
     @Test
@@ -21,5 +20,4 @@ class MultiAsyncActionTest : UtilTest() {
             assert(taskStates[i.toString()] == false)
         }
     }
-
 }

@@ -7,5 +7,4 @@ interface IServerPlayerProvider {
     fun getConnectedPlayerCount(): Int
     fun getConnectedPlayers(): List<UUID>
     fun getMaxPlayerCount(): Int
-
 }

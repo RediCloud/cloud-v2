@@ -20,9 +20,9 @@ class CommandBase(
 
     init {
         name = commandImpl::class.findAnnotation<Command>()?.name
-            ?: throw IllegalStateException("Command annotation not found on ${this::class.qualifiedName}")
-        if (name.isEmpty()) throw IllegalStateException("Command name cannot be empty")
-        if (name.contains(" ")) throw IllegalStateException("Command name cannot contain spaces")
+            ?: error("Command annotation not found on ${this::class.qualifiedName}")
+        check(name.isNotEmpty()) { "Command name cannot be empty" }
+        check(!name.contains(" ")) { "Command name cannot contain spaces" }
         description = commandImpl::class.findAnnotation<CommandDescription>()?.description ?: ""
         subCommands = commandImpl::class.functions.filter { it.findAnnotation<CommandSubPath>() != null }.map {
             CommandSubBase(this, it)
@@ -46,5 +46,4 @@ class CommandBase(
     fun getSubCommand(subPath: String): CommandSubBase? = subCommands.firstOrNull {
         it.isThis("$name $subPath", false)
     }
-
 }

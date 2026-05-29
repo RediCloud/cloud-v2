@@ -64,5 +64,4 @@ class DataBucket<V>(
 
     override suspend fun delete(): Boolean =
         handle.delete()
-
 }

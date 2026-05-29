@@ -1,25 +1,26 @@
 package dev.redicloud.repository.node
 
+import dev.redicloud.api.events.internal.node.NodeDisconnectEvent
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
+import dev.redicloud.api.service.node.ICloudNode
+import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.CachedServiceRepository
-import dev.redicloud.api.events.internal.node.NodeDisconnectEvent
-import dev.redicloud.api.service.node.ICloudNode
-import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.repository.service.ServiceRepository
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.api.service.ServiceType
 import kotlin.time.Duration.Companion.minutes
 
 class NodeRepository(
     databaseConnection: DatabaseConnection,
     packetManager: PacketManager,
     private val eventManager: EventManager
-) : ServiceRepository (
+) : ServiceRepository(
     databaseConnection,
     packetManager
-), ICloudNodeRepository {
+),
+    ICloudNodeRepository {
 
     val internalRepo = object : CachedServiceRepository<ICloudNode, CloudNode>(
         databaseConnection,
@@ -75,5 +76,4 @@ class NodeRepository(
     override suspend fun getRegisteredNodes(): List<CloudNode> {
         return internalRepo.getRegisteredServices()
     }
-
 }

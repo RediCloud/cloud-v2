@@ -34,5 +34,4 @@ class CloudPlayerResourcePackPacket(
             .required(required)
             .build()
     }
-
 }

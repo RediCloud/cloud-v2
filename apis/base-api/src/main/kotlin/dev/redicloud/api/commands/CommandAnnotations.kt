@@ -34,7 +34,12 @@ annotation class CommandAlias(val aliases: Array<String>)
  * @param suggesterArguments The arguments can be used to specify arguments for the suggester (or custom command help {@see dev.redicloud.api.commands.CommandContext})
  */
 @Target(AnnotationTarget.VALUE_PARAMETER)
-annotation class CommandParameter(val name: String = "", val required: Boolean = true, val suggester: KClass<out AbstractCommandSuggester> = EmptySuggester::class, val suggesterArguments: Array<String> = []) //TODO: required will be automatically set to false if the type is nullable
+annotation class CommandParameter(
+    val name: String = "",
+    val required: Boolean = true,
+    val suggester: KClass<out AbstractCommandSuggester> = EmptySuggester::class,
+    val suggesterArguments: Array<String> = []
+) // Note: required will be automatically set to false if the type is nullable
 
 /**
  * This annotation can be used to specify the description of a command or sub command.

@@ -1,7 +1,7 @@
 package dev.redicloud.logging.fallback
 
-import dev.redicloud.logging.LoggerFactory
 import dev.redicloud.logging.Logger
+import dev.redicloud.logging.LoggerFactory
 import java.util.logging.LogManager
 
 class FallbackLoggerFactory : LoggerFactory {
@@ -16,10 +16,9 @@ class FallbackLoggerFactory : LoggerFactory {
         return loggers.computeIfAbsent(name) {
             if (registered == null) {
                 FallbackLogger(java.util.logging.Logger.getLogger(name))
-            }else {
+            } else {
                 FallbackLogger(registered)
             }
         }
     }
-
 }

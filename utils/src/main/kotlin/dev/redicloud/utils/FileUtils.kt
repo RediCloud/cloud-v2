@@ -18,4 +18,6 @@ fun isInFile(folder: File, file: File): Boolean {
     return false
 }
 
-fun toMb(bytes: Long): Long = bytes / (1024 * 1024)
+private const val BYTES_PER_MB = 1024 * 1024
+
+fun toMb(bytes: Long): Long = bytes / BYTES_PER_MB

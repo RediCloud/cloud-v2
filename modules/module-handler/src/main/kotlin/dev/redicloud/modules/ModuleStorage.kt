@@ -75,5 +75,4 @@ class ModuleStorage(
         }
         return gson.fromJson(value, List::class.java).map { gson.fromJson(it.toString(), clazz) }
     }
-
 }

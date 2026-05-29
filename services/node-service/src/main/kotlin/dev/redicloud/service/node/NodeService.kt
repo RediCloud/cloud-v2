@@ -3,36 +3,36 @@ package dev.redicloud.service.node
 import dev.redicloud.api.commands.ICommand
 import dev.redicloud.api.commands.ICommandManager
 import dev.redicloud.api.events.internal.module.ModuleHandlerInitializedEvent
+import dev.redicloud.api.events.internal.node.NodeConnectEvent
+import dev.redicloud.api.events.internal.node.NodeDisconnectEvent
+import dev.redicloud.api.events.internal.node.NodeSuspendedEvent
 import dev.redicloud.api.events.internal.server.CloudServerDisconnectedEvent
+import dev.redicloud.api.service.server.factory.ICloudRemoteServerFactory
+import dev.redicloud.api.utils.TEMP_FOLDER
+import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.cluster.file.FileNodeRepository
+import dev.redicloud.console.Console
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
+import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.api.version.IServerVersionHandler
+import dev.redicloud.repository.server.version.handler.defaults.URLServerVersionHandler
 import dev.redicloud.repository.server.version.task.CloudServerVersionUpdateTask
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.server.factory.task.*
 import dev.redicloud.service.base.BaseService
-import dev.redicloud.api.events.internal.node.NodeConnectEvent
-import dev.redicloud.api.events.internal.node.NodeDisconnectEvent
-import dev.redicloud.api.events.internal.node.NodeSuspendedEvent
-import dev.redicloud.api.service.server.factory.ICloudRemoteServerFactory
-import dev.redicloud.repository.server.version.handler.defaults.URLServerVersionHandler
-import dev.redicloud.service.node.console.NodeConsole
-import dev.redicloud.service.node.repository.node.connect
 import dev.redicloud.service.node.commands.*
-import dev.redicloud.service.node.repository.template.file.NodeFileTemplateRepository
-import dev.redicloud.service.node.tasks.node.NodeChooseMasterTask
-import dev.redicloud.service.node.tasks.NodePingTask
-import dev.redicloud.service.node.tasks.NodeSelfSuspendTask
-import dev.redicloud.service.node.tasks.metrics.MetricsTask
-import dev.redicloud.api.utils.TEMP_FOLDER
-import dev.redicloud.console.Console
-import dev.redicloud.modules.ModuleHandler
+import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.listener.ConfigurationUpdateServerListener
 import dev.redicloud.service.node.player.NodePlayerExecutor
+import dev.redicloud.service.node.repository.node.connect
+import dev.redicloud.service.node.repository.template.file.NodeFileTemplateRepository
+import dev.redicloud.service.node.tasks.metrics.MetricsTask
+import dev.redicloud.service.node.tasks.node.NodeChooseMasterTask
+import dev.redicloud.service.node.tasks.node.NodePingTask
+import dev.redicloud.service.node.tasks.node.NodeSelfSuspendTask
 import dev.redicloud.service.node.tasks.player.PlayerProxyConnectionStateTask
 import dev.redicloud.service.node.tasks.service.CloudInvalidServerUnregisterTask
 import dev.redicloud.updater.Updater
@@ -41,6 +41,9 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
+private const val MIN_MEMORY_MB = 1024L
+
+@Suppress("TooManyFunctions")
 class NodeService(
     databaseConfiguration: DatabaseConfiguration,
     databaseConnection: DatabaseConnection,
@@ -63,7 +66,14 @@ class NodeService(
         fileCluster = FileCluster(serviceId, configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
         fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster, packetManager)
         serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console, packetManager)
-        serverFactory = ServerFactory(databaseConnection, nodeRepository, serverRepository, serverVersionRepository, serverVersionTypeRepository, fileTemplateRepository, javaVersionRepository, packetManager, configuration.hostAddress, console, clusterConfiguration, configurationTemplateRepository, eventManager, fileCluster)
+        serverFactory = ServerFactory(
+            databaseConnection, nodeRepository, serverRepository,
+            serverVersionRepository, serverVersionTypeRepository,
+            fileTemplateRepository, javaVersionRepository,
+            packetManager, configuration.hostAddress, console,
+            clusterConfiguration, configurationTemplateRepository,
+            eventManager, fileCluster
+        )
         moduleHandler = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, null, databaseConnection)
         playerExecutor = NodePlayerExecutor(this.playerRepository, serverRepository, packetManager, serviceId)
 
@@ -74,19 +84,30 @@ class NodeService(
             Updater.check()
 
             nodeRepository.connect(this@NodeService)
+            @Suppress("TooGenericExceptionCaught")
             try { memoryCheck() } catch (e: Exception) {
                 LOGGER.severe("Error while checking memory", e)
                 shutdown()
                 return@runBlocking
             }
 
+            @Suppress("TooGenericExceptionCaught")
             try { this@NodeService.checkJavaVersions() } catch (e: Exception) {
                 LOGGER.warning("Error while checking java versions", e)
             }
 
             Updater.registerSuggesters(console.commandManager)
 
-            IServerVersionHandler.registerHandler(URLServerVersionHandler(serviceId, serverVersionRepository, serverVersionTypeRepository, nodeRepository, console, javaVersionRepository))
+            IServerVersionHandler.registerHandler(
+                URLServerVersionHandler(
+                    serviceId,
+                    serverVersionRepository,
+                    serverVersionTypeRepository,
+                    nodeRepository,
+                    console,
+                    javaVersionRepository
+                )
+            )
 
             this@NodeService.registerPreTasks()
             this@NodeService.connectFileCluster()
@@ -101,7 +122,13 @@ class NodeService(
     }
 
     private fun registerListeners() {
-        ConfigurationUpdateServerListener(serviceId, eventManager, configurationTemplateRepository, serverRepository, nodeRepository)
+        ConfigurationUpdateServerListener(
+            serviceId,
+            eventManager,
+            configurationTemplateRepository,
+            serverRepository,
+            nodeRepository
+        )
     }
 
     override fun plattformShutdown() {
@@ -127,8 +154,14 @@ class NodeService(
         }
     }
 
-
     private fun registerTasks() {
+        registerNodeTasks()
+        registerServerTasks()
+        registerVersionTasks()
+        registerMonitoringTasks()
+    }
+
+    private fun registerNodeTasks() {
         taskManager.builder()
             .task(NodePingTask(this))
             .instant()
@@ -140,22 +173,61 @@ class NodeService(
             .event(NodeSuspendedEvent::class)
             .period(10.seconds)
             .register()
+    }
+
+    private fun registerServerTasks() {
+        registerServerStartAndStopTasks()
+        registerServerMaintenanceTasks()
+    }
+
+    private fun registerServerStartAndStopTasks() {
         taskManager.builder()
-            .task(CloudServerStartTask(this.serverFactory, this.eventManager, this.nodeRepository, this.serverRepository))
+            .task(
+                CloudServerStartTask(
+                    this.serverFactory,
+                    this.eventManager,
+                    this.nodeRepository,
+                    this.serverRepository
+                )
+            )
             .event(NodeConnectEvent::class)
             .period(3.seconds)
             .register()
         taskManager.builder()
-            .task(CloudAutoStartServerTask(this.configurationTemplateRepository, this.serverRepository, this.serverFactory, this.nodeRepository))
+            .task(
+                CloudAutoStartServerTask(
+                    this.configurationTemplateRepository,
+                    this.serverRepository,
+                    this.serverFactory,
+                    this.nodeRepository
+                )
+            )
             .event(CloudServerDisconnectedEvent::class)
             .period(5.seconds)
             .register()
         taskManager.builder()
-            .task(CloudServerStopTask(this.serviceId, this.serverRepository, this.serverFactory, this.configurationTemplateRepository, this.nodeRepository))
+            .task(
+                CloudServerStopTask(
+                    this.serviceId,
+                    this.serverRepository,
+                    this.serverFactory,
+                    this.configurationTemplateRepository,
+                    this.nodeRepository
+                )
+            )
             .period(2.seconds)
             .register()
+    }
+
+    private fun registerServerMaintenanceTasks() {
         taskManager.builder()
-            .task(CloudServerQueueCleanerTask(this.serverFactory, this.nodeRepository, this.serverRepository))
+            .task(
+                CloudServerQueueCleanerTask(
+                    this.serverFactory,
+                    this.nodeRepository,
+                    this.serverRepository
+                )
+            )
             .event(NodeConnectEvent::class)
             .event(NodeDisconnectEvent::class)
             .event(NodeSuspendedEvent::class)
@@ -170,33 +242,79 @@ class NodeService(
             .period(5.seconds)
             .register()
         taskManager.builder()
-            .task(CloudServerUnregisterTask(this.serviceId, this.serverFactory, this.nodeRepository, this.serverRepository))
+            .task(
+                CloudServerUnregisterTask(
+                    this.serviceId,
+                    this.serverFactory,
+                    this.nodeRepository,
+                    this.serverRepository
+                )
+            )
             .period(5.seconds)
             .register()
         taskManager.builder()
-            .task(CloudServerVersionUpdateTask(firstStart, this.serverVersionRepository, this.serverVersionTypeRepository))
+            .task(
+                CloudInvalidServerUnregisterTask(
+                    this.serviceId,
+                    this.serverRepository,
+                    this.serverFactory,
+                    this.nodeRepository
+                )
+            )
+            .period(5.seconds)
+            .instant()
+            .register()
+    }
+
+    private fun registerVersionTasks() {
+        taskManager.builder()
+            .task(
+                CloudServerVersionUpdateTask(
+                    firstStart,
+                    this.serverVersionRepository,
+                    this.serverVersionTypeRepository
+                )
+            )
             .period(5.minutes)
             .event(ModuleHandlerInitializedEvent::class)
             .register()
+    }
+
+    private fun registerMonitoringTasks() {
         taskManager.builder()
-            .task(MetricsTask(this.clusterConfiguration, this.serviceId, this.playerRepository, this.serverRepository))
+            .task(
+                MetricsTask(
+                    this.clusterConfiguration,
+                    this.serviceId,
+                    this.playerRepository,
+                    this.serverRepository
+                )
+            )
             .instant()
             .delay(55.seconds)
             .period(5.minutes)
             .register()
         taskManager.builder()
-            .task(CloudNodeMemoryUsageTask(this.serverFactory, this.nodeRepository, this.serviceId))
+            .task(
+                CloudNodeMemoryUsageTask(
+                    this.serverFactory,
+                    this.nodeRepository,
+                    this.serviceId
+                )
+            )
             .instant()
             .period(1500.milliseconds)
             .register()
         taskManager.builder()
-            .task(PlayerProxyConnectionStateTask(this.playerRepository, this.serverRepository, this.nodeRepository, this.serviceId))
+            .task(
+                PlayerProxyConnectionStateTask(
+                    this.playerRepository,
+                    this.serverRepository,
+                    this.nodeRepository,
+                    this.serviceId
+                )
+            )
             .event(CloudServerDisconnectedEvent::class)
-            .register()
-        taskManager.builder()
-            .task(CloudInvalidServerUnregisterTask(this.serviceId, this.serverRepository, this.serverFactory, this.nodeRepository))
-            .period(5.seconds)
-            .instant()
             .register()
     }
 
@@ -217,7 +335,11 @@ class NodeService(
             detected.add(it)
         }
         if (detected.isNotEmpty()) {
-            LOGGER.info("Detected %hc%${detected.size} %tc%java versions§8: %hc%${detected.joinToString("§8, %hc%") { it.name }}")
+            LOGGER.info(
+                "Detected %hc%${detected.size} %tc%java versions§8: %hc%${detected.joinToString(
+                    "§8, %hc%"
+                ) { it.name }}"
+            )
         }
         var wrongAutoDetectPossible = false
         javaVersionRepository.getVersions().forEach { version ->
@@ -234,23 +356,32 @@ class NodeService(
             }
         }
         if (wrongAutoDetectPossible) {
-            LOGGER.warning("§cIf the version is installed, try to set the java home manually with '-Dredicloud.java.versions.path=path/to/java/versions'")
+            LOGGER.warning(
+                "§cIf the version is installed, try to set the java home manually with '-Dredicloud.java.versions.path=path/to/java/versions'"
+            )
         }
     }
 
     private suspend fun memoryCheck() {
         val thisNode = nodeRepository.getNode(this.serviceId)!!
-        if (thisNode.maxMemory < 1024) throw IllegalStateException("Max memory of this node is too low! Please increase the max memory of this node!")
-        if (thisNode.maxMemory > Runtime.getRuntime().freeMemory()) throw IllegalStateException("Not enough memory available! Please increase the max memory of this node!")
+        check(
+            thisNode.maxMemory >= MIN_MEMORY_MB
+        ) { "Max memory of this node is too low! Please increase the max memory of this node!" }
+        check(
+            thisNode.maxMemory <= Runtime.getRuntime().freeMemory()
+        ) { "Not enough memory available! Please increase the max memory of this node!" }
     }
 
-    private fun registerPackets() {}
+    private fun registerPackets() {
+        // node-specific packets registered in BaseService
+    }
 
     private suspend fun connectFileCluster() {
+        @Suppress("TooGenericExceptionCaught")
         try {
             this.fileCluster.connect()
             LOGGER.info("Connected to file cluster on port ${this.fileCluster.port}!")
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             LOGGER.severe("Failed to connect to file cluster!", e)
             this.shutdown()
             return
@@ -264,11 +395,33 @@ class NodeService(
         register(ExitCommand(this))
         register(VersionCommand(console))
         register(ClusterCommand(this))
-        register(CloudServerVersionCommand(this.serverVersionRepository, this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverRepository, this.javaVersionRepository, this.console))
-        register(CloudServerVersionTypeCommand(this.serverVersionTypeRepository, this.configurationTemplateRepository, this.serverVersionRepository))
+        register(
+            CloudServerVersionCommand(
+                this.serverVersionRepository,
+                this.serverVersionTypeRepository,
+                this.configurationTemplateRepository,
+                this.serverRepository,
+                this.javaVersionRepository
+            )
+        )
+        register(
+            CloudServerVersionTypeCommand(
+                this.serverVersionTypeRepository,
+                this.configurationTemplateRepository,
+                this.serverVersionRepository
+            )
+        )
         register(JavaVersionCommand(this.javaVersionRepository, this.serverVersionRepository))
         register(ClearCommand(this.console))
-        register(ConfigurationTemplateCommand(this.configurationTemplateRepository, this.javaVersionRepository, this.serverRepository, this.serverVersionRepository, this.nodeRepository, this.fileTemplateRepository))
+        register(
+            ConfigurationTemplateCommand(
+                this.configurationTemplateRepository,
+                this.serverRepository,
+                this.serverVersionRepository,
+                this.nodeRepository,
+                this.fileTemplateRepository
+            )
+        )
         register(FileTemplateCommand(this.fileTemplateRepository))
         register(ServerCommand(this.serverFactory, this.serverRepository, this.nodeRepository))
         register(ScreenCommand(this.console))
@@ -285,5 +438,4 @@ class NodeService(
         bind(Console::class).toInstance(console)
         bind(ICloudRemoteServerFactory::class).toInstance(serverFactory)
     }
-
 }

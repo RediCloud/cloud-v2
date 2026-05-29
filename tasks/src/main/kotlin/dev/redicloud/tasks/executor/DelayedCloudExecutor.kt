@@ -10,5 +10,4 @@ class DelayedCloudExecutor(task: CloudTask, val delay: Duration) : CloudTaskExec
         delay(delay)
         cloudTask.preExecute(this)?.join()
     }
-
 }

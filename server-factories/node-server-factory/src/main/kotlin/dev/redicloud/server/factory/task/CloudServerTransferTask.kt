@@ -1,5 +1,6 @@
 package dev.redicloud.server.factory.task
 
+import dev.redicloud.api.exceptions.CloudServerException
 import dev.redicloud.logging.LogManager
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.tasks.CloudTask
@@ -20,8 +21,11 @@ class CloudServerTransferTask(
                 try {
                     serverFactory.transferQueue.remove(it)
                     serverFactory.transferServer(it.serverId, it.targetNodeId)
-                }catch (e: Exception) {
-                    logger.severe("§cError while transferring server ${it.serverId.toName()} to node ${it.targetNodeId.toName()}", e)
+                } catch (e: CloudServerException) {
+                    logger.severe(
+                        "§cError while transferring server ${it.serverId.toName()} to node ${it.targetNodeId.toName()}",
+                        e
+                    )
                 }
             }
         }
@@ -29,5 +33,4 @@ class CloudServerTransferTask(
 
         return false
     }
-
 }

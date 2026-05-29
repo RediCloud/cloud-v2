@@ -4,7 +4,9 @@ import dev.redicloud.logging.fallback.FallbackLoggerFactory
 import java.util.ServiceLoader
 import kotlin.reflect.KClass
 
-private val LOGGER_FACTORY: LoggerFactory = ServiceLoader.load(LoggerFactory::class.java).firstOrNull() ?: FallbackLoggerFactory()
+private val LOGGER_FACTORY: LoggerFactory =
+    ServiceLoader.load(LoggerFactory::class.java).firstOrNull()
+        ?: FallbackLoggerFactory()
 
 class LogManager private constructor() {
 
@@ -23,5 +25,4 @@ class LogManager private constructor() {
 
         fun logger(o: Any): Logger = LOGGER_FACTORY.getLogger(o.javaClass.name)
     }
-
 }

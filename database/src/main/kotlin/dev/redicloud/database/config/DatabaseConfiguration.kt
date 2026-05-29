@@ -13,6 +13,8 @@ data class DatabaseConfiguration(
     fun isCluster(): Boolean = nodes.size > 1
 
     companion object {
+        private const val DEFAULT_REDIS_PORT = 6379
+
         fun fromEnv(): DatabaseConfiguration {
             val password = System.getenv("RC_DATABASE_PASSWORD") ?: ""
             val databaseId = System.getenv("RC_DATABASE_ID")?.toInt() ?: 0
@@ -20,16 +22,14 @@ data class DatabaseConfiguration(
             val nodes = System.getenv("RC_DATABASE_NODES")?.split(";")?.map {
                 val split = it.split(":")
                 DatabaseNode(split[0], split[1].toInt())
-            } ?: listOf(DatabaseNode("127.0.0.1", 6379))
+            } ?: listOf(DatabaseNode("127.0.0.1", DEFAULT_REDIS_PORT))
             return DatabaseConfiguration(username, password, nodes, databaseId)
         }
 
         fun fromFile(file: File): DatabaseConfiguration {
             return gson.fromJson(file.readText(Charsets.UTF_8), DatabaseConfiguration::class.java)
         }
-
     }
-
 }
 
 fun DatabaseConfiguration.toEnv(processBuilder: ProcessBuilder) {

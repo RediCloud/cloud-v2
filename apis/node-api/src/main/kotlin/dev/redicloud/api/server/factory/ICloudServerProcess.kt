@@ -14,5 +14,4 @@ interface ICloudServerProcess {
     val processHandler: ProcessHandler?
     val hostServiceId: ServiceId
     var process: Process?
-
 }

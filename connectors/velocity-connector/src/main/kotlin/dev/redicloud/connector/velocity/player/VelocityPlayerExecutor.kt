@@ -43,5 +43,4 @@ class VelocityPlayerExecutor(
         }
         player.disconnect(reason)
     }
-
 }

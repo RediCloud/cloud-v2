@@ -7,13 +7,18 @@ import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.api.packets.IPacketResponse
 import dev.redicloud.api.packets.PacketListener
-import dev.redicloud.database.DatabaseConnection
-import dev.redicloud.logging.LogManager
-import dev.redicloud.utils.gson.fixKotlinAnnotations
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.database.DatabaseConnection
+import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.coroutineExceptionHandler
-import kotlinx.coroutines.*
+import dev.redicloud.utils.gson.fixKotlinAnnotations
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 
@@ -40,7 +45,7 @@ class PacketManager(
     private val messageListener = createMessageListener()
 
     init {
-        if (!databaseConnection.connected) throw IllegalStateException("Database connection is not connected!")
+        check(databaseConnection.connected) { "Database connection is not connected!" }
 
         serviceTopic = databaseConnection.getCommunicationChannel(serviceId.toName())
         broadcastTopic = databaseConnection.getCommunicationChannel("broadcast")
@@ -62,7 +67,9 @@ class PacketManager(
             override fun onMessage(channel: String, message: PackedPacket) {
                 val data = message.data
                 val packetClazz = registeredPackets.firstOrNull { it.qualifiedName == message.clazz }
-                    ?: return kotlin.run { LOGGER.fine("Received packet with unknown class ${message.clazz} in channel $channel") }
+                    ?: return kotlin.run {
+                        LOGGER.fine("Received packet with unknown class ${message.clazz} in channel $channel")
+                    }
                 val packet = gson.fromJson(data, packetClazz.java)
                 if (!packet.allowLocalReceiver && packet.sender == serviceId) return
                 LOGGER.finest("Received packet ${packetClazz.simpleName} in channel $channel")
@@ -73,14 +80,16 @@ class PacketManager(
                     packetsOfLast3Seconds.remove(packet)
                 }
                 ArrayList(packetResponses).filterNotNull().forEach {
+                    @Suppress("TooGenericExceptionCaught")
                     try {
                         it.handle(packet)
-                    }catch (e: Exception) {
+                    } catch (e: Exception) {
                         LOGGER.severe("Error while handling packet response ${packet::class.java.simpleName}!", e)
                     }
                 }
                 listeners.forEach {
                     if (packet::class == it.packetClazz) {
+                        @Suppress("TooGenericExceptionCaught")
                         try {
                             (it as PacketListener<AbstractPacket>).listener(packet)
                         } catch (e: Exception) {
@@ -101,7 +110,7 @@ class PacketManager(
     }
 
     suspend fun registerCategoryChannel(name: String) {
-        if (this.categoryChannelName != null) throw IllegalStateException("Category channel is already registered!")
+        check(this.categoryChannelName == null) { "Category channel is already registered!" }
         this.categoryChannelName = name
 
         categoryChannel?.subscribe(PackedPacket::class.java, messageListener)
@@ -171,6 +180,4 @@ class PacketManager(
         databaseConnection.getCommunicationChannel(categoryName).publish(packedPacket)
         return PacketResponse(this, packet)
     }
-
-
 }

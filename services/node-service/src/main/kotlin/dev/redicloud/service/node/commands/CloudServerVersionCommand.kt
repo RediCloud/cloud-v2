@@ -1,17 +1,17 @@
 package dev.redicloud.service.node.commands
 
 import dev.redicloud.api.commands.*
-import dev.redicloud.console.Console
+import dev.redicloud.api.exceptions.CloudVersionException
+import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.server.version.CloudServerVersion
+import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.repository.server.version.CloudServerVersionRepository
-import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.repository.server.version.serverversion.ServerVersion
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.service.base.suggester.*
@@ -27,15 +27,14 @@ import java.util.*
 @Command("sv")
 @CommandAlias(["serverversion", "serverversion"])
 @CommandDescription("Configures the server version")
+@Suppress("LargeClass", "TooManyFunctions")
 class CloudServerVersionCommand(
     private val serverVersionRepository: CloudServerVersionRepository,
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
     private val serverRepository: ServerRepository,
-    private val javaVersionRepository: JavaVersionRepository,
-    private val console: Console
+    private val javaVersionRepository: JavaVersionRepository
 ) : ICommand {
-
 
     @CommandSubPath("duplicate <version> [new-name]")
     @CommandDescription("Duplicate a server version")
@@ -50,7 +49,11 @@ class CloudServerVersionCommand(
             return@launch
         }
         serverVersionRepository.createVersion(newVersion)
-        actor.sendMessage("Duplicated server version ${toConsoleValue(version.displayName)} to ${toConsoleValue(newVersion.displayName)}")
+        actor.sendMessage(
+            "Duplicated server version ${toConsoleValue(
+                version.displayName
+            )} to ${toConsoleValue(newVersion.displayName)}"
+        )
     }
 
     @CommandSubPath("edit <version> project <name>")
@@ -108,7 +111,9 @@ class CloudServerVersionCommand(
             }
             version.customDownloadUrl = if (url != "null") url else null
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Updated download url of ${toConsoleValue(version.displayName)} to ${toConsoleValue(url)}")
+            actor.sendMessage(
+                "Updated download url of ${toConsoleValue(version.displayName)} to ${toConsoleValue(url)}"
+            )
         }
     }
 
@@ -131,9 +136,9 @@ class CloudServerVersionCommand(
                 )
                 return@launch
             }
-            if (version.version.versionTypes.isNotEmpty()
-                && version.version.versionTypes.none { it.lowercase() == type.name.lowercase() }
-                && version.version.versionTypes.filter { it.startsWith("!") }
+            if (version.version.versionTypes.isNotEmpty() &&
+                version.version.versionTypes.none { it.lowercase() == type.name.lowercase() } &&
+                version.version.versionTypes.filter { it.startsWith("!") }
                     .any { it.replaceFirst("!", "").lowercase() == type.name.lowercase() }
             ) {
                 actor.sendMessage(
@@ -153,7 +158,9 @@ class CloudServerVersionCommand(
     }
 
     @CommandSubPath("edit <version> libPattern <pattern>")
-    @CommandDescription("Set the lib pattern for the files that should be stored after the patch. Set to 'null' to disable the patching")
+    @CommandDescription(
+        "Set the lib pattern for the files that should be stored after the patch. Set to 'null' to disable the patching"
+    )
     fun onEditLibPattern(
         actor: ConsoleActor,
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion,
@@ -173,7 +180,9 @@ class CloudServerVersionCommand(
             }
             version.libPattern = if (pattern != "null") pattern else null
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Updated lib pattern of ${toConsoleValue(version.displayName)} to §8'%tc%${version.libPattern}§8'")
+            actor.sendMessage(
+                "Updated lib pattern of ${toConsoleValue(version.displayName)} to §8'%tc%${version.libPattern}§8'"
+            )
         }
     }
 
@@ -418,12 +427,16 @@ class CloudServerVersionCommand(
                 return@launch
             }
             if (version.defaultFiles.none { it.value.lowercase() == url.lowercase() }) {
-                actor.sendMessage("§cThe file with the url '$url' is not added to the version ${toConsoleValue(version.displayName)}!")
+                actor.sendMessage(
+                    "§cThe file with the url '$url' is not added to the version ${toConsoleValue(version.displayName)}!"
+                )
                 return@launch
             }
             version.defaultFiles.remove(url)
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Removed file with url ${toConsoleValue(url)} from ${toConsoleValue(version.displayName)}")
+            actor.sendMessage(
+                "Removed file with url ${toConsoleValue(url)} from ${toConsoleValue(version.displayName)}"
+            )
         }
     }
 
@@ -447,7 +460,9 @@ class CloudServerVersionCommand(
             }
             version.programParameters.add(parameter)
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Added program parameter ${toConsoleValue(parameter)} to ${toConsoleValue(version.displayName)}")
+            actor.sendMessage(
+                "Added program parameter ${toConsoleValue(parameter)} to ${toConsoleValue(version.displayName)}"
+            )
         }
     }
 
@@ -471,10 +486,11 @@ class CloudServerVersionCommand(
             }
             version.programParameters.remove(parameter)
             serverVersionRepository.updateVersion(version)
-            actor.sendMessage("Removed program parameter ${toConsoleValue(parameter)} from ${toConsoleValue(version.displayName)}")
+            actor.sendMessage(
+                "Removed program parameter ${toConsoleValue(parameter)} from ${toConsoleValue(version.displayName)}"
+            )
         }
     }
-
 
     @CommandSubPath("create <project> <version>")
     @CommandDescription("Create a new server version")
@@ -494,7 +510,9 @@ class CloudServerVersionCommand(
                 null,
             )
             if (serverVersionRepository.existsVersion(version.displayName)) {
-                actor.sendMessage("§cA server version with the project name $projectName and the mc version ${mcVersion.name}already exists!")
+                actor.sendMessage(
+                    "§cA server version with the project name $projectName and the mc version ${mcVersion.name}already exists!"
+                )
                 return@launch
             }
             serverVersionRepository.createVersion(version)
@@ -587,7 +605,9 @@ class CloudServerVersionCommand(
                         line.append("§8, ")
                     }
                     val displayName = "%tc%${version.projectName}§8_%hc%${version.version.name}"
-                    line.append("${displayName}${if (version.version.latest) " §8(%tc%${version.version.dynamicVersion().name}§8)" else ""}")
+                    line.append(
+                        "${displayName}${if (version.version.latest) " §8(%tc%${version.version.dynamicVersion().name}§8)" else ""}"
+                    )
                 }
                 if (line.isNotEmpty()) {
                     actor.sendMessage(line.toString())
@@ -615,7 +635,15 @@ class CloudServerVersionCommand(
             actor.sendMessage("§8- %tc%Online§8: %hc%${version.online.toSymbol()}")
             actor.sendMessage("§8- %tc%Used§8: %hc%${version.used.toSymbol()}")
             actor.sendMessage("§8- %tc%Version§8: %hc%${version.version.name}")
-            actor.sendMessage("§8- %tc%Version-Id§8: %hc%${if (version.version.latest) "latest (${version.version.dynamicVersion().name})" else version.version.name}")
+            actor.sendMessage(
+                "§8- %tc%Version-Id§8: %hc%${
+                    if (version.version.latest) {
+                        "latest (${version.version.dynamicVersion().name})"
+                    } else {
+                        version.version.name
+                    }
+                }"
+            )
             actor.sendMessage("§8- %tc%Patch-Version§8: ${version.patch.toSymbol()}")
             actor.sendMessage("§8- %tc%Version-Handler§8: %hc%${type?.versionHandlerName ?: "unknown"}")
             actor.sendMessage("§8- %tc%Download-Url§8: %hc%${version.customDownloadUrl ?: "not set"}")
@@ -631,7 +659,9 @@ class CloudServerVersionCommand(
             version.jvmArguments.forEach {
                 actor.sendMessage("§8  - %hc%$it")
             }
-            actor.sendMessage("§8- %tc%Program parameters§8:${if (version.programParameters.isEmpty()) " %hc%not set" else ""}")
+            actor.sendMessage(
+                "§8- %tc%Program parameters§8:${if (version.programParameters.isEmpty()) " %hc%not set" else ""}"
+            )
             version.programParameters.forEach {
                 actor.sendMessage("§8  - %hc%$it")
             }
@@ -662,12 +692,14 @@ class CloudServerVersionCommand(
             }
             val handler = IServerVersionHandler.getHandler(type)
             if (!handler.isPatchVersion(version)) {
-                actor.sendMessage("§cThis version is not patchable! Set the lib pattern with '/sv edit ${version.displayName} patchh true'")
+                actor.sendMessage(
+                    "§cThis version is not patchable! Set the lib pattern with '/sv edit ${version.displayName} patchh true'"
+                )
                 return@launch
             }
             try {
                 handler.patch(version)
-            } catch (e: Exception) {
+            } catch (e: CloudVersionException) {
                 LOGGER.severe("Error while patching version ${version.displayName}", e)
             }
         }
@@ -688,15 +720,16 @@ class CloudServerVersionCommand(
             }
             val handler = IServerVersionHandler.getHandler(type)
             if (!handler.canDownload(version)) {
-                actor.sendMessage("§c'${version.displayName}' can´t be downloaded! Check the version type and the download url!")
+                actor.sendMessage(
+                    "§c'${version.displayName}' can´t be downloaded! Check the version type and the download url!"
+                )
                 return@launch
             }
             try {
                 handler.download(version, true)
-            } catch (e: Exception) {
+            } catch (e: CloudVersionException) {
                 LOGGER.severe("Error while downloading version ${version.displayName}", e)
             }
         }
     }
-
 }

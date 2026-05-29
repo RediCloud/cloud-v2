@@ -9,7 +9,7 @@ fun getDefaultLogLevel(): Level = getLogLevelByProperty() ?: Level.INFO
 fun getLogLevelByProperty(): Level? {
     val property = System.getProperty("redicloud.logging.level")
     return if (property != null) {
-        try { Level.parse(property) }catch (_: Exception) { null }
+        try { Level.parse(property) } catch (_: Exception) { null }
     } else {
         null
     }
@@ -41,4 +41,3 @@ fun translateLevelToLogback(level: Level): ch.qos.logback.classic.Level {
         else -> ch.qos.logback.classic.Level.INFO
     }
 }
-

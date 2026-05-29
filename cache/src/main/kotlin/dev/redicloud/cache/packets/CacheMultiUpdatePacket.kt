@@ -21,5 +21,4 @@ class CacheMultiUpdatePacket(
             cache!!.setCached(key, value)
         }
     }
-
 }

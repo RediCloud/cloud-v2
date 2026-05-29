@@ -29,5 +29,4 @@ class NodePlayerExecutor(
     override fun executeKick(cloudPlayer: ICloudPlayer, reason: Component) {
         runBlocking { this@NodePlayerExecutor.kick(cloudPlayer, reason) }
     }
-
 }

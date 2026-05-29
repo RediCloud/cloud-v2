@@ -19,7 +19,7 @@ class LoadableModulesSuggester(
             ?.filter { it.exists() }
             ?.filter { it.isFile }
             ?.filter { it.extension == "jar" }
-            ?.filter { file -> moduleHandler.getCachedDescriptions().none { it.cachedFile == file} }
+            ?.filter { file -> moduleHandler.getCachedDescriptions().none { it.cachedFile == file } }
             ?.filter { file ->
                 val description = kotlin.runCatching {
                     moduleHandler.loadDescription(file)
@@ -31,5 +31,4 @@ class LoadableModulesSuggester(
         val results = descriptions.map { it.id } + files.map { it.name }
         return results.toTypedArray()
     }
-
 }

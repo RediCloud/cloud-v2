@@ -2,6 +2,7 @@ package dev.redicloud.service.node.repository.template.file
 
 import com.jcraft.jsch.ChannelSftp
 import com.jcraft.jsch.Session
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.template.file.ICloudFileTemplate
 import dev.redicloud.api.utils.STORAGE_FOLDER
 import dev.redicloud.api.utils.TEMPLATE_FOLDER
@@ -14,7 +15,6 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.utils.*
-import dev.redicloud.api.service.ServiceId
 import java.io.File
 import java.util.*
 
@@ -28,7 +28,9 @@ class NodeFileTemplateRepository(
     override suspend fun pushTemplates(serviceId: ServiceId) {
         val node = nodeRepository.getNode(serviceId) ?: return
         if (node.serviceId == databaseConnection.serviceId) {
-            FileCluster.LOGGER.info("Skipping pushing templates to ${node.identifyName()} because it is the current node!")
+            FileCluster.LOGGER.info(
+                "Skipping pushing templates to ${node.identifyName()} because it is the current node!"
+            )
             return
         }
         if (!node.connected) {
@@ -52,7 +54,11 @@ class NodeFileTemplateRepository(
 
             fileCluster.shareFile(sftpChannel, zip, toUniversalPath(workFolder), "data.zip")
             fileCluster.deleteFolderRecursive(sftpChannel, toUniversalPath(TEMPLATE_FOLDER.getFile()))
-            val response = fileCluster.unzip(node.serviceId, toUniversalPath(zip), toUniversalPath(STORAGE_FOLDER.getFile()))
+            val response = fileCluster.unzip(
+                node.serviceId,
+                toUniversalPath(zip),
+                toUniversalPath(STORAGE_FOLDER.getFile())
+            )
             if (response == null) {
                 FileCluster.LOGGER.warning("Unzip process of template pushing does not respond!")
             }
@@ -61,14 +67,14 @@ class NodeFileTemplateRepository(
             workFolder.deleteRecursively()
 
             FileCluster.LOGGER.info("Successfully pushed templates to ${node.identifyName()}!")
-        }finally {
+        } finally {
             sftpChannel?.disconnect()
             session?.disconnect()
         }
     }
 
     override suspend fun updateTemplate(template: ICloudFileTemplate): FileTemplate {
-        val storedTemplate = getTemplate(template.uniqueId) ?: throw Exception("Template ${template.uniqueId} not found!")
+        val storedTemplate = getTemplate(template.uniqueId) ?: error("Template ${template.uniqueId} not found!")
         return set(template.uniqueId.toString(), template).apply {
             if (storedTemplate.displayName != template.displayName) {
                 val folder = storedTemplate.folder
@@ -87,5 +93,4 @@ class NodeFileTemplateRepository(
             }
         }
     }
-
 }

@@ -1,6 +1,5 @@
 package dev.redicloud.updater
 
-import com.google.gson.reflect.TypeToken
 import dev.redicloud.api.commands.ICommandManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.updater.suggest.BranchSuggester
@@ -32,9 +31,15 @@ object Updater {
         }
         val updateInfo = updateAvailable()
         if (updateInfo.first && updateInfo.second != null) {
-            LogManager.rootLogger().info("An update is available: ${updateInfo.second!!.branch}#${updateInfo.second!!.build}")
-            LogManager.rootLogger().info("You can download the update with the command: version download $BRANCH ${updateInfo.second!!.build}")
-            LogManager.rootLogger().info("And switch the update with the command: version switch $BRANCH ${updateInfo.second!!.build}")
+            LogManager.rootLogger().info(
+                "An update is available: ${updateInfo.second!!.branch}#${updateInfo.second!!.build}"
+            )
+            LogManager.rootLogger().info(
+                "You can download the update with the command: version download $BRANCH ${updateInfo.second!!.build}"
+            )
+            LogManager.rootLogger().info(
+                "And switch the update with the command: version switch $BRANCH ${updateInfo.second!!.build}"
+            )
         } else {
             LogManager.rootLogger().info("You are running the latest version!")
         }
@@ -45,13 +50,10 @@ object Updater {
     }
 
     suspend fun download(branch: String, build: Int): File {
-
         val response = httpClient.get {
-            url(getRootAPIUrl() + "/files/$branch/$build/redicloud.zip")
+            url("$ROOT_API_URL/files/$branch/$build/redicloud.zip")
         }
-        if (!response.status.isSuccess()) {
-            throw IllegalStateException("Failed to download the latest build")
-        }
+        check(response.status.isSuccess()) { "Failed to download the latest build" }
         val versionsFolder = File("versions")
         if (!versionsFolder.exists()) {
             versionsFolder.mkdir()
@@ -63,13 +65,9 @@ object Updater {
 
     fun switchVersion(branch: String, build: Int) {
         val versionsFolder = File("versions")
-        if (!versionsFolder.exists()) {
-            throw IllegalStateException("Version is not located in the versions folder")
-        }
+        check(versionsFolder.exists()) { "Version is not located in the versions folder" }
         val file = File("versions/redicloud-$branch#$build.zip")
-        if (file.extension != "zip") {
-            throw IllegalArgumentException("File must be a zip file")
-        }
+        require(file.extension == "zip") { "File must be a zip file" }
         unzipFile(file.absolutePath, File(".").absolutePath)
         var version: String = "unknown"
         updateToVersion = mainFolderJars().map { it to getJarProperties(it) }.filter {
@@ -77,13 +75,15 @@ object Updater {
         }.map {
             version = it.second["version"] ?: "unknown"
             it.first
-        }.firstOrNull() ?: throw IllegalStateException("Failed to find the version in the main folder")
+        }.firstOrNull() ?: error("Failed to find the version in the main folder")
         if (versionInfoFile.exists()) {
             versionInfoFile.delete()
         }
         versionInfoFile.createNewFile()
-        versionInfoFile.writeText(gson.toJson(UpdateInfo(version, build.toString(), branch, BRANCH, BUILD, CLOUD_VERSION)))
-}
+        versionInfoFile.writeText(
+            gson.toJson(UpdateInfo(version, build.toString(), branch, BRANCH, BUILD, CLOUD_VERSION))
+        )
+    }
 
     private fun getJarProperties(file: File): Map<String, String> {
         if (!file.exists() || file.extension != "jar") {
@@ -96,7 +96,7 @@ object Updater {
                 p.load(stream)
                 p
             }
-        } ?: throw IllegalStateException("redicloud-version.properties not found in jar file")
+        } ?: error("redicloud-version.properties not found in jar file")
         return properties.map { it.key.toString() to it.value.toString() }.toMap()
     }
 
@@ -142,7 +142,7 @@ object Updater {
     suspend fun getBuilds(branch: String?): List<BuildInfo> {
         if (branch == null) return emptyList()
         val response = httpClient.get {
-            url(getRootAPIUrl() + "/builds/?branch=$branch")
+            url("$ROOT_API_URL/builds/?branch=$branch")
         }
         if (!response.status.isSuccess()) return emptyList()
         val builds = gson.fromJsonToList<BuildInfo>(response.bodyAsText())
@@ -151,11 +151,10 @@ object Updater {
 
     suspend fun getBranches(): List<String> {
         val response = httpClient.get {
-            url(getRootAPIUrl() + "/builds/")
+            url("$ROOT_API_URL/builds/")
         }
         if (!response.status.isSuccess()) return emptyList()
         val info = gson.fromJson(response.bodyAsText(), BranchList::class.java)
         return info.branches
     }
-
 }

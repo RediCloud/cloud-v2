@@ -8,5 +8,4 @@ interface IFileNode : ICloudService {
     var hostname: String
     val nodeInternal: Boolean
     val cloudPath: String
-
 }

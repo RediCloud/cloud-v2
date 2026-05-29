@@ -13,5 +13,4 @@ class CloudPlayerConnectServerPacket(
         uniqueId,
         cloudServer.serviceId
     )
-
 }

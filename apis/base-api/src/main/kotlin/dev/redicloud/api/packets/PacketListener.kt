@@ -7,5 +7,4 @@ open class PacketListener<T : AbstractPacket>(val packetClazz: KClass<T>, privat
     val classLoader = this::class.java.classLoader
 
     fun listener(packet: T) = handle(packet)
-
 }

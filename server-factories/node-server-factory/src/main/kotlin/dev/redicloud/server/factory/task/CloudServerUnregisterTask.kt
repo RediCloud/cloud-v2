@@ -1,5 +1,6 @@
 package dev.redicloud.server.factory.task
 
+import dev.redicloud.api.exceptions.CloudServerException
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.api.service.server.ICloudServer
@@ -33,7 +34,7 @@ class CloudServerUnregisterTask(
             actions.add {
                 try {
                     serverFactory.unregisterServer(serviceId, force = true)
-                }catch (e: Exception) {
+                } catch (e: CloudServerException) {
                     LOGGER.severe("§cFailed to unregister server ${serviceId.toName()}!", e)
                 }
             }
@@ -43,5 +44,4 @@ class CloudServerUnregisterTask(
 
         return false
     }
-
 }

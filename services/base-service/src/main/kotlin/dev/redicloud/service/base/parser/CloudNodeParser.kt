@@ -1,10 +1,10 @@
 package dev.redicloud.service.base.parser
 
 import dev.redicloud.api.commands.ICommandArgumentParser
-import dev.redicloud.repository.node.CloudNode
-import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.isServiceId
+import dev.redicloud.repository.node.CloudNode
+import dev.redicloud.repository.node.NodeRepository
 import kotlinx.coroutines.runBlocking
 
 class CloudNodeParser(private val nodeRepository: NodeRepository) : ICommandArgumentParser<CloudNode> {
@@ -17,11 +17,10 @@ class CloudNodeParser(private val nodeRepository: NodeRepository) : ICommandArgu
                     return@runBlocking nodeRepository.getNode(serviceId)
                 }
                 return@runBlocking nodeRepository.getRegisteredNodes()
-                    .firstOrNull() { it.name.lowercase() == parameter.lowercase() }
-            }catch (e: Exception) {
+                    .firstOrNull { it.name.lowercase() == parameter.lowercase() }
+            } catch (_: Exception) {
                 return@runBlocking null
             }
         }
     }
-
 }

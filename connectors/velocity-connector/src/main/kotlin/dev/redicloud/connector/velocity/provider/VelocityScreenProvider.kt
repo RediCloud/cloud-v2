@@ -14,5 +14,4 @@ class VelocityScreenProvider(
         LogManager.rootLogger().info("Executing command: $command")
         proxyServer.commandManager.executeAsync(proxyServer.consoleCommandSource, command)
     }
-
 }

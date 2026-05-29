@@ -14,5 +14,4 @@ class ReloadableModulesSuggester(
             .map { it.id }
             .toTypedArray()
     }
-
 }

@@ -3,11 +3,15 @@ package dev.redicloud.console.animation.impl.line
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.AbstractConsoleAnimation
 
-class AnimatedLineAnimation(console: Console, updateInterval: Long, val line: () -> String?) : AbstractConsoleAnimation(updateInterval, false, console) {
+class AnimatedLineAnimation(console: Console, updateInterval: Long, val line: () -> String?) : AbstractConsoleAnimation(
+    updateInterval,
+    false,
+    console
+) {
 
     companion object {
         private val LOADING_ANIMATION_SYMBOLS = listOf("|", "/", "-", "\\")
-        private val LOADING_ANIMATION_IDENTIFIER = "%loading%"
+        private const val LOADING_ANIMATION_IDENTIFIER = "%loading%"
     }
 
     private val loadingAnimations = mutableMapOf<Int, String>()
@@ -48,5 +52,4 @@ class AnimatedLineAnimation(console: Console, updateInterval: Long, val line: ()
         val nextIndex = if (currentIndex + 1 >= LOADING_ANIMATION_SYMBOLS.size) 0 else currentIndex + 1
         return LOADING_ANIMATION_SYMBOLS[nextIndex]
     }
-
 }

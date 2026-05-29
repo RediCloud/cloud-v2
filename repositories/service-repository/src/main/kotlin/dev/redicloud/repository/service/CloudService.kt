@@ -2,8 +2,8 @@ package dev.redicloud.repository.service
 
 import dev.redicloud.api.service.ICloudService
 import dev.redicloud.api.service.ICloudServiceSession
-import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.utils.isIpv4
 import dev.redicloud.utils.isIpv6
 
@@ -14,8 +14,8 @@ abstract class CloudService(
     override var connected: Boolean = false
 ) : IClusterCacheObject, ICloudService {
 
-    override fun identifyName(colored: Boolean): String
-        = if (colored) "%hc%$name§8#%tc%${serviceId.id}" else "$name#${serviceId.id}"
+    override fun identifyName(colored: Boolean): String =
+        if (colored) "%hc%$name§8#%tc%${serviceId.id}" else "$name#${serviceId.id}"
 
     override val currentSession: ServiceSession?
         get() {
@@ -39,7 +39,7 @@ abstract class CloudService(
         }
 
     override fun endSession(session: ICloudServiceSession?): ICloudServiceSession {
-        val current = (session ?: currentSession) as ServiceSession? ?: throw IllegalStateException("No session is currently active")
+        val current = (session ?: currentSession) as ServiceSession? ?: error("No session is currently active")
         current.endTime = System.currentTimeMillis()
         sessions.currentSession = null
         return current
@@ -51,9 +51,7 @@ abstract class CloudService(
         }
 
     override fun startSession(ipAddress: String): ServiceSession {
-        if (!isIpv4(ipAddress) && !isIpv6(ipAddress)) {
-            throw IllegalArgumentException("Invalid IP address: $ipAddress")
-        }
+        require(isIpv4(ipAddress) || isIpv6(ipAddress)) { "Invalid IP address: $ipAddress" }
         var hostname = ipAddress
         if (isIpv6(ipAddress) && !ipAddress.startsWith("[")) {
             hostname = "[$ipAddress]"
@@ -62,7 +60,7 @@ abstract class CloudService(
         sessions.currentSession = session
         if (registrationSession == null) {
             sessions.registrationSession = session
-        }else {
+        } else {
             sessions.sessionHistory.add(session)
             while (sessions.sessionHistory.size > 5) {
                 sessions.sessionHistory.removeAt(0)
@@ -70,5 +68,4 @@ abstract class CloudService(
         }
         return session
     }
-
 }

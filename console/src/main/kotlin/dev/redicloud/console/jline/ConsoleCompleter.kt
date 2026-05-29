@@ -19,7 +19,11 @@ class ConsoleCompleter(val console: Console) : Completer {
             return
         }
 
-        candidates.addAll(console.commandManager.getCompletions(console.commandManager.defaultActor, line.line()).map { Candidate(it) })
+        candidates.addAll(
+            console.commandManager.getCompletions(
+                console.commandManager.defaultActor,
+                line.line()
+            ).map { Candidate(it) }
+        )
     }
-
 }

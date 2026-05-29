@@ -15,7 +15,6 @@ import java.net.URLClassLoader
 import java.util.logging.Logger
 import kotlin.system.exitProcess
 
-
 @Plugin(
     id = "redicloud-connector",
     name = "redicloud-connector-velocity",
@@ -28,21 +27,25 @@ class VelocityConnectorBootstrap @Inject constructor(val proxyServer: ProxyServe
     private var connector: VelocityConnector? = null
 
     init {
+        @Suppress("TooGenericExceptionCaught")
         try {
             loadProperties(this.javaClass.classLoader)
             Bootstrap().apply(URLClassLoaderJarLoader(this.javaClass.classLoader as URLClassLoader))
-            connector = VelocityConnector(this, proxyServer)
-        }catch (e: Exception) {
-            e.printStackTrace()
+            connector = VelocityConnector(proxyServer)
+        } catch (e: Exception) {
+            System.err.println("Failed to initialize VelocityConnector: ${e.message}")
+            System.err.println(e.stackTraceToString())
             proxyServer.shutdown()
         }
     }
 
+    @Suppress("UnusedParameter")
     @Subscribe(order = PostOrder.FIRST)
     fun onProxyInitialization(event: ProxyInitializeEvent) {
         connector?.onEnable()
     }
 
+    @Suppress("UnusedParameter")
     @Subscribe(order = PostOrder.LAST)
     fun onShutdown(event: ProxyShutdownEvent) {
         if (connector == null) {
@@ -52,5 +55,4 @@ class VelocityConnectorBootstrap @Inject constructor(val proxyServer: ProxyServe
         connector!!.velocityShuttingDown = true
         connector!!.onDisable()
     }
-
 }

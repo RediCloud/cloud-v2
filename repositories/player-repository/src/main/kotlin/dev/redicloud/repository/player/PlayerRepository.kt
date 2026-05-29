@@ -5,11 +5,11 @@ import dev.redicloud.api.events.internal.player.CloudPlayerDisconnectEvent
 import dev.redicloud.api.events.internal.player.CloudPlayerSwitchServerEvent
 import dev.redicloud.api.player.ICloudPlayer
 import dev.redicloud.api.player.ICloudPlayerRepository
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
-import dev.redicloud.api.service.ServiceType
 import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
 
@@ -27,7 +27,8 @@ class PlayerRepository(
     ServiceType.NODE,
     ServiceType.MINECRAFT_SERVER,
     ServiceType.PROXY_SERVER
-), ICloudPlayerRepository {
+),
+    ICloudPlayerRepository {
 
     override suspend fun getPlayer(uniqueId: UUID): CloudPlayer? {
         return get(uniqueId.toString())
@@ -46,13 +47,13 @@ class PlayerRepository(
     }
 
     override suspend fun updatePlayer(cloudPlayer: ICloudPlayer): CloudPlayer {
-        val oldPlayer = getPlayer(cloudPlayer.uniqueId) ?: throw IllegalStateException("Player not found")
+        val oldPlayer = getPlayer(cloudPlayer.uniqueId) ?: error("Player not found")
         return set(cloudPlayer.uniqueId.toString(), cloudPlayer).also {
             if (oldPlayer.serverId != null && it.serverId == null || oldPlayer.proxyId != null && it.proxyId == null) {
                 eventManager.fireEvent(CloudPlayerDisconnectEvent(it.uniqueId))
-            }else if (oldPlayer.proxyId != it.proxyId) {
+            } else if (oldPlayer.proxyId != it.proxyId) {
                 eventManager.fireEvent(CloudPlayerConnectedEvent(it.uniqueId))
-            }else if(oldPlayer.serverId != null && it.serverId != null && oldPlayer.serverId != it.serverId) {
+            } else if (oldPlayer.serverId != null && it.serverId != null && oldPlayer.serverId != it.serverId) {
                 eventManager.fireEvent(CloudPlayerSwitchServerEvent(it.uniqueId, oldPlayer.serverId!!, it.serverId!!))
             }
         }
@@ -63,7 +64,7 @@ class PlayerRepository(
     }
 
     override suspend fun deletePlayer(uniqueId: UUID): Boolean {
-       return  delete(uniqueId.toString())
+        return delete(uniqueId.toString())
     }
 
     override suspend fun existsPlayer(uniqueId: UUID): Boolean {
@@ -81,5 +82,4 @@ class PlayerRepository(
     override suspend fun getRegisteredPlayers(): List<CloudPlayer> {
         return getAll()
     }
-
 }

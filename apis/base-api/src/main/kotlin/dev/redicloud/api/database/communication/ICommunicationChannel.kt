@@ -12,5 +12,4 @@ interface ICommunicationChannel {
     suspend fun unsubscribe(listenerId: Int)
 
     suspend fun unsubscribeAll()
-
 }

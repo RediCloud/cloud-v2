@@ -18,5 +18,4 @@ class UnloadableModulesSuggester(
             .map { it.id }
             .toTypedArray()
     }
-
 }

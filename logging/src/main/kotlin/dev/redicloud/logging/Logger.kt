@@ -42,5 +42,4 @@ abstract class Logger(name: String?, resourceBundleName: String? = null) : Logge
         if (!this.isLoggable(level)) return
         this.log(level, if (params.size == 0) message else String.format(message, *params), throwable)
     }
-
 }

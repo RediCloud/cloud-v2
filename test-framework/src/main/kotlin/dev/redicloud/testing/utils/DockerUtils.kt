@@ -1,18 +1,17 @@
 package dev.redicloud.testing.utils
 
 import com.google.common.util.concurrent.Futures
-import dev.redicloud.testing.RediCloud
 import dev.redicloud.testing.pre.PreJavaVersion
 import org.slf4j.LoggerFactory
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.images.builder.ImageFromDockerfile
 import java.util.concurrent.Future
 
-val NODE_IMAGE_NAME = "redicloud-node"
-val NODE_IMAGE = "redicloud-node"
-val REDIS_IMAGE_NAME = "redis"
+const val NODE_IMAGE_NAME = "redicloud-node"
+const val NODE_IMAGE = "redicloud-node"
+const val REDIS_IMAGE_NAME = "redis"
 
-val ALPIN_IMAGE = "alpine:edge"
+const val ALPIN_IMAGE = "alpine:edge"
 
 object DockerUtils {
     private val logger = LoggerFactory.getLogger(DockerUtils::class.java)
@@ -23,7 +22,7 @@ object DockerUtils {
             testContainer.start()
             testContainer.stop()
             return Futures.immediateFuture(imageName)
-        }catch (e: Exception) {
+        } catch (_: Exception) {
             logger.info("Building image $imageName...")
             return ImageFromDockerfile(NODE_IMAGE_NAME, false)
                 .withDockerfileFromBuilder { builder ->
@@ -40,5 +39,4 @@ object DockerUtils {
                 }
         }
     }
-
 }

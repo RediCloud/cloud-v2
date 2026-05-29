@@ -1,10 +1,10 @@
 package dev.redicloud.repository.server.version.task
 
+import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.tasks.CloudTask
 
 class CloudServerVersionUpdateTask(
@@ -18,7 +18,6 @@ class CloudServerVersionUpdateTask(
     }
 
     override suspend fun execute(): Boolean {
-
         serverVersionTypeRepository.pullOnlineTypes(this.serverVersionRepository, silent)
         serverVersionRepository.pullOnlineVersions(this.serverVersionTypeRepository, silent)
 
@@ -34,5 +33,4 @@ class CloudServerVersionUpdateTask(
 
         return false
     }
-
 }

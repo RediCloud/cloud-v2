@@ -1,13 +1,12 @@
 package dev.redicloud.repository.template.file
 
 import dev.redicloud.api.database.IDatabaseConnection
+import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.template.file.ICloudFileTemplate
 import dev.redicloud.api.template.file.ICloudFileTemplateRepository
-import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.repository.node.NodeRepository
-import dev.redicloud.api.service.ServiceType
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
 
@@ -23,7 +22,8 @@ abstract class AbstractFileTemplateRepository(
     5.minutes,
     packetManager,
     ServiceType.NODE,
-), ICloudFileTemplateRepository {
+),
+    ICloudFileTemplateRepository {
 
     override suspend fun getTemplate(uniqueId: UUID): FileTemplate? {
         return get(uniqueId.toString())
@@ -34,7 +34,9 @@ abstract class AbstractFileTemplateRepository(
     }
 
     override suspend fun getTemplate(name: String, prefix: String): FileTemplate? {
-        return getTemplates().firstOrNull { it.name.lowercase() == name.lowercase() && it.prefix.lowercase() == prefix.lowercase() }
+        return getTemplates().firstOrNull {
+            it.name.lowercase() == name.lowercase() && it.prefix.lowercase() == prefix.lowercase()
+        }
     }
 
     override suspend fun existsTemplate(uniqueId: UUID, prefix: String): Boolean {
@@ -52,7 +54,7 @@ abstract class AbstractFileTemplateRepository(
     override suspend fun deleteTemplate(uniqueId: UUID): Boolean {
         val templates = getTemplates()
         val template =
-            templates.firstOrNull { it.uniqueId == uniqueId } ?: throw Exception("Template $uniqueId not found!")
+            templates.firstOrNull { it.uniqueId == uniqueId } ?: error("Template $uniqueId not found!")
         templates.filter { it.inherited.contains(template.uniqueId) }.forEach {
             it.inherited.remove(template.uniqueId)
             updateTemplate(it)
@@ -87,7 +89,7 @@ abstract class AbstractFileTemplateRepository(
         val collectedTemplates = mutableListOf<FileTemplate>()
         templates.forEach { fileTemplate ->
             val template = getTemplate(fileTemplate.uniqueId)
-                ?: throw Exception("Template ${fileTemplate.uniqueId} not found!")
+                ?: error("Template ${fileTemplate.uniqueId} not found!")
             collectedTemplates.add(template)
             collectedTemplates.addAll(
                 collectTemplates(
@@ -97,5 +99,4 @@ abstract class AbstractFileTemplateRepository(
         }
         return collectedTemplates
     }
-
 }

@@ -1,25 +1,26 @@
 package dev.redicloud.repository.server
 
+import dev.redicloud.api.events.internal.server.CloudServerRegisteredEvent
+import dev.redicloud.api.events.internal.server.CloudServerStateChangeEvent
 import dev.redicloud.api.events.internal.server.CloudServerUnregisteredEvent
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.ServiceType
+import dev.redicloud.api.service.server.*
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
-import dev.redicloud.api.events.internal.server.CloudServerRegisteredEvent
-import dev.redicloud.api.events.internal.server.CloudServerStateChangeEvent
-import dev.redicloud.api.service.server.*
 import dev.redicloud.repository.service.ServiceRepository
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.api.service.ServiceType
 
 class ServerRepository(
     databaseConnection: DatabaseConnection,
     private val serviceId: ServiceId,
     packetManager: PacketManager,
     val eventManager: EventManager
-) : ServiceRepository (
+) : ServiceRepository(
     databaseConnection,
     packetManager
-) , ICloudServerRepository {
+),
+    ICloudServerRepository {
 
     val internalMinecraftServerRepository = InternalServerRepository(
         databaseConnection,
@@ -72,17 +73,25 @@ class ServerRepository(
 
     override suspend fun <T : ICloudServer> updateServer(cloudServer: T): T {
         val impl = when (cloudServer) {
-            is CloudMinecraftServer -> internalMinecraftServerRepository.updateService(cloudServer as CloudMinecraftServer)
+            is CloudMinecraftServer -> internalMinecraftServerRepository.updateService(
+                cloudServer as CloudMinecraftServer
+            )
             is CloudProxyServer -> internalProxyServerRepository.updateService(cloudServer as CloudProxyServer)
-            else -> throw IllegalArgumentException("Unknown service type ${cloudServer.serviceId.type} (${cloudServer.serviceId.type})")
+            else -> throw IllegalArgumentException(
+                "Unknown service type ${cloudServer.serviceId.type} (${cloudServer.serviceId.type})"
+            )
         }
         if (impl.oldState != cloudServer.state) {
             eventManager.fireEvent(CloudServerStateChangeEvent(cloudServer.serviceId, cloudServer.state))
             impl.oldState = cloudServer.state
             when (cloudServer) {
-                is CloudMinecraftServer -> internalMinecraftServerRepository.updateService(cloudServer as CloudMinecraftServer)
+                is CloudMinecraftServer -> internalMinecraftServerRepository.updateService(
+                    cloudServer as CloudMinecraftServer
+                )
                 is CloudProxyServer -> internalProxyServerRepository.updateService(cloudServer as CloudProxyServer)
-                else -> throw IllegalArgumentException("Unknown service type ${cloudServer.serviceId.type} (${cloudServer.serviceId.type})")
+                else -> throw IllegalArgumentException(
+                    "Unknown service type ${cloudServer.serviceId.type} (${cloudServer.serviceId.type})"
+                )
             }
         }
         return cloudServer
@@ -90,9 +99,13 @@ class ServerRepository(
 
     suspend fun <T : ICloudServer> createServer(cloudServer: T): T {
         when (cloudServer) {
-            is CloudMinecraftServer -> internalMinecraftServerRepository.createService(cloudServer as CloudMinecraftServer)
+            is CloudMinecraftServer -> internalMinecraftServerRepository.createService(
+                cloudServer as CloudMinecraftServer
+            )
             is CloudProxyServer -> internalProxyServerRepository.createService(cloudServer as CloudProxyServer)
-            else -> throw IllegalArgumentException("Unknown service type ${cloudServer.serviceId.type} (${cloudServer.serviceId.type})")
+            else -> throw IllegalArgumentException(
+                "Unknown service type ${cloudServer.serviceId.type} (${cloudServer.serviceId.type})"
+            )
         }
         eventManager.fireEvent(CloudServerRegisteredEvent(cloudServer.serviceId))
         if (cloudServer.state != CloudServerState.UNKNOWN) {
@@ -101,13 +114,16 @@ class ServerRepository(
         return cloudServer
     }
 
-
     suspend fun <T : ICloudServer> deleteServer(cloudServer: T) {
         val unregister = registeredServices.contains(cloudServer.serviceId)
         when (cloudServer) {
-            is CloudMinecraftServer -> internalMinecraftServerRepository.deleteService(cloudServer as CloudMinecraftServer)
+            is CloudMinecraftServer -> internalMinecraftServerRepository.deleteService(
+                cloudServer as CloudMinecraftServer
+            )
             is CloudProxyServer -> internalProxyServerRepository.deleteService(cloudServer as CloudProxyServer)
-            else -> throw IllegalArgumentException("Unknown service type ${cloudServer.serviceId.type} (${cloudServer.serviceId.type})")
+            else -> throw IllegalArgumentException(
+                "Unknown service type ${cloudServer.serviceId.type} (${cloudServer.serviceId.type})"
+            )
         }
         if (unregister) eventManager.fireEvent(CloudServerUnregisteredEvent(cloudServer.serviceId))
     }
@@ -129,11 +145,10 @@ class ServerRepository(
             .asSequence()
             .filter { it.serviceId != serviceId }
             .filter { !ignoredServerIds.toList().contains(it.serviceId) }
-            //TODO check permissions
+            // TODO check permissions
             .filter { it.configurationTemplate.fallbackServer }
             .filter { it.state == CloudServerState.RUNNING }
             .filter { it.connectedPlayers.size < it.maxPlayers || it.maxPlayers == -1 }
             .minByOrNull { it.connectedPlayers.size }
     }
-
 }

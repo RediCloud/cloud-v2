@@ -21,6 +21,11 @@ class VersionCommand(
     val console: NodeConsole
 ) : ICommand {
 
+    companion object {
+        private const val ANIMATION_TICK_MS = 200L
+        private const val SWITCH_CONFIRM_TIMEOUT_MS = 30000
+    }
+
     @CommandSubPath("")
     @CommandDescription("Displays the current version of the node service")
     fun version(
@@ -45,9 +50,16 @@ class VersionCommand(
         }
         val updateInfo = Updater.updateAvailable()
         if (updateInfo.first && updateInfo.second != null) {
-            actor.sendMessage("An update is available: %hc%${updateInfo.second!!.branch}§8#%tc%${updateInfo.second!!.build} §8(%tc%${updateInfo.second!!.version}§8)")
-            actor.sendMessage("You can download the update with the command: %hc%version download $BRANCH ${updateInfo.second}")
-            actor.sendMessage("And switch the update with the command: %hc%version switch $BRANCH ${updateInfo.second!!.build}")
+            actor.sendMessage(
+                "An update is available: %hc%${updateInfo.second!!.branch}" +
+                    "§8#%tc%${updateInfo.second!!.build} §8(%tc%${updateInfo.second!!.version}§8)"
+            )
+            actor.sendMessage(
+                "You can download the update with the command: %hc%version download $BRANCH ${updateInfo.second}"
+            )
+            actor.sendMessage(
+                "And switch the update with the command: %hc%version switch $BRANCH ${updateInfo.second!!.build}"
+            )
         } else {
             actor.sendMessage("You are running the latest version!")
         }
@@ -57,11 +69,11 @@ class VersionCommand(
     @CommandDescription("Downloads a version")
     fun download(
         actor: ConsoleActor,
-        @CommandParameter("branch", false, BranchSuggester::class) _branch: String?,
-        @CommandParameter("build", false, BuildsSuggester::class) _build: String?
+        @CommandParameter("branch", false, BranchSuggester::class) branchParam: String?,
+        @CommandParameter("build", false, BuildsSuggester::class) buildParam: String?
     ) = defaultScope.launch {
-        val branch = _branch ?: BRANCH
-        val build = _build ?: "latest"
+        val branch = branchParam ?: BRANCH
+        val build = buildParam ?: "latest"
         val buildId = if (build == "latest") {
             val builds = Updater.getBuilds(branch)
             if (builds.isEmpty()) {
@@ -72,10 +84,10 @@ class VersionCommand(
                 actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
                 return@launch
             }
-        }else if (build.toIntOrNull() == null) {
+        } else if (build.toIntOrNull() == null) {
             actor.sendMessage("§cInvalid build number")
             return@launch
-        }else {
+        } else {
             build.toInt()
         }
         var canceled = false
@@ -83,7 +95,7 @@ class VersionCommand(
         var downloaded = false
         val animation = AnimatedLineAnimation(
             console,
-            200
+            ANIMATION_TICK_MS
         ) {
             if (canceled) {
                 null
@@ -95,11 +107,12 @@ class VersionCommand(
             }
         }
         console.startAnimation(animation)
+        @Suppress("TooGenericExceptionCaught")
         try {
-            val file = Updater.download(branch, buildId)
+            Updater.download(branch, buildId)
             downloaded = true
             actor.sendMessage("You can switch the version with the command: %hc%version switch $branch $buildId")
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             error = true
             actor.sendMessage("§cFailed to download the version!")
             LOGGER.severe("Failed to download the version", e)
@@ -112,15 +125,15 @@ class VersionCommand(
     @CommandDescription("Switch to a downloaded version")
     fun switch(
         actor: ConsoleActor,
-        @CommandParameter("branch", false, BranchSuggester::class) _branch: String?,
-        @CommandParameter("build", false, BuildsSuggester::class) _build: String?
+        @CommandParameter("branch", false, BranchSuggester::class) branchParam: String?,
+        @CommandParameter("build", false, BuildsSuggester::class) buildParam: String?
     ) = defaultScope.launch {
         if (Updater.updateToVersion != null) {
             actor.sendMessage("§cAn update was already installed! Restart the node service to apply the changes!")
             return@launch
         }
-        val branch = _branch ?: BRANCH
-        val build = _build ?: "latest"
+        val branch = branchParam ?: BRANCH
+        val build = buildParam ?: "latest"
         if (BUILD == build && BRANCH == branch) {
             actor.sendMessage("You are already running this version!")
             return@launch
@@ -135,10 +148,10 @@ class VersionCommand(
                 actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
                 return@launch
             }
-        }else if (build.toIntOrNull() == null) {
+        } else if (build.toIntOrNull() == null) {
             actor.sendMessage("§cInvalid build number")
             return@launch
-        }else {
+        } else {
             build.toInt()
         }
         val installedVersions = Updater.localInstalledVersions()
@@ -148,26 +161,36 @@ class VersionCommand(
             return@launch
         }
         val confirmIdentifier = Pair(branch, build)
-        if (branch.lowercase() != BRANCH.lowercase()
-            && switchConfirms.getOrDefault(confirmIdentifier, 0) + 30000 < System.currentTimeMillis()) {
+        if (branch.lowercase() != BRANCH.lowercase() &&
+            switchConfirms.getOrDefault(confirmIdentifier, 0) + SWITCH_CONFIRM_TIMEOUT_MS < System.currentTimeMillis()
+        ) {
             actor.sendMessage("§cYou are trying to switch to a different branch!")
-            actor.sendMessage("§cAre you sure you want to switch to the branch ${toConsoleValue("$branch#$build", false)}?")
-            actor.sendMessage("§cThis can cause issues and data loss! Backup your data before switching is recommended!")
+            actor.sendMessage(
+                "§cAre you sure you want to switch to the branch ${toConsoleValue("$branch#$build", false)}?"
+            )
+            actor.sendMessage(
+                "§cThis can cause issues and data loss! Backup your data before switching is recommended!"
+            )
             actor.sendMessage("§cType the command again to confirm!")
             switchConfirms[confirmIdentifier] = System.currentTimeMillis()
             return@launch
         }
-        if (branch == BRANCH && buildId < (BUILD.toIntOrNull() ?: -1)
-            && switchConfirms.getOrDefault(confirmIdentifier, 0) + 30000 < System.currentTimeMillis()) {
+        if (branch == BRANCH && buildId < (BUILD.toIntOrNull() ?: -1) &&
+            switchConfirms.getOrDefault(confirmIdentifier, 0) + SWITCH_CONFIRM_TIMEOUT_MS < System.currentTimeMillis()
+        ) {
             actor.sendMessage("§cYou are trying to switch to an older version!")
-            actor.sendMessage("§cAre you sure you want to switch to the version ${toConsoleValue("$branch#$build", false)}?")
-            actor.sendMessage("§cThis can cause issues and data loss! Backup your data before switching is recommended!")
+            actor.sendMessage(
+                "§cAre you sure you want to switch to the version ${toConsoleValue("$branch#$build", false)}?"
+            )
+            actor.sendMessage(
+                "§cThis can cause issues and data loss! Backup your data before switching is recommended!"
+            )
             actor.sendMessage("§cType the command again to confirm!")
             switchConfirms[confirmIdentifier] = System.currentTimeMillis()
             return@launch
         }
         switchConfirms.remove(confirmIdentifier)
-        val file = Updater.switchVersion(branch, buildId)
+        Updater.switchVersion(branch, buildId)
         actor.sendMessage("Activated the version: %hc%$branch§8#%tc%$buildId")
         actor.sendMessage("§cYou have to restart the node service to apply the changes!")
     }
@@ -189,7 +212,7 @@ class VersionCommand(
         branches.forEach {
             if (it == BRANCH) {
                 actor.sendMessage("§8- %hc%$it §7(§acurrent§7)")
-            }else {
+            } else {
                 actor.sendMessage("§8- %hc%$it")
             }
         }
@@ -199,9 +222,9 @@ class VersionCommand(
     @CommandDescription("Displays all available builds for a branch")
     fun builds(
         actor: ConsoleActor,
-        @CommandParameter("branch", false, BranchSuggester::class) _branch: String?
+        @CommandParameter("branch", false, BranchSuggester::class) branchParam: String?
     ) = defaultScope.launch {
-        val branch = _branch ?: BRANCH
+        val branch = branchParam ?: BRANCH
         val builds = mutableListOf<BuildInfo>()
         builds.addAll(Updater.getBuilds(branch))
         if (builds.isEmpty()) {
@@ -218,8 +241,10 @@ class VersionCommand(
         actor.sendMessage("Available builds for branch ${toConsoleValue(branch)}:")
         builds.forEach {
             if (it.build.toString() == BUILD) {
-                actor.sendMessage("§8- %hc%${if (it.build == -1) "local" else it.build} §8| %tc%${it.version} §7(§acurrent§7)")
-            }else {
+                actor.sendMessage(
+                    "§8- %hc%${if (it.build == -1) "local" else it.build} §8| %tc%${it.version} §7(§acurrent§7)"
+                )
+            } else {
                 actor.sendMessage("§8- %hc%${it.build} §8| %tc%${it.version}")
             }
         }
@@ -233,7 +258,9 @@ class VersionCommand(
         val installedVersions = Updater.localInstalledVersions()
         if (installedVersions.isEmpty()) {
             actor.sendMessage("No versions downloaded!")
-            actor.sendMessage("Use the command ${toConsoleValue("version download <branch> <build>")} to download a version!")
+            actor.sendMessage(
+                "Use the command ${toConsoleValue("version download <branch> <build>")} to download a version!"
+            )
             return@runBlocking
         }
         actor.sendMessage("Downloaded versions:")
@@ -242,11 +269,10 @@ class VersionCommand(
             builds.forEach {
                 if (it.toString() == BUILD && branch == BRANCH) {
                     actor.sendMessage("  §8➥ %tc%$it§7(§acurrent§7)")
-                }else {
+                } else {
                     actor.sendMessage("  §8➥ %tc%$it")
                 }
             }
         }
     }
-
 }

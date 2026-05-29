@@ -17,5 +17,4 @@ interface IModuleHandler {
     fun getStorage(moduleId: String, name: String): IModuleStorage
 
     fun getDescription(moduleId: String): IModuleDescription
-
 }

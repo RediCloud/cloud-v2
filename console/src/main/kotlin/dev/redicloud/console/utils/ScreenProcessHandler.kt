@@ -29,53 +29,59 @@ class ScreenProcessHandler(
     override fun run() {
         var stopped = false
         while (!stopped) {
+            @Suppress("TooGenericExceptionCaught")
             try {
-                val inputReader = InputStreamReader(inputStream)
-                val bufferedReader = BufferedReader(inputReader)
-                while (process.isAlive && inputStream.isOpen()) {
-                    val line = bufferedReader.readLine()
-                    if (line == null || line.isEmpty()) continue
-                    screen.println(line)
-                    lines.forEach { it(line) }
-                }
-                bufferedReader.close()
-                inputReader.close()
-
-                if (errorStream.isOpen()) {
-                    val errorReader = InputStreamReader(errorStream)
-                    val errorBufferedReader = BufferedReader(errorReader)
-                    while (errorStream.isOpen() && errorReader.ready()) {
-                        val line = errorBufferedReader.readLine()
-                        if (line == null || line.isEmpty()) continue
-
-                        screen.println(line)
-                        lines.forEach { it(line) }
-
-                        if (filterSpam) {
-                            if (!screen.isActive()) {
-                                val identifier = line
-                                    .replace(Regex("\\[.*?\\]"), "")
-                                    .trim()
-                                if (logged.contains(identifier)) return
-                                logged.add(identifier)
-                            }
-                            LOGGER.warning("[${screen.name}]: §c$line")
-                        }
-                    }
-                    errorBufferedReader.close()
-                    errorReader.close()
-                }
+                processInputStream()
+                processErrorStream()
 
                 if (!process.isAlive) {
                     exits.forEach { it(process.exitValue()) }
                     screen.destroy()
                     stopped = true
                 }
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 if (!inputStream.isOpen() && !errorStream.isOpen()) return
                 LOGGER.severe("Error while reading process output", e)
             }
         }
+    }
+
+    private fun processInputStream() {
+        val inputReader = InputStreamReader(inputStream)
+        val bufferedReader = BufferedReader(inputReader)
+        while (process.isAlive && inputStream.isOpen()) {
+            val line = bufferedReader.readLine()
+            if (line == null || line.isEmpty()) continue
+            screen.println(line)
+            lines.forEach { it(line) }
+        }
+        bufferedReader.close()
+        inputReader.close()
+    }
+
+    private fun processErrorStream() {
+        if (!errorStream.isOpen()) return
+        val errorReader = InputStreamReader(errorStream)
+        val errorBufferedReader = BufferedReader(errorReader)
+        while (errorStream.isOpen() && errorReader.ready()) {
+            val line = errorBufferedReader.readLine()
+            if (line == null || line.isEmpty()) continue
+            screen.println(line)
+            lines.forEach { it(line) }
+            handleErrorSpamFilter(line)
+        }
+        errorBufferedReader.close()
+        errorReader.close()
+    }
+
+    private fun handleErrorSpamFilter(line: String) {
+        if (!filterSpam) return
+        if (!screen.isActive()) {
+            val identifier = line.replace(Regex("\\[.*?\\]"), "").trim()
+            if (logged.contains(identifier)) return
+            logged.add(identifier)
+        }
+        LOGGER.warning("[${screen.name}]: §c$line")
     }
 
     override suspend fun onExit(): Int = process.waitFor()
@@ -87,5 +93,4 @@ class ScreenProcessHandler(
     override fun onLine(block: (String) -> Unit) {
         lines.add(block)
     }
-
 }

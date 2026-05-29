@@ -1,7 +1,6 @@
 package dev.redicloud.utils
 
 import kotlinx.coroutines.*
-import kotlin.time.Duration
 
 class MultiAsyncAction(
     dispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -24,5 +23,4 @@ class MultiAsyncAction(
             scope.cancel()
         }
     }
-
 }

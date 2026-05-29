@@ -21,5 +21,4 @@ interface IPacketResponse {
     fun withTimeOut(millis: Long): IPacketResponse {
         return withTimeOut(millis.milliseconds)
     }
-
 }
