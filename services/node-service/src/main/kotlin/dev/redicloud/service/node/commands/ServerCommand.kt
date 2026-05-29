@@ -144,71 +144,58 @@ class ServerCommand(
         @CommandParameter("server", true, CloudServerSuggester::class) server: String,
         @CommandParameter("force", false, BooleanSuggester::class) force: Boolean?
     ) = defaultScope.launch {
-        val servers = mutableListOf<CloudServer>()
-        if (server == "*") {
-            serverRepository.getRegisteredServers().forEach {
-                if (it.state == CloudServerState.STOPPING && force != true || it.state == CloudServerState.STOPPED) return@forEach
-                servers.add(it)
-            }
-            if (servers.isEmpty()) {
-                actor.sendMessage("No servers are connected!")
-                return@launch
-            }
-            actor.sendMessage("Stopping all servers...")
-            servers.forEach {
-                serverFactory.queueStop(it.serviceId, force ?: false)
-            }
-            return@launch
-        } else if (server.endsWith("*")) {
-            val name = server.substring(0, server.length - 1)
-            serverRepository.getRegisteredServers().forEach {
-                if (it.state == CloudServerState.STOPPING && force != true || it.state == CloudServerState.STOPPED) return@forEach
-                if (it.name.lowercase().startsWith(name.lowercase())) {
-                    servers.add(it)
-                }
-            }
-            if (servers.isEmpty()) {
-                actor.sendMessage("No server starts with ${toConsoleValue(name)} is connected!")
-                return@launch
-            }
-            actor.sendMessage("Stopping all servers starting with ${toConsoleValue(name)}...")
-            servers.forEach {
-                serverFactory.queueStop(it.serviceId, force ?: false)
-            }
-            return@launch
-        } else if (server.contains(",")) {
-            val names = server.split(",")
-            names.forEach {
-                val name = it.trim()
-                serverRepository.getRegisteredServers().forEach server@{ server ->
-                    if (server.state == CloudServerState.STOPPING && force != true || server.state == CloudServerState.STOPPED) return@server
-                    if (server.name.lowercase() == name.lowercase()) {
-                        servers.add(server)
-                    }
-                }
-            }
-            actor.sendMessage("Stopping ${toConsoleValue(servers.size)} servers...")
-            servers.forEach {
-                serverFactory.queueStop(it.serviceId, force ?: false)
-            }
-            return@launch
-        } else {
-            serverRepository.getRegisteredServers().forEach {
-                if (it.state == CloudServerState.STOPPING && force != true || it.state == CloudServerState.STOPPED) return@forEach
-                if (it.name.lowercase() == server.lowercase()) {
-                    servers.add(it)
-                }
-            }
-            if (servers.isEmpty()) {
-                actor.sendMessage("No server with name ${toConsoleValue(server)} connected!")
-                return@launch
-            }
-            actor.sendMessage("Stopping server ${toConsoleValue(server)}...")
-            servers.forEach {
-                serverFactory.queueStop(it.serviceId, force ?: false)
-            }
-            return@launch
+        val forceStop = force ?: false
+        when {
+            server == "*" -> stopAllServers(actor, forceStop)
+            server.endsWith("*") -> stopServersByPrefix(actor, server.dropLast(1), forceStop)
+            server.contains(",") -> stopServersByNames(actor, server.split(",").map { it.trim() }, forceStop)
+            else -> stopServerByName(actor, server, forceStop)
         }
+    }
+
+    private suspend fun collectStoppableServers(forceStop: Boolean): List<CloudServer> {
+        return serverRepository.getRegisteredServers().filter { server ->
+            !(server.state == CloudServerState.STOPPING && !forceStop || server.state == CloudServerState.STOPPED)
+        }
+    }
+
+    private suspend fun stopAllServers(actor: ConsoleActor, forceStop: Boolean) {
+        val servers = collectStoppableServers(forceStop)
+        if (servers.isEmpty()) {
+            actor.sendMessage("No servers are connected!")
+            return
+        }
+        actor.sendMessage("Stopping all servers...")
+        servers.forEach { serverFactory.queueStop(it.serviceId, forceStop) }
+    }
+
+    private suspend fun stopServersByPrefix(actor: ConsoleActor, prefix: String, forceStop: Boolean) {
+        val servers = collectStoppableServers(forceStop)
+            .filter { it.name.lowercase().startsWith(prefix.lowercase()) }
+        if (servers.isEmpty()) {
+            actor.sendMessage("No server starts with ${toConsoleValue(prefix)} is connected!")
+            return
+        }
+        actor.sendMessage("Stopping all servers starting with ${toConsoleValue(prefix)}...")
+        servers.forEach { serverFactory.queueStop(it.serviceId, forceStop) }
+    }
+
+    private suspend fun stopServersByNames(actor: ConsoleActor, names: List<String>, forceStop: Boolean) {
+        val servers = collectStoppableServers(forceStop)
+            .filter { server -> names.any { it.lowercase() == server.name.lowercase() } }
+        actor.sendMessage("Stopping ${toConsoleValue(servers.size)} servers...")
+        servers.forEach { serverFactory.queueStop(it.serviceId, forceStop) }
+    }
+
+    private suspend fun stopServerByName(actor: ConsoleActor, name: String, forceStop: Boolean) {
+        val servers = collectStoppableServers(forceStop)
+            .filter { it.name.lowercase() == name.lowercase() }
+        if (servers.isEmpty()) {
+            actor.sendMessage("No server with name ${toConsoleValue(name)} connected!")
+            return
+        }
+        actor.sendMessage("Stopping server ${toConsoleValue(name)}...")
+        servers.forEach { serverFactory.queueStop(it.serviceId, forceStop) }
     }
 
     @CommandSubPath("info <server>")

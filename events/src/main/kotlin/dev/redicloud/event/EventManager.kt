@@ -92,158 +92,61 @@ class EventManager(
     }
 
     override fun fireEvent(event: CloudEvent) {
-        val fireType = event.fireType
-        LOGGER.finest("Firing event ${event::class.simpleName} with fire type $fireType")
+        LOGGER.finest("Firing event ${event::class.simpleName} with fire type ${event.fireType}")
         when (event.fireType) {
-            EventFireType.GLOBAL -> {
-                runBlocking {
-                    @Suppress("TooGenericExceptionCaught")
-                    try {
-                        packetManager?.publishBroadcast(
-                            CloudEventPacket(
-                                gson.toJson(event),
-                                event::class.qualifiedName!!,
-                                identifier
-                            )
-                        )
-                        fireLocalEvent(event)
-                    } catch (e: Exception) {
-                        LOGGER.severe(
-                            "Error while publishing global event (Make sure ${event::class.simpleName} is serializable)",
-                            e
-                        )
-                    }
-                }
-                return
-            }
+            EventFireType.GLOBAL -> publishEventBroadcast(event)
+            EventFireType.CLIENT -> publishEventToServices(event, "client", ServiceType.CLIENT)
+            EventFireType.SERVER -> publishEventToServices(
+                event, "server", ServiceType.MINECRAFT_SERVER, ServiceType.PROXY_SERVER
+            )
+            EventFireType.MINECRAFT_SERVER -> publishEventToServices(
+                event, "minecraft server", ServiceType.MINECRAFT_SERVER
+            )
+            EventFireType.PROXY_SERVER -> publishEventToServices(event, "proxy server", ServiceType.PROXY_SERVER)
+            EventFireType.NODE -> publishEventToServices(event, "node", ServiceType.NODE)
+            else -> fireLocalEvent(event)
+        }
+    }
 
-            EventFireType.CLIENT -> {
-                runBlocking {
-                    @Suppress("TooGenericExceptionCaught")
-                    try {
-                        packetManager?.publish(
-                            CloudEventPacket(
-                                gson.toJson(event),
-                                event::class.qualifiedName!!,
-                                identifier
-                            ),
-                            ServiceType.CLIENT
-                        )
-                        fireLocalEvent(event)
-                    } catch (e: Exception) {
-                        LOGGER.severe(
-                            "Error while publishing client event (Make sure ${event::class.simpleName} is serializable)",
-                            e
-                        )
-                    }
-                }
-                return
-            }
-
-            EventFireType.SERVER -> {
-                runBlocking {
-                    @Suppress("TooGenericExceptionCaught")
-                    try {
-                        packetManager?.publish(
-                            CloudEventPacket(
-                                gson.toJson(event),
-                                event::class.qualifiedName!!,
-                                identifier
-                            ),
-                            ServiceType.MINECRAFT_SERVER
-                        )
-                        packetManager?.publish(
-                            CloudEventPacket(
-                                gson.toJson(event),
-                                event::class.qualifiedName!!,
-                                identifier
-                            ),
-                            ServiceType.PROXY_SERVER
-                        )
-                        fireLocalEvent(event)
-                    } catch (e: Exception) {
-                        LOGGER.severe(
-                            "Error while publishing server event (Make sure ${event::class.simpleName} is serializable)",
-                            e
-                        )
-                    }
-                }
-                return
-            }
-
-            EventFireType.MINECRAFT_SERVER -> {
-                runBlocking {
-                    @Suppress("TooGenericExceptionCaught")
-                    try {
-                        packetManager?.publish(
-                            CloudEventPacket(
-                                gson.toJson(event),
-                                event::class.qualifiedName!!,
-                                identifier
-                            ),
-                            ServiceType.MINECRAFT_SERVER
-                        )
-                        fireLocalEvent(event)
-                    } catch (e: Exception) {
-                        LOGGER.severe(
-                            "Error while publishing minecraft server event (Make sure ${event::class.simpleName} is serializable)",
-                            e
-                        )
-                    }
-                }
-                return
-            }
-
-            EventFireType.PROXY_SERVER -> {
-                runBlocking {
-                    @Suppress("TooGenericExceptionCaught")
-                    try {
-                        packetManager?.publish(
-                            CloudEventPacket(
-                                gson.toJson(event),
-                                event::class.qualifiedName!!,
-                                identifier
-                            ),
-                            ServiceType.PROXY_SERVER
-                        )
-                        fireLocalEvent(event)
-                    } catch (e: Exception) {
-                        LOGGER.severe(
-                            "Error while publishing proxy server event (Make sure ${event::class.simpleName} is serializable)",
-                            e
-                        )
-                    }
-                }
-                return
-            }
-
-            EventFireType.NODE -> {
-                runBlocking {
-                    @Suppress("TooGenericExceptionCaught")
-                    try {
-                        packetManager?.publish(
-                            CloudEventPacket(
-                                gson.toJson(event),
-                                event::class.qualifiedName!!,
-                                identifier
-                            ),
-                            ServiceType.NODE
-                        )
-                        fireLocalEvent(event)
-                    } catch (e: Exception) {
-                        LOGGER.severe(
-                            "Error while publishing node event (Make sure ${event::class.simpleName} is serializable)",
-                            e
-                        )
-                    }
-                }
-                return
-            }
-
-            else -> {
+    private fun publishEventBroadcast(event: CloudEvent) {
+        runBlocking {
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                packetManager?.publishBroadcast(createEventPacket(event))
                 fireLocalEvent(event)
+            } catch (e: Exception) {
+                LOGGER.severe(
+                    "Error while publishing global event (Make sure ${event::class.simpleName} is serializable)",
+                    e
+                )
             }
         }
+    }
+
+    private fun publishEventToServices(event: CloudEvent, description: String, vararg serviceTypes: ServiceType) {
+        runBlocking {
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                val packet = createEventPacket(event)
+                serviceTypes.forEach { serviceType ->
+                    packetManager?.publish(packet, serviceType)
+                }
+                fireLocalEvent(event)
+            } catch (e: Exception) {
+                LOGGER.severe(
+                    "Error while publishing $description event (Make sure ${event::class.simpleName} is serializable)",
+                    e
+                )
+            }
+        }
+    }
+
+    private fun createEventPacket(event: CloudEvent): CloudEventPacket {
+        return CloudEventPacket(
+            gson.toJson(event),
+            event::class.qualifiedName!!,
+            identifier
+        )
     }
 
     internal fun fireLocalEvent(event: CloudEvent) {
