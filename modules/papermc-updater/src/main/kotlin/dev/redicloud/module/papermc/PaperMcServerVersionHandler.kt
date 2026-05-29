@@ -30,6 +30,12 @@ class PaperMcServerVersionHandler(
     private val logger: Logger
 ) : IServerVersionHandler {
 
+    companion object {
+        private const val ANIMATION_TICK_MS = 200L
+        private const val PATCH_PORT_RANGE_START = 40000
+        private const val PATCH_PORT_RANGE_END = 60000
+    }
+
     override val name: String = "papermc"
     override val default: Boolean = false
     private val lastUpdateChecks = mutableMapOf<ICloudServerVersion, Long>()
@@ -41,7 +47,7 @@ class PaperMcServerVersionHandler(
         console?.let {
             val animation = AnimatedLineAnimation(
                 console,
-                200
+                ANIMATION_TICK_MS
             ) {
                 if (canceled) {
                     null
@@ -226,7 +232,7 @@ class PaperMcServerVersionHandler(
         console?.let {
             val animation = AnimatedLineAnimation(
                 console,
-                200
+                ANIMATION_TICK_MS
             ) {
                 if (canceled) {
                     null
@@ -265,7 +271,7 @@ class PaperMcServerVersionHandler(
             }
             val javaVersion = javaVersionRepository.getVersion(version.javaVersionId!!)
                 ?: throw NullPointerException("Cant find java version for ${version.displayName}")
-            findFreePort(40000..60000)
+            findFreePort(PATCH_PORT_RANGE_START..PATCH_PORT_RANGE_END)
 
             val processBuilder = ProcessBuilder(patchCommand(type, javaVersion, tempJar))
             processBuilder.directory(tempDir)

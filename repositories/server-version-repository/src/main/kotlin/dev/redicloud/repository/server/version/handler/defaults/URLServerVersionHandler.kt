@@ -38,6 +38,9 @@ open class URLServerVersionHandler(
 
     companion object {
         private val logger = LogManager.logger(URLServerVersionHandler::class)
+        private const val ANIMATION_TICK_MS = 200L
+        private const val PATCH_PORT_RANGE_START = 40000
+        private const val PATCH_PORT_RANGE_END = 60000
     }
 
     protected val locks = mutableMapOf<UUID, SimpleLock>()
@@ -52,7 +55,7 @@ open class URLServerVersionHandler(
         var error = false
         val animation = AnimatedLineAnimation(
             console,
-            200
+            ANIMATION_TICK_MS
         ) {
             if (canceled) {
                 null
@@ -192,7 +195,7 @@ open class URLServerVersionHandler(
         var error = false
         val animation = AnimatedLineAnimation(
             console,
-            200
+            ANIMATION_TICK_MS
         ) {
             if (canceled) {
                 null
@@ -222,7 +225,7 @@ open class URLServerVersionHandler(
             if (version.javaVersionId == null) throw NullPointerException("Cant find java version for ${version.displayName}")
             val javaVersion = javaVersionRepository.getVersion(version.javaVersionId!!)
                 ?: throw NullPointerException("Cant find java version for ${version.displayName}")
-            findFreePort(40000..60000)
+            findFreePort(PATCH_PORT_RANGE_START..PATCH_PORT_RANGE_END)
 
             val processBuilder = ProcessBuilder(patchCommand(type, javaVersion, tempJar))
             processBuilder.directory(tempDir)

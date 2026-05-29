@@ -21,6 +21,11 @@ class VersionCommand(
     val console: NodeConsole
 ) : ICommand {
 
+    companion object {
+        private const val ANIMATION_TICK_MS = 200L
+        private const val SWITCH_CONFIRM_TIMEOUT_MS = 30000
+    }
+
     @CommandSubPath("")
     @CommandDescription("Displays the current version of the node service")
     fun version(
@@ -83,7 +88,7 @@ class VersionCommand(
         var downloaded = false
         val animation = AnimatedLineAnimation(
             console,
-            200
+            ANIMATION_TICK_MS
         ) {
             if (canceled) {
                 null
@@ -150,7 +155,7 @@ class VersionCommand(
         }
         val confirmIdentifier = Pair(branch, build)
         if (branch.lowercase() != BRANCH.lowercase()
-            && switchConfirms.getOrDefault(confirmIdentifier, 0) + 30000 < System.currentTimeMillis()) {
+            && switchConfirms.getOrDefault(confirmIdentifier, 0) + SWITCH_CONFIRM_TIMEOUT_MS < System.currentTimeMillis()) {
             actor.sendMessage("§cYou are trying to switch to a different branch!")
             actor.sendMessage("§cAre you sure you want to switch to the branch ${toConsoleValue("$branch#$build", false)}?")
             actor.sendMessage("§cThis can cause issues and data loss! Backup your data before switching is recommended!")
@@ -159,7 +164,7 @@ class VersionCommand(
             return@launch
         }
         if (branch == BRANCH && buildId < (BUILD.toIntOrNull() ?: -1)
-            && switchConfirms.getOrDefault(confirmIdentifier, 0) + 30000 < System.currentTimeMillis()) {
+            && switchConfirms.getOrDefault(confirmIdentifier, 0) + SWITCH_CONFIRM_TIMEOUT_MS < System.currentTimeMillis()) {
             actor.sendMessage("§cYou are trying to switch to an older version!")
             actor.sendMessage("§cAre you sure you want to switch to the version ${toConsoleValue("$branch#$build", false)}?")
             actor.sendMessage("§cThis can cause issues and data loss! Backup your data before switching is recommended!")

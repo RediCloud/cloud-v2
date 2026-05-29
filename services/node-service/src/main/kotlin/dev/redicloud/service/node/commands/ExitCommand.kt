@@ -12,6 +12,10 @@ import kotlinx.coroutines.launch
 @CommandDescription("Stops the node service")
 class ExitCommand(private val nodeService: NodeService) : ICommand {
 
+    companion object {
+        private const val EXIT_CONFIRM_TIMEOUT_MS = 10000L
+    }
+
     private var confirmed = System.getProperty("redicloud.exit.confirm", "false").toBoolean()
 
     @CommandSubPath("")
@@ -20,7 +24,7 @@ class ExitCommand(private val nodeService: NodeService) : ICommand {
             actor.sendMessage("§cTo shutdown the node enter the command again within 10 seconds!")
             confirmed = true
             defaultScope.launch {
-                delay(10000)
+                delay(EXIT_CONFIRM_TIMEOUT_MS)
                 confirmed = false
             }
             return
@@ -34,7 +38,7 @@ class ExitCommand(private val nodeService: NodeService) : ICommand {
             actor.sendMessage("§cTo shutdown the node enter the command again within 10 seconds!")
             confirmed = true
             defaultScope.launch {
-                delay(10000)
+                delay(EXIT_CONFIRM_TIMEOUT_MS)
                 confirmed = false
             }
             return

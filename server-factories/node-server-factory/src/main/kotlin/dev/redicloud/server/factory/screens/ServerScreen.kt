@@ -15,7 +15,7 @@ class ServerScreen(
     name: String,
     console: Console,
     private val packetManager: PacketManager?
-) : Screen(console, name, mutableListOf("*"), true, 100, 100) {
+) : Screen(console, name, mutableListOf("*"), true, MAX_STORED_LINES, MAX_STORED_LINES) {
 
     private val listener = console.eventManager?.listen<CloudServerDisconnectedEvent> {
         if (it.serviceId == serviceId) {
@@ -23,6 +23,7 @@ class ServerScreen(
         }
     }
     companion object {
+        private const val MAX_STORED_LINES = 100
         val SCREEN_LINE_FORMAT = System.getProperty("redicloud.screen.line", "§8[%hc%%name%§8] %tc%%message%")
     }
 

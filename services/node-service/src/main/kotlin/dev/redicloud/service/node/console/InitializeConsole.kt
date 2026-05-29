@@ -31,6 +31,9 @@ class InitializeConsole : Console(
 
     companion object {
         private val logger = LogManager.logger(InitializeConsole::class)
+        private const val SETUP_RETRY_DELAY_MS = 5000L
+        private const val SETUP_COMPLETE_DELAY_MS = 2000L
+        private const val DB_RETRY_DELAY_MS = 10000L
     }
 
     var firstStartDetected = false
@@ -220,7 +223,7 @@ class InitializeConsole : Console(
         val nodeFile = NODE_JSON.getFile()
         if (!nodeFile.exists()) {
             writeLine("Node file not found! Starting node setup in 5 seconds...")
-            Thread.sleep(5000)
+            Thread.sleep(SETUP_RETRY_DELAY_MS)
             return nodeSetup()
         }
         return try {
@@ -235,7 +238,7 @@ class InitializeConsole : Console(
             config
         } catch (_: Exception) {
             writeLine("§cError while reading node file! Starting node setup in 5 seconds...")
-            Thread.sleep(5000)
+            Thread.sleep(SETUP_RETRY_DELAY_MS)
             nodeSetup()
         }
     }
@@ -268,7 +271,7 @@ class InitializeConsole : Console(
         switchToDefaultScreen()
         emptyPrompt()
         writeLine("You finished the node setup!")
-        Thread.sleep(2000)
+        Thread.sleep(SETUP_COMPLETE_DELAY_MS)
         return config
     }
 
@@ -277,7 +280,7 @@ class InitializeConsole : Console(
         val databaseFile = DATABASE_JSON.getFile()
         if (!databaseFile.exists()) {
             writeLine("Database file not found! Starting database setup in 5 seconds...")
-            Thread.sleep(5000)
+            Thread.sleep(SETUP_RETRY_DELAY_MS)
             return databaseSetup()
         }
         @Suppress("TooGenericExceptionCaught")
@@ -297,14 +300,14 @@ class InitializeConsole : Console(
                 }
                 emptyPrompt()
                 writeLine("Retrying in 10 seconds...")
-                Thread.sleep(10000)
+                Thread.sleep(DB_RETRY_DELAY_MS)
                 return checkDatabase(serviceId)
             }
             return p.first
         } catch (e: Exception) {
             writeLine("§cError while reading database file! Starting database setup in 5 seconds...")
             logger.log(Level.FINE, "Reading file error: ${databaseFile.absolutePath}", e)
-            Thread.sleep(5000)
+            Thread.sleep(SETUP_RETRY_DELAY_MS)
             return databaseSetup()
         }
     }
@@ -338,7 +341,7 @@ class InitializeConsole : Console(
         if (useToken) {
             writeLine("§cIts currently not possible to use a token!")
             writeLine("Please enter your redis credentials manually!")
-            Thread.sleep(2000)
+            Thread.sleep(SETUP_COMPLETE_DELAY_MS)
         }
         val username: String = databaseUsernameQuestion.ask(this)
         val password: String = databasePasswordQuestion.ask(this)
@@ -361,7 +364,7 @@ class InitializeConsole : Console(
         switchToDefaultScreen()
         emptyPrompt()
         writeLine("You finished the database setup!")
-        Thread.sleep(2000)
+        Thread.sleep(SETUP_COMPLETE_DELAY_MS)
         return checkDatabase(ServiceId(UUID.randomUUID(), ServiceType.NODE))
     }
 

@@ -41,6 +41,8 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
+private const val MIN_MEMORY_MB = 1024L
+
 class NodeService(
     databaseConfiguration: DatabaseConfiguration,
     databaseConnection: DatabaseConnection,
@@ -242,7 +244,7 @@ class NodeService(
 
     private suspend fun memoryCheck() {
         val thisNode = nodeRepository.getNode(this.serviceId)!!
-        check(thisNode.maxMemory >= 1024) { "Max memory of this node is too low! Please increase the max memory of this node!" }
+        check(thisNode.maxMemory >= MIN_MEMORY_MB) { "Max memory of this node is too low! Please increase the max memory of this node!" }
         check(thisNode.maxMemory <= Runtime.getRuntime().freeMemory()) { "Not enough memory available! Please increase the max memory of this node!" }
     }
 

@@ -11,6 +11,7 @@ class EmptySuggester : AbstractCommandSuggester() {
  * A suggester that returns all available memory values that are smaller than the total memory.
  */
 class MemorySuggester : AbstractCommandSuggester() {
+    @Suppress("MagicNumber")
     private val memoryList = mutableListOf<Long>(
         524,
         1024,

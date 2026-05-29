@@ -9,13 +9,17 @@ class ClusterConfiguration(
     databaseConnection: DatabaseConnection
 ) {
 
+    companion object {
+        private const val PROXY_SECRET_LENGTH = 27
+    }
+
     val map = databaseConnection.getCacheMutableMap<String, String>("cloud:cluster-configuration")
 
     init {
         if (!contains("id")) set("id", UUID.randomUUID().toString())
         if (!contains("proxy-secret")) {
             set("proxy-secret",
-                (1..27).map { "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".random() }
+                (1..PROXY_SECRET_LENGTH).map { "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".random() }
                     .joinToString("")
             )
         }

@@ -2,6 +2,7 @@ package dev.redicloud.module.rest.handler.version.type
 
 import dev.redicloud.api.modules.IModuleStorage
 import dev.redicloud.api.version.ICloudServerVersionTypeRepository
+import dev.redicloud.module.rest.HTTP_NOT_FOUND
 import dev.redicloud.module.rest.RestHandler
 import dev.redicloud.module.rest.fetcher.ServerVersionTypeFetcher
 import io.javalin.http.Context
@@ -16,7 +17,7 @@ class ServerVersionTypeInfoHandler(
         if (ctx.queryParam("id") != null) {
             val serverVersionType = serverVersionTypeFetcher.fetchVersionTypeById(ctx.pathParam("id"))
             if (serverVersionType == null) {
-                ctx.status(404)
+                ctx.status(HTTP_NOT_FOUND)
                 ctx.json(mapOf("error" to "Server version type not found"))
                 return
             }
@@ -26,7 +27,7 @@ class ServerVersionTypeInfoHandler(
         if (ctx.queryParam("name") != null) {
             val serverVersionType = serverVersionTypeFetcher.fetchVersionTypeByName(ctx.pathParam("name"))
             if (serverVersionType == null) {
-                ctx.status(404)
+                ctx.status(HTTP_NOT_FOUND)
                 ctx.json(mapOf("error" to "Server version type not found"))
                 return
             }

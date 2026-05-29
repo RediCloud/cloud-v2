@@ -10,6 +10,9 @@ import dev.redicloud.service.node.NodeService
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.utils.toMb
 
+private const val MEMORY_USAGE_FACTOR = 0.9
+private const val MIN_MEMORY_MB = 1024L
+
 val LOGGER = LogManager.logger(NodeRepository::class)
 
 suspend fun NodeRepository.connect(nodeService: NodeService) {
@@ -22,8 +25,8 @@ suspend fun NodeRepository.connect(nodeService: NodeService) {
 
         val allocated = total - free
         val actualFree: Long = Runtime.getRuntime().maxMemory() - allocated
-        val memory = toMb((actualFree * 0.9).toLong())
-        check(memory >= 1024) { "There must be at least 1GB of free memory to start a node!" }
+        val memory = toMb((actualFree * MEMORY_USAGE_FACTOR).toLong())
+        check(memory >= MIN_MEMORY_MB) { "There must be at least 1GB of free memory to start a node!" }
         //TODO: Update current memory by task
         createNode(CloudNode(serviceId, nodeService.configuration.nodeName, ServiceSessions(), mutableListOf(), false, toMb(allocated), memory))
     }

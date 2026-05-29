@@ -20,6 +20,13 @@ import kotlinx.coroutines.runBlocking
 @CommandDescription("All commands for the cluster")
 class ClusterCommand(private val nodeService: NodeService) : ICommand {
 
+    companion object {
+        private const val CONFIRM_TIMEOUT_MS = 15000
+        private const val ANIMATION_TICK_MS = 200L
+        private const val PING_DELAY_MS = 1500L
+        private const val PING_PENDING = -2L
+    }
+
     @CommandSubPath("nodes")
     @CommandAlias(["list", "info"])
     @CommandDescription("List all nodes")
@@ -87,7 +94,7 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
         @CommandParameter("node", true, ConnectedCloudNodeSuggester::class) node: CloudNode
     ) {
         runBlocking {
-            if (suspendConfirm.contains(node.serviceId) && System.currentTimeMillis() - suspendConfirm[node.serviceId]!! < 15000) {
+            if (suspendConfirm.contains(node.serviceId) && System.currentTimeMillis() - suspendConfirm[node.serviceId]!! < CONFIRM_TIMEOUT_MS) {
                 actor.sendMessage("Suspending node ${node.identifyName()}...")
                 nodeService.nodeRepository.suspendNode(nodeService, node.serviceId)
                 return@runBlocking
@@ -140,7 +147,7 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
             actor.sendMessage("§cPlease stop/delete all servers hosted on the node before deleting it!")
             return@launch
         }
-        if (deleteConfirm.contains(node.serviceId) && System.currentTimeMillis() - deleteConfirm[node.serviceId]!! < 15000) {
+        if (deleteConfirm.contains(node.serviceId) && System.currentTimeMillis() - deleteConfirm[node.serviceId]!! < CONFIRM_TIMEOUT_MS) {
             actor.sendMessage("Deleting node ${node.identifyName()}...")
             nodeService.nodeRepository.deleteNode(node.serviceId)
             return@launch
@@ -151,16 +158,16 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
     }
 
     private fun sendPingMessage(node: CloudNode, actor: ConsoleActor, prefix: String, block: (Long) -> Unit = {}) {
-        var ping = -2L
+        var ping = PING_PENDING
         val local = node.serviceId == nodeService.serviceId
         var cancel = false
-        val pingAnimation = AnimatedLineAnimation(actor.console, 200) {
+        val pingAnimation = AnimatedLineAnimation(actor.console, ANIMATION_TICK_MS) {
             if (cancel) {
                 null
             }else if(local){
                 cancel = true
                 "$prefix%hc%this node"
-            }else if (ping == -2L) {
+            }else if (ping == PING_PENDING) {
                 "$prefix%hc%%loading% §8(%tc%pinging§8)"
             } else if (ping == -1L) {
                 cancel = true
@@ -173,7 +180,7 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
         actor.console.startAnimation(pingAnimation)
         if (local) return
         defaultScope.launch {
-            delay(1500)
+            delay(PING_DELAY_MS)
             ping = nodeService.nodeRepository.pingService(node.serviceId)
             block(ping)
         }

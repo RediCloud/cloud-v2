@@ -4,12 +4,14 @@ import dev.redicloud.testing.RediCloudCluster
 import dev.redicloud.testing.utils.REDIS_IMAGE_NAME
 import org.testcontainers.containers.GenericContainer
 
+private const val DEFAULT_REDIS_PORT = 6379
+
 class RedisInstance(
     cluster: RediCloudCluster,
     version: String = "7.2.4"
 ) : GenericContainer<RedisInstance>("$REDIS_IMAGE_NAME:$version") {
 
-    val port = 6379
+    val port = DEFAULT_REDIS_PORT
     val hostname = "redis.redicloud.test"
     val uri = "redis://$cluster.hostname:$port"
 

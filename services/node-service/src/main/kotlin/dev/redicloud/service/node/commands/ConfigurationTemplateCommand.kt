@@ -40,6 +40,10 @@ class ConfigurationTemplateCommand(
         val invalidChars = Regex("[/\\\\?%*:|\"<>]")
         val invalidNames = listOf("con", "prn", "aux", "nul", "com1", "com2", "com3", "com4", "com5", "com6",
             "com7", "com8", "com9", "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9")
+        private const val DEFAULT_MAX_MEMORY = 512L
+        private const val DEFAULT_START_PRIORITY = 50
+        private const val DEFAULT_START_PORT = 40000
+        private const val MAX_PORT = 65535
     }
 
     @CommandSubPath("duplicate <name> [new-name]")
@@ -72,7 +76,7 @@ class ConfigurationTemplateCommand(
             ConfigurationTemplate(
                 UUID.randomUUID(),
                 name,
-                512,
+                DEFAULT_MAX_MEMORY,
                 mutableListOf(),
                 mutableListOf(),
                 0,
@@ -82,10 +86,10 @@ class ConfigurationTemplateCommand(
                 100.0,
                 "-",
                 false,
-                50,
+                DEFAULT_START_PRIORITY,
                 null,
                 false,
-                40000
+                DEFAULT_START_PORT
             )
         )
         actor.sendMessage("§aThe configuration template was created successfully!")
@@ -647,8 +651,8 @@ class ConfigurationTemplateCommand(
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("port", true) port: Int
     ) = runBlocking {
-        if (port < 100 || port > 65535) {
-            actor.sendMessage("§cThe port must be between 100 and 65535!")
+        if (port < 100 || port > MAX_PORT) {
+            actor.sendMessage("§cThe port must be between 100 and $MAX_PORT!")
             return@runBlocking
         }
         template.startPort = port

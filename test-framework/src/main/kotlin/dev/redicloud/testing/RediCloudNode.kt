@@ -27,6 +27,9 @@ class RediCloudNode(
     companion object {
         internal val LOGGER = LoggerFactory.getLogger(RediCloudNode::class.java)
         val CONSOLE_COMMAND_DELAY = 20.milliseconds
+        private const val POST_START_DELAY_MS = 4000L
+        private const val STOP_COMMAND_DELAY_MS = 500L
+        private const val POST_STOP_DELAY_MS = 2000L
     }
 
     val localWorkingDirectory = File(cluster.workingDirectory, config.name)
@@ -104,7 +107,7 @@ class RediCloudNode(
                 .withStartupTimeout(Duration.ofMillis(timeout.inWholeMilliseconds))
         )
         waitUntilContainerStarted()
-        Thread.sleep(4000)
+        Thread.sleep(POST_START_DELAY_MS)
         execute("cluster edit ${config.name} maxMemory ${config.maxMemory}")
         config.startUpCommands.forEach { execute(it) }
         LOGGER.info("Node {} in cluster {} started", config.name, cluster.config.name)
@@ -128,9 +131,9 @@ class RediCloudNode(
         }
 
         execute("stop")
-        Thread.sleep(500)
+        Thread.sleep(STOP_COMMAND_DELAY_MS)
         execute("stop")
-        Thread.sleep(2000)
+        Thread.sleep(POST_STOP_DELAY_MS)
         terminal?.destroy()
 
         super.stop()

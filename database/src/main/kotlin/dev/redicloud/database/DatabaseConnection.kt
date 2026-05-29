@@ -32,14 +32,17 @@ import org.redisson.config.Config
 class DatabaseConnection(
     config: DatabaseConfiguration,
     override val serviceId: ServiceId,
-    connectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 64 / 2 else 64,
-    connectionMinimumIdleSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 24 / 2 else 24,
-    subscriptionConnectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 50 / 2 else 50,
+    connectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) DEFAULT_CONNECTION_POOL_SIZE / 2 else DEFAULT_CONNECTION_POOL_SIZE,
+    connectionMinimumIdleSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) DEFAULT_MIN_IDLE_CONNECTIONS / 2 else DEFAULT_MIN_IDLE_CONNECTIONS,
+    subscriptionConnectionPoolSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) DEFAULT_SUBSCRIPTION_POOL_SIZE / 2 else DEFAULT_SUBSCRIPTION_POOL_SIZE,
     subscriptionConnectionMinimumIdleSize: Int = if (serviceId.type == ServiceType.MINECRAFT_SERVER) 2 / 2 else 2
 ) : IDatabaseConnection {
 
     companion object {
         private val LOGGER = LogManager.logger(DatabaseConnection::class)
+        private const val DEFAULT_CONNECTION_POOL_SIZE = 64
+        private const val DEFAULT_MIN_IDLE_CONNECTIONS = 24
+        private const val DEFAULT_SUBSCRIPTION_POOL_SIZE = 50
     }
 
     private val redissonConfig = Config()

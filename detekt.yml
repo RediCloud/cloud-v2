@@ -4,6 +4,29 @@ build:
 style:
   ForbiddenComment:
     active: false
+  MagicNumber:
+    ignoreNumbers:
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+      - '3'
+      - '4'
+      - '5'
+      - '6'
+      - '8'
+      - '10'
+      - '15'
+      - '16'
+      - '75'
+      - '100'
+      - '255'
+      - '1000'
+    ignoreHashCodeFunction: true
+    ignorePropertyDeclaration: true
+    ignoreAnnotation: true
+    ignoreEnums: true
+    ignoreRanges: true
   MaxLineLength:
     active: false
   WildcardImport:

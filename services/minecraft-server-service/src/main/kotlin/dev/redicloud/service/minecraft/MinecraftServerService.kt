@@ -34,6 +34,7 @@ abstract class MinecraftServerService<T> : BaseService(
 
     companion object {
         private val logger = LogManager.logger(MinecraftServerService::class)
+        private const val SHUTDOWN_DELAY_MS = 1500L
     }
 
     override val fileTemplateRepository: AbstractFileTemplateRepository
@@ -100,7 +101,7 @@ abstract class MinecraftServerService<T> : BaseService(
             serverRepository.shutdownAction.run()
         }
         super.shutdown(force)
-        Thread.sleep(1500) // Wait for all threads to finish their work
+        Thread.sleep(SHUTDOWN_DELAY_MS) // Wait for all threads to finish their work
     }
 
     protected fun registerTasks() {

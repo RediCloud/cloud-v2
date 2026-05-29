@@ -2,6 +2,7 @@ package dev.redicloud.module.rest.handler.player
 
 import dev.redicloud.api.modules.IModuleStorage
 import dev.redicloud.api.player.ICloudPlayerRepository
+import dev.redicloud.module.rest.HTTP_NOT_FOUND
 import dev.redicloud.module.rest.RestHandler
 import dev.redicloud.module.rest.fetcher.PlayerFetcher
 import io.javalin.http.Context
@@ -16,7 +17,7 @@ class PlayerInfoHandler(
         if (ctx.queryParam("name") != null) {
             val player = playerParser.fetchPlayerByName(ctx.queryParam("name"))
             if (player == null) {
-                ctx.status(404)
+                ctx.status(HTTP_NOT_FOUND)
                 ctx.json(mapOf("error" to "Player not found"))
                 return
             }
@@ -26,7 +27,7 @@ class PlayerInfoHandler(
         if (ctx.queryParam("uuid") != null) {
             val player = playerParser.fetchPlayerByUniqueId(ctx.queryParam("uuid"))
             if (player == null) {
-                ctx.status(404)
+                ctx.status(HTTP_NOT_FOUND)
                 ctx.json(mapOf("error" to "Player not found"))
                 return
             }

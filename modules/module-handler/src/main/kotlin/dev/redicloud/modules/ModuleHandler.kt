@@ -40,6 +40,7 @@ class ModuleHandler(
 
     companion object {
         private val logger = LogManager.logger(ModuleHandler::class)
+        private const val MIN_MODULE_FILE_SIZE = 1000L
     }
 
     private val loaders = mutableMapOf<String, ModuleClassLoader>()
@@ -170,7 +171,7 @@ class ModuleHandler(
         logger.info("Installing module %hc%${info.id} §8(%tc%$latest§8)%tc%...")
         try {
             val file = repository.download(info.id, latest)
-            if (file.length() < 1000) {
+            if (file.length() < MIN_MODULE_FILE_SIZE) {
                 logger.warning("§cFailed to install module with id $moduleId!")
                 return
             }

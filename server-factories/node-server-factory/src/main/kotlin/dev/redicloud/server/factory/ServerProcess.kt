@@ -52,12 +52,15 @@ class ServerProcess(
 
     companion object {
         private val logger = LogManager.logger(ServerProcess::class)
+        private const val DEFAULT_START_PORT = 40000
+        private const val STOP_POLL_INTERVAL_MS = 1000L
+        private const val JAVA_8_MAJOR_VERSION = 8
         val SERVER_STOP_TIMEOUT = System.getProperty("redicloud.server.stop.timeout", "20").toInt()
     }
 
     init {
         port = if (configurationTemplate.startPort == -1) {
-            findFreePort(40000, true)
+            findFreePort(DEFAULT_START_PORT, true)
         }else {
             findFreePort(configurationTemplate.startPort, false)
         }
@@ -156,7 +159,7 @@ class ServerProcess(
                 var seconds = 0
                 while (cloudServer != null && cloudServer?.connected == true && seconds < SERVER_STOP_TIMEOUT) {
                     withContext(Dispatchers.IO) {
-                        Thread.sleep(1000)
+                        Thread.sleep(STOP_POLL_INTERVAL_MS)
                     }
                     seconds++
                     cloudServer = serverRepository.getServer(serverId)
@@ -204,7 +207,7 @@ class ServerProcess(
             javaPath,
         )
 
-        if ((snapshotData.javaVersion.info?.major ?: -1) > 8) {
+        if ((snapshotData.javaVersion.info?.major ?: -1) > JAVA_8_MAJOR_VERSION) {
             list.apply {
                 add("--add-opens=java.base/java.lang=ALL-UNNAMED")
                 add("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED")

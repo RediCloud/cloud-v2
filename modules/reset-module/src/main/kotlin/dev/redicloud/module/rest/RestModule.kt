@@ -29,10 +29,11 @@ class RestModule : CloudModule(), CloudInjectable {
 
     companion object {
         private val logger = LogManager.logger(RestModule::class)
+        private const val DEFAULT_REST_PORT = 8787
     }
 
     var app: Javalin? = null
-    val port: Int = System.getProperty("redicloud.rest.port", "8787").toIntOrNull() ?: 8787
+    val port: Int = System.getProperty("redicloud.rest.port", DEFAULT_REST_PORT.toString()).toIntOrNull() ?: DEFAULT_REST_PORT
 
     lateinit var config: IModuleStorage
 

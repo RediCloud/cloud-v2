@@ -42,6 +42,7 @@ open class Console(
     companion object {
         val LOGGER: Logger = LogManager.logger(Console::class.java)
         private val DATE_FORMAT = SimpleDateFormat("HH:mm:ss.SSS")
+        private const val HISTORY_SIZE = 500
         private var FIRST_INIT = true
         lateinit var TERMINAL: Terminal
         private var CONSOLE_THREAD: Thread? = null
@@ -95,7 +96,7 @@ open class Console(
                 option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
 
                 variable(LineReader.BELL_STYLE, "none")
-                variable(LineReader.HISTORY_SIZE, 500)
+                variable(LineReader.HISTORY_SIZE, HISTORY_SIZE)
                 variable(LineReader.COMPLETION_STYLE_LIST_BACKGROUND, "inverse")
                 variable(LineReader.HISTORY_FILE, CONSOLE_HISTORY_FILE.getFile().path)
             }

@@ -2,6 +2,8 @@ package dev.redicloud.utils
 
 import java.net.ServerSocket
 
+private const val DEFAULT_PORT_RANGE_SIZE = 1000
+
 private val blocked = mutableListOf<Int>()
 
 fun findFreePort(startPort: Int, endPort: Int, random: Boolean = true): Int {
@@ -22,7 +24,7 @@ fun freePort(port: Int) {
 }
 
 fun findFreePort(startPort: Int, random: Boolean = true): Int {
-    return findFreePort(startPort, startPort + 1000, random)
+    return findFreePort(startPort, startPort + DEFAULT_PORT_RANGE_SIZE, random)
 }
 
 fun findFreePort(range: IntRange): Int {

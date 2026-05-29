@@ -64,6 +64,8 @@ class ServerFactory(
 
     companion object {
         private val logger = LogManager.logger(ServerFactory::class)
+        private const val DEFAULT_START_PRIORITY = 50
+        private const val LOCK_RELEASE_DELAY_MS = 50L
     }
 
     override val hostedProcesses: MutableList<ServerProcess> = mutableListOf()
@@ -81,7 +83,7 @@ class ServerFactory(
                 val configuration = runBlocking {
                     serverRepository.getServer<CloudServer>(it.serviceId!!)?.configurationTemplate
                 }
-                configuration?.startPriority ?: 50
+                configuration?.startPriority ?: DEFAULT_START_PRIORITY
             } else {
                 it.configurationTemplate.startPriority
             }
@@ -197,7 +199,7 @@ class ServerFactory(
                     )
                 }
             } finally {
-                Thread.sleep(50)
+                Thread.sleep(LOCK_RELEASE_DELAY_MS)
                 idLock.unlock()
             }
             serverProcess.cloudServer = cloudServer!!

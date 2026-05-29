@@ -58,6 +58,12 @@ class FileCluster(
 
     companion object {
         val LOGGER = LogManager.logger(FileCluster::class)
+        private const val PASSWORD_LENGTH = 32
+        private const val SFTP_PORT_RANGE_START = 4000
+        private const val SFTP_PORT_RANGE_END = 5000
+        private const val RSA_KEY_SIZE = 2048
+        private const val CERTIFICATE_EXPIRATION_DAYS = 31
+        private const val UNZIP_DELAY_MS = 500L
     }
 
     private val ipFilter = IPFilter(this.eventManager, this.fileNodeRepository)
@@ -84,7 +90,7 @@ class FileCluster(
                 -1,
                 hostname,
                 "redicloud",
-                generatePassword(32),
+                generatePassword(PASSWORD_LENGTH),
                 nodeInternal,
                 CLOUD_PATH
             )
@@ -143,7 +149,7 @@ class FileCluster(
             runBlocking { fileNodeRepository.updateFileNode(fileNode) }
             return fileNode.port
         }
-        val range = 4000..5000
+        val range = SFTP_PORT_RANGE_START..SFTP_PORT_RANGE_END
         val port = if (range.contains(fileNode.port) && isPortFree(fileNode.port)) {
             fileNode.port
         } else {
@@ -161,7 +167,7 @@ class FileCluster(
     @Suppress("UnusedPrivateMember")
     private fun generateKey(): KeyPair {
         val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
-        keyPairGenerator.initialize(2048)
+        keyPairGenerator.initialize(RSA_KEY_SIZE)
         return keyPairGenerator.generateKeyPair()
     }
 
@@ -181,7 +187,7 @@ class FileCluster(
     private fun signCertificate(publicKey: PublicKey, privateKey: PrivateKey): X509Certificate {
         val subject = X500Name("CN=Self-Signed")
         val now = Instant.now()
-        val expirationTime = now.plus(31 * 3, ChronoUnit.DAYS)
+        val expirationTime = now.plus(CERTIFICATE_EXPIRATION_DAYS.toLong() * 3, ChronoUnit.DAYS)
         val serialNumber = BigInteger.valueOf(now.toEpochMilli())
         val publicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.encoded)
         val builder = X509v3CertificateBuilder(
@@ -273,7 +279,7 @@ class FileCluster(
             UnzipPacket(file, unzipPath),
             serviceId
         ).withTimeOut(60.seconds).waitBlocking()
-        if (response != null) delay(500)
+        if (response != null) delay(UNZIP_DELAY_MS)
         return response
     }
 

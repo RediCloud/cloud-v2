@@ -4,6 +4,14 @@ import dev.redicloud.utils.OSType
 import dev.redicloud.utils.getOperatingSystemType
 import java.io.File
 
+private const val CLASS_VERSION_OFFSET = 44
+
+@Suppress("MagicNumber")
+private val SUPPORTED_CLASS_VERSIONS = setOf(52, 61, 62, 63, 65)
+
+@Suppress("MagicNumber")
+private val UNTESTED_CLASS_VERSIONS = setOf(53, 54, 55, 56, 57, 58, 59, 60, 64)
+
 fun getJavaVersionsBetween(javaVersion1: CloudJavaVersion, javaVersion2: CloudJavaVersion): List<CloudJavaVersion> {
     return JavaVersionRepository.ONLINE_VERSION_CACHE.get()!!
         .filter { it.id >= javaVersion1.id && it.id <= javaVersion2.id }.toList()
@@ -23,11 +31,11 @@ fun getJavaVersion(): CloudJavaVersion {
 }
 
 fun isJavaVersionSupported(version: CloudJavaVersion): Boolean {
-    return version.id == 52 || version.id == 61 || version.id == 62 || version.id == 63 || version.id == 65
+    return version.id in SUPPORTED_CLASS_VERSIONS
 }
 
 fun isJavaVersionNotTested(version: CloudJavaVersion): Boolean {
-    return version.id == 53 || version.id == 54 || version.id == 55 || version.id == 56 || version.id == 57 || version.id == 58 || version.id == 59 || version.id == 60 || version.id == 64
+    return version.id in UNTESTED_CLASS_VERSIONS
 }
 
 fun isJavaVersionUnsupported(version: CloudJavaVersion): Boolean {
@@ -99,9 +107,9 @@ fun locateAllJavaVersions(): List<File> {
 }
 
 fun toVersionId(versionNumber: Int): Int {
-    return versionNumber+44
+    return versionNumber + CLASS_VERSION_OFFSET
 }
 
 fun toVersionNumber(versionId: Int): Int {
-    return versionId-44
+    return versionId - CLASS_VERSION_OFFSET
 }

@@ -43,6 +43,7 @@ class CloudServerVersionTypeRepository(
     private val locks = mutableMapOf<UUID, ReentrantLock>()
 
     companion object {
+        private const val ANIMATION_TICK_MS = 200L
         val LOGGER = LogManager.logger(CloudServerVersionTypeRepository::class)
         val DEFAULT_TYPES_CACHE = SingleCache(1.minutes) {
             gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
@@ -107,7 +108,7 @@ class CloudServerVersionTypeRepository(
         val animation = if (console != null) {
             AnimatedLineAnimation(
                 console,
-                200
+                ANIMATION_TICK_MS
             ) {
                 if (canceled) {
                     null

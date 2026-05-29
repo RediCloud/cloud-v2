@@ -8,9 +8,12 @@ import dev.redicloud.utils.threadLogger
 import kotlinx.coroutines.runBlocking
 import kotlin.system.exitProcess
 
+private const val STARTUP_DELAY_MS = 500L
+private const val FAILURE_RETRY_DELAY_MS = 1000L
+
 fun main(args: Array<String>) {
     println("Starting node service...")
-    Thread.sleep(500)
+    Thread.sleep(STARTUP_DELAY_MS)
     Thread.currentThread().setUncaughtExceptionHandler { thread, throwable ->
         threadLogger.severe("Caught exception in thread: ${thread.name}", throwable)
     }
@@ -24,7 +27,7 @@ fun main(args: Array<String>) {
             NodeService(databaseConfiguration, databaseConnection, nodeConfiguration, preConsole.firstStartDetected)
         }.onFailure {
             LogManager.rootLogger().severe("Failed to start node service!", it)
-            Thread.sleep(1000)
+            Thread.sleep(FAILURE_RETRY_DELAY_MS)
             exitProcess(1)
         }
     }
