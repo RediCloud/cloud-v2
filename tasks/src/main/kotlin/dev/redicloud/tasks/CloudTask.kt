@@ -41,7 +41,8 @@ abstract class CloudTask(private val useLock: Boolean = true) {
             } catch (e: Exception) {
                 CloudTaskManager.LOGGER.log(
                     Level.SEVERE,
-                    "Error while executing cloud task (${this@CloudTask::class.simpleName}) by ${source::class.simpleName}",
+                    "Error while executing cloud task " +
+                        "(${this@CloudTask::class.simpleName}) by ${source::class.simpleName}",
                     e
                 )
             } finally {

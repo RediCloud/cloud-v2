@@ -13,7 +13,13 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.coroutineExceptionHandler
 import dev.redicloud.utils.gson.fixKotlinAnnotations
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 
@@ -62,7 +68,9 @@ class PacketManager(
             override fun onMessage(channel: String, message: PackedPacket) {
                 val data = message.data
                 val packetClazz = registeredPackets.firstOrNull { it.qualifiedName == message.clazz }
-                    ?: return kotlin.run { LOGGER.fine("Received packet with unknown class ${message.clazz} in channel $channel") }
+                    ?: return kotlin.run {
+                        LOGGER.fine("Received packet with unknown class ${message.clazz} in channel $channel")
+                    }
                 val packet = gson.fromJson(data, packetClazz.java)
                 if (!packet.allowLocalReceiver && packet.sender == serviceId) return
                 LOGGER.finest("Received packet ${packetClazz.simpleName} in channel $channel")
