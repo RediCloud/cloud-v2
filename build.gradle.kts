@@ -50,21 +50,6 @@ allprojects {
         dependency(rootLibs.guice)
 
         "detektPlugins"(rootLibs.detekt.formatting)
-
-        testImplementation(rootLibs.testcontainers)
-        testImplementation(rootLibs.gson)
-        testImplementation(rootLibs.logback.core)
-        testImplementation(rootLibs.logback.classic)
-        testImplementation(project(":utils"))
-        testImplementation(project(":apis:base-api"))
-        testImplementation(project(":database"))
-        testImplementation(project(":services:node-service"))
-        testImplementation(rootLibs.ktor.client.cio) {
-            exclude(group = "org.slf4j", module = "slf4j-api")
-        }
-        testImplementation(rootLibs.ktor.client.core) {
-            exclude(group = "org.slf4j", module = "slf4j-api")
-        }
     }
 
     tasks {
