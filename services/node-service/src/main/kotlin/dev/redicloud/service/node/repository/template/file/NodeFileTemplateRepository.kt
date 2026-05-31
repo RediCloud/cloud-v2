@@ -15,6 +15,7 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.utils.*
+import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.util.*
 
@@ -22,8 +23,9 @@ class NodeFileTemplateRepository(
     private val databaseConnection: DatabaseConnection,
     private val nodeRepository: NodeRepository,
     private val fileCluster: FileCluster,
-    packetManager: PacketManager
-) : AbstractFileTemplateRepository(databaseConnection, nodeRepository, packetManager) {
+    packetManager: PacketManager,
+    scope: CoroutineScope
+) : AbstractFileTemplateRepository(databaseConnection, nodeRepository, packetManager, scope) {
 
     override suspend fun pushTemplates(serviceId: ServiceId) {
         val node = nodeRepository.getNode(serviceId) ?: return

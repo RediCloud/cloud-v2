@@ -35,7 +35,7 @@ class MinestomConnector(val extension: Extension) : MinecraftServerService<Exten
         super.onDisable()
     }
 
-    override fun plattformShutdown() {
+    override fun platformShutdown() {
         this.minestomShuttingDown = true
         MinecraftServer.stopCleanly()
     }

@@ -101,7 +101,7 @@ class BungeeCordConnector(
         super.onDisable()
     }
 
-    override fun plattformShutdown() {
+    override fun platformShutdown() {
         this.bungeecordShuttingDown = true
         ProxyServer.getInstance().stop()
     }

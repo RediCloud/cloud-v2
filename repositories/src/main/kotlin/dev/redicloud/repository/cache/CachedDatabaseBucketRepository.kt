@@ -5,6 +5,7 @@ import dev.redicloud.api.service.ServiceType
 import dev.redicloud.cache.ClusterCache
 import dev.redicloud.database.repository.DatabaseBucketRepository
 import dev.redicloud.packets.PacketManager
+import kotlinx.coroutines.CoroutineScope
 import kotlin.reflect.KClass
 import kotlin.time.Duration
 
@@ -15,6 +16,7 @@ open class CachedDatabaseBucketRepository<I : Any, K : Any> (
     cacheClass: KClass<K>,
     cacheDuration: Duration,
     packetManager: PacketManager,
+    scope: CoroutineScope,
     vararg cacheTypes: ServiceType
 ) : DatabaseBucketRepository<I, K>(
     connection,
@@ -24,7 +26,7 @@ open class CachedDatabaseBucketRepository<I : Any, K : Any> (
 ) {
 
     protected val cache =
-        ClusterCache(name, connection.serviceId, cacheClass, cacheDuration, packetManager, *cacheTypes)
+        ClusterCache(name, connection.serviceId, cacheClass, cacheDuration, packetManager, scope, *cacheTypes)
 
     override suspend fun get(identifier: String): K? {
         if (cache.isCached(identifier)) return cache.get(identifier)

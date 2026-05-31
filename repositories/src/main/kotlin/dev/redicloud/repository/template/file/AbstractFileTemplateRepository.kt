@@ -7,13 +7,15 @@ import dev.redicloud.api.template.file.ICloudFileTemplateRepository
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.repository.node.NodeRepository
+import kotlinx.coroutines.CoroutineScope
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
 
 abstract class AbstractFileTemplateRepository(
     private val databaseConnection: IDatabaseConnection,
     private val nodeRepository: NodeRepository,
-    packetManager: PacketManager
+    packetManager: PacketManager,
+    scope: CoroutineScope
 ) : CachedDatabaseBucketRepository<ICloudFileTemplate, FileTemplate>(
     databaseConnection,
     "file-template",
@@ -21,6 +23,7 @@ abstract class AbstractFileTemplateRepository(
     FileTemplate::class,
     5.minutes,
     packetManager,
+    scope,
     ServiceType.NODE,
 ),
     ICloudFileTemplateRepository {
@@ -30,12 +33,12 @@ abstract class AbstractFileTemplateRepository(
     }
 
     override suspend fun getTemplate(displayName: String): FileTemplate? {
-        return getTemplates().firstOrNull { it.displayName.lowercase() == displayName.lowercase() }
+        return getTemplates().firstOrNull { it.displayName.equals(displayName, ignoreCase = true) }
     }
 
     override suspend fun getTemplate(name: String, prefix: String): FileTemplate? {
         return getTemplates().firstOrNull {
-            it.name.lowercase() == name.lowercase() && it.prefix.lowercase() == prefix.lowercase()
+            it.name.equals(name, ignoreCase = true) && it.prefix.equals(prefix, ignoreCase = true)
         }
     }
 
@@ -44,11 +47,11 @@ abstract class AbstractFileTemplateRepository(
     }
 
     override suspend fun existsTemplate(displayName: String): Boolean {
-        return getTemplates().any { it.displayName.lowercase() == displayName.lowercase() }
+        return getTemplates().any { it.displayName.equals(displayName, ignoreCase = true) }
     }
 
     override suspend fun existsTemplate(name: String, prefix: String): Boolean {
-        return getTemplates().any { it.name.lowercase() == name.lowercase() && it.prefix.lowercase() == prefix.lowercase() }
+        return getTemplates().any { it.name.equals(name, ignoreCase = true) && it.prefix.equals(prefix, ignoreCase = true) }
     }
 
     override suspend fun deleteTemplate(uniqueId: UUID): Boolean {

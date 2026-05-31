@@ -39,9 +39,9 @@ abstract class MinecraftServerService<T> :
     }
 
     override val fileTemplateRepository: AbstractFileTemplateRepository =
-        BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository, packetManager)
+        BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository, packetManager, scope)
     override val serverVersionTypeRepository: CloudServerVersionTypeRepository =
-        CloudServerVersionTypeRepository(this.databaseConnection, null, packetManager)
+        CloudServerVersionTypeRepository(this.databaseConnection, null, packetManager, scope)
     lateinit var currentServerData: CurrentServerData
         private set
     private lateinit var hostServiceId: ServiceId

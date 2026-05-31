@@ -10,12 +10,14 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.ServiceRepository
+import kotlinx.coroutines.CoroutineScope
 
 class ServerRepository(
     databaseConnection: DatabaseConnection,
     private val serviceId: ServiceId,
     packetManager: PacketManager,
-    val eventManager: EventManager
+    val eventManager: EventManager,
+    scope: CoroutineScope
 ) : ServiceRepository(
     databaseConnection,
     packetManager
@@ -28,7 +30,8 @@ class ServerRepository(
         ICloudMinecraftServer::class,
         CloudMinecraftServer::class,
         ServiceType.MINECRAFT_SERVER,
-        this
+        this,
+        scope
     ).apply { internalRepositories.add(this) }
     val internalProxyServerRepository = InternalServerRepository(
         databaseConnection,
@@ -36,7 +39,8 @@ class ServerRepository(
         ICloudProxyServer::class,
         CloudProxyServer::class,
         ServiceType.PROXY_SERVER,
-        this
+        this,
+        scope
     ).apply { internalRepositories.add(this) }
 
     override suspend fun <T : ICloudServer> existsServer(serviceId: ServiceId): Boolean {

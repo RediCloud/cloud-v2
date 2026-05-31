@@ -7,6 +7,7 @@ import dev.redicloud.api.service.ServiceType
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
@@ -20,6 +21,7 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
     implClass: KClass<K>,
     cacheDuration: Duration,
     private val targetRepository: ServiceRepository,
+    scope: CoroutineScope,
     vararg cacheTypes: ServiceType
 ) : CachedDatabaseBucketRepository<I, K>(
     databaseConnection,
@@ -28,6 +30,7 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
     implClass,
     cacheDuration,
     packetManager,
+    scope,
     *cacheTypes
 ) {
 
@@ -76,7 +79,7 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
     }
 
     suspend fun getService(name: String): K? {
-        return getRegisteredServices().firstOrNull { it.name.lowercase() == name.lowercase() }
+        return getRegisteredServices().firstOrNull { it.name.equals(name, ignoreCase = true) }
     }
 
     suspend fun existsService(serviceId: ServiceId): Boolean {

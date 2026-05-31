@@ -6,6 +6,7 @@ import dev.redicloud.api.service.server.ICloudServer
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.CachedServiceRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.minutes
 
@@ -15,7 +16,8 @@ class InternalServerRepository<I : ICloudServer, K : CloudServer>(
     interfaceClass: KClass<I>,
     implementationClass: KClass<K>,
     targetType: ServiceType,
-    targetRepository: ServerRepository
+    targetRepository: ServerRepository,
+    scope: CoroutineScope
 ) : CachedServiceRepository<I, K>(
     databaseConnection,
     targetType,
@@ -23,7 +25,8 @@ class InternalServerRepository<I : ICloudServer, K : CloudServer>(
     interfaceClass,
     implementationClass,
     5.minutes,
-    targetRepository
+    targetRepository,
+    scope
 ) {
     override suspend fun transformShutdownable(service: K): K {
         service.state = CloudServerState.STOPPED

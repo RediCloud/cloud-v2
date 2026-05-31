@@ -6,8 +6,8 @@ import dev.redicloud.api.service.ServiceType
 import dev.redicloud.cache.packets.CacheMultiUpdatePacket
 import dev.redicloud.cache.packets.CacheResetPacket
 import dev.redicloud.cache.packets.CacheUpdatePacket
-import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.gson.gson
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
@@ -20,6 +20,7 @@ class ClusterCache<V : Any>(
     val cacheClass: KClass<V>,
     val cacheDuration: Duration,
     private val packetManager: IPacketManager,
+    private val scope: CoroutineScope,
     vararg val serviceTypes: ServiceType,
 ) {
 
@@ -62,7 +63,7 @@ class ClusterCache<V : Any>(
         if (value == null) {
             if (!isCached(key)) return
             setCached(key, value)
-            defaultScope.launch {
+            scope.launch {
                 serviceTypes.forEach {
                     packetManager.publish(CacheUpdatePacket(name, key, null), it)
                 }
@@ -70,7 +71,7 @@ class ClusterCache<V : Any>(
             return
         }
         setCached(key, value)
-        defaultScope.launch {
+        scope.launch {
             serviceTypes.forEach {
                 packetManager.publish(CacheUpdatePacket(name, key, gson.toJson(value)), it)
             }
@@ -82,7 +83,7 @@ class ClusterCache<V : Any>(
         toUpdate.forEach {
             setCached(it.key, it.value)
         }
-        defaultScope.launch {
+        scope.launch {
             val map = toUpdate.mapValues { gson.toJson(it.value) }
             serviceTypes.forEach {
                 packetManager.publish(CacheMultiUpdatePacket(name, map), it)
@@ -92,7 +93,7 @@ class ClusterCache<V : Any>(
 
     fun clearCache() {
         cache.clear()
-        defaultScope.launch {
+        scope.launch {
             serviceTypes.forEach {
                 packetManager.publish(CacheResetPacket(name), it)
             }

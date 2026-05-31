@@ -62,10 +62,10 @@ class NodeService(
 
     init {
         console = NodeConsole(configuration, eventManager, nodeRepository, serverRepository)
-        fileNodeRepository = FileNodeRepository(databaseConnection, packetManager)
+        fileNodeRepository = FileNodeRepository(databaseConnection, packetManager, scope)
         fileCluster = FileCluster(serviceId, configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
-        fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster, packetManager)
-        serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console, packetManager)
+        fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster, packetManager, scope)
+        serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console, packetManager, scope)
         serverFactory = ServerFactory(
             databaseConnection, nodeRepository, serverRepository,
             serverVersionRepository, serverVersionTypeRepository,
@@ -131,8 +131,8 @@ class NodeService(
         )
     }
 
-    override fun plattformShutdown() {
-        super.plattformShutdown()
+    override fun platformShutdown() {
+        super.platformShutdown()
         shutdown(false)
     }
 

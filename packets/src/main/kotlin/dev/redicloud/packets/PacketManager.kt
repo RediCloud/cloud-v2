@@ -19,7 +19,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 
@@ -53,13 +52,13 @@ class PacketManager(
         ServiceType.entries.forEach {
             typedTopics[it] = databaseConnection.getCommunicationChannel(it.name.lowercase())
         }
+    }
 
-        runBlocking {
-            serviceTopic.subscribe(PackedPacket::class.java, messageListener)
-            broadcastTopic.subscribe(PackedPacket::class.java, messageListener)
-            typedTopics.forEach { (_, topic) ->
-                topic.subscribe(PackedPacket::class.java, messageListener)
-            }
+    suspend fun connect() {
+        serviceTopic.subscribe(PackedPacket::class.java, messageListener)
+        broadcastTopic.subscribe(PackedPacket::class.java, messageListener)
+        typedTopics.forEach { (_, topic) ->
+            topic.subscribe(PackedPacket::class.java, messageListener)
         }
     }
 

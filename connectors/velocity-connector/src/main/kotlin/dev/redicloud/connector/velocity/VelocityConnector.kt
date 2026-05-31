@@ -101,7 +101,7 @@ class VelocityConnector(
         super.onDisable()
     }
 
-    override fun plattformShutdown() {
+    override fun platformShutdown() {
         this.velocityShuttingDown = true
         this.proxyServer.shutdown()
     }

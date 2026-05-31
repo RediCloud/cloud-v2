@@ -10,13 +10,15 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
+import kotlinx.coroutines.CoroutineScope
 import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
 
 class PlayerRepository(
     databaseConnection: DatabaseConnection,
     private val eventManager: EventManager,
-    packetManager: PacketManager
+    packetManager: PacketManager,
+    scope: CoroutineScope
 ) : CachedDatabaseBucketRepository<ICloudPlayer, CloudPlayer>(
     databaseConnection,
     "player",
@@ -24,6 +26,7 @@ class PlayerRepository(
     CloudPlayer::class,
     5.minutes,
     packetManager,
+    scope,
     ServiceType.NODE,
     ServiceType.MINECRAFT_SERVER,
     ServiceType.PROXY_SERVER
@@ -35,7 +38,7 @@ class PlayerRepository(
     }
 
     override suspend fun getPlayer(name: String): CloudPlayer? {
-        return getAll().firstOrNull { it.name.lowercase() == name.lowercase() }
+        return getAll().firstOrNull { it.name.equals(name, ignoreCase = true) }
     }
 
     override suspend fun createPlayer(cloudPlayer: ICloudPlayer): CloudPlayer {
@@ -72,7 +75,7 @@ class PlayerRepository(
     }
 
     override suspend fun existsPlayer(name: String): Boolean {
-        return getAll().any { it.name.lowercase() == name.lowercase() }
+        return getAll().any { it.name.equals(name, ignoreCase = true) }
     }
 
     override suspend fun getConnectedPlayers(): List<CloudPlayer> {

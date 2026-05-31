@@ -16,6 +16,7 @@ import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import kotlinx.coroutines.CoroutineScope
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
@@ -25,7 +26,8 @@ import kotlin.time.Duration.Companion.minutes
 class CloudServerVersionTypeRepository(
     databaseConnection: DatabaseConnection,
     private val console: Console?,
-    packetManager: PacketManager
+    packetManager: PacketManager,
+    scope: CoroutineScope
 ) : CachedDatabaseBucketRepository<ICloudServerVersionType, CloudServerVersionType>(
     databaseConnection,
     "server-version-types",
@@ -33,6 +35,7 @@ class CloudServerVersionTypeRepository(
     CloudServerVersionType::class,
     5.minutes,
     packetManager,
+    scope,
     ServiceType.NODE
 ),
     ICloudServerVersionTypeRepository {
@@ -69,10 +72,10 @@ class CloudServerVersionTypeRepository(
     }
 
     fun getLock(type: ICloudServerVersionType): ReentrantLock {
-        return locks.getOrPut(type.uniqueId) { java.util.concurrent.locks.ReentrantLock() }
+        return locks.getOrPut(type.uniqueId) { ReentrantLock() }
     }
 
-    override suspend fun getType(name: String) = getTypes().firstOrNull { it.name.lowercase() == name.lowercase() }
+    override suspend fun getType(name: String) = getTypes().firstOrNull { it.name.equals(name, ignoreCase = true) }
 
     override suspend fun getType(uniqueId: UUID) = get(uniqueId.toString())
 
@@ -81,7 +84,7 @@ class CloudServerVersionTypeRepository(
         return getType(version.typeId!!)
     }
 
-    override suspend fun existsType(name: String) = getTypes().any { it.name.lowercase() == name.lowercase() }
+    override suspend fun existsType(name: String) = getTypes().any { it.name.equals(name, ignoreCase = true) }
 
     override suspend fun existsType(uniqueId: UUID) = exists(uniqueId.toString())
 
@@ -136,8 +139,8 @@ class CloudServerVersionTypeRepository(
                 serverVersionType.getParsedConnectorURL().isValid()
             ) { "Connector download url of ${serverVersionType.connectorPluginName} is null!" }
             httpClient.get {
-                url(serverVersionType.getParsedConnectorURL().toExternalForm())
-            }.readBytes().let {
+                        url(serverVersionType.getParsedConnectorURL().toExternalForm())
+                    }.readRawBytes().let {
                 if (connectorFile.exists()) connectorFile.delete()
                 connectorFile.createNewFile()
                 connectorFile.writeBytes(it)

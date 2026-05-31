@@ -129,6 +129,7 @@ abstract class BaseService(
         clusterConfiguration = ClusterConfiguration(databaseConnection)
 
         packetManager = PacketManager(databaseConnection, serviceId)
+        runBlocking { packetManager.connect() }
         eventManager = EventManager("base-event-manager", packetManager)
         val taskThreads = when (serviceId.type) {
             ServiceType.NODE -> 4
@@ -142,12 +143,12 @@ abstract class BaseService(
             .period(30.seconds)
             .register()
 
-        playerRepository = PlayerRepository(databaseConnection, eventManager, packetManager)
-        javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection, packetManager)
-        nodeRepository = NodeRepository(databaseConnection, packetManager, eventManager)
-        serverVersionRepository = CloudServerVersionRepository(databaseConnection, packetManager)
-        configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager, packetManager)
-        serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager)
+        playerRepository = PlayerRepository(databaseConnection, eventManager, packetManager, scope)
+        javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection, packetManager, scope)
+        nodeRepository = NodeRepository(databaseConnection, packetManager, eventManager, scope)
+        serverVersionRepository = CloudServerVersionRepository(databaseConnection, packetManager, scope)
+        configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager, packetManager, scope)
+        serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager, scope)
         this.registerPackets()
         this.registerPacketListeners()
     }
@@ -178,7 +179,7 @@ abstract class BaseService(
         this.registerDefaultSuggesters()
     }
 
-    open fun plattformShutdown() {}
+    open fun platformShutdown() {}
 
     open fun shutdown(force: Boolean = false) {
         SHUTTINGDOWN = true
@@ -190,7 +191,7 @@ abstract class BaseService(
             packetManager.disconnect()
             databaseConnection.disconnect()
             scope.cancel()
-            Console.Companion.CURRENT_CONSOLE?.close(true)
+            Console.CURRENT_CONSOLE?.close(true)
         }
     }
 
