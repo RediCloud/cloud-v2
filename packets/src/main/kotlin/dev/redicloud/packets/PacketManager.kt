@@ -74,27 +74,29 @@ class PacketManager(
                 val packet = gson.fromJson(data, packetClazz.java)
                 if (!packet.allowLocalReceiver && packet.sender == serviceId) return
                 LOGGER.finest("Received packet ${packetClazz.simpleName} in channel $channel")
-                packet.received(this@PacketManager)
-                packetsOfLast3Seconds.add(packet)
                 packetScope.launch {
-                    delay(3.seconds)
-                    packetsOfLast3Seconds.remove(packet)
-                }
-                ArrayList(packetResponses).filterNotNull().forEach {
-                    @Suppress("TooGenericExceptionCaught")
-                    try {
-                        it.handle(packet)
-                    } catch (e: Exception) {
-                        LOGGER.severe("Error while handling packet response ${packet::class.java.simpleName}!", e)
+                    packet.received(this@PacketManager)
+                    packetsOfLast3Seconds.add(packet)
+                    launch {
+                        delay(3.seconds)
+                        packetsOfLast3Seconds.remove(packet)
                     }
-                }
-                listeners.forEach {
-                    if (packet::class == it.packetClazz) {
+                    ArrayList(packetResponses).filterNotNull().forEach {
                         @Suppress("TooGenericExceptionCaught")
                         try {
-                            (it as PacketListener<AbstractPacket>).listener(packet)
+                            it.handle(packet)
                         } catch (e: Exception) {
-                            LOGGER.severe("Error while handling packet ${packet::class.java.simpleName}!", e)
+                            LOGGER.severe("Error while handling packet response ${packet::class.java.simpleName}!", e)
+                        }
+                    }
+                    listeners.forEach {
+                        if (packet::class == it.packetClazz) {
+                            @Suppress("TooGenericExceptionCaught")
+                            try {
+                                (it as PacketListener<AbstractPacket>).listener(packet)
+                            } catch (e: Exception) {
+                                LOGGER.severe("Error while handling packet ${packet::class.java.simpleName}!", e)
+                            }
                         }
                     }
                 }

@@ -14,7 +14,7 @@ abstract class AbstractPacket {
     val referenceId: UUID?
         get() = backingReferenceId
 
-    open fun received(manager: IPacketManager) {
+    open suspend fun received(manager: IPacketManager) {
         this.manager = manager
     }
 
