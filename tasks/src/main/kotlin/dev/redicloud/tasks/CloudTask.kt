@@ -3,8 +3,9 @@ package dev.redicloud.tasks
 import dev.redicloud.tasks.executor.CloudTaskExecutor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.*
-import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
 
 abstract class CloudTask(private val useLock: Boolean = true) {
@@ -16,7 +17,7 @@ abstract class CloudTask(private val useLock: Boolean = true) {
     private var started = false
     lateinit var taskManager: CloudTaskManager
     private val finishListener = mutableListOf<() -> Unit>()
-    private val lock = ReentrantLock()
+    private val mutex = Mutex()
 
     abstract suspend fun execute(): Boolean
 
@@ -25,29 +26,29 @@ abstract class CloudTask(private val useLock: Boolean = true) {
         return taskManager.scope.launch {
             executeCount++
             if (canceled) return@launch
-            if (useLock) {
-                lock.lock()
+            val block: suspend () -> Unit = {
+                @Suppress("TooGenericExceptionCaught")
+                try {
+                    CloudTaskManager.LOGGER.log(
+                        Level.FINEST,
+                        "Cloud task ${this@CloudTask::class.simpleName} execute by ${source::class.simpleName}"
+                    )
+                    if (execute()) {
+                        cancel()
+                    }
+                } catch (e: Exception) {
+                    CloudTaskManager.LOGGER.log(
+                        Level.SEVERE,
+                        "Error while executing cloud task " +
+                            "(${this@CloudTask::class.simpleName}) by ${source::class.simpleName}",
+                        e
+                    )
+                }
             }
-            @Suppress("TooGenericExceptionCaught")
-            try {
-                CloudTaskManager.LOGGER.log(
-                    Level.FINEST,
-                    "Cloud task ${this@CloudTask::class.simpleName} execute by ${source::class.simpleName}"
-                )
-                if (execute()) {
-                    cancel()
-                }
-            } catch (e: Exception) {
-                CloudTaskManager.LOGGER.log(
-                    Level.SEVERE,
-                    "Error while executing cloud task " +
-                        "(${this@CloudTask::class.simpleName}) by ${source::class.simpleName}",
-                    e
-                )
-            } finally {
-                if (useLock) {
-                    lock.unlock()
-                }
+            if (useLock) {
+                mutex.withLock { block() }
+            } else {
+                block()
             }
         }
     }
