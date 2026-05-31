@@ -1,4 +1,5 @@
 plugins {
+    id("redicloud-conventions")
     kotlin("kapt")
 }
 

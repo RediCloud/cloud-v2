@@ -16,6 +16,8 @@ pluginManagement {
     }
 }
 
+includeBuild("gradle/build-logic")
+
 include("database")
 include("packets")
 include("utils")

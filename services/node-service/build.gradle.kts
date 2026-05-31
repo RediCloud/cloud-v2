@@ -1,6 +1,8 @@
 import dev.redicloud.libloader.plugin.LibraryLoader
 
-apply(plugin = "dev.redicloud.libloader")
+plugins {
+    id("redicloud-conventions")
+}
 
 group = "dev.redicloud.service"
 

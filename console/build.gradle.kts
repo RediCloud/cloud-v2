@@ -1,5 +1,5 @@
 plugins {
-    `maven-publish`
+    id("redicloud-conventions")
 }
 
 val publishToRepository by extra(true)

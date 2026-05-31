@@ -1,5 +1,5 @@
 plugins {
-    `maven-publish`
+    id("redicloud-conventions")
 }
 
 group = "dev.redicloud.api"
