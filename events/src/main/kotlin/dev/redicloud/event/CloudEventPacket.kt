@@ -4,6 +4,7 @@ import dev.redicloud.api.events.CloudEvent
 import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.utils.gson.gson
+import kotlinx.coroutines.runBlocking
 
 class CloudEventPacket(
     val eventData: String,
@@ -23,7 +24,7 @@ class CloudEventPacket(
         try {
             val clazz = Class.forName(eventClazz)
             val event = gson.fromJson(eventData, clazz) as CloudEvent
-            eventManager.fireLocalEvent(event)
+            runBlocking { eventManager.fireLocalEvent(event) }
         } catch (e: ClassNotFoundException) {
             EventManager.LOGGER.severe("Error while parsing packet called event $eventClazz", e)
             return

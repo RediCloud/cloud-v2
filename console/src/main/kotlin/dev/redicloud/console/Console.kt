@@ -201,7 +201,7 @@ open class Console(
 
     private fun run() {
         CONSOLE_THREAD = Thread({
-            CURRENT_CONSOLE?.eventManager?.fireEvent(ConsoleRunEvent(this@Console))
+            runBlocking { CURRENT_CONSOLE?.eventManager?.fireEvent(ConsoleRunEvent(this@Console)) }
             while (!Thread.currentThread().isInterrupted) {
                 val line = readLineInput() ?: continue
                 CURRENT_CONSOLE?.defaultScreen?.addLine((CURRENT_CONSOLE?.prompt ?: "") + line + "\r\n")

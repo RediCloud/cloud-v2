@@ -349,12 +349,12 @@ class ModuleHandler(
             moduleData.loaded = true
         } catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
-            eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleInstance))
+            runBlocking { eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleInstance)) }
             throw CloudModuleException("Failed to execute LOAD tasks for module ${moduleData.id}", e)
         }
     }
 
-    override fun reloadModule(moduleId: String) = lock.withLock {
+    override fun reloadModule(moduleId: String): Unit = lock.withLock {
         val moduleData = getModuleData(moduleId)
         if (moduleData == null) {
             logger.warning("§cTried to reload module $moduleId that is not loaded!")
@@ -372,16 +372,16 @@ class ModuleHandler(
         try {
             val tasksCount = callTasks(moduleData.id, ModuleLifeCycle.RELOAD)
             moduleData.lifeCycle = ModuleLifeCycle.LOAD
-            eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance))
+            runBlocking { eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance)) }
             logger.info("Reloaded module %hc%${moduleData.id}%tc% with %hc%$tasksCount%tc% reload tasks!")
         } catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
-            eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance))
+            runBlocking { eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance)) }
             throw CloudModuleException("Failed to reload module ${moduleData.id}", e)
         }
     }
 
-    override fun unloadModule(moduleId: String) = lock.withLock {
+    override fun unloadModule(moduleId: String): Unit = lock.withLock {
         if (!loaders.containsKey(moduleId)) {
             logger.warning("§cTried to unload module $moduleId that is not loaded!")
             return
@@ -412,7 +412,7 @@ class ModuleHandler(
         val loader = loaders[moduleData.id] ?: return 0
         var tasksCount = 0
         moduleData.lifeCycle = targetLifeCycle
-        eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance))
+        runBlocking { eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance)) }
         loader.tasks.filter { it.lifeCycle == targetLifeCycle }.sortedBy { it.order }.forEach {
             val function = it.function
             val injectParameters = mutableListOf<Any>()

@@ -44,8 +44,8 @@ import dev.redicloud.utils.zipFile
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.io.File
-import kotlin.time.Duration.Companion.milliseconds
 import java.util.*
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("LongParameterList", "TooManyFunctions")
 class ServerFactory(

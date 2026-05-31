@@ -4,6 +4,7 @@ import dev.redicloud.api.commands.IRegisteredCommand
 import dev.redicloud.console.Console
 import dev.redicloud.console.events.screen.ScreenChangedEvent
 import dev.redicloud.utils.History
+import kotlinx.coroutines.runBlocking
 
 open class Screen(
     val console: Console,
@@ -33,7 +34,7 @@ open class Screen(
             if (!isCommandAllowed(it)) console.commandManager.disableCommand(it)
         }
         console.clearScreen()
-        console.eventManager?.fireEvent(ScreenChangedEvent(console, this, oldScreen))
+        runBlocking { console.eventManager?.fireEvent(ScreenChangedEvent(console, this@Screen, oldScreen)) }
         history.forEach { console.writeRaw(it, printDirectly = true) }
         if (storeMessages) {
             queuedMessage.forEach {

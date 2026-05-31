@@ -10,6 +10,7 @@ open class EasyCache<T, I>(
 ) {
 
     private val cachedValues: ConcurrentHashMap<I, Pair<Long, T?>> = ConcurrentHashMap()
+
     @Volatile
     private var singleCachedValue: Pair<Long, T?>? = null
 

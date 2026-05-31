@@ -16,16 +16,16 @@ interface IEventManager {
 
     fun unregisterListener(listener: Any)
 
-    fun fireEvent(event: CloudEvent)
+    suspend fun fireEvent(event: CloudEvent)
 }
 
-inline fun <reified T : CloudEvent> IEventManager.listen(noinline handler: (T) -> Unit): InlineEventCaller<T> {
+inline fun <reified T : CloudEvent> IEventManager.listen(noinline handler: suspend (T) -> Unit): InlineEventCaller<T> {
     val listener = InlineEventCaller(this, T::class, handler)
     registerInlineListener(listener)
     return listener
 }
 
-fun <T : CloudEvent> IEventManager.listen(clazz: KClass<T>, handler: (T) -> Unit): InlineEventCaller<T> {
+fun <T : CloudEvent> IEventManager.listen(clazz: KClass<T>, handler: suspend (T) -> Unit): InlineEventCaller<T> {
     val listener = InlineEventCaller(this, clazz, handler)
     registerInlineListener(listener)
     return listener
