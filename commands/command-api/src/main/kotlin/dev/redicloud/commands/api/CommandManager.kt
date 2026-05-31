@@ -232,7 +232,7 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
     }
 
     @Suppress("ReturnCount")
-    fun handleInput(actor: K, input: String): CommandResponse {
+    suspend fun handleInput(actor: K, input: String): CommandResponse {
         if (input.isBlank()) return CommandResponse(CommandResponseType.BLANK_INPUT, "Command cannot be blank")
         val split = input.removeLastSpaces().split(" ")
         val commandName = split[0].lowercase()

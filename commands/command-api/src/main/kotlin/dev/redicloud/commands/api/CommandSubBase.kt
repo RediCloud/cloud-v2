@@ -1,7 +1,6 @@
 package dev.redicloud.commands.api
 
 import dev.redicloud.api.commands.*
-import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.callSuspend
 import kotlin.reflect.full.findAnnotation
@@ -23,7 +22,6 @@ class CommandSubBase(
 
     init {
         suspend = function.isSuspend
-        if (suspend) throw UnsupportedOperationException("Suspend functions are not supported yet!")
         path = function.findAnnotation<CommandSubPath>()!!.path
         description = function.findAnnotation<CommandDescription>()?.description ?: ""
         suggester = CommandSubPathSuggester(this)
@@ -56,7 +54,7 @@ class CommandSubBase(
     }
 
     @Suppress("ReturnCount")
-    fun execute(actor: ICommandActor<*>, arguments: List<String>): CommandResponse {
+    suspend fun execute(actor: ICommandActor<*>, arguments: List<String>): CommandResponse {
         val parsedArguments = mutableListOf<Any?>()
         val max = this.arguments.count { !it.actorArgument }
         val min = this.arguments.count { it.required && !it.actorArgument }
@@ -118,9 +116,8 @@ class CommandSubBase(
         @Suppress("TooGenericExceptionCaught")
         return try {
             if (suspend) {
-                runBlocking { function.callSuspend(command.commandImpl, *final) } // TODO fix this
+                function.callSuspend(command.commandImpl, *final)
             } else {
-                // function.call(command.commandImpl, *final) //TODO fix this
                 function.javaMethod!!.invoke(command.commandImpl, *final)
             }
             CommandResponse(CommandResponseType.SUCCESS, null)

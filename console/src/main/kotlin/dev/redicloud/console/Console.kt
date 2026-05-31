@@ -232,7 +232,7 @@ open class Console(
         val commandManager = CURRENT_CONSOLE?.commandManager ?: return
         @Suppress("TooGenericExceptionCaught")
         try {
-            val response = commandManager.handleInput(commandManager.defaultActor, line)
+            val response = runBlocking { commandManager.handleInput(commandManager.defaultActor, line) }
             if (response.type == CommandResponseType.HELP_SENT) return
             if (response.message != null && response.type != CommandResponseType.BLANK_INPUT &&
                 response.type != CommandResponseType.ERROR

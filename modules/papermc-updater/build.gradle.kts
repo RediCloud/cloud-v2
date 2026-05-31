@@ -18,7 +18,10 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation(project(":repositories"))
+    testImplementation(project(":apis:base-api"))
+    testImplementation(project(":cache"))
     testImplementation(project(":utils"))
     testImplementation(project(":logging"))
     testImplementation(libs.kotlinx.coroutines)
+    testImplementation(libs.gson)
 }

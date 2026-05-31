@@ -18,4 +18,5 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation(libs.kotlinx.coroutines)
+    testRuntimeOnly(project(":logging"))
 }

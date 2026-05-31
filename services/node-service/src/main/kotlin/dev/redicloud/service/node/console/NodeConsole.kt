@@ -106,6 +106,10 @@ class NodeConsole(
     }
 
     override fun handleUserInterrupt(e: Exception) {
-        commandManager.getCommand("exit")!!.getSubCommand("")!!.execute(commandManager.defaultActor, emptyList())
+        runBlocking {
+            commandManager.getCommand(
+                "exit"
+            )!!.getSubCommand("")!!.execute(commandManager.defaultActor, emptyList())
+        }
     }
 }

@@ -9,12 +9,15 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+
+private val STARTUP_DELAY = 500.milliseconds
 
 @Suppress("TooGenericExceptionCaught")
 fun main(args: Array<String>) {
     println("Starting node service...")
-    Thread.sleep(500)
+    Thread.sleep(STARTUP_DELAY.inWholeMilliseconds)
     Thread.currentThread().setUncaughtExceptionHandler { thread, throwable ->
         threadLogger.severe("Caught exception in thread: ${thread.name}", throwable)
     }
