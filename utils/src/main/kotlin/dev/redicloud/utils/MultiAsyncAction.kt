@@ -6,7 +6,7 @@ class MultiAsyncAction(
     dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) {
 
-    private val scope = CoroutineScope(dispatcher + coroutineExceptionHandler)
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher + coroutineExceptionHandler)
     private val actions = mutableListOf<suspend () -> Unit>()
     private val jobs = mutableListOf<Job>()
 

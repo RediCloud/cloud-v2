@@ -37,6 +37,7 @@ import dev.redicloud.utils.coroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -103,7 +104,7 @@ open class Console(
     override var printingEnabled = true
     override var matchingHistorySearch = true
 
-    private val animationScope = CoroutineScope(Dispatchers.Default + coroutineExceptionHandler)
+    private val animationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + coroutineExceptionHandler)
     private var logRecordDispatcher: ThreadRecordDispatcher? = null
 
     init {

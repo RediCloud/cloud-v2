@@ -17,6 +17,7 @@ import dev.redicloud.utils.MultiAsyncAction
 import dev.redicloud.utils.coroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
 
@@ -69,7 +70,7 @@ class CloudServerStartTask(
         private val logger = LogManager.logger(CloudServerStartTask::class)
 
         @OptIn(DelicateCoroutinesApi::class)
-        private val scope = CoroutineScope(newSingleThreadContext("server-factory-start") + coroutineExceptionHandler)
+        private val scope = CoroutineScope(SupervisorJob() + newSingleThreadContext("server-factory-start") + coroutineExceptionHandler)
     }
 
     override suspend fun execute(): Boolean {

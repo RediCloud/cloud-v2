@@ -15,6 +15,7 @@ import dev.redicloud.utils.coroutineExceptionHandler
 import dev.redicloud.utils.gson.fixKotlinAnnotations
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -41,7 +42,7 @@ class PacketManager(
     private val listeners = mutableListOf<PacketListener<out AbstractPacket>>()
     internal val packetResponses = mutableListOf<PacketResponse>()
     internal val packetsOfLast3Seconds = mutableListOf<AbstractPacket>()
-    internal val packetScope = CoroutineScope(Dispatchers.IO + coroutineExceptionHandler)
+    internal val packetScope = CoroutineScope(SupervisorJob() + Dispatchers.IO + coroutineExceptionHandler)
     private val messageListener = createMessageListener()
 
     init {
