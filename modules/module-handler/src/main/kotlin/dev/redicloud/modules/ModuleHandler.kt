@@ -21,11 +21,10 @@ import dev.redicloud.modules.repository.ModuleWebRepository
 import dev.redicloud.modules.suggesters.*
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.utils.gson.gson
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.File
-import java.util.concurrent.locks.ReentrantLock
 import java.util.jar.JarFile
-import kotlin.concurrent.withLock
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.javaMethod
 
@@ -45,7 +44,7 @@ class ModuleHandler(
     }
 
     private val loaders = mutableMapOf<String, ModuleClassLoader>()
-    private val lock = ReentrantLock()
+    private val mutex = Mutex()
     private val moduleFiles = mutableListOf<File>()
     private val cachedDescriptions = mutableListOf<ModuleDescription>()
     val repositories = mutableListOf<ModuleWebRepository>()
@@ -82,47 +81,45 @@ class ModuleHandler(
         eventManager.fireEvent(ModuleHandlerInitializedEvent(this))
     }
 
-    override suspend fun updateModules(silent: Boolean, loadModules: Boolean) = lock.withLock {
-        runBlocking {
-            cachedDescriptions.forEach { description ->
-                @Suppress("TooGenericExceptionCaught")
-                try {
-                    val targetRepositories = if (description.cachedFile != null) {
-                        repositories.filter { it.isUpdateAvailable(description.id) }
-                    } else {
-                        emptyList()
-                    }
-
-                    if (targetRepositories.isEmpty()) return@forEach
-
-                    if (targetRepositories.size > 2) {
-                        logger.warning(
-                            "§cFound more than 2 repositories that have an update for module ${description.id}!"
-                        )
-                        targetRepositories.forEach {
-                            logger.warning(
-                                "§c - ${it.repoUrl} | ${it.getLatestVersion(description.id)}"
-                            )
-                        }
-                        return@forEach
-                    }
-
-                    val targetRepository = targetRepositories.first()
-                    val data = getModuleData(description.id)
-                    if (data != null && (data.loaded || data.lifeCycle == ModuleLifeCycle.LOAD)) {
-                        unloadModule(data.id)
-                    }
-                    targetRepository.download(description.id, description.version)
-                    detectModules()
-                    val file = moduleFiles.firstOrNull { it.name == "${description.id}-${description.version}.jar" }
-                    if (file == null) {
-                        logger.warning("§cFailed to find downloaded module ${description.id}!")
-                        return@forEach
-                    }
-                    if (loadModules) loadModule(file)
-                } catch (e: Exception) {
-                    logger.severe("Failed to update module ${description.id}!", e)
+    override suspend fun updateModules(silent: Boolean, loadModules: Boolean) = mutex.withLock {
+        cachedDescriptions.forEach { description ->
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                val targetRepositories = if (description.cachedFile != null) {
+                    repositories.filter { it.isUpdateAvailable(description.id) }
+                } else {
+                    emptyList()
                 }
+
+                if (targetRepositories.isEmpty()) return@forEach
+
+                if (targetRepositories.size > 2) {
+                    logger.warning(
+                        "§cFound more than 2 repositories that have an update for module ${description.id}!"
+                    )
+                    targetRepositories.forEach {
+                        logger.warning(
+                            "§c - ${it.repoUrl} | ${it.getLatestVersion(description.id)}"
+                        )
+                    }
+                    return@forEach
+                }
+
+                val targetRepository = targetRepositories.first()
+                val data = getModuleData(description.id)
+                if (data != null && (data.loaded || data.lifeCycle == ModuleLifeCycle.LOAD)) {
+                    unloadModule(data.id)
+                }
+                targetRepository.download(description.id, description.version)
+                detectModules()
+                val file = moduleFiles.firstOrNull { it.name == "${description.id}-${description.version}.jar" }
+                if (file == null) {
+                    logger.warning("§cFailed to find downloaded module ${description.id}!")
+                    return@forEach
+                }
+                if (loadModules) loadModule(file)
+            } catch (e: Exception) {
+                logger.severe("Failed to update module ${description.id}!", e)
             }
         }
     }
@@ -193,7 +190,7 @@ class ModuleHandler(
         }
     }
 
-    fun unloadModules() {
+    suspend fun unloadModules() {
         loaders.map { it.value.data.id }.toList().forEach {
             try {
                 unloadModule(it)
@@ -203,7 +200,7 @@ class ModuleHandler(
         }
     }
 
-    fun detectModules() = lock.withLock {
+    suspend fun detectModules() = mutex.withLock {
         moduleFiles.clear()
         MODULES_FOLDER.getFile().listFiles()?.filter {
             it.isFile && it.extension == "jar"
@@ -233,7 +230,7 @@ class ModuleHandler(
         return description
     }
 
-    fun loadModule(file: File) = lock.withLock {
+    suspend fun loadModule(file: File) = mutex.withLock {
         if (!validateModuleFile(file)) return
         val description = loadDescription(file)
         if (loaders.any { it.value.data.id == description.id }) {
@@ -341,7 +338,7 @@ class ModuleHandler(
             }
     }
 
-    private fun executeLoadTasks(moduleData: ModuleData, description: ModuleDescription, moduleInstance: CloudModule) {
+    private suspend fun executeLoadTasks(moduleData: ModuleData, description: ModuleDescription, moduleInstance: CloudModule) {
         @Suppress("TooGenericExceptionCaught")
         try {
             val tasksCount = callTasks(moduleData.id, ModuleLifeCycle.LOAD)
@@ -349,12 +346,12 @@ class ModuleHandler(
             moduleData.loaded = true
         } catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
-            runBlocking { eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleInstance)) }
+            eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleInstance))
             throw CloudModuleException("Failed to execute LOAD tasks for module ${moduleData.id}", e)
         }
     }
 
-    override fun reloadModule(moduleId: String): Unit = lock.withLock {
+    override suspend fun reloadModule(moduleId: String): Unit = mutex.withLock {
         val moduleData = getModuleData(moduleId)
         if (moduleData == null) {
             logger.warning("§cTried to reload module $moduleId that is not loaded!")
@@ -372,16 +369,16 @@ class ModuleHandler(
         try {
             val tasksCount = callTasks(moduleData.id, ModuleLifeCycle.RELOAD)
             moduleData.lifeCycle = ModuleLifeCycle.LOAD
-            runBlocking { eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance)) }
+            eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance))
             logger.info("Reloaded module %hc%${moduleData.id}%tc% with %hc%$tasksCount%tc% reload tasks!")
         } catch (e: Exception) {
             moduleData.lifeCycle = ModuleLifeCycle.UNLOAD
-            runBlocking { eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance)) }
+            eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance))
             throw CloudModuleException("Failed to reload module ${moduleData.id}", e)
         }
     }
 
-    override fun unloadModule(moduleId: String): Unit = lock.withLock {
+    override suspend fun unloadModule(moduleId: String): Unit = mutex.withLock {
         if (!loaders.containsKey(moduleId)) {
             logger.warning("§cTried to unload module $moduleId that is not loaded!")
             return
@@ -407,12 +404,12 @@ class ModuleHandler(
         return repositories.firstOrNull { it.hasModule(moduleId) }
     }
 
-    private fun callTasks(moduleId: String, targetLifeCycle: ModuleLifeCycle): Int {
+    private suspend fun callTasks(moduleId: String, targetLifeCycle: ModuleLifeCycle): Int {
         val moduleData = getModuleData(moduleId) ?: return 0
         val loader = loaders[moduleData.id] ?: return 0
         var tasksCount = 0
         moduleData.lifeCycle = targetLifeCycle
-        runBlocking { eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance)) }
+        eventManager.fireEvent(ModuleLifeCycleChangedEvent(moduleData.instance))
         loader.tasks.filter { it.lifeCycle == targetLifeCycle }.sortedBy { it.order }.forEach {
             val function = it.function
             val injectParameters = mutableListOf<Any>()
@@ -426,8 +423,8 @@ class ModuleHandler(
                 val instance = injector.getInstance(key)
                 injectParameters.add(instance)
             }
-            if (function.isSuspend) { // TODO test suspend
-                runBlocking { function.callSuspend(moduleData.instance, *injectParameters.toTypedArray()) }
+            if (function.isSuspend) {
+                function.callSuspend(moduleData.instance, *injectParameters.toTypedArray())
             } else {
                 function.javaMethod!!.invoke(moduleData.instance, *injectParameters.toTypedArray())
             }
@@ -452,7 +449,7 @@ class ModuleHandler(
         return loaders[moduleId]?.tasks?.any { it.lifeCycle == ModuleLifeCycle.RELOAD } ?: false
     }
 
-    override fun loadModule(moduleId: String) {
+    override suspend fun loadModule(moduleId: String) {
         loadModule(cachedDescriptions.firstOrNull { it.id == moduleId }?.cachedFile ?: return)
     }
 

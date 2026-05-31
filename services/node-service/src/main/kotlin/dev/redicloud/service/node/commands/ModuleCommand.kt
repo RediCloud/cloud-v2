@@ -64,17 +64,17 @@ class ModuleCommand(
     fun load(
         actor: ConsoleActor,
         @CommandParameter("id", true, LoadableModulesSuggester::class) id: String
-    ) {
+    ) = defaultScope.launch {
         moduleHandler.detectModules()
         val description = moduleHandler.getModuleDescription(id)
         if (description == null) {
             actor.sendMessage("§cModule with id $id not found!")
-            return
+            return@launch
         }
         val data = moduleHandler.getModuleDatas().firstOrNull { it.description.id == id }
         if (data != null && data.loaded) {
             actor.sendMessage("§cModule with id $id is already loaded!")
-            return
+            return@launch
         }
         actor.sendMessage("Loading module %hc%${description.id}%tc%...")
         moduleHandler.loadModule(description.cachedFile!!)
@@ -84,7 +84,7 @@ class ModuleCommand(
     @CommandDescription("Unload a module")
     fun unload(
         @CommandParameter("id", true, UnloadableModulesSuggester::class) id: String
-    ) {
+    ) = defaultScope.launch {
         moduleHandler.unloadModule(id)
     }
 
@@ -94,7 +94,7 @@ class ModuleCommand(
     fun reload(
         actor: ConsoleActor,
         @CommandParameter("id", true, ReloadableModulesSuggester::class) id: String
-    ) {
+    ) = defaultScope.launch {
         moduleHandler.reloadModule(id)
     }
 

@@ -3,7 +3,7 @@ package dev.redicloud.api.version
 import dev.redicloud.api.java.ICloudJavaVersion
 import dev.redicloud.api.utils.MINECRAFT_VERSIONS_FOLDER
 import dev.redicloud.logging.LogManager
-import dev.redicloud.utils.SimpleLock
+import kotlinx.coroutines.sync.Mutex
 import java.io.File
 
 @Suppress("TooManyFunctions")
@@ -42,7 +42,7 @@ interface IServerVersionHandler {
 
     fun register() = registerHandler(this)
 
-    fun getLock(version: ICloudServerVersion): SimpleLock
+    fun getLock(version: ICloudServerVersion): Mutex
 
     suspend fun shutdown(force: Boolean, serverVersionRepository: ICloudServerVersionRepository) {
         serverVersionRepository.getVersions().forEach {

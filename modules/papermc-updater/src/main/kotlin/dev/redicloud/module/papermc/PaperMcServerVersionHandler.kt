@@ -13,6 +13,7 @@ import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.Logger
 import dev.redicloud.utils.*
 import io.ktor.client.request.*
+import kotlinx.coroutines.sync.Mutex
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import java.io.File
@@ -371,7 +372,7 @@ class PaperMcServerVersionHandler(
         return IServerVersionHandler.getDefaultHandler().patchCommand(type, javaVersion, jarToExecute)
     }
 
-    override fun getLock(version: ICloudServerVersion): SimpleLock {
+    override fun getLock(version: ICloudServerVersion): Mutex {
         return IServerVersionHandler.getDefaultHandler().getLock(version)
     }
 }

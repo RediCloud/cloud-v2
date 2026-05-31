@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
 
+@Deprecated("Use kotlinx.coroutines.sync.Mutex instead", ReplaceWith("Mutex()", "kotlinx.coroutines.sync.Mutex"))
 class SimpleLock : Lock {
 
     private val state = AtomicBoolean(false)

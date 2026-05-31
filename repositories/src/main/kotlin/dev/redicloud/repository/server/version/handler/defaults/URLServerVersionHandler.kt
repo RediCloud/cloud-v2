@@ -15,6 +15,7 @@ import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.*
 import io.ktor.client.request.*
+import kotlinx.coroutines.sync.Mutex
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import java.io.File
@@ -42,10 +43,10 @@ open class URLServerVersionHandler(
         private const val PATCH_PORT_RANGE_END = 60000
     }
 
-    protected val locks = mutableMapOf<UUID, SimpleLock>()
+    protected val locks = mutableMapOf<UUID, Mutex>()
 
-    override fun getLock(version: ICloudServerVersion): SimpleLock {
-        return locks.getOrPut(version.uniqueId) { SimpleLock() }
+    override fun getLock(version: ICloudServerVersion): Mutex {
+        return locks.getOrPut(version.uniqueId) { Mutex() }
     }
 
     override suspend fun download(version: ICloudServerVersion, force: Boolean, lock: Boolean): File {

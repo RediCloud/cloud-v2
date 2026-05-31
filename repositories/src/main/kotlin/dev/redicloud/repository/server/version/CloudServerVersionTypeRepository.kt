@@ -17,8 +17,8 @@ import dev.redicloud.utils.gson.gsonInterfaceFactory
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.sync.Mutex
 import java.util.*
-import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
 import kotlin.time.Duration.Companion.minutes
 
@@ -44,7 +44,7 @@ class CloudServerVersionTypeRepository(
         gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
     }
 
-    private val locks = mutableMapOf<UUID, ReentrantLock>()
+    private val locks = mutableMapOf<UUID, Mutex>()
 
     companion object {
         private const val ANIMATION_TICK_MS = 200L
@@ -71,8 +71,8 @@ class CloudServerVersionTypeRepository(
         }
     }
 
-    fun getLock(type: ICloudServerVersionType): ReentrantLock {
-        return locks.getOrPut(type.uniqueId) { ReentrantLock() }
+    fun getLock(type: ICloudServerVersionType): Mutex {
+        return locks.getOrPut(type.uniqueId) { Mutex() }
     }
 
     override suspend fun getType(name: String) = getTypes().firstOrNull { it.name.equals(name, ignoreCase = true) }
@@ -132,7 +132,8 @@ class CloudServerVersionTypeRepository(
             if (console == null) Level.INFO else Level.FINE,
             "Downloading connector for ${toConsoleValue(serverVersionType.name)}..."
         )
-        if (lock) getLock(serverVersionType).lock()
+        val mutex = getLock(serverVersionType)
+        if (lock) mutex.lock()
         @Suppress("TooGenericExceptionCaught")
         try {
             check(
@@ -154,7 +155,7 @@ class CloudServerVersionTypeRepository(
             error = true
         } finally {
             downloaded = true
-            if (lock) getLock(serverVersionType).unlock()
+            if (lock) mutex.unlock()
         }
     }
 

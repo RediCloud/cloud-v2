@@ -11,9 +11,8 @@ import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.server.factory.utils.StartDataSnapshot
 import dev.redicloud.utils.JarView
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.withLock
 import java.io.File
-import kotlin.concurrent.withLock
 
 class FileCopier(
     serverProcess: ServerProcess,
@@ -75,7 +74,7 @@ class FileCopier(
                 }
                 @Suppress("TooGenericExceptionCaught")
                 try {
-                    runBlocking { serverVersionTypeRepository.downloadConnector(snapshot.versionType, lock = false) }
+                    serverVersionTypeRepository.downloadConnector(snapshot.versionType, lock = false)
                     if (!connectorFile.exists()) {
                         logger.warning(
                             "Connector file for ${snapshot.versionType.name} does not exist! The server will not connect to the cloud cluster!"
@@ -111,23 +110,21 @@ class FileCopier(
         logger.fine("Copying files for $serviceId of version ${snapshot.version.displayName}")
         val versionHandler = IServerVersionHandler.getHandler(snapshot.versionType)
         versionHandler.getLock(snapshot.version).withLock {
-            runBlocking {
-                if (!versionHandler.isPatched(snapshot.version) && versionHandler.isPatchVersion(snapshot.version)) {
-                    versionHandler.patch(snapshot.version, lock = false)
-                } else if (!versionHandler.isDownloaded(snapshot.version)) {
-                    versionHandler.download(snapshot.version, lock = false)
-                }
-                if (force && configurationTemplate.static || !configurationTemplate.static) {
-                    versionHandler.getFolder(snapshot.version).copyRecursively(workDirectory)
-                } else {
-                    val jar = versionHandler.getJar(snapshot.version)
-                    if (jar.exists()) {
-                        jar.copyTo(File(workDirectory, jar.name), overwrite = true)
-                    }
-                }
-                snapshot.versionType.doFileEdits(workDirectory, action)
-                snapshot.version.doFileEdits(workDirectory, action)
+            if (!versionHandler.isPatched(snapshot.version) && versionHandler.isPatchVersion(snapshot.version)) {
+                versionHandler.patch(snapshot.version, lock = false)
+            } else if (!versionHandler.isDownloaded(snapshot.version)) {
+                versionHandler.download(snapshot.version, lock = false)
             }
+            if (force && configurationTemplate.static || !configurationTemplate.static) {
+                versionHandler.getFolder(snapshot.version).copyRecursively(workDirectory)
+            } else {
+                val jar = versionHandler.getJar(snapshot.version)
+                if (jar.exists()) {
+                    jar.copyTo(File(workDirectory, jar.name), overwrite = true)
+                }
+            }
+            snapshot.versionType.doFileEdits(workDirectory, action)
+            snapshot.version.doFileEdits(workDirectory, action)
         }
     }
 
