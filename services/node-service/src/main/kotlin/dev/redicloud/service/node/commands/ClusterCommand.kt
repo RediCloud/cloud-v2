@@ -14,7 +14,6 @@ import dev.redicloud.service.node.repository.node.suspendNode
 import dev.redicloud.utils.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 @Command("cluster")
 @CommandDescription("All commands for the cluster")
@@ -30,47 +29,45 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
     @CommandSubPath("nodes")
     @CommandAlias(["list", "info"])
     @CommandDescription("List all nodes")
-    fun list(actor: ConsoleActor) {
-        runBlocking {
-            @Suppress("TooGenericExceptionCaught")
-            try {
-                val nodes = nodeService.nodeRepository.getRegisteredNodes()
-                actor.sendHeader("Nodes")
-                nodes.forEach { node ->
-                    actor.sendMessage("")
-                    actor.sendMessage(
-                        "§8> §a${if (node.master) node.identifyName() + " §8(§6master§8)" else node.identifyName()}"
-                    )
-                    actor.sendMessage(
-                        "   - Status§8: %hc%${
-                            if (node.suspended) {
-                                "§4● §8(§fsuspended§8)"
-                            } else if (node.connected) {
-                                "§2● §8(§fconnected§8)"
-                            } else {
-                                "§c● §8(§fdisconnected§8)"
-                            }
-                        }"
-                    )
-                    actor.sendMessage("   - Memory§8: %hc%${node.currentMemoryUsage} §8/ %hc%${node.maxMemory}")
-                    actor.sendMessage("   - IP§8: %hc%${node.currentOrLastSession()?.ipAddress ?: "Unknown"}")
-                    if (node.connected) {
-                        sendPingMessage(node, actor, "   - Ping§8: ")
-                        val server = node.hostedServers.mapNotNull {
-                            nodeService.serverRepository.getServer<CloudServer>(
-                                it
-                            )?.name
-                        }
-                        actor.sendMessage(
-                            "   - Server§8: %hc%${if (server.isEmpty()) "None" else server.joinToString(", ")}"
-                        )
-                    }
-                }
+    suspend fun list(actor: ConsoleActor) {
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            val nodes = nodeService.nodeRepository.getRegisteredNodes()
+            actor.sendHeader("Nodes")
+            nodes.forEach { node ->
                 actor.sendMessage("")
-                actor.sendHeader("Nodes")
-            } catch (e: Exception) {
-                e.printStackTrace()
+                actor.sendMessage(
+                    "§8> §a${if (node.master) node.identifyName() + " §8(§6master§8)" else node.identifyName()}"
+                )
+                actor.sendMessage(
+                    "   - Status§8: %hc%${
+                        if (node.suspended) {
+                            "§4● §8(§fsuspended§8)"
+                        } else if (node.connected) {
+                            "§2● §8(§fconnected§8)"
+                        } else {
+                            "§c● §8(§fdisconnected§8)"
+                        }
+                    }"
+                )
+                actor.sendMessage("   - Memory§8: %hc%${node.currentMemoryUsage} §8/ %hc%${node.maxMemory}")
+                actor.sendMessage("   - IP§8: %hc%${node.currentOrLastSession()?.ipAddress ?: "Unknown"}")
+                if (node.connected) {
+                    sendPingMessage(node, actor, "   - Ping§8: ")
+                    val server = node.hostedServers.mapNotNull {
+                        nodeService.serverRepository.getServer<CloudServer>(
+                            it
+                        )?.name
+                    }
+                    actor.sendMessage(
+                        "   - Server§8: %hc%${if (server.isEmpty()) "None" else server.joinToString(", ")}"
+                    )
+                }
             }
+            actor.sendMessage("")
+            actor.sendHeader("Nodes")
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -89,7 +86,7 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
 
     @CommandSubPath("templates push <node>")
     @CommandDescription("Push templates to the cluster")
-    fun pushTemplates(
+    suspend fun pushTemplates(
         actor: ConsoleActor,
         @CommandParameter("node", true, ConnectedCloudNodeSuggester::class) node: CloudNode
     ) {
@@ -97,40 +94,38 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
             actor.sendMessage("${node.identifyName()} is not connected to the cluster!")
             return
         }
-        runBlocking { nodeService.fileTemplateRepository.pushTemplates(node.serviceId) }
+        nodeService.fileTemplateRepository.pushTemplates(node.serviceId)
     }
 
     private val suspendConfirm = mutableMapOf<ServiceId, Long>()
 
     @CommandSubPath("suspend <node>")
     @CommandDescription("Suspend a node")
-    fun suspend(
+    suspend fun suspend(
         actor: ConsoleActor,
         @CommandParameter("node", true, ConnectedCloudNodeSuggester::class) node: CloudNode
     ) {
-        runBlocking {
-            if (suspendConfirm.contains(node.serviceId) && System.currentTimeMillis() - suspendConfirm[node.serviceId]!! < CONFIRM_TIMEOUT_MS) {
-                actor.sendMessage("Suspending node ${node.identifyName()}...")
-                nodeService.nodeRepository.suspendNode(nodeService, node.serviceId)
-                return@runBlocking
-            }
-            actor.sendHeader("Suspend")
-            actor.sendMessage("")
-            actor.sendMessage("Node§8: %hc%${node.identifyName()}")
-            actor.sendMessage(
-                "Servers§8: %hc%${node.hostedServers.mapNotNull { nodeService.serverRepository.getServer<CloudServer>(
-                    it
-                )?.name
-                }.joinToString(", ")}"
-            )
-            sendPingMessage(node, actor, "Ping§8: %hc%")
-            actor.sendMessage("")
-            actor.sendMessage("§cThis will suspend the node and all hosted servers will be stopped!")
-            actor.sendMessage("§cEnter the command again to confirm within 15 seconds")
-            actor.sendMessage("")
-            actor.sendHeader("Suspend")
-            suspendConfirm[node.serviceId] = System.currentTimeMillis()
+        if (suspendConfirm.contains(node.serviceId) && System.currentTimeMillis() - suspendConfirm[node.serviceId]!! < CONFIRM_TIMEOUT_MS) {
+            actor.sendMessage("Suspending node ${node.identifyName()}...")
+            nodeService.nodeRepository.suspendNode(nodeService, node.serviceId)
+            return
         }
+        actor.sendHeader("Suspend")
+        actor.sendMessage("")
+        actor.sendMessage("Node§8: %hc%${node.identifyName()}")
+        actor.sendMessage(
+            "Servers§8: %hc%${node.hostedServers.mapNotNull { nodeService.serverRepository.getServer<CloudServer>(
+                it
+            )?.name
+            }.joinToString(", ")}"
+        )
+        sendPingMessage(node, actor, "Ping§8: %hc%")
+        actor.sendMessage("")
+        actor.sendMessage("§cThis will suspend the node and all hosted servers will be stopped!")
+        actor.sendMessage("§cEnter the command again to confirm within 15 seconds")
+        actor.sendMessage("")
+        actor.sendHeader("Suspend")
+        suspendConfirm[node.serviceId] = System.currentTimeMillis()
     }
 
     @CommandSubPath("edit <node> maxmemory <value>")

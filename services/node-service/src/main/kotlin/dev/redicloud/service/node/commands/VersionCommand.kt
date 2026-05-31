@@ -12,7 +12,6 @@ import dev.redicloud.updater.suggest.BranchSuggester
 import dev.redicloud.updater.suggest.BuildsSuggester
 import dev.redicloud.utils.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 @Command("version")
 @CommandAlias(["ver"])
@@ -252,16 +251,16 @@ class VersionCommand(
 
     @CommandSubPath("downloaded")
     @CommandDescription("Displays all downloaded versions")
-    fun downloaded(
+    suspend fun downloaded(
         actor: ConsoleActor
-    ) = runBlocking {
+    ) {
         val installedVersions = Updater.localInstalledVersions()
         if (installedVersions.isEmpty()) {
             actor.sendMessage("No versions downloaded!")
             actor.sendMessage(
                 "Use the command ${toConsoleValue("version download <branch> <build>")} to download a version!"
             )
-            return@runBlocking
+            return
         }
         actor.sendMessage("Downloaded versions:")
         installedVersions.forEach { (branch, builds) ->

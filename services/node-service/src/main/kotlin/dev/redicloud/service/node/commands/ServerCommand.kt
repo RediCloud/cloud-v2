@@ -17,7 +17,6 @@ import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
 import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.toSymbol
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 @Command("server")
 @CommandAlias(["ser", "s", "servers"])
@@ -30,13 +29,13 @@ class ServerCommand(
 
     @CommandSubPath("list")
     @CommandDescription("List all registered servers")
-    fun list(
+    suspend fun list(
         actor: ConsoleActor
-    ) = runBlocking {
+    ) {
         val registered = serverRepository.getRegisteredServers()
         if (registered.isEmpty()) {
             actor.sendMessage("No servers are registered!")
-            return@runBlocking
+            return
         }
         actor.sendHeader("Registered servers")
         actor.sendMessage("")
@@ -99,13 +98,13 @@ class ServerCommand(
 
     @CommandSubPath("delete <server>")
     @CommandDescription("Delete a server")
-    fun delete(
+    suspend fun delete(
         actor: ConsoleActor,
         @CommandParameter("server", true, CloudServerSuggester::class) server: CloudServer
-    ) = runBlocking {
+    ) {
         if (server.state != CloudServerState.STOPPED) {
             actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is not stopped!")
-            return@runBlocking
+            return
         }
         actor.sendMessage("Queued deletion of server ${server.identifyName()}...")
         actor.sendMessage(
@@ -116,13 +115,13 @@ class ServerCommand(
 
     @CommandSubPath("unregister <server>")
     @CommandDescription("Unregister a server (this will not delete the server files of a static server)")
-    fun unregister(
+    suspend fun unregister(
         actor: ConsoleActor,
         @CommandParameter("server", true, CloudServerSuggester::class) server: CloudServer
-    ) = runBlocking {
+    ) {
         if (server.state != CloudServerState.STOPPED) {
             actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is not stopped!")
-            return@runBlocking
+            return
         }
         actor.sendMessage("Queued unregistration of server ${server.identifyName()}...")
         serverFactory.queueUnregister(server.serviceId)
@@ -130,14 +129,14 @@ class ServerCommand(
 
     @CommandSubPath("transfer <server> <node>")
     @CommandDescription("Transfer a static server to another node")
-    fun transfer(
+    suspend fun transfer(
         actor: ConsoleActor,
         @CommandParameter("server", true, CloudServerSuggester::class) server: CloudServer,
         @CommandParameter("node", true, RegisteredCloudNodeSuggester::class) node: CloudNode
-    ) = runBlocking {
+    ) {
         if (server.state != CloudServerState.STOPPED) {
             actor.sendMessage("§cThe server ${toConsoleValue(server.name, false)} is not stopped!")
-            return@runBlocking
+            return
         }
         if (server.hostNodeId == node.serviceId) {
             actor.sendMessage(
@@ -146,7 +145,7 @@ class ServerCommand(
                     false
                 )} is already hosted on node ${toConsoleValue(node.name, false)}!"
             )
-            return@runBlocking
+            return
         }
         actor.sendMessage(
             "Queued transfer of static server ${server.identifyName()} to node ${toConsoleValue(node.name, false)}..."
@@ -220,10 +219,10 @@ class ServerCommand(
 
     @CommandSubPath("info <server>")
     @CommandDescription("Get information about a server")
-    fun info(
+    suspend fun info(
         actor: ConsoleActor,
         @CommandParameter("server", true, CloudServerSuggester::class) server: CloudServer
-    ) = runBlocking {
+    ) {
         actor.sendHeader("Server information")
         actor.sendMessage("")
         actor.sendMessage("§8- %tc%Name§8: %hc%${server.name}")

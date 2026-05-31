@@ -10,7 +10,6 @@ import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
 import dev.redicloud.service.base.suggester.FileTemplateSuggester
 import dev.redicloud.utils.defaultScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.util.*
 
 @Command("filetemplate")
@@ -54,9 +53,9 @@ class FileTemplateCommand(
 
     @CommandSubPath("list")
     @CommandDescription("List all file templates")
-    fun list(
+    suspend fun list(
         actor: ConsoleActor
-    ) = runBlocking {
+    ) {
         val v = fileTemplateRepository.getTemplates()
         val versions = mutableMapOf<String, MutableList<String>>()
         v.forEach {
@@ -66,7 +65,7 @@ class FileTemplateCommand(
         }
         if (versions.isEmpty()) {
             actor.sendMessage("§cNo file templates found")
-            return@runBlocking
+            return
         }
         actor.sendHeader("File templates")
         actor.sendMessage("")
@@ -82,10 +81,10 @@ class FileTemplateCommand(
 
     @CommandSubPath("info <name>")
     @CommandDescription("Get info about a file template")
-    fun info(
+    suspend fun info(
         actor: ConsoleActor,
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate
-    ) = runBlocking {
+    ) {
         val inherited = fileTemplateRepository.collectTemplates(template)
         actor.sendHeader("File template")
         actor.sendMessage("")
@@ -138,11 +137,11 @@ class FileTemplateCommand(
 
     @CommandSubPath("edit <name> inherit add <inherit>")
     @CommandDescription("Add a file template to the inheritance of a file template")
-    fun editInheritAdd(
+    suspend fun editInheritAdd(
         actor: ConsoleActor,
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate,
         @CommandParameter("inherit", true, FileTemplateSuggester::class) inherit: FileTemplate
-    ) = runBlocking {
+    ) {
         if (template.inherited.contains(inherit.uniqueId)) {
             actor.sendMessage(
                 "§cThe file template ${toConsoleValue(
@@ -150,7 +149,7 @@ class FileTemplateCommand(
                     false
                 )} already inherits from ${toConsoleValue(inherit.displayName, false)}!"
             )
-            return@runBlocking
+            return
         }
         val allTemplates = fileTemplateRepository.collectTemplates(template)
         if (allTemplates.contains(inherit)) {
@@ -160,7 +159,7 @@ class FileTemplateCommand(
                     false
                 )} already inherits from ${toConsoleValue(inherit.displayName, false)}!"
             )
-            return@runBlocking
+            return
         }
         actor.sendMessage(
             "File template ${toConsoleValue(
@@ -178,11 +177,11 @@ class FileTemplateCommand(
 
     @CommandSubPath("edit <name> inherit remove <inherit>")
     @CommandDescription("Remove a file template from the inheritance of a file template")
-    fun editInheritRemove(
+    suspend fun editInheritRemove(
         actor: ConsoleActor,
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate,
         @CommandParameter("inherit", true, FileTemplateSuggester::class) inherit: FileTemplate
-    ) = runBlocking {
+    ) {
         if (!template.inherited.contains(inherit.uniqueId)) {
             actor.sendMessage(
                 "§cThe file template ${toConsoleValue(
@@ -190,7 +189,7 @@ class FileTemplateCommand(
                     false
                 )} does not inherit from ${toConsoleValue(inherit.displayName, false)}!"
             )
-            return@runBlocking
+            return
         }
         actor.sendMessage(
             "File template ${toConsoleValue(
