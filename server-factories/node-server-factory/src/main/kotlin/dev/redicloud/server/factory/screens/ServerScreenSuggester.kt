@@ -8,7 +8,7 @@ class ServerScreenSuggester(
     private val console: Console
 ) : AbstractCommandSuggester() {
 
-    override fun suggest(context: CommandContext): Array<String> {
+    override suspend fun suggest(context: CommandContext): Array<String> {
         return console.getScreens().filterIsInstance<ServerScreen>().map { it.name }.toTypedArray()
     }
 }

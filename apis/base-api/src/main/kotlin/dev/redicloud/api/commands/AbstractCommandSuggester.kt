@@ -12,8 +12,8 @@ abstract class AbstractCommandSuggester {
         suggest(it!!)
     }
 
-    fun preSuggest(context: CommandContext): Array<String> {
-        return cache.getBlocking(context)!!
+    suspend fun preSuggest(context: CommandContext): Array<String> {
+        return cache.get(context)!!
     }
 
     /**
@@ -22,5 +22,5 @@ abstract class AbstractCommandSuggester {
      * @param context The context of the command
      * @return The list of possible arguments
      */
-    abstract fun suggest(context: CommandContext): Array<String>
+    abstract suspend fun suggest(context: CommandContext): Array<String>
 }

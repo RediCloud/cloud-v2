@@ -9,7 +9,7 @@ class LoadableModulesSuggester(
     private val moduleHandler: ModuleHandler
 ) : AbstractCommandSuggester() {
 
-    override fun suggest(context: CommandContext): Array<String> {
+    override suspend fun suggest(context: CommandContext): Array<String> {
         val descriptions = moduleHandler.getCachedDescriptions()
             .filter {
                 val data = moduleHandler.getModuleData(it.id)
