@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 
+@Suppress("TooManyFunctions")
 class PacketManager(
     private val databaseConnection: DatabaseConnection,
     override val serviceId: ServiceId

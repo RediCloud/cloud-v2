@@ -28,7 +28,12 @@ fun main(args: Array<String>) {
             val databaseConnection = preConsole.databaseConnection!!
             val databaseConfiguration = preConsole.databaseConfiguration!!
             val nodeConfiguration = preConsole.nodeConfiguration!!
-            val nodeService = NodeService(databaseConfiguration, databaseConnection, nodeConfiguration, preConsole.firstStartDetected)
+            val nodeService = NodeService(
+                databaseConfiguration,
+                databaseConnection,
+                nodeConfiguration,
+                preConsole.firstStartDetected
+            )
             nodeService.start()
         } catch (e: CancellationException) {
             throw e

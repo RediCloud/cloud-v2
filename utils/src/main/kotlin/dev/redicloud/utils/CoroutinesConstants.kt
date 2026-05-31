@@ -12,5 +12,8 @@ val coroutineExceptionHandler = CoroutineExceptionHandler { coroutineContext, th
     threadLogger.severe("Caught exception in coroutine-context: $coroutineContext", throwable)
 }
 
+@Deprecated("Use a service-scoped CoroutineScope instead", ReplaceWith("serviceScope"))
 val defaultScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + coroutineExceptionHandler)
+
+@Deprecated("Use a service-scoped CoroutineScope instead", ReplaceWith("serviceScope"))
 val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO + coroutineExceptionHandler)

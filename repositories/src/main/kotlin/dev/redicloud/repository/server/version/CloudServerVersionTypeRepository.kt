@@ -139,8 +139,8 @@ class CloudServerVersionTypeRepository(
                 serverVersionType.getParsedConnectorURL().isValid()
             ) { "Connector download url of ${serverVersionType.connectorPluginName} is null!" }
             httpClient.get {
-                        url(serverVersionType.getParsedConnectorURL().toExternalForm())
-                    }.readRawBytes().let {
+                url(serverVersionType.getParsedConnectorURL().toExternalForm())
+            }.readRawBytes().let {
                 if (connectorFile.exists()) connectorFile.delete()
                 connectorFile.createNewFile()
                 connectorFile.writeBytes(it)

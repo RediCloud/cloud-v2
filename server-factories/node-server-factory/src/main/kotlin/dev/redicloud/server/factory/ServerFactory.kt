@@ -42,7 +42,6 @@ import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.ConcurrentBatch
 import dev.redicloud.utils.zipFile
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.util.*
 import kotlin.time.Duration.Companion.milliseconds
@@ -80,18 +79,18 @@ class ServerFactory(
     }
 
     suspend fun getStartList(): List<ServerQueueInformation> {
-        return startQueue.toMutableList().sortedWith(
-            compareByDescending<ServerQueueInformation>
-                {
-                    if (it.serviceId != null) {
-                        val configuration = runBlocking {
-                            serverRepository.getServer<CloudServer>(it.serviceId!!)?.configurationTemplate
-                        }
-                        configuration?.startPriority ?: DEFAULT_START_PRIORITY
-                    } else {
-                        it.configurationTemplate.startPriority
-                    }
-                }.thenByDescending { it.queueTime }
+        val queueItems = startQueue.toMutableList()
+        val priorityMap = queueItems.associateWith { item ->
+            if (item.serviceId != null) {
+                val configuration = serverRepository.getServer<CloudServer>(item.serviceId!!)?.configurationTemplate
+                configuration?.startPriority ?: DEFAULT_START_PRIORITY
+            } else {
+                item.configurationTemplate.startPriority
+            }
+        }
+        return queueItems.sortedWith(
+            compareByDescending<ServerQueueInformation> { priorityMap[it] ?: DEFAULT_START_PRIORITY }
+                .thenByDescending { it.queueTime }
         ).toList()
     }
 

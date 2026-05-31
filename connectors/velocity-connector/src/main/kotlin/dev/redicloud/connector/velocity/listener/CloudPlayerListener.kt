@@ -27,7 +27,7 @@ class CloudPlayerListener(
 
     @Subscribe(order = PostOrder.FIRST)
     fun onPostLogin(event: PostLoginEvent) = runBlocking {
-        val fallback = runBlocking { serverRepository.getFallback() }
+        val fallback = serverRepository.getFallback()
         if (fallback == null) {
             event.player.disconnect(Component.text("No fallback server found!"))
             return@runBlocking
@@ -121,7 +121,7 @@ class CloudPlayerListener(
             event.server.serverInfo.name,
             ServiceType.MINECRAFT_SERVER
         )
-        val fallback = runBlocking { serverRepository.getFallback(cloudPlayer?.serverId, kickedFromServer?.serviceId) }
+        val fallback = serverRepository.getFallback(cloudPlayer?.serverId, kickedFromServer?.serviceId)
         if (fallback == null) {
             event.result = KickedFromServerEvent.DisconnectPlayer.create(
                 event.serverKickReason.getOrElse {

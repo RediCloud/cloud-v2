@@ -131,7 +131,7 @@ class CloudPlayerListener(
             event.kickedFrom.name,
             ServiceType.MINECRAFT_SERVER
         )
-        val fallback = runBlocking { serverRepository.getFallback(cloudPlayer?.serverId, kickedFromServer?.serviceId) }
+        val fallback = serverRepository.getFallback(cloudPlayer?.serverId, kickedFromServer?.serviceId)
         if (fallback == null) {
             event.isCancelled = true
             event.kickReasonComponent = ComponentBuilder().append("You were kicked from the server and no fallback was found!").create()
