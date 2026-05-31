@@ -27,6 +27,7 @@ import dev.redicloud.utils.blockPort
 import dev.redicloud.utils.findFreePort
 import dev.redicloud.utils.freePort
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.seconds
@@ -53,7 +54,7 @@ class ServerProcess(
     companion object {
         private val logger = LogManager.logger(ServerProcess::class)
         private const val DEFAULT_START_PORT = 40000
-        private const val STOP_POLL_INTERVAL_MS = 1000L
+        private val STOP_POLL_INTERVAL = 1.seconds
         private const val JAVA_8_MAJOR_VERSION = 8
         val SERVER_STOP_TIMEOUT = System.getProperty("redicloud.server.stop.timeout", "20").toInt()
     }
@@ -177,9 +178,7 @@ class ServerProcess(
         if (answer != null) {
             var seconds = 0
             while (cloudServer != null && cloudServer?.connected == true && seconds < SERVER_STOP_TIMEOUT) {
-                withContext(Dispatchers.IO) {
-                    Thread.sleep(STOP_POLL_INTERVAL_MS)
-                }
+                delay(STOP_POLL_INTERVAL)
                 seconds++
                 cloudServer = serverRepository.getServer(serverId)
             }

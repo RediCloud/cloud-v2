@@ -54,6 +54,7 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.UUID
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
@@ -320,8 +321,8 @@ open class Console(
 
     override fun startAnimation(animation: AbstractConsoleAnimation) {
         val uniqueId = UUID.randomUUID()
-        var started = false
-        animation.addStartHandler { started = true }
+        val latch = CountDownLatch(1)
+        animation.addStartHandler { latch.countDown() }
         val job = animationScope.launch {
             animation.running = true
             animation.run()
@@ -330,7 +331,7 @@ open class Console(
             animation.handleDone()
         }
         runningAnimations[uniqueId] = job to animation
-        while (!started) Thread.sleep(10)
+        latch.await()
     }
 
     override fun cancelAnimations() {

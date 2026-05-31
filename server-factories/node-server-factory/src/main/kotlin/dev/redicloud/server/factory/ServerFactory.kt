@@ -41,8 +41,10 @@ import dev.redicloud.server.factory.utils.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.ConcurrentBatch
 import dev.redicloud.utils.zipFile
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 import java.util.*
 
 @Suppress("LongParameterList", "TooManyFunctions")
@@ -66,7 +68,7 @@ class ServerFactory(
     companion object {
         private val logger = LogManager.logger(ServerFactory::class)
         private const val DEFAULT_START_PRIORITY = 50
-        private const val LOCK_RELEASE_DELAY_MS = 50L
+        private val LOCK_RELEASE_DELAY = 50.milliseconds
     }
 
     override val hostedProcesses: MutableList<ServerProcess> = mutableListOf()
@@ -221,7 +223,7 @@ class ServerFactory(
                 )
             }
         } finally {
-            Thread.sleep(LOCK_RELEASE_DELAY_MS)
+            delay(LOCK_RELEASE_DELAY)
             idLock.unlock()
         }
     }
