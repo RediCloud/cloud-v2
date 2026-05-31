@@ -10,8 +10,12 @@ val libs = the<VersionCatalogsExtension>().named("libs")
 fun lib(name: String) = libs.findLibrary(name).get().get()
 
 // Custom "dependency" configuration for libloader
+// Wired into compile/runtime classpath and runtimeElements so dependencies are available
+// at runtime and transitive to consuming projects (needed for IntelliJ direct-run)
 val dependency by configurations.creating
 configurations.compileClasspath.get().extendsFrom(dependency)
+configurations.runtimeClasspath.get().extendsFrom(dependency)
+configurations.named("runtimeElements") { extendsFrom(dependency) }
 
 the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).configurationName.set("dependency")
 the(dev.redicloud.libloader.plugin.LibraryLoader.LibraryLoaderConfig::class).doBootstrapShade.set(false)
