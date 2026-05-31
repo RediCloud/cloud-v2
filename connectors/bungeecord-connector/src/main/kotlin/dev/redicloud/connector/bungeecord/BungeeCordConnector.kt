@@ -39,12 +39,11 @@ class BungeeCordConnector(
         this.eventManager
     )
 
-    init {
+    override suspend fun start() {
+        super.start()
         initApi()
-        runBlocking {
-            registerTasks()
-        }
-        runBlocking { moduleHandler.loadModules() }
+        registerTasks()
+        moduleHandler.loadModules()
     }
 
     override fun registerServer(server: CloudMinecraftServer) {

@@ -7,7 +7,6 @@ import dev.redicloud.connector.bukkit.provider.BukkitServerPlayerProvider
 import dev.redicloud.service.base.player.BasePlayerExecutor
 import dev.redicloud.service.minecraft.MinecraftServerService
 import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
-import kotlinx.coroutines.runBlocking
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -25,10 +24,11 @@ class BukkitConnector(val plugin: JavaPlugin) : MinecraftServerService<JavaPlugi
             this.serviceId
         )
 
-    init {
+    override suspend fun start() {
+        super.start()
         initApi()
         registerTasks()
-        runBlocking { moduleHandler.loadModules() }
+        moduleHandler.loadModules()
     }
 
     override fun getConnectorPlugin(): JavaPlugin {
