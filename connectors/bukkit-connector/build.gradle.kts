@@ -47,7 +47,7 @@ dependencies {
     compileOnly(libs.adventure.bukkit)
 }
 
-val shadowModJar by tasks.creating(ShadowJar::class) {
+val shadowModJar by tasks.registering(ShadowJar::class) {
     dependsOn(tasks.jar, tasks.named("shadowJar"))
     val v = if (project.version == "unspecified") project.parent?.version ?: "unknown" else project.version
     archiveFileName.set("redicloud-${project.name}-$v-shadow.jar")
@@ -66,10 +66,10 @@ val shadowModJar by tasks.creating(ShadowJar::class) {
     })
 }
 
-val copyShadowedJar by tasks.creating {
+val copyShadowedJar by tasks.registering {
     dependsOn(shadowModJar)
     doLast {
-        shadowModJar.archiveFile.get().asFile.inputStream().use { src ->
+        shadowModJar.get().archiveFile.get().asFile.inputStream().use { src ->
             tasks.jar.get().archiveFile.get().asFile.apply { parentFile.mkdirs() }
                 .outputStream()
                 .use { dst -> src.copyTo(dst) }
