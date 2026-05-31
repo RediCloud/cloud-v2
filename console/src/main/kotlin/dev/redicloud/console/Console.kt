@@ -106,6 +106,7 @@ open class Console(
     override var matchingHistorySearch = true
 
     private val animationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + coroutineExceptionHandler)
+    var commandScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + coroutineExceptionHandler)
     private var logRecordDispatcher: ThreadRecordDispatcher? = null
 
     init {
@@ -230,20 +231,22 @@ open class Console(
     private fun handleCommandInput(line: String) {
         if (CURRENT_CONSOLE?.commandManager?.areCommandsDisabled() != false) return
         val commandManager = CURRENT_CONSOLE?.commandManager ?: return
-        @Suppress("TooGenericExceptionCaught")
-        try {
-            val response = runBlocking { commandManager.handleInput(commandManager.defaultActor, line) }
-            if (response.type == CommandResponseType.HELP_SENT) return
-            if (response.message != null && response.type != CommandResponseType.BLANK_INPUT &&
-                response.type != CommandResponseType.ERROR
-            ) {
-                commandManager.defaultActor.sendMessage(response.message!!)
+        commandScope.launch {
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                val response = commandManager.handleInput(commandManager.defaultActor, line)
+                if (response.type == CommandResponseType.HELP_SENT) return@launch
+                if (response.message != null && response.type != CommandResponseType.BLANK_INPUT &&
+                    response.type != CommandResponseType.ERROR
+                ) {
+                    commandManager.defaultActor.sendMessage(response.message!!)
+                }
+                if (response.throwable != null && response.type == CommandResponseType.ERROR) {
+                    LOGGER.severe(response.message!!, response.throwable!!)
+                }
+            } catch (e: Exception) {
+                LOGGER.severe("Error while routing/processing command", e)
             }
-            if (response.throwable != null && response.type == CommandResponseType.ERROR) {
-                LOGGER.severe(response.message!!, response.throwable!!)
-            }
-        } catch (e: Exception) {
-            LOGGER.severe("Error while routing/processing command", e)
         }
     }
 
@@ -360,7 +363,7 @@ open class Console(
 
     override fun getScreens(): List<Screen> = screens.toList()
 
-    override fun getScreen(name: String): Screen? = screens.firstOrNull { it.name.lowercase() == name.lowercase() }
+    override fun getScreen(name: String): Screen? = screens.firstOrNull { it.name.equals(name, ignoreCase = true) }
 
     override fun createScreen(
         name: String,

@@ -14,9 +14,7 @@ import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.service.base.suggester.CloudServerSuggester
 import dev.redicloud.service.base.suggester.ConfigurationTemplateSuggester
 import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
-import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.toSymbol
-import kotlinx.coroutines.launch
 
 @Command("server")
 @CommandAlias(["ser", "s", "servers"])
@@ -48,11 +46,11 @@ class ServerCommand(
 
     @CommandSubPath("start <template> [count]")
     @CommandDescription("Queue a amount of servers with a configuration template")
-    fun start(
+    suspend fun start(
         actor: ConsoleActor,
         @CommandParameter("template", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("count", false, IntegerSuggester::class) count: Int?
-    ) = defaultScope.launch {
+    ) {
         actor.sendMessage(
             "Queued ${toConsoleValue(count ?: 1)} server with template ${toConsoleValue(template.name)}..."
         )
@@ -61,13 +59,13 @@ class ServerCommand(
 
     @CommandSubPath("startstatic <name> <id>")
     @CommandDescription("Queue a registered static server with the given name and id")
-    fun startStatic(
+    suspend fun startStatic(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) name: String,
         @CommandParameter("id", true, IntegerSuggester::class) id: Int
-    ) = defaultScope.launch {
+    ) {
         val server = serverRepository.getRegisteredServers().firstOrNull {
-            it.configurationTemplate.name.lowercase() == name.lowercase() && it.id == id
+            it.configurationTemplate.name.equals(name, ignoreCase = true) && it.id == id
         }
         if (server == null) {
             actor.sendMessage(
@@ -76,21 +74,21 @@ class ServerCommand(
                     false
                 )} and id ${toConsoleValue(id, false)}!"
             )
-            return@launch
+            return
         }
         if (!server.configurationTemplate.static) {
             actor.sendMessage(
                 "§cThe server ${toConsoleValue(server.identifyName(false), false)} is not a static server!"
             )
-            return@launch
+            return
         }
         if (server.state == CloudServerState.STARTING || server.state == CloudServerState.PREPARING) {
             actor.sendMessage("§cThe server ${toConsoleValue(server.identifyName(false), false)} is already starting!")
-            return@launch
+            return
         }
         if (server.state == CloudServerState.RUNNING || server.state == CloudServerState.STOPPING) {
             actor.sendMessage("§cThe server ${toConsoleValue(server.identifyName(false), false)} is already running!")
-            return@launch
+            return
         }
         actor.sendMessage("Queued static server ${server.identifyName()}...")
         serverFactory.queueStart(server.serviceId)
@@ -158,11 +156,11 @@ class ServerCommand(
 
     @CommandSubPath("stop <server> [force]")
     @CommandDescription("Stop a server")
-    fun stop(
+    suspend fun stop(
         actor: ConsoleActor,
         @CommandParameter("server", true, CloudServerSuggester::class) server: String,
         @CommandParameter("force", false, BooleanSuggester::class) force: Boolean?
-    ) = defaultScope.launch {
+    ) {
         val forceStop = force ?: false
         when {
             server == "*" -> stopAllServers(actor, forceStop)
@@ -201,14 +199,14 @@ class ServerCommand(
 
     private suspend fun stopServersByNames(actor: ConsoleActor, names: List<String>, forceStop: Boolean) {
         val servers = collectStoppableServers(forceStop)
-            .filter { server -> names.any { it.lowercase() == server.name.lowercase() } }
+            .filter { server -> names.any { it.equals(server.name, ignoreCase = true) } }
         actor.sendMessage("Stopping ${toConsoleValue(servers.size)} servers...")
         servers.forEach { serverFactory.queueStop(it.serviceId, forceStop) }
     }
 
     private suspend fun stopServerByName(actor: ConsoleActor, name: String, forceStop: Boolean) {
         val servers = collectStoppableServers(forceStop)
-            .filter { it.name.lowercase() == name.lowercase() }
+            .filter { it.name.equals(name, ignoreCase = true) }
         if (servers.isEmpty()) {
             actor.sendMessage("No server with name ${toConsoleValue(name)} connected!")
             return

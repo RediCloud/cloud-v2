@@ -7,7 +7,6 @@ import dev.redicloud.console.Console
 import dev.redicloud.console.utils.Screen
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.service.base.packets.ScreenCommandPacket
-import dev.redicloud.utils.defaultScope
 import kotlinx.coroutines.launch
 
 class ServerScreen(
@@ -24,7 +23,7 @@ class ServerScreen(
     }
     companion object {
         private const val MAX_STORED_LINES = 100
-        val SCREEN_LINE_FORMAT = System.getProperty("redicloud.screen.line", "§8[%hc%%name%§8] %tc%%message%")
+        val SCREEN_LINE_FORMAT: String = System.getProperty("redicloud.screen.line", "§8[%hc%%name%§8] %tc%%message%")
     }
 
     override fun println(text: String) {
@@ -37,6 +36,6 @@ class ServerScreen(
     }
 
     fun executeCommand(command: String) {
-        defaultScope.launch { packetManager?.publish(ScreenCommandPacket(command), serviceId) }
+        console.commandScope.launch { packetManager?.publish(ScreenCommandPacket(command), serviceId) }
     }
 }

@@ -9,10 +9,8 @@ import dev.redicloud.repository.java.version.getVersionInfo
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.service.base.suggester.JavaVersionSuggester
 import dev.redicloud.utils.OSType
-import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.getOperatingSystemType
 import dev.redicloud.utils.toSymbol
-import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
 
@@ -26,9 +24,9 @@ class JavaVersionCommand(
 
     @CommandSubPath("list")
     @CommandDescription("List all java versions")
-    fun list(
+    suspend fun list(
         actor: ConsoleActor
-    ) = defaultScope.launch {
+    ) {
         actor.sendHeader("Java-Versions")
         actor.sendMessage("")
         javaVersionRepository.getVersions().forEach {
@@ -42,13 +40,13 @@ class JavaVersionCommand(
 
     @CommandSubPath("auto-locate")
     @CommandDescription("Auto locate all java versions")
-    fun autoLocate(
+    suspend fun autoLocate(
         actor: ConsoleActor
-    ) = defaultScope.launch {
+    ) {
         val versions = javaVersionRepository.detectInstalledVersions()
         if (versions.isEmpty()) {
             actor.sendMessage("§cNo java versions found")
-            return@launch
+            return
         }
         val created = mutableListOf<CloudJavaVersion>()
         versions.forEach {
@@ -58,17 +56,17 @@ class JavaVersionCommand(
         }
         if (created.isEmpty()) {
             actor.sendMessage("No new java versions found")
-            return@launch
+            return
         }
         actor.sendMessage("Created new java versions§8: %hc%${created.joinToString("§8, %hc%") { it.name }}")
     }
 
     @CommandSubPath("delete <version>")
     @CommandDescription("Delete a java version")
-    fun delete(
+    suspend fun delete(
         actor: ConsoleActor,
         @CommandParameter("version", true, JavaVersionSuggester::class) version: CloudJavaVersion
-    ) = defaultScope.launch {
+    ) {
         val versions = serverVersionRepository.getVersions()
         if (versions.any { it.uniqueId == version.uniqueId }) {
             actor.sendMessage("§cThere are still server versions using this version:")
@@ -77,7 +75,7 @@ class JavaVersionCommand(
                     versions.filter { it.javaVersionId == version.uniqueId }.joinToString(", ") { it.displayName }
                 }"
             )
-            return@launch
+            return
         }
         javaVersionRepository.deleteVersion(version)
         actor.sendMessage("Deleted version ${version.name}")
@@ -85,11 +83,11 @@ class JavaVersionCommand(
 
     @CommandSubPath("locate <version> <path>")
     @CommandDescription("Locate an java version on the current node")
-    fun locate(
+    suspend fun locate(
         actor: ConsoleActor,
         @CommandParameter("version", true, JavaVersionSuggester::class) versionName: String,
         @CommandParameter("path", true) path: String
-    ) = defaultScope.launch {
+    ) {
         val file = File(path)
         if (file.isFile) {
             actor.sendMessage("§cThe path must be a directory")
@@ -100,7 +98,7 @@ class JavaVersionCommand(
         }
         if (!executable.exists()) {
             actor.sendMessage("§cThe path does not contain a valid java installation")
-            return@launch
+            return
         }
         var version = javaVersionRepository.getVersion(versionName)
         if (version == null) {
@@ -117,7 +115,7 @@ class JavaVersionCommand(
             )
             javaVersionRepository.createVersion(version)
             actor.sendMessage("Located version ${toConsoleValue(version.name)} at ${toConsoleValue(path)}")
-            return@launch
+            return
         }
         version.located[javaVersionRepository.serviceId.id] = file.absolutePath
         javaVersionRepository.updateVersion(version)

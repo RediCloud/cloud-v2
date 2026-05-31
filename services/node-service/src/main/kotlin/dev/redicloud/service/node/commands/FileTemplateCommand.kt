@@ -8,8 +8,6 @@ import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
 import dev.redicloud.service.base.suggester.FileTemplateSuggester
-import dev.redicloud.utils.defaultScope
-import kotlinx.coroutines.launch
 import java.util.*
 
 @Command("filetemplate")
@@ -21,11 +19,11 @@ class FileTemplateCommand(
 
     @CommandSubPath("duplicate <name> [new-name]")
     @CommandDescription("Duplicate a file template")
-    fun duplicate(
+    suspend fun duplicate(
         actor: ConsoleActor,
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate,
         @CommandParameter("new-name", false) newName: String?
-    ) = defaultScope.launch {
+    ) {
         val newTemplate = template.copy(newName ?: "${template.name}_copy")
         if (fileTemplateRepository.existsTemplate(newTemplate.name, newTemplate.prefix)) {
             actor.sendMessage(
@@ -33,7 +31,7 @@ class FileTemplateCommand(
                     newTemplate.name
                 )} and prefix ${toConsoleValue(newTemplate.prefix)} already exists!"
             )
-            return@launch
+            return
         }
         actor.sendMessage(
             "File template ${toConsoleValue(
@@ -100,18 +98,18 @@ class FileTemplateCommand(
 
     @CommandSubPath("create <name> <prefix>")
     @CommandDescription("Create a new file template")
-    fun create(
+    suspend fun create(
         actor: ConsoleActor,
         @CommandParameter("name") name: String,
         @CommandParameter("prefix") prefix: String
-    ) = defaultScope.launch {
+    ) {
         if (fileTemplateRepository.existsTemplate(name, prefix)) {
             actor.sendMessage(
                 "§cA file template with the name ${toConsoleValue(
                     name
                 )} and prefix ${toConsoleValue(prefix)} already exists!"
             )
-            return@launch
+            return
         }
         val template = FileTemplate(
             UUID.randomUUID(),
@@ -126,10 +124,10 @@ class FileTemplateCommand(
 
     @CommandSubPath("delete <name>")
     @CommandDescription("Delete a file template")
-    fun delete(
+    suspend fun delete(
         actor: ConsoleActor,
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate
-    ) = defaultScope.launch {
+    ) {
         actor.sendMessage("File template ${toConsoleValue(template.displayName)} will be deleted...")
         fileTemplateRepository.deleteTemplate(template.uniqueId)
         actor.sendMessage("File template ${toConsoleValue(template.displayName)} was deleted!")
@@ -207,18 +205,18 @@ class FileTemplateCommand(
 
     @CommandSubPath("edit <name> name <new-name>")
     @CommandDescription("Change the name of a file template")
-    fun editName(
+    suspend fun editName(
         actor: ConsoleActor,
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate,
         @CommandParameter("new-name") newName: String
-    ) = defaultScope.launch {
+    ) {
         if (fileTemplateRepository.existsTemplate(newName, template.prefix)) {
             actor.sendMessage(
                 "§cA file template with the name ${toConsoleValue(
                     newName
                 )} and prefix ${toConsoleValue(template.prefix)} already exists!"
             )
-            return@launch
+            return
         }
         actor.sendMessage(
             "File template ${toConsoleValue(template.displayName)} will be renamed to ${toConsoleValue(newName)}..."
@@ -232,18 +230,18 @@ class FileTemplateCommand(
 
     @CommandSubPath("edit <name> prefix <new-prefix>")
     @CommandDescription("Change the prefix of a file template")
-    fun editPrefix(
+    suspend fun editPrefix(
         actor: ConsoleActor,
         @CommandParameter("name", true, FileTemplateSuggester::class) template: FileTemplate,
         @CommandParameter("new-prefix") newPrefix: String
-    ) = defaultScope.launch {
+    ) {
         if (fileTemplateRepository.existsTemplate(template.name, newPrefix)) {
             actor.sendMessage(
                 "§cA file template with the name ${toConsoleValue(
                     template.name
                 )} and prefix ${toConsoleValue(newPrefix)} already exists!"
             )
-            return@launch
+            return
         }
         actor.sendMessage(
             "File template ${toConsoleValue(template.displayName)} will be renamed to ${toConsoleValue(newPrefix)}..."
@@ -257,13 +255,13 @@ class FileTemplateCommand(
 
     @CommandSubPath("publish <node>")
     @CommandDescription("Publish a file template to a node")
-    fun publish(
+    suspend fun publish(
         actor: ConsoleActor,
         @CommandParameter("node", true, ConnectedCloudNodeSuggester::class) node: CloudNode,
-    ) = defaultScope.launch {
+    ) {
         if (node.currentSession == null) {
             actor.sendMessage("§cThe node ${toConsoleValue(node.name)} is not connected!")
-            return@launch
+            return
         }
         fileTemplateRepository.pushTemplates(node.serviceId)
     }

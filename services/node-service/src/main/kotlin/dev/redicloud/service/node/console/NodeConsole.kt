@@ -21,7 +21,6 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.service.node.NodeConfiguration
-import dev.redicloud.utils.defaultScope
 import kotlinx.coroutines.launch
 
 @Suppress("LongMethod")
@@ -90,7 +89,7 @@ class NodeConsole(
     }
 
     override fun handleUserInterrupt(e: Exception) {
-        defaultScope.launch {
+        commandScope.launch {
             commandManager.getCommand(
                 "exit"
             )!!.getSubCommand("")!!.execute(commandManager.defaultActor, emptyList())

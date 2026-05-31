@@ -10,8 +10,7 @@ import dev.redicloud.api.template.configuration.ICloudConfigurationTemplateRepos
 import dev.redicloud.event.EventManager
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.service.node.repository.node.LOGGER
-import dev.redicloud.utils.defaultScope
-import kotlinx.coroutines.launch
+
 
 class ConfigurationUpdateServerListener(
     serviceId: ServiceId,
@@ -23,29 +22,27 @@ class ConfigurationUpdateServerListener(
 
     init {
         eventManager.listen<ConfigurationTemplateUpdateEvent> {
-            defaultScope.launch {
-                val thisNode = nodeRepository.getNode(serviceId) ?: return@launch
-                if (!thisNode.master) {
-                    return@launch
-                }
-                LOGGER.info("Updating server configuration templates")
-                val configurationTemplate =
-                    configurationTemplateRepository.getTemplate(it.configurationTemplateId) ?: return@launch
-                serverRepository.getRegisteredServers()
-                    .filter { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }.forEach {
-                        if (it.state == CloudServerState.STOPPED) {
-                            (it as CloudServer).configurationTemplate = configurationTemplate
-                        } else {
-                            it.configurationTemplate.fallbackServer = configurationTemplate.fallbackServer
-                            it.configurationTemplate.joinPermission = configurationTemplate.joinPermission
-                            it.configurationTemplate.maxPlayers = configurationTemplate.maxPlayers
-                            it.configurationTemplate.percentToStartNewService =
-                                configurationTemplate.percentToStartNewService
-                            it.configurationTemplate.startPriority = configurationTemplate.startPriority
-                        }
-                        serverRepository.updateServer(it)
-                    }
+            val thisNode = nodeRepository.getNode(serviceId) ?: return@listen
+            if (!thisNode.master) {
+                return@listen
             }
+            LOGGER.info("Updating server configuration templates")
+            val configurationTemplate =
+                configurationTemplateRepository.getTemplate(it.configurationTemplateId) ?: return@listen
+            serverRepository.getRegisteredServers()
+                .filter { it.configurationTemplate.uniqueId == configurationTemplate.uniqueId }.forEach {
+                    if (it.state == CloudServerState.STOPPED) {
+                        (it as CloudServer).configurationTemplate = configurationTemplate
+                    } else {
+                        it.configurationTemplate.fallbackServer = configurationTemplate.fallbackServer
+                        it.configurationTemplate.joinPermission = configurationTemplate.joinPermission
+                        it.configurationTemplate.maxPlayers = configurationTemplate.maxPlayers
+                        it.configurationTemplate.percentToStartNewService =
+                            configurationTemplate.percentToStartNewService
+                        it.configurationTemplate.startPriority = configurationTemplate.startPriority
+                    }
+                    serverRepository.updateServer(it)
+                }
         }
     }
 }

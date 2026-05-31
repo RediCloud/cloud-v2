@@ -5,7 +5,7 @@ import dev.redicloud.api.service.ServiceType
 import dev.redicloud.repository.player.PlayerRepository
 import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.repository.server.ServerRepository
-import dev.redicloud.utils.defaultScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.md_5.bungee.api.ProxyServer
@@ -24,13 +24,14 @@ class CloudPlayerListener(
     private val serviceId: ServiceId,
     private val playerRepository: PlayerRepository,
     private val serverRepository: ServerRepository,
-    private val plugin: Plugin
+    private val plugin: Plugin,
+    private val scope: CoroutineScope
 ) : Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     fun onLogin(event: LoginEvent) {
         event.registerIntent(plugin)
-        defaultScope.launch {
+        scope.launch {
             try {
                 val fallback = serverRepository.getFallback()
                 if (fallback == null) {
