@@ -4,19 +4,6 @@ plugins {
 
 group = "dev.redicloud.connector"
 
-tasks {
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-    }
-
-    withType<JavaCompile> {
-        options.release.set(17)
-        options.encoding = "UTF-8"
-
-    }
-}
-
-
 dependencies {
     shade(project(":cache"))
     shade(project(":apis:base-api"))

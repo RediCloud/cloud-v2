@@ -50,18 +50,18 @@ dependencies {
 // --- Task configuration ---
 tasks {
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
+        compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
 
     withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
-        jvmTarget = "1.8"
+        jvmTarget = "21"
         autoCorrect = true
         config.setFrom(rootProject.files("detekt.yml"))
         buildUponDefaultConfig = true
     }
 
     withType<JavaCompile> {
-        options.release.set(8)
+        options.release.set(21)
         options.encoding = "UTF-8"
     }
 }

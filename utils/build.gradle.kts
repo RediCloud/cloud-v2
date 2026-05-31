@@ -17,4 +17,5 @@ dependencies {
     implementation(libs.gson)
 
     testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines)
 }
