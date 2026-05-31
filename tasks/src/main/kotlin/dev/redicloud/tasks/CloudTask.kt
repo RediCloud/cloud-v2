@@ -3,7 +3,6 @@ package dev.redicloud.tasks
 import dev.redicloud.tasks.executor.CloudTaskExecutor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
@@ -35,8 +34,8 @@ abstract class CloudTask(private val useLock: Boolean = true) {
                     Level.FINEST,
                     "Cloud task ${this@CloudTask::class.simpleName} execute by ${source::class.simpleName}"
                 )
-                if (runBlocking { execute() }) {
-                    runBlocking { cancel() }
+                if (execute()) {
+                    cancel()
                 }
             } catch (e: Exception) {
                 CloudTaskManager.LOGGER.log(
