@@ -13,7 +13,7 @@ abstract class AbstractCommandSuggester {
     }
 
     fun preSuggest(context: CommandContext): Array<String> {
-        return cache.get(context)!!
+        return cache.getBlocking(context)!!
     }
 
     /**

@@ -21,7 +21,7 @@ class StartDataSnapshot private constructor(
         private val easyCache = EasyCache<StartDataSnapshot, ICloudConfigurationTemplate>(3.seconds) {
             StartDataSnapshot(it!!)
         }
-        fun of(configurationTemplate: ICloudConfigurationTemplate) = easyCache.get(configurationTemplate)
+        suspend fun of(configurationTemplate: ICloudConfigurationTemplate) = easyCache.get(configurationTemplate)
             ?: easyCache.get(configurationTemplate)!!
     }
 

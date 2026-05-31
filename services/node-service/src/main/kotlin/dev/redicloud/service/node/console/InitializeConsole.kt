@@ -186,7 +186,7 @@ class InitializeConsole : Console(
 
     override fun sendHeader() {
         super.sendHeader()
-        getJavaVersion() // Load versions
+        runBlocking { getJavaVersion() } // Load versions
         writeLine("§8» §fChecks§8:")
         writeLine("§f‾‾‾‾‾‾‾‾‾‾‾‾‾")
         writeLine("§8• §fLibraries §8» ${checkLibs()}")
@@ -214,8 +214,8 @@ class InitializeConsole : Console(
         }
     }
 
-    private fun checkJava(): String {
-        return if (isJavaVersionSupported(getJavaVersion())) {
+    private fun checkJava(): String = runBlocking {
+        if (isJavaVersionSupported(getJavaVersion())) {
             "§2✓ §8(§fJava: %hc%${System.getProperty("java.version")}§8)"
         } else if (isJavaVersionNotTested(getJavaVersion())) {
             "§e§l~ §8(§eJava: ${System.getProperty("java.version")}§8| §enot tested§8)"
