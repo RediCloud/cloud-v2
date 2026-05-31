@@ -1,12 +1,5 @@
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.io.FileWriter
-import java.io.IOException
-import java.util.*
-import java.util.jar.JarEntry
-import java.util.jar.JarFile
-import java.util.jar.JarOutputStream
 
 val version = "2.4.0-SNAPSHOT"
 val build = System.getenv("build_number") ?: "local"
