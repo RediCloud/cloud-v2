@@ -96,4 +96,3 @@ findProject(":modules:reset-module")?.name = "reset-module"
 
 include("test-framework")
 findProject(":test-framework")?.name = "test-framework"
-include("api-files-creator")

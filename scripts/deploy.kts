@@ -6,7 +6,7 @@ val build = System.getenv("build_number") ?: "local"
 val git = System.getenv("build_vcs_number") ?: "unknown"
 val branch = System.getenv("branch")?.replace("refs/heads/", "") ?: "local"
 
-File("start-scripts").listFiles()?.filter { it.extension == "sh" || it.extension == "bat" }?.forEach {
+File("scripts/start").listFiles()?.filter { it.extension == "sh" || it.extension == "bat" }?.forEach {
     val lines = it.readLines()
         .map { line ->
             line.replace("%version%", version)
