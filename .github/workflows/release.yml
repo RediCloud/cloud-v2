@@ -30,10 +30,10 @@ jobs:
       - uses: ./.github/actions/setup
       - uses: fwilhe2/setup-kotlin@main
       - name: Make scripts executable
-        run: chmod +x ./gradlew ./deploy.kts
+        run: chmod +x ./gradlew ./scripts/deploy.kts
 
       - name: Kotlin deploy script
-        run: kotlin ./deploy.kts
+        run: kotlin ./scripts/deploy.kts
         env:
           build_number: ${{ github.run_number }}
           build_vcs_number: ${{ github.sha }}
@@ -50,7 +50,7 @@ jobs:
           cp -r api-files/ export/
           cp connectors/*-connector/build/libs/*.jar export/connectors/
           cp services/node-service/build/libs/redicloud-node-service-*.jar export/
-          cp -r start-scripts/ export/
+          cp -r scripts/start/ export/start-scripts/
           cp modules/*/build/libs/*.jar export/modules/
           rm export/modules/*module-handler*.jar
 

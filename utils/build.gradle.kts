@@ -1,5 +1,5 @@
 plugins {
-    `maven-publish`
+    id("redicloud-conventions")
 }
 
 group = "dev.redicloud"
@@ -17,4 +17,5 @@ dependencies {
     implementation(libs.gson)
 
     testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines)
 }

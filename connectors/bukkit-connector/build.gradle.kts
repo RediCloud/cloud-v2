@@ -2,6 +2,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
+    id("redicloud-conventions")
     alias(libs.plugins.shadow)
 }
 
@@ -17,15 +18,7 @@ dependencies {
     shade(project(":apis:base-api"))
     shade(project(":services:base-service"))
     shade(project(":services:minecraft-server-service"))
-    shade(project(":repositories:node-repository"))
-    shade(project(":repositories:service-repository"))
-    shade(project(":repositories:server-repository"))
-    shade(project(":repositories:file-template-repository"))
-    shade(project(":repositories:configuration-template-repository"))
-    shade(project(":repositories:server-version-repository"))
-    shade(project(":repositories:java-version-repository"))
-    shade(project(":repositories:player-repository"))
-    shade(project(":repositories:cache-repository"))
+    shade(project(":repositories"))
     shade(project(":database"))
     shade(project(":utils"))
     shade(project(":events"))
@@ -46,7 +39,7 @@ dependencies {
     compileOnly(libs.adventure.bukkit)
 }
 
-val shadowModJar by tasks.creating(ShadowJar::class) {
+val shadowModJar by tasks.registering(ShadowJar::class) {
     dependsOn(tasks.jar, tasks.named("shadowJar"))
     val v = if (project.version == "unspecified") project.parent?.version ?: "unknown" else project.version
     archiveFileName.set("redicloud-${project.name}-$v-shadow.jar")
@@ -65,10 +58,10 @@ val shadowModJar by tasks.creating(ShadowJar::class) {
     })
 }
 
-val copyShadowedJar by tasks.creating {
+val copyShadowedJar by tasks.registering {
     dependsOn(shadowModJar)
     doLast {
-        shadowModJar.archiveFile.get().asFile.inputStream().use { src ->
+        shadowModJar.get().archiveFile.get().asFile.inputStream().use { src ->
             tasks.jar.get().archiveFile.get().asFile.apply { parentFile.mkdirs() }
                 .outputStream()
                 .use { dst -> src.copyTo(dst) }

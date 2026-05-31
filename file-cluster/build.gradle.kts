@@ -1,3 +1,7 @@
+plugins {
+    id("redicloud-conventions")
+}
+
 group = "dev.redicloud"
 
 dependencies {
@@ -9,9 +13,7 @@ dependencies {
     compileOnly(project(":database"))
     compileOnly(project(":packets"))
     compileOnly(project(":cache"))
-    compileOnly(project(":repositories:node-repository"))
-    compileOnly(project(":repositories:service-repository"))
-    compileOnly(project(":repositories:cache-repository"))
+    compileOnly(project(":repositories"))
 
     dependency(libs.sshd)
     dependency(libs.jsch)

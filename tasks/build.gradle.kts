@@ -1,3 +1,7 @@
+plugins {
+    id("redicloud-conventions")
+}
+
 group = "dev.redicloud"
 
 val publishToRepository by extra(true)

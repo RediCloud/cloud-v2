@@ -26,7 +26,6 @@ formatting:
     indentSize: 4
   Indentation:
     indentSize: 4
-    continuationIndentSize: 4
   MaximumLineLength:
     maxLineLength: 150
   NoWildcardImports:

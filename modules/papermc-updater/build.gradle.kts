@@ -1,3 +1,7 @@
+plugins {
+    id("redicloud-conventions")
+}
+
 group = "dev.redicloud.module"
 
 dependencies {
@@ -13,7 +17,7 @@ dependencies {
     dependency(libs.gson)
 
     testImplementation(kotlin("test"))
-    testImplementation(project(":repositories:server-version-repository"))
+    testImplementation(project(":repositories"))
     testImplementation(project(":utils"))
     testImplementation(project(":logging"))
     testImplementation(libs.kotlinx.coroutines)
