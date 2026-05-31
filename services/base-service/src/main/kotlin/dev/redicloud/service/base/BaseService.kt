@@ -62,9 +62,11 @@ import dev.redicloud.service.base.suggester.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.tasks.CloudTaskManager
 import dev.redicloud.utils.InjectorModule
-import dev.redicloud.utils.defaultScope
-import dev.redicloud.utils.ioScope
+import dev.redicloud.utils.coroutineExceptionHandler
 import dev.redicloud.utils.loadProperties
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -83,6 +85,8 @@ abstract class BaseService(
         val LOGGER = LogManager.logger(BaseService::class)
         var SHUTTINGDOWN = false
     }
+
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default + coroutineExceptionHandler)
 
     val databaseConnection: DatabaseConnection
 
@@ -185,20 +189,19 @@ abstract class BaseService(
             taskManager.getTasks().forEach { it.cancel() }
             packetManager.disconnect()
             databaseConnection.disconnect()
-            defaultScope.cancel()
-            ioScope.cancel()
+            scope.cancel()
             Console.Companion.CURRENT_CONSOLE?.close(true)
         }
     }
 
     fun sendClusterMessage(message: String, level: Level = Level.INFO, vararg serviceIds: ServiceId) {
-        ioScope.launch {
+        scope.launch {
             packetManager.publish(ClusterMessagePacket(message, level), *serviceIds)
         }
     }
 
     fun sendClusterMessage(message: String, level: Level = Level.INFO, serviceTargetType: ServiceType) {
-        ioScope.launch {
+        scope.launch {
             packetManager.publish(ClusterMessagePacket(message, level), serviceTargetType)
         }
     }
