@@ -5,7 +5,7 @@ import dev.redicloud.console.Console
 
 class ScreenParser(private val console: Console) : ICommandArgumentParser<Screen> {
 
-    override fun parse(parameter: String): Screen? {
-        return console.getScreens().firstOrNull { it.name.lowercase() == parameter.lowercase() }
+    override suspend fun parse(parameter: String): Screen? {
+        return console.getScreens().firstOrNull { it.name.equals(parameter, ignoreCase = true) }
     }
 }

@@ -105,7 +105,7 @@ class CommandArgument(
             state.argumentIndex + 1 == this.index
         if (predictMatch) return true
 
-        return state.currentBuild.lowercase() == input.lowercase() && state.lastWasThis
+        return state.currentBuild.equals(input, ignoreCase = true) && state.lastWasThis
     }
 
     private fun buildMatchState(pathParts: List<String>, inputParts: List<String>, predict: Boolean): PathMatchState {
@@ -117,7 +117,7 @@ class CommandArgument(
             val inputCurrent = inputParts[state.index]
             if (part.isArgument()) {
                 state.argumentIndex++
-                if (pathFormat.lowercase() == part.lowercase() || part.isEmpty() && predict) {
+                if (pathFormat.equals(part, ignoreCase = true) || part.isEmpty() && predict) {
                     state.lastWasThis = true
                     state.alreadyIndexed = true
                 }
@@ -125,7 +125,7 @@ class CommandArgument(
                 state.currentBuild += inputCurrent
                 return@forEach
             }
-            if (inputCurrent.lowercase() == part.lowercase()) {
+            if (inputCurrent.equals(part, ignoreCase = true)) {
                 if (state.currentBuild.isNotEmpty()) state.currentBuild += " "
                 state.currentBuild += inputCurrent
                 return@forEach
@@ -134,5 +134,5 @@ class CommandArgument(
         return state
     }
 
-    fun parse(input: String): Any? = parser?.parse(input)
+    suspend fun parse(input: String): Any? = parser?.parse(input)
 }
