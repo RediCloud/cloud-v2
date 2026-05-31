@@ -11,6 +11,7 @@ import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.utils.EasyCache
+import kotlinx.coroutines.CancellationException
 import kotlin.time.Duration.Companion.seconds
 
 class StartDataSnapshot private constructor(
@@ -75,17 +76,25 @@ class StartDataSnapshot private constructor(
         this.javaVersion = javaVersion
 
         // get the version handler and update/patch the version if needed
-        val versionHandler = runCatching { IServerVersionHandler.getHandler(versionType) }.getOrNull()
+        val versionHandler = try {
+            IServerVersionHandler.getHandler(versionType)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }
         if (versionHandler == null) {
             startResult = UnknownServerVersionHandlerResult(version.typeId)
             return startResult
         }
         this.versionHandler = versionHandler
-        val hostName = runCatching {
-            nodeRepository.getNode(
-                hostServiceId
-            )
-        }.getOrNull()?.currentOrLastSession()?.ipAddress
+        val hostName = try {
+            nodeRepository.getNode(hostServiceId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null
+        }?.currentOrLastSession()?.ipAddress
         if (hostName == null) {
             startResult = UnknownErrorStartResult(Exception("Cant find host node: ${hostServiceId.toName()}"))
             return startResult

@@ -5,6 +5,7 @@ import dev.redicloud.api.modules.getListOrDefault
 import dev.redicloud.utils.SingleCache
 import io.javalin.http.Context
 import io.javalin.http.Handler
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.seconds
 
@@ -20,9 +21,10 @@ abstract class RestHandler(
 
     private val tokensCache = SingleCache<List<String>>(5.seconds) { config.getListOrDefault("tokens") { emptyList() } }
 
+    @Suppress("TooGenericExceptionCaught")
     override fun handle(ctx: Context) {
         runBlocking {
-            runCatching {
+            try {
                 if (auth) {
                     val token = ctx.header("redicloud-token")
                     if (token == null) {
@@ -37,10 +39,12 @@ abstract class RestHandler(
                     }
                 }
                 handleRequest(ctx)
-            }.onFailure {
-                it.printStackTrace()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                e.printStackTrace()
                 ctx.status(HTTP_INTERNAL_ERROR)
-                ctx.json(mapOf("error" to it.message))
+                ctx.json(mapOf("error" to e.message))
             }
         }
     }
