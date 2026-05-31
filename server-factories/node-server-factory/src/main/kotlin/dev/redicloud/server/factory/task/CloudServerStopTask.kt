@@ -10,7 +10,7 @@ import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.repository.template.configuration.ConfigurationTemplate
 import dev.redicloud.repository.template.configuration.ConfigurationTemplateRepository
 import dev.redicloud.server.factory.ServerFactory
-import dev.redicloud.utils.MultiAsyncAction
+import dev.redicloud.utils.ConcurrentBatch
 import dev.redicloud.utils.pop
 
 class CloudServerStopTask(
@@ -35,7 +35,7 @@ class CloudServerStopTask(
         val thisNode = nodeRepository.getNode(serviceId)!!
         if (!thisNode.master) return false
 
-        val actions = MultiAsyncAction()
+        val actions = ConcurrentBatch()
         val servers = serverRepository.getConnectedServers()
             .filter { it.state == CloudServerState.RUNNING }
             .filter { !it.hidden }
@@ -72,7 +72,7 @@ class CloudServerStopTask(
         templateStartedServers: Map<ServiceId, Int>,
         stopAble: MutableList<CloudServer>
     ) {
-        val actions = MultiAsyncAction()
+        val actions = ConcurrentBatch()
         templateStartedServers.forEach { (nodeId, count) ->
             if (template.minStartedServices >= count) return@forEach
             if (template.minStartedServicesPerNode in 1 until count) {
@@ -99,7 +99,7 @@ class CloudServerStopTask(
         if (template.minStartedServices !in 1 until started) return
         if (stopAble.isEmpty()) return
 
-        val actions = MultiAsyncAction()
+        val actions = ConcurrentBatch()
         val countToStop = started - template.minStartedServices
         stopAble.filter { !preQueuedStop.contains(it.serviceId) }
             .filter { !serverFactory.stopQueue.contains(it.serviceId) }
@@ -113,7 +113,7 @@ class CloudServerStopTask(
     }
 
     private suspend fun processRequestedServerStops() {
-        val actions = MultiAsyncAction()
+        val actions = ConcurrentBatch()
         serverFactory.stopQueue.forEach {
             actions.add {
                 try {

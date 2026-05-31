@@ -39,7 +39,7 @@ import dev.redicloud.server.factory.screens.ServerScreenParser
 import dev.redicloud.server.factory.screens.ServerScreenSuggester
 import dev.redicloud.server.factory.utils.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
-import dev.redicloud.utils.MultiAsyncAction
+import dev.redicloud.utils.ConcurrentBatch
 import dev.redicloud.utils.zipFile
 import kotlinx.coroutines.runBlocking
 import java.io.File
@@ -484,7 +484,7 @@ class ServerFactory(
     suspend fun shutdown(force: Boolean = false) {
         if (!force && shutdown) return
         shutdown = true
-        val actions = MultiAsyncAction()
+        val actions = ConcurrentBatch()
         hostedProcesses.toList().forEach {
             actions.add {
                 try {

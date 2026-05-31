@@ -113,7 +113,7 @@ class PaperMcServerVersionHandler(
 
     private suspend fun downloadDefaultFiles(version: ICloudServerVersion, folder: File, logger: Logger) {
         val type = serverVersionTypeRepository.getType(version.typeId!!) ?: return
-        val downloader = MultiAsyncAction()
+        val downloader = ConcurrentBatch()
         val defaultFiles = mutableMapOf<String, String>()
         defaultFiles.putAll(version.defaultFiles)
         defaultFiles.putAll(type.defaultFiles)

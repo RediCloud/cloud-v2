@@ -13,7 +13,7 @@ import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.server.factory.*
 import dev.redicloud.server.factory.utils.*
 import dev.redicloud.tasks.CloudTask
-import dev.redicloud.utils.MultiAsyncAction
+import dev.redicloud.utils.ConcurrentBatch
 import dev.redicloud.utils.coroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -74,7 +74,7 @@ class CloudServerStartTask(
     }
 
     override suspend fun execute(): Boolean {
-        val actions = MultiAsyncAction()
+        val actions = ConcurrentBatch()
         serverFactory.getStartList().forEach { info ->
             if (!info.isNextNode(serverFactory.hostingId)) return@forEach
             val name = if (info.serviceId == null) info.configurationTemplate.name else info.serviceId?.toName() ?: "unknown"

@@ -2,7 +2,7 @@ package dev.redicloud.utils
 
 import kotlinx.coroutines.*
 
-class MultiAsyncAction(
+class ConcurrentBatch(
     dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) {
 
@@ -11,16 +11,14 @@ class MultiAsyncAction(
     private val jobs = mutableListOf<Job>()
 
     fun add(action: suspend () -> Unit) {
-        runBlocking { actions.add(action) }
+        actions.add(action)
     }
 
     suspend fun joinAll() {
-        runBlocking {
-            actions.forEach {
-                jobs.add(scope.launch { it() })
-            }
-            jobs.joinAll()
-            scope.cancel()
+        actions.forEach {
+            jobs.add(scope.launch { it() })
         }
+        jobs.joinAll()
+        scope.cancel()
     }
 }
