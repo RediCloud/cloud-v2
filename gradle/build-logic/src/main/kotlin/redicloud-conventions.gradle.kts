@@ -68,6 +68,14 @@ tasks {
         options.release.set(21)
         options.encoding = "UTF-8"
     }
+
+    // Expand ${version} placeholders in resource files (plugin.yml, bungee.yml, etc.)
+    withType<ProcessResources> {
+        val versionString = project.version.toString()
+        filesMatching(listOf("plugin.yml", "bungee.yml", "extension.json", "module.json")) {
+            filter { it.replace("\${version}", versionString) }
+        }
+    }
 }
 
 tasks.withType<Jar> {
