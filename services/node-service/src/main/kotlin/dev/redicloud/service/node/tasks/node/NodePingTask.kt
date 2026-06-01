@@ -6,11 +6,12 @@ import dev.redicloud.service.node.NodeService
 import dev.redicloud.service.node.repository.node.suspendNode
 import dev.redicloud.tasks.CloudTask
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 class NodePingTask(val nodeService: NodeService) : CloudTask() {
 
     companion object {
-        private const val UNREACHABLE_CONFIRM_DELAY_MS = 2000L
+        private val UNREACHABLE_CONFIRM_DELAY_MS = 2000.milliseconds
     }
 
     override suspend fun execute(): Boolean {

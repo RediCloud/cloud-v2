@@ -68,10 +68,63 @@ tasks {
         options.release.set(21)
         options.encoding = "UTF-8"
     }
+
+    // Expand ${version} placeholders in resource files (plugin.yml, bungee.yml, etc.)
+    withType<ProcessResources> {
+        val versionString = project.version.toString()
+        filesMatching(listOf("plugin.yml", "bungee.yml", "extension.json", "module.json")) {
+            filter { it.replace("\${version}", versionString) }
+        }
+    }
+
+    // Generate redicloud-version.properties for local builds.
+    // CI overwrites this file before the build, so this only provides dev defaults.
+    val generateVersionProperties by registering {
+        val outputDir = project.layout.buildDirectory.dir("generated/resources/version")
+        val versionString = project.version.toString()
+        val channel = providers.environmentVariable("REDICLOUD_CHANNEL").orNull ?: "dev"
+        val buildNum = providers.environmentVariable("REDICLOUD_BUILD").orNull ?: "local"
+        val gitSha = providers.environmentVariable("REDICLOUD_GIT").orNull
+            ?: runCatching {
+                Runtime.getRuntime().exec(arrayOf("git", "rev-parse", "--short=7", "HEAD"))
+                    .inputStream.bufferedReader().readText().trim()
+            }.getOrDefault("unknown")
+        val branch = providers.environmentVariable("REDICLOUD_BRANCH").orNull ?: "dev"
+        val fullVersion = if (channel == "stable") "$versionString+$gitSha"
+            else "$versionString-$channel.$buildNum+$gitSha"
+
+        inputs.property("version", versionString)
+        inputs.property("channel", channel)
+        inputs.property("build", buildNum)
+        inputs.property("git", gitSha)
+        outputs.dir(outputDir)
+
+        doLast {
+            val dir = outputDir.get().asFile
+            dir.mkdirs()
+            dir.resolve("redicloud-version.properties").writeText(
+                listOf(
+                    "version=$versionString",
+                    "channel=$channel",
+                    "build=$buildNum",
+                    "git=$gitSha",
+                    "branch=$branch",
+                    "full-version=$fullVersion"
+                ).joinToString("\n")
+            )
+        }
+    }
+
+    withType<ProcessResources> {
+        from(generateVersionProperties)
+    }
 }
 
 tasks.withType<Jar> {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    // Exclude signature files from shaded dependencies (e.g. Bouncy Castle)
+    // to prevent "Invalid signature file digest" errors at runtime
+    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
     manifest {
         attributes["Main-Class"] = "dev.redicloud.libloader.boot.Bootstrap"
         attributes["Premain-Class"] = "dev.redicloud.libloader.boot.Agent"

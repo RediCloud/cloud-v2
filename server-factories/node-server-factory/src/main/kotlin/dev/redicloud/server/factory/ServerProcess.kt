@@ -58,6 +58,24 @@ class ServerProcess(
         private const val DEFAULT_START_PORT = 40000
         private val STOP_POLL_INTERVAL = 1.seconds
         private const val JAVA_8_MAJOR_VERSION = 8
+
+        /**
+         * JPMS module opens/exports required by dependencies on Java 9+.
+         * Keep in sync with `scripts/start/start.sh`.
+         */
+        private val JPMS_OPENS = listOf(
+            "--add-opens=java.base/java.lang=ALL-UNNAMED", // Redisson, Gson, Guice, Kotlin Reflect
+            "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED", // Guice, Kotlin Reflect
+            "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED", // Redisson
+            "--add-opens=java.base/java.text=ALL-UNNAMED", // Gson date/time
+            "--add-opens=java.base/java.util=ALL-UNNAMED", // Redisson, Gson
+            "--add-opens=java.base/java.math=ALL-UNNAMED", // Redisson, Gson
+            "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED", // Netty Unsafe
+            "--add-opens=java.base/java.nio=ALL-UNNAMED", // Netty DirectByteBuffer
+            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED", // Netty NIO selector
+            "--add-opens=java.base/java.net=ALL-UNNAMED", // Ktor CIO, ClassLoader
+            "--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED" // Ktor HTTPS
+        )
         val SERVER_STOP_TIMEOUT = System.getProperty("redicloud.server.stop.timeout", "20").toInt()
     }
 
@@ -236,16 +254,7 @@ class ServerProcess(
         )
 
         if ((snapshotData.javaVersion.info?.major ?: -1) > JAVA_8_MAJOR_VERSION) {
-            list.apply {
-                add("--add-opens=java.base/java.lang=ALL-UNNAMED")
-                add("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED")
-                add("--add-opens=java.base/java.text=ALL-UNNAMED")
-                add("--add-opens=java.base/java.util=ALL-UNNAMED")
-                add("--add-opens=java.base/java.math=ALL-UNNAMED")
-                add("--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED")
-                add("--add-opens=java.base/java.net=ALL-UNNAMED")
-                add("--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED")
-            }
+            list.addAll(JPMS_OPENS)
         }
         configurationTemplate.jvmArguments.forEach { list.add(replacePlaceholders(it, snapshotData)) }
         list.add("-Xms${configurationTemplate.maxMemory}M")

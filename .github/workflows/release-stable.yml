@@ -1,0 +1,210 @@
+name: Stable Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Build & Publish Stable
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: ./.github/actions/setup
+
+      # --- Determine version ---
+      - name: Determine version
+        id: version
+        run: |
+          BASE_VERSION=$(grep '^cloudVersion=' gradle.properties | cut -d'=' -f2)
+          GIT_SHA=$(git rev-parse --short=7 HEAD)
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          FULL_VERSION="${BASE_VERSION}+${GIT_SHA}"
+
+          echo "base=${BASE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "git=${GIT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "full=${FULL_VERSION}" >> "$GITHUB_OUTPUT"
+
+          echo "### Stable Release" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Version:** ${FULL_VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Commit:** ${GIT_SHA}" >> "$GITHUB_STEP_SUMMARY"
+
+      # --- Generate version properties ---
+      - name: Generate version properties
+        run: |
+          PROPS_CONTENT="version=${{ steps.version.outputs.base }}
+          channel=stable
+          build=0
+          git=${{ steps.version.outputs.git }}
+          branch=${{ steps.version.outputs.branch }}
+          full-version=${{ steps.version.outputs.full }}"
+
+          RESOURCE_DIRS=(
+            "services/node-service/src/main/resources"
+          )
+          for dir in connectors/*/; do
+            name=$(basename "$dir")
+            [[ "$name" == "build" || "$name" == "src" ]] && continue
+            RESOURCE_DIRS+=("connectors/${name}/src/main/resources")
+          done
+
+          for dir in "${RESOURCE_DIRS[@]}"; do
+            mkdir -p "$dir"
+            echo "$PROPS_CONTENT" > "${dir}/redicloud-version.properties"
+          done
+
+      # --- Replace start script placeholders ---
+      - name: Prepare start scripts
+        run: |
+          VERSION="${{ steps.version.outputs.base }}"
+          sed -i "s/%version%/${VERSION}/g" scripts/start.sh
+
+      # --- Build ---
+      - name: Build
+        run: ./gradlew build -x test -PcloudVersion=${{ steps.version.outputs.base }}
+
+      # --- Assemble export ---
+      - name: Assemble release artifacts
+        run: |
+          mkdir -p export/connectors export/modules export/api-files
+
+          cp services/node-service/build/libs/redicloud-node-service-*.jar export/
+          cp connectors/*-connector/build/libs/*.jar export/connectors/
+          cp -r api-files/* export/api-files/
+          cp scripts/start.sh export/
+          cp modules/*/build/libs/*.jar export/modules/ 2>/dev/null || true
+          rm -f export/modules/*module-handler*.jar
+
+      # --- Create zip ---
+      - name: Create zip archive
+        run: |
+          cd export
+          zip -r "../redicloud-${{ steps.version.outputs.full }}.zip" .
+          cd ..
+
+      # --- Checksums ---
+      - name: Generate SHA256 checksums
+        run: |
+          sha256sum "redicloud-${{ steps.version.outputs.full }}.zip" > checksums.sha256
+          cd export
+          sha256sum **/*.jar >> ../checksums.sha256
+          cd ..
+
+      # --- GPG signing ---
+      - name: GPG sign checksums
+        if: ${{ env.GPG_PRIVATE_KEY != '' }}
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          # Sign the checksums file (public key is embedded in the binary, not uploaded)
+          gpg --batch --yes --pinentry-mode loopback \
+            --detach-sign --armor checksums.sha256
+
+      # --- Publish to GitHub Packages ---
+      - name: Publish Maven artifacts
+        run: ./gradlew publish -PcloudVersion=${{ steps.version.outputs.base }}
+
+      # --- Generate release body ---
+      - name: Generate release body
+        id: body
+        run: |
+          VERSION="${{ steps.version.outputs.base }}"
+          FULL="${{ steps.version.outputs.full }}"
+          REPO="${{ github.repository }}"
+          FINGERPRINT="2ABA6BC97D5FE276C1C7FCA47D569523230B5367"
+
+          # Find previous tag for changelog range
+          git fetch --tags --quiet
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [[ -n "$PREV_TAG" ]]; then
+            RANGE="${PREV_TAG}..HEAD"
+            COMPARE_URL="https://github.com/${REPO}/compare/${PREV_TAG}...v${VERSION}"
+          else
+            RANGE="HEAD"
+            COMPARE_URL=""
+          fi
+
+          # Parse conventional commits into categories
+          FEATURES=""
+          FIXES=""
+          REFACTORS=""
+          CI_BUILD=""
+          OTHER=""
+
+          while IFS= read -r line; do
+            HASH=$(echo "$line" | cut -d' ' -f1)
+            SHORT_HASH="${HASH:0:7}"
+            MSG=$(echo "$line" | cut -d' ' -f2-)
+
+            case "$MSG" in
+              feat*)    FEATURES="${FEATURES}\n- ${MSG#feat:} (\`${SHORT_HASH}\`)" ;;
+              feat\(*) FEATURES="${FEATURES}\n- ${MSG#feat*: } (\`${SHORT_HASH}\`)" ;;
+              fix*)     FIXES="${FIXES}\n- ${MSG#fix:} (\`${SHORT_HASH}\`)" ;;
+              fix\(*)  FIXES="${FIXES}\n- ${MSG#fix*: } (\`${SHORT_HASH}\`)" ;;
+              refactor*) REFACTORS="${REFACTORS}\n- ${MSG#refactor*: } (\`${SHORT_HASH}\`)" ;;
+              ci*|build*) CI_BUILD="${CI_BUILD}\n- ${MSG} (\`${SHORT_HASH}\`)" ;;
+              *)        OTHER="${OTHER}\n- ${MSG} (\`${SHORT_HASH}\`)" ;;
+            esac
+          done < <(git log --oneline --no-merges ${RANGE} 2>/dev/null)
+
+          # Build changelog section
+          CHANGELOG=""
+          [[ -n "$FEATURES" ]] && CHANGELOG="${CHANGELOG}\n#### Features\n${FEATURES}\n"
+          [[ -n "$FIXES" ]] && CHANGELOG="${CHANGELOG}\n#### Bug Fixes\n${FIXES}\n"
+          [[ -n "$REFACTORS" ]] && CHANGELOG="${CHANGELOG}\n#### Refactoring\n${REFACTORS}\n"
+          [[ -n "$CI_BUILD" ]] && CHANGELOG="${CHANGELOG}\n#### CI / Build\n${CI_BUILD}\n"
+          [[ -n "$OTHER" ]] && CHANGELOG="${CHANGELOG}\n#### Other\n${OTHER}\n"
+
+          # Compose full body
+          {
+            echo "body<<BODY_EOF"
+            echo "### Quick Install"
+            echo '```bash'
+            echo "curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install.sh | bash"
+            echo '```'
+            echo ""
+            echo "### Upgrade"
+            echo '```'
+            echo "version download stable ${VERSION}"
+            echo "version switch stable ${VERSION}"
+            echo '```'
+            echo ""
+            echo "### Verification"
+            echo "SHA-256 checksums and GPG signature are included as release assets."
+            echo '```'
+            echo "Signing key fingerprint: ${FINGERPRINT}"
+            echo '```'
+            echo ""
+            echo "### Changelog"
+            echo -e "$CHANGELOG"
+            if [[ -n "$COMPARE_URL" ]]; then
+              echo "**Full Changelog**: ${COMPARE_URL}"
+            fi
+            echo "BODY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      # --- Create GitHub Release ---
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.base }}
+          name: ${{ steps.version.outputs.base }}
+          body: ${{ steps.body.outputs.body }}
+          prerelease: false
+          files: |
+            redicloud-${{ steps.version.outputs.full }}.zip
+            checksums.sha256
+            checksums.sha256.asc
+          fail_on_unmatched_files: false

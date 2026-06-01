@@ -5,6 +5,7 @@ on:
     branches: [dev, main]
     paths-ignore:
       - "docs/**"
+      - "*.md"
   pull_request:
     branches: [dev, main]
 

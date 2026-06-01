@@ -1,7 +1,7 @@
 package dev.redicloud.utils
 
-fun getGithubBranche(): String =
-    System.getProperty("redicloud.git.branch", "master")
+fun getGithubBranch(): String =
+    System.getProperty("redicloud.git.branch", "main")
 
 fun getGithubRepository(): String =
     System.getProperty("redicloud.git.repository", "cloud-v2")
@@ -13,4 +13,4 @@ fun getGithubCommitHash(): String =
     System.getProperty("redicloud.git.commit", "HEAD")
 
 fun getRawUserContentUrl(): String =
-    "https://raw.githubusercontent.com/${getGithubUser()}/${getGithubRepository()}/${getGithubBranche()}"
+    "https://raw.githubusercontent.com/${getGithubUser()}/${getGithubRepository()}/${getGithubBranch()}"

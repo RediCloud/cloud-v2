@@ -4,23 +4,24 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 
-const val ROOT_API_URL = "https://api.redicloud.dev/v2"
-
-fun getAPIUrl(): String {
-    return "$ROOT_API_URL/files/$BRANCH/$BUILD"
-}
-
-suspend fun getAPIUrlOrFallback(): String {
-    if (isValidUrl("${getAPIUrl()}/status")) return getAPIUrl()
-    return getRawUserContentUrl()
-}
-
-suspend fun getTextOfAPIWithFallback(path: String): String {
-    if (isValidUrl("${getAPIUrl()}/status")) {
-        val response = httpClient.get {
-            url("${getAPIUrl()}/$path")
-        }
-        if (response.status.isSuccess()) return response.bodyAsText()
+/**
+ * Fetches a text file from the GitHub repository's raw content URL.
+ *
+ * Used by version repositories to load api-files (server-versions.json, etc.)
+ * from the repository at the configured branch.
+ */
+suspend fun getTextFromGitHub(path: String): String {
+    val response = httpClient.get {
+        url("${getRawUserContentUrl()}/$path")
     }
-    return httpClient.get { url("${getRawUserContentUrl()}/$path") }.bodyAsText()
+    check(response.status.isSuccess()) { "Failed to fetch $path from GitHub: HTTP ${response.status}" }
+    return response.bodyAsText()
 }
+
+/**
+ * Backward-compatible alias for [getTextFromGitHub].
+ *
+ * Previously tried api.redicloud.dev first with a GitHub fallback.
+ * Now goes directly to GitHub raw content.
+ */
+suspend fun getTextOfAPIWithFallback(path: String): String = getTextFromGitHub(path)

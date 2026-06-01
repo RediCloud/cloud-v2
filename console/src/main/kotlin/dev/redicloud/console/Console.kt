@@ -28,12 +28,15 @@ import dev.redicloud.logging.handler.FILE_LOG_FORMATTER
 import dev.redicloud.logging.handler.LogFileHandler
 import dev.redicloud.logging.handler.LogFormatter
 import dev.redicloud.logging.handler.ThreadRecordDispatcher
-import dev.redicloud.utils.BRANCH
-import dev.redicloud.utils.BUILD
 import dev.redicloud.utils.CLOUD_VERSION
+import dev.redicloud.utils.CLOUD_VERSION_CHANNEL
+import dev.redicloud.utils.CLOUD_VERSION_FULL
 import dev.redicloud.utils.DEV_BUILD
+import dev.redicloud.utils.GIT
 import dev.redicloud.utils.USER_NAME
 import dev.redicloud.utils.coroutineExceptionHandler
+import dev.redicloud.utils.getGithubRepository
+import dev.redicloud.utils.getGithubUser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -59,6 +62,7 @@ import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
 import java.util.logging.LogRecord
+import java.util.logging.Logger.getLogger
 import kotlin.system.exitProcess
 
 @Suppress("TooManyFunctions")
@@ -176,10 +180,8 @@ open class Console(
     }
 
     open fun sendHeader() {
-        var devInfo = ""
-        if (DEV_BUILD) {
-            devInfo = " §8| §cDevelopment Build"
-        }
+        val channelTag = if (DEV_BUILD) " §8| §c${CLOUD_VERSION_CHANNEL.uppercase()}" else ""
+        val commitUrl = "https://github.com/${getGithubUser()}/${getGithubRepository()}/commit/$GIT"
         writeLine("")
         writeLine("")
         writeLine("")
@@ -192,7 +194,8 @@ open class Console(
         writeLine("§fA redis based cluster cloud system for Minecraft")
         writeLine("")
         writeLine("")
-        writeLine("§8» §fVersion§8: %hc%$CLOUD_VERSION §8| §fGIT§8: %hc%$BRANCH§8#§f$BUILD$devInfo")
+        writeLine("§8» §fVersion§8: %hc%$CLOUD_VERSION_FULL$channelTag")
+        writeLine("§8» §fCommit§8:  %hc%$commitUrl")
         writeLine("§8» §fDiscord§8: %hc%https://discord.gg/g2HV52VV4G")
         writeLine("")
         writeLine("")
@@ -311,8 +314,8 @@ open class Console(
     }
 
     private fun disableJLineLogger() {
-        java.util.logging.Logger.getLogger("org.jline").apply { level = java.util.logging.Level.OFF }
-        java.util.logging.Logger.getLogger(StyleResolver::class.java.name).apply { level = java.util.logging.Level.OFF }
+        getLogger("org.jline").apply { level = Level.OFF }
+        getLogger(StyleResolver::class.java.name).apply { level = Level.OFF }
     }
 
     fun updatePrompt() {
