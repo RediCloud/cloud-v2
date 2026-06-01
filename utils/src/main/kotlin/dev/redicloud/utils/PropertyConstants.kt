@@ -1,34 +1,46 @@
 package dev.redicloud.utils
 
+import dev.redicloud.utils.version.CloudVersion
+import dev.redicloud.utils.version.VersionChannel
 import java.util.*
 
+// --- Legacy accessors (backed by properties file) ---
+
 val CLOUD_VERSION: String
-    get() {
-        return cachedProperties?.getProperty("version", "unknown") ?: "unknown"
-    }
+    get() = cachedProperties?.getProperty("version", "unknown") ?: "unknown"
+
+val CLOUD_VERSION_FULL: String
+    get() = cachedProperties?.getProperty("full-version", "unknown") ?: "unknown"
+
+val CLOUD_VERSION_CHANNEL: String
+    get() = cachedProperties?.getProperty("channel", "dev") ?: "dev"
+
 val BUILD: String
-    get() {
-        return cachedProperties?.getProperty("build", "local") ?: "local"
-    }
+    get() = cachedProperties?.getProperty("build", "local") ?: "local"
+
 val GIT: String
-    get() {
-        return cachedProperties?.getProperty("git", "unknown") ?: "unknown"
-    }
+    get() = cachedProperties?.getProperty("git", "unknown") ?: "unknown"
+
 val BRANCH: String
-    get() {
-        return cachedProperties?.getProperty("branch", "dev") ?: "dev"
-    }
+    get() = cachedProperties?.getProperty("branch", "dev") ?: "dev"
 
 val DEV_BUILD: Boolean
-    get() {
-        return BRANCH != "master"
-    }
+    get() = CLOUD_VERSION_CHANNEL != VersionChannel.STABLE.label
+
+// --- Typed version model ---
+
+val CLOUD_VERSION_PARSED: CloudVersion?
+    get() = CloudVersion.parseOrNull(CLOUD_VERSION_FULL)
+
+// --- System properties ---
 
 val USER_NAME: String = System.getProperty("user.name")
 
 val OS_NAME: String = System.getProperty("os.name")
 
 val JAVA_VERSION: String = System.getProperty("java.version")
+
+// --- Properties loader ---
 
 private var cachedProperties: Properties? = null
 fun loadProperties(classLoader: ClassLoader): Properties? {
