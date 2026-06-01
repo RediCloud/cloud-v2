@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import io.ktor.client.statement.*
+import io.ktor.client.statement.readRawBytes
 import io.ktor.http.*
 import java.io.File
 import java.util.*
@@ -119,7 +120,7 @@ open class URLServerVersionHandler(
         }
 
         val folder = getFolder(version)
-        val bytes = response.readBytes()
+        val bytes = response.readRawBytes()
         withContext(Dispatchers.IO) {
             if (folder.exists()) folder.deleteRecursively()
             folder.mkdirs()
@@ -168,7 +169,7 @@ open class URLServerVersionHandler(
                 )
                 return
             }
-            val bytes = response.readBytes()
+            val bytes = response.readRawBytes()
             withContext(Dispatchers.IO) {
                 file.createNewFile()
                 file.writeBytes(bytes)
@@ -317,10 +318,12 @@ open class URLServerVersionHandler(
         findFreePort(PATCH_PORT_RANGE_START..PATCH_PORT_RANGE_END)
         val processBuilder = ProcessBuilder(patchCommand(type, javaVersion, tempJar))
         processBuilder.directory(tempDir)
-        val process = processBuilder.start()
-        val screen = console.createScreen("patch_${version.displayName}")
-        ScreenProcessHandler(process, screen)
-        process.waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+        withContext(Dispatchers.IO) {
+            val process = processBuilder.start()
+            val screen = console.createScreen("patch_${version.displayName}")
+            ScreenProcessHandler(process, screen)
+            process.waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+        }
     }
 
     private fun cleanupPatchedFiles(

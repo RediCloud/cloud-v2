@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import io.ktor.client.statement.*
+import io.ktor.client.statement.readRawBytes
 import io.ktor.http.*
 import java.io.File
 import java.util.*
@@ -104,7 +105,7 @@ class PaperMcServerVersionHandler(
         }
 
         val folder = getFolder(version)
-        val bytes = response.readBytes()
+        val bytes = response.readRawBytes()
         withContext(Dispatchers.IO) {
             if (folder.exists()) folder.deleteRecursively()
             folder.mkdirs()
@@ -164,7 +165,7 @@ class PaperMcServerVersionHandler(
                 )
                 return
             }
-            val bytes = response.readBytes()
+            val bytes = response.readRawBytes()
             withContext(Dispatchers.IO) {
                 file.createNewFile()
                 file.writeBytes(bytes)
@@ -327,12 +328,14 @@ class PaperMcServerVersionHandler(
         findFreePort(PATCH_PORT_RANGE_START..PATCH_PORT_RANGE_END)
         val processBuilder = ProcessBuilder(patchCommand(type, javaVersion, tempJar))
         processBuilder.directory(tempDir)
-        val process = processBuilder.start()
-        console?.let {
-            val screen = console.createScreen("patch_${version.displayName}")
-            ScreenProcessHandler(process, screen)
+        withContext(Dispatchers.IO) {
+            val process = processBuilder.start()
+            console?.let {
+                val screen = console.createScreen("patch_${version.displayName}")
+                ScreenProcessHandler(process, screen)
+            }
+            process.waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
         }
-        process.waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
     }
 
     private fun cleanupPatchedFiles(
