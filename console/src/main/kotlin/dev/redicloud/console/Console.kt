@@ -62,6 +62,7 @@ import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
 import java.util.logging.LogRecord
+import java.util.logging.Logger.getLogger
 import kotlin.system.exitProcess
 
 @Suppress("TooManyFunctions")
@@ -313,8 +314,8 @@ open class Console(
     }
 
     private fun disableJLineLogger() {
-        java.util.logging.Logger.getLogger("org.jline").apply { level = java.util.logging.Level.OFF }
-        java.util.logging.Logger.getLogger(StyleResolver::class.java.name).apply { level = java.util.logging.Level.OFF }
+        getLogger("org.jline").apply { level = Level.OFF }
+        getLogger(StyleResolver::class.java.name).apply { level = Level.OFF }
     }
 
     fun updatePrompt() {
