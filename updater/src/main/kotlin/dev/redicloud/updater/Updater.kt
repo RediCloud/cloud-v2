@@ -109,16 +109,17 @@ object Updater {
         check(response.status.isSuccess()) { "Download failed: HTTP ${response.status}" }
         target.writeBytes(response.readRawBytes())
 
-        // Verify checksum if available
-        if (release.checksumsUrl != null) {
-            val checksumsBytes = downloadBytes(release.checksumsUrl)
-            if (checksumsBytes != null) {
-                verifyChecksum(target, checksumsBytes)
-                // Verify GPG signature of checksums if both signature and key are available
-                if (release.signatureUrl != null && release.signingKeyUrl != null) {
-                    verifyGpgSignature(checksumsBytes, release.signatureUrl, release.signingKeyUrl)
-                }
+        // Verify integrity -- fail-closed: if assets exist but verification fails, abort.
+        val checksumsBytes = release.checksumsUrl?.let { downloadBytes(it) }
+        if (checksumsBytes != null) {
+            verifyChecksum(target, checksumsBytes)
+            if (release.signatureUrl != null) {
+                verifyGpgSignature(checksumsBytes, release.signatureUrl)
+            } else {
+                LogManager.rootLogger().warning("No GPG signature available for this release")
             }
+        } else {
+            LogManager.rootLogger().warning("No checksums available for this release, integrity not verified")
         }
 
         return target
@@ -136,9 +137,8 @@ object Updater {
             ?.split("\\s+".toRegex())
             ?.firstOrNull()
 
-        if (expectedHash == null) {
-            LogManager.rootLogger().warning("No checksum found for ${zipFile.name}, skipping verification")
-            return
+        checkNotNull(expectedHash) {
+            "No checksum entry found for ${zipFile.name} in checksums file"
         }
 
         val actualHash = sha256(zipFile)
@@ -149,38 +149,25 @@ object Updater {
     }
 
     /**
-     * Verifies the GPG signature of the checksums file using the public key from the release.
+     * Verifies the GPG signature of the checksums file using the embedded trusted public key.
      *
-     * Logs a warning instead of failing if verification cannot be performed.
+     * Fail-closed: if the signature exists but is invalid or the download fails, the update is aborted.
      *
-     * @throws IllegalStateException if the signature is invalid.
+     * @throws IllegalStateException if the signature is invalid or cannot be verified.
      */
-    @Suppress("TooGenericExceptionCaught")
     private suspend fun verifyGpgSignature(
         checksumsBytes: ByteArray,
-        signatureUrl: String,
-        signingKeyUrl: String
+        signatureUrl: String
     ) {
-        try {
-            val signatureBytes = downloadBytes(signatureUrl)
-            val keyBytes = downloadBytes(signingKeyUrl)
-            if (signatureBytes == null || keyBytes == null) {
-                LogManager.rootLogger().warning("Could not download GPG signature or key, skipping verification")
-                return
-            }
+        val signatureBytes = downloadBytes(signatureUrl)
+            ?: error("Failed to download GPG signature from $signatureUrl")
 
-            val verified = GpgVerifier.verify(
-                data = checksumsBytes,
-                signature = signatureBytes,
-                publicKey = keyBytes
-            )
-            check(verified) { "GPG signature verification failed for checksums" }
-            LogManager.rootLogger().info("GPG signature verified")
-        } catch (e: IllegalStateException) {
-            throw e
-        } catch (e: Exception) {
-            LogManager.rootLogger().warning("GPG verification error: ${e.message}")
-        }
+        val verified = GpgVerifier.verify(
+            data = checksumsBytes,
+            signature = signatureBytes
+        )
+        check(verified) { "GPG signature verification failed: signature is invalid or key is not trusted" }
+        LogManager.rootLogger().info("GPG signature verified (trusted key)")
     }
 
     /** Downloads raw bytes from a URL, returning `null` on failure. */
@@ -290,8 +277,7 @@ object Updater {
             tagName = tagName,
             zipUrl = assets.firstOrNull { it.name.endsWith(".zip") }?.downloadUrl,
             checksumsUrl = assets.firstOrNull { it.name == "checksums.sha256" }?.downloadUrl,
-            signatureUrl = assets.firstOrNull { it.name == "checksums.sha256.asc" }?.downloadUrl,
-            signingKeyUrl = assets.firstOrNull { it.name == "signing-key.asc" }?.downloadUrl
+            signatureUrl = assets.firstOrNull { it.name == "checksums.sha256.asc" }?.downloadUrl
         )
     }
 }

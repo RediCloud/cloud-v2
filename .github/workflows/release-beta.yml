@@ -113,15 +113,11 @@ jobs:
         if: ${{ env.GPG_PRIVATE_KEY != '' }}
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
           echo "$GPG_PRIVATE_KEY" | gpg --batch --import
-          # Export public key so verifiers can import it
-          GPG_KEY_ID=$(gpg --list-keys --with-colons | awk -F: '/^pub/{print $5}' | head -1)
-          gpg --armor --export "$GPG_KEY_ID" > signing-key.asc
-          # Sign the checksums file
-          echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
-            --passphrase-fd 0 --detach-sign --armor checksums.sha256
+          # Sign the checksums file (public key is embedded in the binary, not uploaded)
+          gpg --batch --yes --pinentry-mode loopback \
+            --detach-sign --armor checksums.sha256
 
       # --- Publish to GitHub Packages ---
       - name: Publish Maven artifacts
@@ -139,5 +135,4 @@ jobs:
             redicloud-${{ steps.version.outputs.full }}.zip
             checksums.sha256
             checksums.sha256.asc
-            signing-key.asc
           fail_on_unmatched_files: false

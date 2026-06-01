@@ -10,6 +10,19 @@ set -euo pipefail
 REPO="RediCloud/cloud-v2"
 GITHUB_API="https://api.github.com/repos/${REPO}/releases"
 
+# Trusted GPG signing key (embedded, not downloaded from release)
+TRUSTED_FINGERPRINT="2ABA6BC97D5FE276C1C7FCA47D569523230B5367"
+TRUSTED_KEY="-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mDMEah3hoRYJKwYBBAHaRw8BAQdAVIhWZ6k3E0yfgdd8cTGgu99Vo9syNwbvongc
+oqiZ5bK0MVJlZGlDbG91ZCBSZWxlYXNlIFNpZ25pbmcgPHJlbGVhc2VAcmVkaWNs
+b3VkLmRldj6IjQQTFgoANRYhBCq6a8l9X+J2wcf8pH1WlSMjC1NnBQJqHeGhAhsj
+BAsJCAcEFQoJCAQWAgMBAh4FAheAAAoJEH1WlSMjC1NnpdwBAOdGlrul1r8tMNQ9
+ovKCmkIchm92D/g0heaPFFoGEjcqAP9psWyhKPcitn6ci2uDX1/NzIyvq4xGtlT6
+7iBWVcJCAg==
+=YozT
+-----END PGP PUBLIC KEY BLOCK-----"
+
 # Defaults
 CHANNEL="stable"
 VERSION="latest"
@@ -163,7 +176,6 @@ resolve_release() {
     ZIP_URL=$(echo "$assets" | awk -F'\t' '/\.zip\t/ { print $2; exit }')
     CHECKSUMS_URL=$(echo "$assets" | awk -F'\t' '$1 == "checksums.sha256" { print $2; exit }')
     SIGNATURE_URL=$(echo "$assets" | awk -F'\t' '$1 == "checksums.sha256.asc" { print $2; exit }')
-    SIGNING_KEY_URL=$(echo "$assets" | awk -F'\t' '$1 == "signing-key.asc" { print $2; exit }')
 
     [[ -z "$ZIP_URL" ]] && fail "No zip asset found in release $TAG_NAME"
 }
@@ -214,31 +226,51 @@ elif $VERIFY; then
 fi
 
 # ─────────────────────────────────────────────────────────────────────
-# GPG signature verification (optional, requires gpg on the system)
+# GPG signature verification (uses embedded trusted key)
 # ─────────────────────────────────────────────────────────────────────
 
 if command -v gpg &>/dev/null \
    && [[ -n "${SIGNATURE_URL:-}" ]] \
-   && [[ -n "${SIGNING_KEY_URL:-}" ]] \
    && [[ -f "$CHECKSUMS_FILE" ]]; then
 
-    KEY_FILE="$TMPDIR/signing-key.asc"
+    KEY_FILE="$TMPDIR/trusted-key.asc"
     SIG_FILE="$TMPDIR/checksums.sha256.asc"
 
-    if curl -fsSL -o "$KEY_FILE" "$SIGNING_KEY_URL" 2>/dev/null \
-       && curl -fsSL -o "$SIG_FILE" "$SIGNATURE_URL" 2>/dev/null; then
-        # Import the public key and verify
-        gpg --batch --quiet --import "$KEY_FILE" 2>/dev/null || true
-        if gpg --batch --verify "$SIG_FILE" "$CHECKSUMS_FILE" 2>/dev/null; then
-            ok "GPG signature verified"
-        else
-            warn "GPG signature verification failed"
+    # Write the embedded trusted key to a temp file
+    echo "$TRUSTED_KEY" > "$KEY_FILE"
+
+    if curl -fsSL -o "$SIG_FILE" "$SIGNATURE_URL" 2>/dev/null; then
+        # Import the embedded trusted key into a temporary keyring
+        GNUPGHOME="$TMPDIR/gnupg"
+        export GNUPGHOME
+        mkdir -p "$GNUPGHOME"
+        chmod 700 "$GNUPGHOME"
+
+        gpg --batch --quiet --import "$KEY_FILE" 2>/dev/null \
+            || fail "Failed to import embedded signing key"
+
+        # Verify the imported key matches our trusted fingerprint
+        IMPORTED_FP=$(gpg --batch --with-colons --fingerprint 2>/dev/null \
+            | awk -F: '/^fpr/{print $10; exit}')
+        if [[ "$IMPORTED_FP" != "$TRUSTED_FINGERPRINT" ]]; then
+            fail "Embedded key fingerprint mismatch: expected $TRUSTED_FINGERPRINT, got $IMPORTED_FP"
         fi
+
+        # Verify the signature -- fail-closed
+        if gpg --batch --verify "$SIG_FILE" "$CHECKSUMS_FILE" 2>/dev/null; then
+            ok "GPG signature verified (trusted key: ${TRUSTED_FINGERPRINT:0:16}...)"
+        else
+            fail "GPG signature verification FAILED. The release may be tampered with."
+        fi
+
+        unset GNUPGHOME
     else
-        warn "Could not download signing key or signature, skipping GPG verification"
+        fail "Could not download GPG signature from release"
     fi
 elif ! command -v gpg &>/dev/null; then
-    info "gpg not found, skipping signature verification (optional)"
+    info "gpg not found, skipping signature verification (install gpg for added security)"
+elif [[ -z "${SIGNATURE_URL:-}" ]]; then
+    warn "No GPG signature available for this release"
 fi
 
 # ─────────────────────────────────────────────────────────────────────

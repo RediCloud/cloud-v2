@@ -34,9 +34,9 @@ import dev.redicloud.utils.CLOUD_VERSION_FULL
 import dev.redicloud.utils.DEV_BUILD
 import dev.redicloud.utils.GIT
 import dev.redicloud.utils.USER_NAME
+import dev.redicloud.utils.coroutineExceptionHandler
 import dev.redicloud.utils.getGithubRepository
 import dev.redicloud.utils.getGithubUser
-import dev.redicloud.utils.coroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
