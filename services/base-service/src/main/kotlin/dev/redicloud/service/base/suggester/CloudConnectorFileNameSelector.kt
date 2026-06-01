@@ -6,7 +6,7 @@ import dev.redicloud.api.utils.CONNECTORS_FOLDER
 
 class CloudConnectorFileNameSelector : AbstractCommandSuggester() {
 
-    override fun suggest(context: CommandContext): Array<String> {
+    override suspend fun suggest(context: CommandContext): Array<String> {
         return CONNECTORS_FOLDER.getFile().listFiles()?.map { it.name }?.toTypedArray() ?: arrayOf()
     }
 }

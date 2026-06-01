@@ -4,7 +4,7 @@ import dev.redicloud.api.exceptions.CloudServerException
 import dev.redicloud.logging.LogManager
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.tasks.CloudTask
-import dev.redicloud.utils.MultiAsyncAction
+import dev.redicloud.utils.ConcurrentBatch
 
 class CloudServerTransferTask(
     private val serverFactory: ServerFactory
@@ -15,7 +15,7 @@ class CloudServerTransferTask(
     }
 
     override suspend fun execute(): Boolean {
-        val actions = MultiAsyncAction()
+        val actions = ConcurrentBatch()
         serverFactory.transferQueue.forEach {
             actions.add {
                 try {

@@ -3,7 +3,8 @@ package dev.redicloud.api.version
 import dev.redicloud.api.java.ICloudJavaVersion
 import dev.redicloud.api.utils.MINECRAFT_VERSIONS_FOLDER
 import dev.redicloud.logging.LogManager
-import dev.redicloud.utils.SimpleLock
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.File
 
 @Suppress("TooManyFunctions")
@@ -42,7 +43,7 @@ interface IServerVersionHandler {
 
     fun register() = registerHandler(this)
 
-    fun getLock(version: ICloudServerVersion): SimpleLock
+    fun getLock(version: ICloudServerVersion): Mutex
 
     suspend fun shutdown(force: Boolean, serverVersionRepository: ICloudServerVersionRepository) {
         serverVersionRepository.getVersions().forEach {
@@ -50,8 +51,7 @@ interface IServerVersionHandler {
             if (lock.isLocked) {
                 if (!force) {
                     LOGGER.warning("Server version ${it.displayName} currently updating, waiting for it to finish...")
-                    lock.lock()
-                    lock.unlock()
+                    lock.withLock { /* wait for release */ }
                 } else {
                     LOGGER.warning("Server version ${it.displayName} currently updating, but forcing shutdown...")
                 }
@@ -65,15 +65,15 @@ interface IServerVersionHandler {
         val CACHE_HANDLERS = mutableListOf<IServerVersionHandler>()
 
         fun getHandler(type: ICloudServerVersionType): IServerVersionHandler =
-            CACHE_HANDLERS.firstOrNull { it.name.lowercase() == type.versionHandlerName.lowercase() }
+            CACHE_HANDLERS.firstOrNull { it.name.equals(type.versionHandlerName, ignoreCase = true) }
                 ?: getDefaultHandler()
 
         fun getHandlerStrict(name: String): IServerVersionHandler? =
-            CACHE_HANDLERS.firstOrNull { it.name.lowercase() == name.lowercase() }
+            CACHE_HANDLERS.firstOrNull { it.name.equals(name, ignoreCase = true) }
 
         fun registerHandler(serverVersionHandler: IServerVersionHandler): IServerVersionHandler {
-            if (CACHE_HANDLERS.any { it.name.lowercase() == serverVersionHandler.name.lowercase() }) {
-                return CACHE_HANDLERS.first { it.name.lowercase() == serverVersionHandler.name.lowercase() }
+            if (CACHE_HANDLERS.any { it.name.equals(serverVersionHandler.name, ignoreCase = true) }) {
+                return CACHE_HANDLERS.first { it.name.equals(serverVersionHandler.name, ignoreCase = true) }
             }
             CACHE_HANDLERS.add(serverVersionHandler)
             return serverVersionHandler
@@ -88,7 +88,7 @@ interface IServerVersionHandler {
         }
 
         fun unregisterHandler(name: String) {
-            CACHE_HANDLERS.removeIf { it.name.lowercase() == name.lowercase() }
+            CACHE_HANDLERS.removeIf { it.name.equals(name, ignoreCase = true) }
         }
     }
 }

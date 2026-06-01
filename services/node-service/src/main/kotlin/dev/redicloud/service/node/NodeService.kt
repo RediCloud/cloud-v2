@@ -62,63 +62,63 @@ class NodeService(
 
     init {
         console = NodeConsole(configuration, eventManager, nodeRepository, serverRepository)
-        fileNodeRepository = FileNodeRepository(databaseConnection, packetManager)
+        fileNodeRepository = FileNodeRepository(databaseConnection, packetManager, scope)
         fileCluster = FileCluster(serviceId, configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
-        fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster, packetManager)
-        serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console, packetManager)
+        fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster, packetManager, scope)
+        serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console, packetManager, scope)
         serverFactory = ServerFactory(
             databaseConnection, nodeRepository, serverRepository,
             serverVersionRepository, serverVersionTypeRepository,
             fileTemplateRepository, javaVersionRepository,
             packetManager, configuration.hostAddress, console,
             clusterConfiguration, configurationTemplateRepository,
-            eventManager, fileCluster
+            eventManager, fileCluster, scope
         )
         moduleHandler = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, null, databaseConnection)
         playerExecutor = NodePlayerExecutor(this.playerRepository, serverRepository, packetManager, serviceId)
+    }
 
-        runBlocking {
-            registerDefaults()
-            this@NodeService.initShutdownHook()
+    suspend fun start() {
+        registerDefaults()
+        initShutdownHook()
 
-            Updater.check()
+        Updater.check()
 
-            nodeRepository.connect(this@NodeService)
-            @Suppress("TooGenericExceptionCaught")
-            try { memoryCheck() } catch (e: Exception) {
-                LOGGER.severe("Error while checking memory", e)
-                shutdown()
-                return@runBlocking
-            }
-
-            @Suppress("TooGenericExceptionCaught")
-            try { this@NodeService.checkJavaVersions() } catch (e: Exception) {
-                LOGGER.warning("Error while checking java versions", e)
-            }
-
-            Updater.registerSuggesters(console.commandManager)
-
-            IServerVersionHandler.registerHandler(
-                URLServerVersionHandler(
-                    serviceId,
-                    serverVersionRepository,
-                    serverVersionTypeRepository,
-                    nodeRepository,
-                    console,
-                    javaVersionRepository
-                )
-            )
-
-            this@NodeService.registerPreTasks()
-            this@NodeService.connectFileCluster()
-            this@NodeService.registerPackets()
-            this@NodeService.registerCommands()
-            this@NodeService.registerTasks()
-            this@NodeService.registerListeners()
-
-            initApi()
-            moduleHandler.loadModules()
+        nodeRepository.connect(this)
+        @Suppress("TooGenericExceptionCaught")
+        try { memoryCheck() } catch (e: Exception) {
+            LOGGER.severe("Error while checking memory", e)
+            shutdown()
+            return
         }
+
+        @Suppress("TooGenericExceptionCaught")
+        try { checkJavaVersions() } catch (e: Exception) {
+            LOGGER.warning("Error while checking java versions", e)
+        }
+
+        Updater.registerSuggesters(console.commandManager)
+
+        IServerVersionHandler.registerHandler(
+            URLServerVersionHandler(
+                serviceId,
+                serverVersionRepository,
+                serverVersionTypeRepository,
+                nodeRepository,
+                console,
+                javaVersionRepository
+            )
+        )
+
+        registerPreTasks()
+        connectFileCluster()
+        registerPackets()
+        registerCommands()
+        registerTasks()
+        registerListeners()
+
+        initApi()
+        moduleHandler.loadModules()
     }
 
     private fun registerListeners() {
@@ -131,8 +131,8 @@ class NodeService(
         )
     }
 
-    override fun plattformShutdown() {
-        super.plattformShutdown()
+    override fun platformShutdown() {
+        super.platformShutdown()
         shutdown(false)
     }
 

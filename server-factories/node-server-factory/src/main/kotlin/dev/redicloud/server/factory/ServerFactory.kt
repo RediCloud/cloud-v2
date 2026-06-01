@@ -39,11 +39,15 @@ import dev.redicloud.server.factory.screens.ServerScreenParser
 import dev.redicloud.server.factory.screens.ServerScreenSuggester
 import dev.redicloud.server.factory.utils.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
-import dev.redicloud.utils.MultiAsyncAction
+import dev.redicloud.utils.ConcurrentBatch
 import dev.redicloud.utils.zipFile
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
+import kotlin.time.Duration.Companion.milliseconds
 
 @Suppress("LongParameterList", "TooManyFunctions")
 class ServerFactory(
@@ -60,13 +64,14 @@ class ServerFactory(
     private val clusterConfiguration: ClusterConfiguration,
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
     private val eventManager: EventManager,
-    private val fileCluster: FileCluster
+    private val fileCluster: FileCluster,
+    private val scope: CoroutineScope
 ) : ICloudServerFactory, RemoteServerFactory(databaseConnection, nodeRepository, serverRepository) {
 
     companion object {
         private val logger = LogManager.logger(ServerFactory::class)
         private const val DEFAULT_START_PRIORITY = 50
-        private const val LOCK_RELEASE_DELAY_MS = 50L
+        private val LOCK_RELEASE_DELAY = 50.milliseconds
     }
 
     override val hostedProcesses: MutableList<ServerProcess> = mutableListOf()
@@ -78,18 +83,18 @@ class ServerFactory(
     }
 
     suspend fun getStartList(): List<ServerQueueInformation> {
-        return startQueue.toMutableList().sortedWith(
-            compareByDescending<ServerQueueInformation>
-                {
-                    if (it.serviceId != null) {
-                        val configuration = runBlocking {
-                            serverRepository.getServer<CloudServer>(it.serviceId!!)?.configurationTemplate
-                        }
-                        configuration?.startPriority ?: DEFAULT_START_PRIORITY
-                    } else {
-                        it.configurationTemplate.startPriority
-                    }
-                }.thenByDescending { it.queueTime }
+        val queueItems = startQueue.toMutableList()
+        val priorityMap = queueItems.associateWith { item ->
+            if (item.serviceId != null) {
+                val configuration = serverRepository.getServer<CloudServer>(item.serviceId!!)?.configurationTemplate
+                configuration?.startPriority ?: DEFAULT_START_PRIORITY
+            } else {
+                item.configurationTemplate.startPriority
+            }
+        }
+        return queueItems.sortedWith(
+            compareByDescending<ServerQueueInformation> { priorityMap[it] ?: DEFAULT_START_PRIORITY }
+                .thenByDescending { it.queueTime }
         ).toList()
     }
 
@@ -112,8 +117,10 @@ class ServerFactory(
             this.unregisterServer(serviceId, server)
             val workDir = File(STATIC_FOLDER.getFile(), "${server.name}-${server.serviceId.id}")
             if (workDir.exists() && workDir.isDirectory) {
-                if (!workDir.deleteRecursively()) {
-                    workDir.deleteOnExit()
+                withContext(Dispatchers.IO) {
+                    if (!workDir.deleteRecursively()) {
+                        workDir.deleteOnExit()
+                    }
                 }
             }
             eventManager.fireEvent(CloudServerDeleteEvent(server.serviceId, server.name))
@@ -192,7 +199,8 @@ class ServerFactory(
             bindHost,
             clusterConfiguration,
             serviceId,
-            hostingId
+            hostingId,
+            scope
         )
     }
 
@@ -221,7 +229,7 @@ class ServerFactory(
                 )
             }
         } finally {
-            Thread.sleep(LOCK_RELEASE_DELAY_MS)
+            delay(LOCK_RELEASE_DELAY)
             idLock.unlock()
         }
     }
@@ -239,11 +247,14 @@ class ServerFactory(
         cloudServer: CloudServer,
         snapshotData: StartDataSnapshot
     ) {
+        val templates = serverProcess.configurationTemplate.fileTemplateIds
+            .mapNotNull { fileTemplateRepository.getTemplate(it) }
+            .flatMap { fileTemplateRepository.collectTemplates(it) }
         val copier = FileCopier(
             serverProcess,
             cloudServer,
             serverVersionTypeRepository,
-            fileTemplateRepository,
+            templates,
             snapshotData
         )
         serverProcess.fileCopier = copier
@@ -306,7 +317,8 @@ class ServerFactory(
             bindHost,
             clusterConfiguration,
             serviceId,
-            hostingId
+            hostingId,
+            scope
         )
         hostedProcesses.add(serverProcess)
         @Suppress("TooGenericExceptionCaught")
@@ -342,24 +354,8 @@ class ServerFactory(
             thisNode.hostedServers.add(server.serviceId)
             nodeRepository.updateNode(thisNode)
 
-            // copy the files to copy server necessary files
-            val copier = FileCopier(
-                serverProcess,
-                server,
-                serverVersionTypeRepository,
-                fileTemplateRepository,
-                snapshotData
-            )
+            val copier = prepareServerFiles(serverProcess, server, newConfigurationTemplate, snapshotData)
             serverProcess.fileCopier = copier
-
-            // copy all templates
-            copier.copyTemplates(false)
-            // copy all version files
-            copier.copyVersionFiles(false) { serverProcess.replacePlaceholders(it, snapshotData) }
-            // delete old connector files
-            copier.deleteConnectors()
-            // copy connector
-            copier.copyConnector()
 
             // start the server
             return serverProcess.start(server, serverScreen, snapshotData)
@@ -373,6 +369,29 @@ class ServerFactory(
             }
             return UnknownErrorStartResult(e)
         }
+    }
+
+    private suspend fun prepareServerFiles(
+        serverProcess: ServerProcess,
+        server: CloudServer,
+        configurationTemplate: ConfigurationTemplate,
+        snapshotData: StartDataSnapshot
+    ): FileCopier {
+        val templates = configurationTemplate.fileTemplateIds
+            .mapNotNull { fileTemplateRepository.getTemplate(it) }
+            .flatMap { fileTemplateRepository.collectTemplates(it) }
+        val copier = FileCopier(
+            serverProcess,
+            server,
+            serverVersionTypeRepository,
+            templates,
+            snapshotData
+        )
+        copier.copyTemplates(false)
+        copier.copyVersionFiles(false) { serverProcess.replacePlaceholders(it, snapshotData) }
+        copier.deleteConnectors()
+        copier.copyConnector()
+        return copier
     }
 
     @Suppress("ThrowsCount")
@@ -462,7 +481,7 @@ class ServerFactory(
                 )
             }
             fileCluster.deleteFolderRecursive(channel, toUniversalPath(workFolder))
-            workFolder.deleteRecursively()
+            withContext(Dispatchers.IO) { workFolder.deleteRecursively() }
             val event = CloudServerTransferredEvent(serverId, server.hostNodeId)
             server.hostNodeId = nodeId
             serverRepository.updateServer(server)
@@ -484,7 +503,7 @@ class ServerFactory(
     suspend fun shutdown(force: Boolean = false) {
         if (!force && shutdown) return
         shutdown = true
-        val actions = MultiAsyncAction()
+        val actions = ConcurrentBatch()
         hostedProcesses.toList().forEach {
             actions.add {
                 try {

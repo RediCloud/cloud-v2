@@ -8,6 +8,7 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.service.server.ICloudServer
 import dev.redicloud.api.service.server.ICloudServerRepository
+import dev.redicloud.logging.LogManager
 import dev.redicloud.service.base.packets.player.*
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.bossbar.BossBar
@@ -235,7 +236,11 @@ abstract class BasePlayerExecutor(
 
     abstract fun audience(player: ICloudPlayer): Audience
 
-    abstract fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer)
+    abstract suspend fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer)
 
-    abstract fun executeKick(cloudPlayer: ICloudPlayer, reason: Component)
+    abstract suspend fun executeKick(cloudPlayer: ICloudPlayer, reason: Component)
+
+    companion object {
+        val LOGGER = LogManager.logger(BasePlayerExecutor::class)
+    }
 }

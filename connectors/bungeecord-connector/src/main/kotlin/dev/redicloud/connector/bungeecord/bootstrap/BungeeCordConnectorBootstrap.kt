@@ -4,6 +4,7 @@ import dev.redicloud.connector.bungeecord.BungeeCordConnector
 import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.loaders.URLClassLoaderJarLoader
 import dev.redicloud.utils.loadProperties
+import kotlinx.coroutines.runBlocking
 import net.md_5.bungee.api.ProxyServer
 import net.md_5.bungee.api.plugin.Plugin
 import java.net.URLClassLoader
@@ -19,6 +20,7 @@ class BungeeCordConnectorBootstrap : Plugin() {
             loadProperties(this.javaClass.classLoader)
             Bootstrap().apply(URLClassLoaderJarLoader(this.javaClass.classLoader as URLClassLoader))
             connector = BungeeCordConnector(this)
+            runBlocking { connector!!.start() }
         } catch (e: Exception) {
             System.err.println("Failed to initialize BungeeCordConnector: ${e.message}")
             System.err.println(e.stackTraceToString())

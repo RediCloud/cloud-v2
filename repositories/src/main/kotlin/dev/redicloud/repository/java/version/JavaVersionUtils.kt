@@ -12,12 +12,12 @@ private val SUPPORTED_CLASS_VERSIONS = setOf(52, 61, 62, 63, 65)
 @Suppress("MagicNumber")
 private val UNTESTED_CLASS_VERSIONS = setOf(53, 54, 55, 56, 57, 58, 59, 60, 64)
 
-fun getJavaVersionsBetween(javaVersion1: CloudJavaVersion, javaVersion2: CloudJavaVersion): List<CloudJavaVersion> {
+suspend fun getJavaVersionsBetween(javaVersion1: CloudJavaVersion, javaVersion2: CloudJavaVersion): List<CloudJavaVersion> {
     return JavaVersionRepository.ONLINE_VERSION_CACHE.get()!!
         .filter { it.id >= javaVersion1.id && it.id <= javaVersion2.id }.toList()
 }
 
-fun getJavaVersion(): CloudJavaVersion {
+suspend fun getJavaVersion(): CloudJavaVersion {
     val version = System.getProperty("java.version")
     if (version.contains("-") && version.split(".").size < 2) {
         return JavaVersionRepository.ONLINE_VERSION_CACHE.get()!!.find { it.name == version.split("-")[0] }
@@ -38,7 +38,7 @@ fun isJavaVersionNotTested(version: CloudJavaVersion): Boolean {
     return version.id in UNTESTED_CLASS_VERSIONS
 }
 
-fun isJavaVersionUnsupported(version: CloudJavaVersion): Boolean {
+suspend fun isJavaVersionUnsupported(version: CloudJavaVersion): Boolean {
     return !isJavaVersionNotTested(getJavaVersion()) && !isJavaVersionNotTested(version)
 }
 

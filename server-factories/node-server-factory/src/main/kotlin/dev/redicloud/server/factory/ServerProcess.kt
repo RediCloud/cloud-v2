@@ -26,8 +26,10 @@ import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.blockPort
 import dev.redicloud.utils.findFreePort
 import dev.redicloud.utils.freePort
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.seconds
 
@@ -39,7 +41,8 @@ class ServerProcess(
     private val bindHost: String,
     private val clusterConfiguration: ClusterConfiguration,
     override val serverId: ServiceId,
-    override val hostServiceId: ServiceId
+    override val hostServiceId: ServiceId,
+    private val scope: CoroutineScope
 ) : ICloudServerProcess {
 
     override val port: Int
@@ -53,7 +56,7 @@ class ServerProcess(
     companion object {
         private val logger = LogManager.logger(ServerProcess::class)
         private const val DEFAULT_START_PORT = 40000
-        private const val STOP_POLL_INTERVAL_MS = 1000L
+        private val STOP_POLL_INTERVAL = 1.seconds
         private const val JAVA_8_MAJOR_VERSION = 8
         val SERVER_STOP_TIMEOUT = System.getProperty("redicloud.server.stop.timeout", "20").toInt()
     }
@@ -112,7 +115,7 @@ class ServerProcess(
         }
         // create handler and listen for exit
         processHandler = ScreenProcessHandler(process!!, serverScreen)
-        processHandler!!.onExit { runBlocking { stop(internalCall = true) } }
+        processHandler!!.onExit { scope.launch { stop(internalCall = true) } }
 
         cloudServer.state = CloudServerState.STARTING
         cloudServer.port = port
@@ -177,9 +180,7 @@ class ServerProcess(
         if (answer != null) {
             var seconds = 0
             while (cloudServer != null && cloudServer?.connected == true && seconds < SERVER_STOP_TIMEOUT) {
-                withContext(Dispatchers.IO) {
-                    Thread.sleep(STOP_POLL_INTERVAL_MS)
-                }
+                delay(STOP_POLL_INTERVAL)
                 seconds++
                 cloudServer = serverRepository.getServer(serverId)
             }

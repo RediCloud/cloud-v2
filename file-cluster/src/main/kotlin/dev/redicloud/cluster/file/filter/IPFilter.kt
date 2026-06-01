@@ -17,25 +17,16 @@ class IPFilter(
 
     init {
         eventManager.listen<FileNodeConnectedEvent> {
-            runBlocking {
-                val fileNode = fileNodeRepository.getFileNode(it.serviceId) ?: return@runBlocking
-                val ipAddress = fileNode.hostname
-                allowedIpCache.add(ipAddress)
-            }
+            val fileNode = fileNodeRepository.getFileNode(it.serviceId) ?: return@listen
+            allowedIpCache.add(fileNode.hostname)
         }
         eventManager.listen<FileNodeDisconnectedEvent> {
-            runBlocking {
-                val fileNode = fileNodeRepository.getFileNode(it.serviceId) ?: return@runBlocking
-                val ipAddress = fileNode.hostname
-                allowedIpCache.remove(ipAddress)
-            }
+            val fileNode = fileNodeRepository.getFileNode(it.serviceId) ?: return@listen
+            allowedIpCache.remove(fileNode.hostname)
         }
         eventManager.listen<NodeSuspendedEvent> {
-            runBlocking {
-                val fileNode = fileNodeRepository.getFileNode(it.serviceId) ?: return@runBlocking
-                val ipAddress = fileNode.hostname
-                allowedIpCache.remove(ipAddress)
-            }
+            val fileNode = fileNodeRepository.getFileNode(it.serviceId) ?: return@listen
+            allowedIpCache.remove(fileNode.hostname)
         }
         runBlocking {
             System.getProperty("redicloud.filter.ip.bypass", "127.0.0.1;0.0.0.0").split(";").forEach {

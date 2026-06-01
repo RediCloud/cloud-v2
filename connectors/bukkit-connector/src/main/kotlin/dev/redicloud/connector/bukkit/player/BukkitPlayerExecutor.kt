@@ -7,10 +7,11 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.ICloudServer
 import dev.redicloud.api.service.server.ICloudServerRepository
 import dev.redicloud.service.base.player.BasePlayerExecutor
-import kotlinx.coroutines.runBlocking
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.platform.bukkit.BukkitAudiences
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 
 class BukkitPlayerExecutor(
@@ -30,11 +31,16 @@ class BukkitPlayerExecutor(
         return _audience!!.player(player.uniqueId)
     }
 
-    override fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer) {
-        runBlocking { this@BukkitPlayerExecutor.connect(cloudPlayer, server) }
+    override suspend fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer) {
+        throw UnsupportedOperationException("executeConnect is not supported on a sub server")
     }
 
-    override fun executeKick(cloudPlayer: ICloudPlayer, reason: Component) {
-        runBlocking { this@BukkitPlayerExecutor.kick(cloudPlayer, reason) }
+    override suspend fun executeKick(cloudPlayer: ICloudPlayer, reason: Component) {
+        val player = Bukkit.getPlayer(cloudPlayer.uniqueId)
+        if (player == null) {
+            LOGGER.warning("Player ${cloudPlayer.uniqueId} not found on this server for kick")
+            return
+        }
+        player.kickPlayer(LegacyComponentSerializer.legacySection().serialize(reason))
     }
 }

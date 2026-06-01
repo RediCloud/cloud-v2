@@ -11,8 +11,6 @@ import dev.redicloud.updater.Updater
 import dev.redicloud.updater.suggest.BranchSuggester
 import dev.redicloud.updater.suggest.BuildsSuggester
 import dev.redicloud.utils.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 @Command("version")
 @CommandAlias(["ver"])
@@ -41,12 +39,12 @@ class VersionCommand(
 
     @CommandSubPath("checkupdate")
     @CommandDescription("Checks if an update is available")
-    fun checkUpdate(
+    suspend fun checkUpdate(
         actor: ConsoleActor
-    ) = defaultScope.launch {
+    ) {
         if (BUILD == "local") {
             actor.sendMessage("You are running a local build, updates are not available!")
-            return@launch
+            return
         }
         val updateInfo = Updater.updateAvailable()
         if (updateInfo.first && updateInfo.second != null) {
@@ -67,26 +65,26 @@ class VersionCommand(
 
     @CommandSubPath("download [branch] [build]")
     @CommandDescription("Downloads a version")
-    fun download(
+    suspend fun download(
         actor: ConsoleActor,
         @CommandParameter("branch", false, BranchSuggester::class) branchParam: String?,
         @CommandParameter("build", false, BuildsSuggester::class) buildParam: String?
-    ) = defaultScope.launch {
+    ) {
         val branch = branchParam ?: BRANCH
         val build = buildParam ?: "latest"
         val buildId = if (build == "latest") {
             val builds = Updater.getBuilds(branch)
             if (builds.isEmpty()) {
                 actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
-                return@launch
+                return
             }
             builds.filter { it.stored }.maxOfOrNull { it.build } ?: run {
                 actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
-                return@launch
+                return
             }
         } else if (build.toIntOrNull() == null) {
             actor.sendMessage("§cInvalid build number")
-            return@launch
+            return
         } else {
             build.toInt()
         }
@@ -123,34 +121,35 @@ class VersionCommand(
 
     @CommandSubPath("switch [branch] [build]")
     @CommandDescription("Switch to a downloaded version")
-    fun switch(
+    @Suppress("ReturnCount")
+    suspend fun switch(
         actor: ConsoleActor,
         @CommandParameter("branch", false, BranchSuggester::class) branchParam: String?,
         @CommandParameter("build", false, BuildsSuggester::class) buildParam: String?
-    ) = defaultScope.launch {
+    ) {
         if (Updater.updateToVersion != null) {
             actor.sendMessage("§cAn update was already installed! Restart the node service to apply the changes!")
-            return@launch
+            return
         }
         val branch = branchParam ?: BRANCH
         val build = buildParam ?: "latest"
         if (BUILD == build && BRANCH == branch) {
             actor.sendMessage("You are already running this version!")
-            return@launch
+            return
         }
         val buildId = if (build == "latest") {
             val builds = Updater.getBuilds(branch)
             if (builds.isEmpty()) {
                 actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
-                return@launch
+                return
             }
             builds.filter { it.stored }.maxOfOrNull { it.build } ?: run {
                 actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
-                return@launch
+                return
             }
         } else if (build.toIntOrNull() == null) {
             actor.sendMessage("§cInvalid build number")
-            return@launch
+            return
         } else {
             build.toInt()
         }
@@ -158,7 +157,7 @@ class VersionCommand(
         if (!installedVersions.containsKey(branch) || !installedVersions[branch]!!.contains(buildId)) {
             actor.sendMessage("§cThe version is not downloaded!")
             actor.sendMessage("§cYou can download the version with the command: %hc%version download <branch> <build>")
-            return@launch
+            return
         }
         val confirmIdentifier = Pair(branch, build)
         if (branch.lowercase() != BRANCH.lowercase() &&
@@ -173,7 +172,7 @@ class VersionCommand(
             )
             actor.sendMessage("§cType the command again to confirm!")
             switchConfirms[confirmIdentifier] = System.currentTimeMillis()
-            return@launch
+            return
         }
         if (branch == BRANCH && buildId < (BUILD.toIntOrNull() ?: -1) &&
             switchConfirms.getOrDefault(confirmIdentifier, 0) + SWITCH_CONFIRM_TIMEOUT_MS < System.currentTimeMillis()
@@ -187,7 +186,7 @@ class VersionCommand(
             )
             actor.sendMessage("§cType the command again to confirm!")
             switchConfirms[confirmIdentifier] = System.currentTimeMillis()
-            return@launch
+            return
         }
         switchConfirms.remove(confirmIdentifier)
         Updater.switchVersion(branch, buildId)
@@ -197,16 +196,16 @@ class VersionCommand(
 
     @CommandSubPath("branches")
     @CommandDescription("Displays all available branches")
-    fun branches(
+    suspend fun branches(
         actor: ConsoleActor
-    ) = defaultScope.launch {
+    ) {
         val branches = Updater.getBranches().toMutableList()
         if (BRANCH == "local") {
             branches.add("local")
         }
         if (branches.isEmpty()) {
             actor.sendMessage("§cFailed to get the branches!")
-            return@launch
+            return
         }
         actor.sendMessage("Available branches:")
         branches.forEach {
@@ -220,23 +219,23 @@ class VersionCommand(
 
     @CommandSubPath("builds [branch]")
     @CommandDescription("Displays all available builds for a branch")
-    fun builds(
+    suspend fun builds(
         actor: ConsoleActor,
         @CommandParameter("branch", false, BranchSuggester::class) branchParam: String?
-    ) = defaultScope.launch {
+    ) {
         val branch = branchParam ?: BRANCH
         val builds = mutableListOf<BuildInfo>()
         builds.addAll(Updater.getBuilds(branch))
         if (builds.isEmpty()) {
             actor.sendMessage("§cFailed to get the builds! Make sure the branch exists!")
-            return@launch
+            return
         }
         if (BRANCH == "local" && BUILD == "local") {
             builds.add(BuildInfo(BRANCH, BUILD.toIntOrNull() ?: -1, CLOUD_VERSION, -1, false))
         }
         if (builds.isEmpty()) {
             actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch)}!")
-            return@launch
+            return
         }
         actor.sendMessage("Available builds for branch ${toConsoleValue(branch)}:")
         builds.forEach {
@@ -252,16 +251,16 @@ class VersionCommand(
 
     @CommandSubPath("downloaded")
     @CommandDescription("Displays all downloaded versions")
-    fun downloaded(
+    suspend fun downloaded(
         actor: ConsoleActor
-    ) = runBlocking {
+    ) {
         val installedVersions = Updater.localInstalledVersions()
         if (installedVersions.isEmpty()) {
             actor.sendMessage("No versions downloaded!")
             actor.sendMessage(
                 "Use the command ${toConsoleValue("version download <branch> <build>")} to download a version!"
             )
-            return@runBlocking
+            return
         }
         actor.sendMessage("Downloaded versions:")
         installedVersions.forEach { (branch, builds) ->

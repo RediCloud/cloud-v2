@@ -19,7 +19,6 @@ import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
 import dev.redicloud.utils.fileName
 import dev.redicloud.utils.isValidUrl
 import dev.redicloud.utils.toSymbol
-import kotlinx.coroutines.runBlocking
 import java.net.URL
 import java.util.*
 import kotlin.time.Duration.Companion.milliseconds
@@ -51,15 +50,15 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("duplicate <name> [new-name]")
     @CommandDescription("Duplicate a configuration template")
-    fun duplicate(
+    suspend fun duplicate(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("new-name", false) newName: String?
-    ) = runBlocking {
+    ) {
         val newTemplate = template.copy(newName ?: "${template.name}-copy")
         if (configurationTemplateRepository.existsTemplate(newTemplate.name)) {
             actor.sendMessage("§cA configuration template with this name already exists!")
-            return@runBlocking
+            return
         }
         configurationTemplateRepository.createTemplate(newTemplate)
         actor.sendMessage(
@@ -71,13 +70,13 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("create <name>")
     @CommandDescription("Create a new configuration template")
-    fun create(
+    suspend fun create(
         actor: ConsoleActor,
         @CommandParameter("name") name: String
-    ) = runBlocking {
+    ) {
         if (configurationTemplateRepository.existsTemplate(name)) {
             actor.sendMessage("§cA configuration template with this name already exists!")
-            return@runBlocking
+            return
         }
         configurationTemplateRepository.createTemplate(
             ConfigurationTemplate(
@@ -104,14 +103,14 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("delete <name>")
     @CommandDescription("Delete a configuration template")
-    fun delete(
+    suspend fun delete(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate
-    ) = runBlocking {
+    ) {
         if (serverRepository.getRegisteredServers().any { it.configurationTemplate.uniqueId == template.uniqueId }) {
             actor.sendMessage("§cThere are still servers registered with this configuration template!")
             actor.sendMessage("§cStop the servers or delete them if it is a static server!")
-            return@runBlocking
+            return
         }
         configurationTemplateRepository.deleteTemplate(template)
         actor.sendMessage("§aThe configuration template was deleted successfully!")
@@ -119,11 +118,11 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("list")
     @CommandDescription("List all configuration templates")
-    fun list(actor: ConsoleActor) = runBlocking {
+    suspend fun list(actor: ConsoleActor) {
         val templates = configurationTemplateRepository.getTemplates()
         if (templates.isEmpty()) {
             actor.sendMessage("§cThere are no configuration templates!")
-            return@runBlocking
+            return
         }
         actor.sendHeader("Configuration templates")
         actor.sendMessage("")
@@ -136,10 +135,10 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("info <name>")
     @CommandDescription("Get information about a configuration template")
-    fun info(
+    suspend fun info(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate
-    ) = runBlocking {
+    ) {
         actor.sendHeader("Configuration template")
         actor.sendMessage("")
         actor.sendMessage("§8- %tc%Name§8: %hc%${template.name}")
@@ -217,11 +216,11 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> stoptime <minutes>")
     @CommandDescription("Set the time after a server should be stopped if it is useless")
-    fun editStopTime(
+    suspend fun editStopTime(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("time") time: Long
-    ) = runBlocking {
+    ) {
         template.timeAfterStopUselessServer = time.minutes.inWholeMilliseconds
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage(
@@ -233,11 +232,11 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> maxplayers <count>")
     @CommandDescription("Set the max players of a configuration template")
-    fun editMaxPlayers(
+    suspend fun editMaxPlayers(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("count", true, IntegerSuggester::class, ["10", "100", "10"]) count: Int
-    ) = runBlocking {
+    ) {
         template.maxPlayers = count
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage("Successfully set the max players of the configuration template to ${toConsoleValue(count)}!")
@@ -245,13 +244,13 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> fileedits add <file> <key> <value>")
     @CommandDescription("Add a file edit to a configuration template")
-    fun editFileEditsAdd(
+    suspend fun editFileEditsAdd(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("file") file: String,
         @CommandParameter("key") key: String,
         @CommandParameter("value") value: String
-    ) = runBlocking {
+    ) {
         val subMap = template.fileEdits.getOrDefault(file, mutableMapOf())
         subMap[key] = value
         template.fileEdits[file] = subMap
@@ -261,16 +260,16 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> fileedits remove <file> <key>")
     @CommandDescription("Remove a file edit from a configuration template")
-    fun editFileEditsRemove(
+    suspend fun editFileEditsRemove(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("file") file: String,
         @CommandParameter("key") key: String
-    ) = runBlocking {
+    ) {
         val subMap = template.fileEdits.getOrDefault(file, mutableMapOf())
         if (subMap.remove(key) == null) {
             actor.sendMessage("§cThe file edit with the key ${toConsoleValue(key, false)} does not exist!")
-            return@runBlocking
+            return
         }
         if (subMap.isEmpty()) {
             template.fileEdits.remove(file)
@@ -283,15 +282,15 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> files add <url> [path]")
     @CommandDescription("Add a default file to a configuration template")
-    fun editFilesAdd(
+    suspend fun editFilesAdd(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("url") url: String,
         @CommandParameter("path", true) path: String?
-    ) = runBlocking {
+    ) {
         if (!isValidUrl(url)) {
             actor.sendMessage("§cThe url '$url' is not valid!")
-            return@runBlocking
+            return
         }
         val file = path ?: URL(url).fileName
         if (template.defaultFiles.any { it.value.lowercase() == file.lowercase() }) {
@@ -301,7 +300,7 @@ class ConfigurationTemplateCommand(
                     false
                 )} was already added to the configuration template ${toConsoleValue(template.name, false)}!"
             )
-            return@runBlocking
+            return
         }
         template.defaultFiles[path ?: url] = url
         configurationTemplateRepository.updateTemplate(template)
@@ -312,18 +311,18 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> files remove <url>")
     @CommandDescription("Remove a default file from a configuration template")
-    fun editFilesRemove(
+    suspend fun editFilesRemove(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("url") url: String
-    ) = runBlocking {
+    ) {
         if (template.defaultFiles.none { it.value.lowercase() == url.lowercase() }) {
             actor.sendMessage(
                 "§cThe file with the url ${toConsoleValue(
                     url
                 )} is not added to the configuration template ${toConsoleValue(template.name, false)}!"
             )
-            return@runBlocking
+            return
         }
         template.defaultFiles.remove(url)
         configurationTemplateRepository.updateTemplate(template)
@@ -336,14 +335,14 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> name <new-name>")
     @CommandDescription("Edit the name of a configuration template")
-    fun editName(
+    suspend fun editName(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("new-name") newName: String
-    ) = runBlocking {
+    ) {
         if (configurationTemplateRepository.existsTemplate(newName)) {
             actor.sendMessage("§cA configuration template with this name already exists!")
-            return@runBlocking
+            return
         }
         template.name = newName
         configurationTemplateRepository.updateTemplate(template)
@@ -352,11 +351,11 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> programparameter add <parameter>")
     @CommandDescription("Add a program parameter to a configuration template")
-    fun editProgramParameterAdd(
+    suspend fun editProgramParameterAdd(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("parameter") parameter: String
-    ) = runBlocking {
+    ) {
         template.programParameters.add(parameter)
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage(
@@ -368,11 +367,11 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> programparameter remove <parameter>")
     @CommandDescription("Remove a program parameter from a configuration template")
-    fun editProgramParameterRemove(
+    suspend fun editProgramParameterRemove(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("parameter") parameter: String
-    ) = runBlocking {
+    ) {
         template.programParameters.remove(parameter)
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage(
@@ -385,11 +384,11 @@ class ConfigurationTemplateCommand(
     @CommandSubPath("edit <name> jvmargument add <argument>")
     @CommandAlias(["edit <name> ja add <argument>"])
     @CommandDescription("Add a JVM argument to a configuration template")
-    fun editJvmArgumentAdd(
+    suspend fun editJvmArgumentAdd(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("argument") argument: String
-    ) = runBlocking {
+    ) {
         template.jvmArguments.add(argument)
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage(
@@ -402,11 +401,11 @@ class ConfigurationTemplateCommand(
     @CommandSubPath("edit <name> jvmargument remove <argument>")
     @CommandAlias(["edit <name> ja remove <argument>"])
     @CommandDescription("Remove a JVM argument from a configuration template")
-    fun editJvmArgumentRemove(
+    suspend fun editJvmArgumentRemove(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("argument") argument: String
-    ) = runBlocking {
+    ) {
         template.jvmArguments.remove(argument)
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage(
@@ -419,12 +418,12 @@ class ConfigurationTemplateCommand(
     @CommandSubPath("edit <name> environment add <key> <value>")
     @CommandAlias(["edit <name> env add <key> <value>"])
     @CommandDescription("Add an environment variable to a configuration template")
-    fun editEnvironmentAdd(
+    suspend fun editEnvironmentAdd(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("key") key: String,
         @CommandParameter("value") value: String
-    ) = runBlocking {
+    ) {
         template.environmentVariables[key] = value
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage(
@@ -438,12 +437,12 @@ class ConfigurationTemplateCommand(
     @CommandAlias(["edit <name> env remove <key>"])
     @CommandDescription("Remove an environment variable from a configuration template")
     @Suppress("UnusedParameter")
-    fun editEnvironmentRemove(
+    suspend fun editEnvironmentRemove(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("key") key: String,
         @CommandParameter("value") value: String
-    ) = runBlocking {
+    ) {
         template.environmentVariables.remove(key)
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage(
@@ -456,11 +455,11 @@ class ConfigurationTemplateCommand(
     @CommandSubPath("edit <name> maxmemory <memory>")
     @CommandAlias(["edit <name> mm <memory>"])
     @CommandDescription("Edit the maximum memory of a configuration template")
-    fun editMaxMemory(
+    suspend fun editMaxMemory(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("memory", true, MemorySuggester::class) memory: Long
-    ) = runBlocking {
+    ) {
         template.maxMemory = memory
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage(
@@ -473,11 +472,11 @@ class ConfigurationTemplateCommand(
     @CommandSubPath("edit <name> filetemplates add <template>")
     @CommandAlias(["edit <name> ft add <template>"])
     @CommandDescription("Add a file template to a configuration template")
-    fun editFileTemplateAdd(
+    suspend fun editFileTemplateAdd(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("template", true, FileTemplateSuggester::class) fileTemplate: FileTemplate
-    ) = runBlocking {
+    ) {
         template.fileTemplateIds.add(fileTemplate.uniqueId)
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage(
@@ -490,11 +489,11 @@ class ConfigurationTemplateCommand(
     @CommandSubPath("edit <name> filetemplates remove <template>")
     @CommandAlias(["edit <name> ft remove <template>"])
     @CommandDescription("Remove a file template from a configuration template")
-    fun editFileTemplateRemove(
+    suspend fun editFileTemplateRemove(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("template", true, FileTemplateSuggester::class) fileTemplate: FileTemplate
-    ) = runBlocking {
+    ) {
         template.fileTemplateIds.remove(fileTemplate.uniqueId)
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage(
@@ -507,11 +506,11 @@ class ConfigurationTemplateCommand(
     @CommandSubPath("edit <name> nodes add <node>")
     @CommandAlias(["edit <name> node add <node>"])
     @CommandDescription("Add a node to a configuration template")
-    fun editNodeAdd(
+    suspend fun editNodeAdd(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("node", true, RegisteredCloudNodeSuggester::class) node: CloudNode
-    ) = runBlocking {
+    ) {
         template.nodeIds.add(node.serviceId)
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage(
@@ -524,11 +523,11 @@ class ConfigurationTemplateCommand(
     @CommandSubPath("edit <name> nodes remove <node>")
     @CommandAlias(["edit <name> node remove <node>"])
     @CommandDescription("Remove a node from a configuration template")
-    fun editNodeRemove(
+    suspend fun editNodeRemove(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("node", true, RegisteredCloudNodeSuggester::class) node: CloudNode
-    ) = runBlocking {
+    ) {
         template.nodeIds.remove(node.serviceId)
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage(
@@ -549,23 +548,23 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> minServices <count>")
     @CommandDescription("Edit the minimum amount of started services of a configuration template")
-    fun editMinStartedServices(
+    suspend fun editMinStartedServices(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("count", true, IntegerSuggester::class) count: Int
-    ) = runBlocking {
+    ) {
         if (count != -1) {
             if (template.maxStartedServices in 1 until count) {
                 actor.sendMessage(
                     "The minimum amount of started services cannot be higher than the maximum amount of started services!"
                 )
-                return@runBlocking
+                return
             }
             if (template.maxStartedServicesPerNode in 1 until count) {
                 actor.sendMessage(
                     "The minimum amount of started services cannot be higher than the maximum amount of started services per node!"
                 )
-                return@runBlocking
+                return
             }
         }
         template.minStartedServices = count
@@ -579,23 +578,23 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> maxServices <count>")
     @CommandDescription("Edit the maximum amount of started services of a configuration template")
-    fun editMaxStartedServices(
+    suspend fun editMaxStartedServices(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("count", true, IntegerSuggester::class) count: Int
-    ) = runBlocking {
+    ) {
         if (count != -1) {
             if (count < template.minStartedServices && template.minStartedServices > 0) {
                 actor.sendMessage(
                     "The maximum amount of started services cannot be lower than the minimum amount of started services!"
                 )
-                return@runBlocking
+                return
             }
             if (count < template.minStartedServicesPerNode && template.minStartedServicesPerNode > 0) {
                 actor.sendMessage(
                     "The maximum amount of started services cannot be lower than the minimum amount of started services per node!"
                 )
-                return@runBlocking
+                return
             }
         }
         template.maxStartedServices = count
@@ -609,29 +608,29 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> minServicesPerNode <count>")
     @CommandDescription("Edit the minimum amount of started services per node of a configuration template")
-    fun editMinStartedServicesPerNode(
+    suspend fun editMinStartedServicesPerNode(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("count", true, IntegerSuggester::class) count: Int
-    ) = runBlocking {
+    ) {
         if (count != -1) {
             if (template.minStartedServices in 1 until count) {
                 actor.sendMessage(
                     "The minimum amount of started services per node cannot be higher than the maximum amount of started services!"
                 )
-                return@runBlocking
+                return
             }
             if (template.maxStartedServicesPerNode in 1 until count) {
                 actor.sendMessage(
                     "The minimum amount of started services per node cannot be higher than the maximum amount of started services per node!"
                 )
-                return@runBlocking
+                return
             }
             if (template.maxStartedServices in 1 until count) {
                 actor.sendMessage(
                     "The minimum amount of started services per node cannot be higher than the maximum amount of started services!"
                 )
-                return@runBlocking
+                return
             }
         }
         template.minStartedServicesPerNode = count
@@ -645,29 +644,29 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> maxServicesPerNode <count>")
     @CommandDescription("Edit the maximum amount of started services per node of a configuration template")
-    fun editMaxStartedServicesPerNode(
+    suspend fun editMaxStartedServicesPerNode(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("count", true, IntegerSuggester::class) count: Int
-    ) = runBlocking {
+    ) {
         if (count != -1) {
             if (count < template.minStartedServicesPerNode && template.minStartedServicesPerNode > 0) {
                 actor.sendMessage(
                     "The maximum amount of started services per node cannot be lower than the minimum amount of started services per node!"
                 )
-                return@runBlocking
+                return
             }
             if (template.maxStartedServices in 1 until count) {
                 actor.sendMessage(
                     "The maximum amount of started services per node cannot be higher than the maximum amount of started services!"
                 )
-                return@runBlocking
+                return
             }
             if (template.maxStartedServicesPerNode in 1 until count) {
                 actor.sendMessage(
                     "The maximum amount of started services per node cannot be higher than the maximum amount of started services per node!"
                 )
-                return@runBlocking
+                return
             }
         }
         template.maxStartedServicesPerNode = count
@@ -681,14 +680,14 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> percentToStartNew <percent>")
     @CommandDescription("Edit the percent of player online to start a new service of a configuration template")
-    fun editPercentToStartNew(
+    suspend fun editPercentToStartNew(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("percent", true) percent: Double
-    ) = runBlocking {
+    ) {
         if (percent < 0 || percent > 100) {
             actor.sendMessage("§cThe percent must be between 0 and 100!")
-            return@runBlocking
+            return
         }
         template.percentToStartNewService = percent
         configurationTemplateRepository.updateTemplate(template)
@@ -701,14 +700,14 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> splitter <value>")
     @CommandDescription("Edit the server splitter of a configuration template")
-    fun editSplitter(
+    suspend fun editSplitter(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("value", true) splitter: String
-    ) = runBlocking {
+    ) {
         if (splitter.length > 3) {
             actor.sendMessage("§cThe splitter cannot be longer than 3 characters!")
-            return@runBlocking
+            return
         }
         if (invalidChars.containsMatchIn(splitter)) {
             actor.sendMessage(
@@ -716,11 +715,11 @@ class ConfigurationTemplateCommand(
                     ""
                 ).joinToString(", ")}"
             )
-            return@runBlocking
+            return
         }
         if (invalidNames.contains(splitter.lowercase())) {
             actor.sendMessage("§cThe splitter cannot be any of the following names: ${invalidNames.joinToString(", ")}")
-            return@runBlocking
+            return
         }
         val servers = serverRepository.getRegisteredServers().filter { it.configurationTemplate.uniqueId == template.uniqueId }
         if (servers.isNotEmpty()) {
@@ -728,7 +727,7 @@ class ConfigurationTemplateCommand(
                 "§cThe splitter cannot be changed while there are still servers registered on this template!"
             )
             actor.sendMessage("§cRegistered servers: ${servers.joinToString(", ") { it.name }}")
-            return@runBlocking
+            return
         }
         template.serverSplitter = if (splitter == "''") "" else splitter
         configurationTemplateRepository.updateTemplate(template)
@@ -741,11 +740,11 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> fallback <value>")
     @CommandDescription("Edit if the fallback server should be enabled or not of a configuration template")
-    fun editFallback(
+    suspend fun editFallback(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("value", true, BooleanSuggester::class) fallback: Boolean
-    ) = runBlocking {
+    ) {
         template.fallbackServer = fallback
         configurationTemplateRepository.updateTemplate(template)
         if (fallback) {
@@ -761,14 +760,14 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> startPriority <priority>")
     @CommandDescription("Edit the start priority of a configuration template")
-    fun editStartPriority(
+    suspend fun editStartPriority(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("priority", true, IntegerSuggester::class, ["0", "100"]) priority: Int
-    ) = runBlocking {
+    ) {
         if (priority < 0 || priority > 100) {
             actor.sendMessage("§cThe priority must be between 0 and 100!")
-            return@runBlocking
+            return
         }
         template.startPriority = priority
         configurationTemplateRepository.updateTemplate(template)
@@ -779,11 +778,11 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> version <version>")
     @CommandDescription("Edit the server version of a configuration template")
-    fun editVersion(
+    suspend fun editVersion(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("version", true, CloudServerVersionSuggester::class) version: CloudServerVersion
-    ) = runBlocking {
+    ) {
         template.serverVersionId = version.uniqueId
         configurationTemplateRepository.updateTemplate(template)
         actor.sendMessage(
@@ -793,14 +792,14 @@ class ConfigurationTemplateCommand(
 
     @CommandSubPath("edit <name> startport <port>")
     @CommandDescription("Edit the start port!")
-    fun editStartPort(
+    suspend fun editStartPort(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("port", true) port: Int
-    ) = runBlocking {
+    ) {
         if (port < 100 || port > MAX_PORT) {
             actor.sendMessage("§cThe port must be between 100 and $MAX_PORT!")
-            return@runBlocking
+            return
         }
         template.startPort = port
         configurationTemplateRepository.updateTemplate(template)
@@ -810,11 +809,11 @@ class ConfigurationTemplateCommand(
     @CommandSubPath("edit <name> static <state>")
     @CommandAlias(["edit <name> static <state>"])
     @CommandDescription("Edit the static service state of a configuration template")
-    fun editStaticService(
+    suspend fun editStaticService(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("state", true, BooleanSuggester::class) staticService: Boolean
-    ) = runBlocking {
+    ) {
         val servers = serverRepository.getRegisteredServers().filter { it.configurationTemplate.uniqueId == template.uniqueId }
         if (servers.isNotEmpty()) {
             actor.sendMessage(
@@ -822,7 +821,7 @@ class ConfigurationTemplateCommand(
                     "registered! Delete all static servers or stop all dynamic servers first!"
             )
             actor.sendMessage("§cRegistered servers: ${servers.joinToString(", ") { it.name}}")
-            return@runBlocking
+            return
         }
         template.static = staticService
         configurationTemplateRepository.updateTemplate(template)
@@ -835,11 +834,11 @@ class ConfigurationTemplateCommand(
     @CommandDescription(
         "Edit the permission that is required to join a service of a configuration template! Use 'null' to remove the permission"
     )
-    fun editPermission(
+    suspend fun editPermission(
         actor: ConsoleActor,
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("permission", true) permission: String
-    ) = runBlocking {
+    ) {
         template.joinPermission = if (permission == "null") null else permission
         configurationTemplateRepository.updateTemplate(template)
         if (permission == "null") {

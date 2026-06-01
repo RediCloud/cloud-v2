@@ -16,7 +16,11 @@ import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.client.statement.readRawBytes
 import io.ktor.http.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -42,10 +46,10 @@ open class URLServerVersionHandler(
         private const val PATCH_PORT_RANGE_END = 60000
     }
 
-    protected val locks = mutableMapOf<UUID, SimpleLock>()
+    protected val locks = mutableMapOf<UUID, Mutex>()
 
-    override fun getLock(version: ICloudServerVersion): SimpleLock {
-        return locks.getOrPut(version.uniqueId) { SimpleLock() }
+    override fun getLock(version: ICloudServerVersion): Mutex {
+        return locks.getOrPut(version.uniqueId) { Mutex() }
     }
 
     override suspend fun download(version: ICloudServerVersion, force: Boolean, lock: Boolean): File {
@@ -66,24 +70,24 @@ open class URLServerVersionHandler(
             }
         }
         console.startAnimation(animation)
-        if (lock) getLock(version).lock()
-        val jar = getJar(version)
-        @Suppress("TooGenericExceptionCaught")
-        try {
-            if (jar.exists() && !force) return jar
-            downloadJar(version, jar)
-            downloadDefaultFiles(version, getFolder(version))
-        } catch (e: CloudVersionException) {
-            error = true
-            throw e
-        } catch (e: Exception) {
-            error = true
-            throw CloudVersionException("Failed to download version ${version.displayName}", e)
-        } finally {
-            downloaded = true
-            if (lock) getLock(version).unlock()
+        return getLock(version).withOptionalLock(lock) {
+            val jar = getJar(version)
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                if (jar.exists() && !force) return@withOptionalLock jar
+                downloadJar(version, jar)
+                downloadDefaultFiles(version, getFolder(version))
+            } catch (e: CloudVersionException) {
+                error = true
+                throw e
+            } catch (e: Exception) {
+                error = true
+                throw CloudVersionException("Failed to download version ${version.displayName}", e)
+            } finally {
+                downloaded = true
+            }
+            jar
         }
-        return jar
     }
 
     @Suppress("ThrowsCount")
@@ -116,15 +120,18 @@ open class URLServerVersionHandler(
         }
 
         val folder = getFolder(version)
-        if (folder.exists()) folder.deleteRecursively()
-        folder.mkdirs()
-        if (jar.exists()) jar.delete()
-        jar.writeBytes(response.readBytes())
+        val bytes = response.readRawBytes()
+        withContext(Dispatchers.IO) {
+            if (folder.exists()) folder.deleteRecursively()
+            folder.mkdirs()
+            if (jar.exists()) jar.delete()
+            jar.writeBytes(bytes)
+        }
     }
 
     private suspend fun downloadDefaultFiles(version: ICloudServerVersion, folder: File) {
         val type = serverVersionTypeRepository.getType(version.typeId!!) ?: return
-        val downloader = MultiAsyncAction()
+        val downloader = ConcurrentBatch()
         val defaultFiles = mutableMapOf<String, String>()
         defaultFiles.putAll(version.defaultFiles)
         defaultFiles.putAll(type.defaultFiles)
@@ -162,8 +169,11 @@ open class URLServerVersionHandler(
                 )
                 return
             }
-            file.createNewFile()
-            file.writeBytes(response.readBytes())
+            val bytes = response.readRawBytes()
+            withContext(Dispatchers.IO) {
+                file.createNewFile()
+                file.writeBytes(bytes)
+            }
         } catch (e: Exception) {
             logger.warning(
                 "§cFailed to download default file ${toConsoleValue(
@@ -239,38 +249,42 @@ open class URLServerVersionHandler(
             }
         }
         console.startAnimation(animation)
-        if (lock) getLock(version).lock()
-        @Suppress("TooGenericExceptionCaught")
-        try {
-            val jar = getJar(version)
-            if (!jar.exists()) download(version, true, lock = false)
+        getLock(version).withOptionalLock(lock) {
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                val jar = getJar(version)
+                if (!jar.exists()) download(version, true, lock = false)
 
-            val versionDir = getFolder(version)
-            val tempDir = File(TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath, UUID.randomUUID().toString())
-            tempDir.mkdirs()
-            versionDir.copyRecursively(tempDir, true)
-            val tempJar = File(tempDir, jar.name)
+                val versionDir = getFolder(version)
+                val tempDir = File(TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath, UUID.randomUUID().toString())
+                withContext(Dispatchers.IO) {
+                    tempDir.mkdirs()
+                    versionDir.copyRecursively(tempDir, true)
+                }
+                val tempJar = File(tempDir, jar.name)
 
-            val type = resolveVersionType(version)
-            val javaVersion = resolveJavaVersion(version)
-            executePatchProcess(version, type, javaVersion, tempDir, tempJar)
+                val type = resolveVersionType(version)
+                val javaVersion = resolveJavaVersion(version)
+                executePatchProcess(version, type, javaVersion, tempDir, tempJar)
 
-            if (!versionDir.exists()) versionDir.mkdirs()
-            tempJar.copyTo(jar, true)
-            cleanupPatchedFiles(version, type, tempDir, tempJar)
-            versionDir.deleteRecursively()
-            tempDir.copyRecursively(versionDir, true)
-            tempDir.deleteRecursively()
-            File(versionDir, ".patched").createNewFile()
-        } catch (e: CloudVersionException) {
-            error = true
-            throw e
-        } catch (e: Exception) {
-            error = true
-            throw CloudVersionException("Failed to patch version ${version.displayName}", e)
-        } finally {
-            patched = true
-            if (lock) getLock(version).unlock()
+                withContext(Dispatchers.IO) {
+                    if (!versionDir.exists()) versionDir.mkdirs()
+                    tempJar.copyTo(jar, true)
+                    cleanupPatchedFiles(version, type, tempDir, tempJar)
+                    versionDir.deleteRecursively()
+                    tempDir.copyRecursively(versionDir, true)
+                    tempDir.deleteRecursively()
+                    File(versionDir, ".patched").createNewFile()
+                }
+            } catch (e: CloudVersionException) {
+                error = true
+                throw e
+            } catch (e: Exception) {
+                error = true
+                throw CloudVersionException("Failed to patch version ${version.displayName}", e)
+            } finally {
+                patched = true
+            }
         }
     }
 
@@ -304,10 +318,12 @@ open class URLServerVersionHandler(
         findFreePort(PATCH_PORT_RANGE_START..PATCH_PORT_RANGE_END)
         val processBuilder = ProcessBuilder(patchCommand(type, javaVersion, tempJar))
         processBuilder.directory(tempDir)
-        val process = processBuilder.start()
-        val screen = console.createScreen("patch_${version.displayName}")
-        ScreenProcessHandler(process, screen)
-        process.waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+        withContext(Dispatchers.IO) {
+            val process = processBuilder.start()
+            val screen = console.createScreen("patch_${version.displayName}")
+            ScreenProcessHandler(process, screen)
+            process.waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+        }
     }
 
     private fun cleanupPatchedFiles(

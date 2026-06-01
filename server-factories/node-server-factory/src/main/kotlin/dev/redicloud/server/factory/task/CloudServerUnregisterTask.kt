@@ -8,7 +8,7 @@ import dev.redicloud.api.service.server.ICloudServerRepository
 import dev.redicloud.logging.LogManager
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.tasks.CloudTask
-import dev.redicloud.utils.MultiAsyncAction
+import dev.redicloud.utils.ConcurrentBatch
 
 class CloudServerUnregisterTask(
     private val thisNodeId: ServiceId,
@@ -25,7 +25,7 @@ class CloudServerUnregisterTask(
         if (nodeRepository.getMasterNode()?.serviceId != thisNodeId) {
             return false
         }
-        val actions = MultiAsyncAction()
+        val actions = ConcurrentBatch()
         serverFactory.unregisterQueue.forEach { serviceId ->
             serverFactory.unregisterQueue.remove(serviceId)
             if (!serverRepository.existsServer<ICloudServer>(serviceId)) {

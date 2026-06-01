@@ -8,11 +8,11 @@ interface IModuleHandler {
 
     fun isModuleReloadable(moduleId: String): Boolean
 
-    fun reloadModule(moduleId: String)
+    suspend fun reloadModule(moduleId: String)
 
-    fun unloadModule(moduleId: String)
+    suspend fun unloadModule(moduleId: String)
 
-    fun loadModule(moduleId: String)
+    suspend fun loadModule(moduleId: String)
 
     fun getStorage(moduleId: String, name: String): IModuleStorage
 

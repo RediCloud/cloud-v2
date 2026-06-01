@@ -13,12 +13,14 @@ import dev.redicloud.utils.getTextOfAPIWithFallback
 import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
+import kotlinx.coroutines.CoroutineScope
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
 
 class CloudServerVersionRepository(
     databaseConnection: DatabaseConnection,
-    packetManager: PacketManager
+    packetManager: PacketManager,
+    scope: CoroutineScope
 ) : CachedDatabaseBucketRepository<ICloudServerVersion, CloudServerVersion>(
     databaseConnection,
     "server-version",
@@ -26,6 +28,7 @@ class CloudServerVersionRepository(
     CloudServerVersion::class,
     5.minutes,
     packetManager,
+    scope,
     ServiceType.NODE
 ),
     ICloudServerVersionRepository {
@@ -44,7 +47,7 @@ class CloudServerVersionRepository(
     }
 
     override suspend fun getVersion(name: String): CloudServerVersion? {
-        return getVersions().firstOrNull { it.displayName.lowercase() == name.lowercase() }
+        return getVersions().firstOrNull { it.displayName.equals(name, ignoreCase = true) }
     }
 
     override suspend fun existsVersion(uniqueId: UUID): Boolean {
@@ -52,7 +55,7 @@ class CloudServerVersionRepository(
     }
 
     override suspend fun existsVersion(name: String): Boolean {
-        return getVersions().any { it.displayName.lowercase() == name.lowercase() }
+        return getVersions().any { it.displayName.equals(name, ignoreCase = true) }
     }
 
     override suspend fun updateVersion(version: ICloudServerVersion): CloudServerVersion {

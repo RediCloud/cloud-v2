@@ -14,7 +14,11 @@ import dev.redicloud.logging.Logger
 import dev.redicloud.utils.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.client.statement.readRawBytes
 import io.ktor.http.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -61,26 +65,25 @@ class PaperMcServerVersionHandler(
             }
             console.startAnimation(animation)
         }
-        if (lock) getLock(version).lock()
-        val jar = getJar(version)
-        @Suppress("TooGenericExceptionCaught")
-        try {
-            if (jar.exists() && !force) return jar
-            downloadJar(version, jar)
-            downloadDefaultFiles(version, getFolder(version), logger)
-            lastUpdateChecks[version] = System.currentTimeMillis()
-        } catch (e: CloudVersionException) {
-            error = true
-            throw e
-        } catch (e: Exception) {
-            error = true
-            throw CloudVersionException("Failed to download version ${version.displayName}", e)
-        } finally {
-            downloaded = true
-            if (lock) getLock(version).unlock()
+        return getLock(version).withOptionalLock(lock) {
+            val jar = getJar(version)
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                if (jar.exists() && !force) return@withOptionalLock jar
+                downloadJar(version, jar)
+                downloadDefaultFiles(version, getFolder(version), logger)
+                lastUpdateChecks[version] = System.currentTimeMillis()
+            } catch (e: CloudVersionException) {
+                error = true
+                throw e
+            } catch (e: Exception) {
+                error = true
+                throw CloudVersionException("Failed to download version ${version.displayName}", e)
+            } finally {
+                downloaded = true
+            }
+            jar
         }
-
-        return jar
     }
 
     @Suppress("ThrowsCount")
@@ -102,10 +105,13 @@ class PaperMcServerVersionHandler(
         }
 
         val folder = getFolder(version)
-        if (folder.exists()) folder.deleteRecursively()
-        folder.mkdirs()
-        if (jar.exists()) jar.delete()
-        jar.writeBytes(response.readBytes())
+        val bytes = response.readRawBytes()
+        withContext(Dispatchers.IO) {
+            if (folder.exists()) folder.deleteRecursively()
+            folder.mkdirs()
+            if (jar.exists()) jar.delete()
+            jar.writeBytes(bytes)
+        }
 
         version.buildId = buildId.toString()
         serverVersionRepository.updateVersion(version)
@@ -113,7 +119,7 @@ class PaperMcServerVersionHandler(
 
     private suspend fun downloadDefaultFiles(version: ICloudServerVersion, folder: File, logger: Logger) {
         val type = serverVersionTypeRepository.getType(version.typeId!!) ?: return
-        val downloader = MultiAsyncAction()
+        val downloader = ConcurrentBatch()
         val defaultFiles = mutableMapOf<String, String>()
         defaultFiles.putAll(version.defaultFiles)
         defaultFiles.putAll(type.defaultFiles)
@@ -159,8 +165,11 @@ class PaperMcServerVersionHandler(
                 )
                 return
             }
-            file.createNewFile()
-            file.writeBytes(response.readBytes())
+            val bytes = response.readRawBytes()
+            withContext(Dispatchers.IO) {
+                file.createNewFile()
+                file.writeBytes(bytes)
+            }
         } catch (e: Exception) {
             logger.warning(
                 "§cFailed to download default file ${toConsoleValue(
@@ -254,38 +263,42 @@ class PaperMcServerVersionHandler(
             }
             console.startAnimation(animation)
         }
-        if (lock) getLock(version).lock()
-        @Suppress("TooGenericExceptionCaught")
-        try {
-            val jar = getJar(version)
-            if (!jar.exists()) download(version, true, lock = false)
+        getLock(version).withOptionalLock(lock) {
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                val jar = getJar(version)
+                if (!jar.exists()) download(version, true, lock = false)
 
-            val versionDir = getFolder(version)
-            val tempDir = File(TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath, UUID.randomUUID().toString())
-            tempDir.mkdirs()
-            versionDir.copyRecursively(tempDir, true)
-            val tempJar = File(tempDir, jar.name)
+                val versionDir = getFolder(version)
+                val tempDir = File(TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath, UUID.randomUUID().toString())
+                withContext(Dispatchers.IO) {
+                    tempDir.mkdirs()
+                    versionDir.copyRecursively(tempDir, true)
+                }
+                val tempJar = File(tempDir, jar.name)
 
-            val type = resolveVersionType(version)
-            val javaVersion = resolveJavaVersion(version)
-            executePatchProcess(version, type, javaVersion, tempDir, tempJar)
+                val type = resolveVersionType(version)
+                val javaVersion = resolveJavaVersion(version)
+                executePatchProcess(version, type, javaVersion, tempDir, tempJar)
 
-            if (!versionDir.exists()) versionDir.mkdirs()
-            tempJar.copyTo(jar, true)
-            cleanupPatchedFiles(version, type, tempDir, tempJar)
-            versionDir.deleteRecursively()
-            tempDir.copyRecursively(versionDir, true)
-            tempDir.deleteRecursively()
-            File(versionDir, ".patched").createNewFile()
-        } catch (e: CloudVersionException) {
-            error = true
-            throw e
-        } catch (e: Exception) {
-            error = true
-            throw CloudVersionException("Failed to patch version ${version.displayName}", e)
-        } finally {
-            patched = true
-            if (lock) getLock(version).unlock()
+                withContext(Dispatchers.IO) {
+                    if (!versionDir.exists()) versionDir.mkdirs()
+                    tempJar.copyTo(jar, true)
+                    cleanupPatchedFiles(version, type, tempDir, tempJar)
+                    versionDir.deleteRecursively()
+                    tempDir.copyRecursively(versionDir, true)
+                    tempDir.deleteRecursively()
+                    File(versionDir, ".patched").createNewFile()
+                }
+            } catch (e: CloudVersionException) {
+                error = true
+                throw e
+            } catch (e: Exception) {
+                error = true
+                throw CloudVersionException("Failed to patch version ${version.displayName}", e)
+            } finally {
+                patched = true
+            }
         }
     }
 
@@ -315,12 +328,14 @@ class PaperMcServerVersionHandler(
         findFreePort(PATCH_PORT_RANGE_START..PATCH_PORT_RANGE_END)
         val processBuilder = ProcessBuilder(patchCommand(type, javaVersion, tempJar))
         processBuilder.directory(tempDir)
-        val process = processBuilder.start()
-        console?.let {
-            val screen = console.createScreen("patch_${version.displayName}")
-            ScreenProcessHandler(process, screen)
+        withContext(Dispatchers.IO) {
+            val process = processBuilder.start()
+            console?.let {
+                val screen = console.createScreen("patch_${version.displayName}")
+                ScreenProcessHandler(process, screen)
+            }
+            process.waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
         }
-        process.waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
     }
 
     private fun cleanupPatchedFiles(
@@ -371,7 +386,7 @@ class PaperMcServerVersionHandler(
         return IServerVersionHandler.getDefaultHandler().patchCommand(type, javaVersion, jarToExecute)
     }
 
-    override fun getLock(version: ICloudServerVersion): SimpleLock {
+    override fun getLock(version: ICloudServerVersion): Mutex {
         return IServerVersionHandler.getDefaultHandler().getLock(version)
     }
 }

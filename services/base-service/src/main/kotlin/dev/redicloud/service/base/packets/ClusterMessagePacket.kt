@@ -11,7 +11,7 @@ class ClusterMessagePacket(
 ) : AbstractPacket() {
 
     // TODO error support
-    override fun received(manager: IPacketManager) {
+    override suspend fun received(manager: IPacketManager) {
         super.received(manager)
         BaseService.LOGGER.log(level, message)
     }

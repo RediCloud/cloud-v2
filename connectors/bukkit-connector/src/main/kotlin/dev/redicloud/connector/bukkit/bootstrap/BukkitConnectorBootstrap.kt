@@ -5,6 +5,7 @@ import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.loaders.URLClassLoaderJarLoader
 import dev.redicloud.logging.configureLogger
 import dev.redicloud.utils.loadProperties
+import kotlinx.coroutines.runBlocking
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 import java.net.URLClassLoader
@@ -23,6 +24,7 @@ class BukkitConnectorBootstrap : JavaPlugin() {
             configureLogger("org.redisson", Level.OFF)
             configureLogger("io.netty", Level.INFO)
             connector = BukkitConnector(this)
+            runBlocking { connector!!.start() }
         } catch (e: Exception) {
             System.err.println("Failed to initialize BukkitConnector: ${e.message}")
             System.err.println(e.stackTraceToString())

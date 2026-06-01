@@ -62,9 +62,11 @@ import dev.redicloud.service.base.suggester.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.tasks.CloudTaskManager
 import dev.redicloud.utils.InjectorModule
-import dev.redicloud.utils.defaultScope
-import dev.redicloud.utils.ioScope
+import dev.redicloud.utils.coroutineExceptionHandler
 import dev.redicloud.utils.loadProperties
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -83,6 +85,8 @@ abstract class BaseService(
         val LOGGER = LogManager.logger(BaseService::class)
         var SHUTTINGDOWN = false
     }
+
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default + coroutineExceptionHandler)
 
     val databaseConnection: DatabaseConnection
 
@@ -125,6 +129,7 @@ abstract class BaseService(
         clusterConfiguration = ClusterConfiguration(databaseConnection)
 
         packetManager = PacketManager(databaseConnection, serviceId)
+        runBlocking { packetManager.connect() }
         eventManager = EventManager("base-event-manager", packetManager)
         val taskThreads = when (serviceId.type) {
             ServiceType.NODE -> 4
@@ -138,12 +143,12 @@ abstract class BaseService(
             .period(30.seconds)
             .register()
 
-        playerRepository = PlayerRepository(databaseConnection, eventManager, packetManager)
-        javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection, packetManager)
-        nodeRepository = NodeRepository(databaseConnection, packetManager, eventManager)
-        serverVersionRepository = CloudServerVersionRepository(databaseConnection, packetManager)
-        configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager, packetManager)
-        serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager)
+        playerRepository = PlayerRepository(databaseConnection, eventManager, packetManager, scope)
+        javaVersionRepository = JavaVersionRepository(serviceId, databaseConnection, packetManager, scope)
+        nodeRepository = NodeRepository(databaseConnection, packetManager, eventManager, scope)
+        serverVersionRepository = CloudServerVersionRepository(databaseConnection, packetManager, scope)
+        configurationTemplateRepository = ConfigurationTemplateRepository(databaseConnection, eventManager, packetManager, scope)
+        serverRepository = ServerRepository(databaseConnection, serviceId, packetManager, eventManager, scope)
         this.registerPackets()
         this.registerPacketListeners()
     }
@@ -174,7 +179,7 @@ abstract class BaseService(
         this.registerDefaultSuggesters()
     }
 
-    open fun plattformShutdown() {}
+    open fun platformShutdown() {}
 
     open fun shutdown(force: Boolean = false) {
         SHUTTINGDOWN = true
@@ -185,20 +190,19 @@ abstract class BaseService(
             taskManager.getTasks().forEach { it.cancel() }
             packetManager.disconnect()
             databaseConnection.disconnect()
-            defaultScope.cancel()
-            ioScope.cancel()
-            Console.Companion.CURRENT_CONSOLE?.close(true)
+            scope.cancel()
+            Console.CURRENT_CONSOLE?.close(true)
         }
     }
 
     fun sendClusterMessage(message: String, level: Level = Level.INFO, vararg serviceIds: ServiceId) {
-        ioScope.launch {
+        scope.launch {
             packetManager.publish(ClusterMessagePacket(message, level), *serviceIds)
         }
     }
 
     fun sendClusterMessage(message: String, level: Level = Level.INFO, serviceTargetType: ServiceType) {
-        ioScope.launch {
+        scope.launch {
             packetManager.publish(ClusterMessagePacket(message, level), serviceTargetType)
         }
     }

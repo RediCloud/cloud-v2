@@ -10,11 +10,11 @@ val SUGGESTERS = mutableListOf(
 )
 
 class CommandSubPathSuggester(val subCommand: CommandSubBase) : AbstractCommandSuggester() {
-    override fun suggest(context: CommandContext): Array<String> = subCommand.getSubPaths().toTypedArray()
+    override suspend fun suggest(context: CommandContext): Array<String> = subCommand.getSubPaths().toTypedArray()
 }
 
 class CommandSuggester(val command: CommandBase) : AbstractCommandSuggester() {
-    override fun suggest(context: CommandContext): Array<String> {
+    override suspend fun suggest(context: CommandContext): Array<String> {
         return if (context.input.isEmpty()) {
             arrayOf(command.name)
         } else {
@@ -25,7 +25,7 @@ class CommandSuggester(val command: CommandBase) : AbstractCommandSuggester() {
 
 class CommandArgumentSuggester(val commandArgument: CommandArgument) : AbstractCommandSuggester() {
 
-    override fun suggest(context: CommandContext): Array<String> {
+    override suspend fun suggest(context: CommandContext): Array<String> {
         if (!commandArgument.subCommand.isThis(context.input, true)) return arrayOf()
         val nextArgument = commandArgument.isThis(context.input, true)
         if (nextArgument) {

@@ -1,5 +1,6 @@
 package dev.redicloud.connector.velocity.listener
 
+import com.velocitypowered.api.event.EventTask
 import com.velocitypowered.api.event.PostOrder
 import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
@@ -14,7 +15,8 @@ import dev.redicloud.repository.player.CloudPlayer
 import dev.redicloud.repository.player.PlayerRepository
 import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.repository.server.ServerRepository
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import net.kyori.adventure.text.Component
 import kotlin.jvm.optionals.getOrElse
 
@@ -22,15 +24,28 @@ class CloudPlayerListener(
     private val serviceId: ServiceId,
     private val playerRepository: PlayerRepository,
     private val serverRepository: ServerRepository,
-    private val proxyServer: ProxyServer
+    private val proxyServer: ProxyServer,
+    private val scope: CoroutineScope
 ) {
 
+    private fun suspendEvent(block: suspend () -> Unit): EventTask {
+        return EventTask.withContinuation { continuation ->
+            scope.launch {
+                try {
+                    block()
+                } finally {
+                    continuation.resume()
+                }
+            }
+        }
+    }
+
     @Subscribe(order = PostOrder.FIRST)
-    fun onPostLogin(event: PostLoginEvent) = runBlocking {
-        val fallback = runBlocking { serverRepository.getFallback() }
+    fun onPostLogin(event: PostLoginEvent) = suspendEvent {
+        val fallback = serverRepository.getFallback()
         if (fallback == null) {
             event.player.disconnect(Component.text("No fallback server found!"))
-            return@runBlocking
+            return@suspendEvent
         }
         val player = event.player
         if (playerRepository.existsPlayer(player.uniqueId)) {
@@ -39,7 +54,7 @@ class CloudPlayerListener(
                 (cloudPlayer.proxyId == serviceId && event.player.currentServer.isPresent)
             if (cloudPlayer.connected && alreadyConnected) {
                 event.player.disconnect(Component.text("You are already connected to the network!"))
-                return@runBlocking
+                return@suspendEvent
             }
             cloudPlayer.connected = true
             cloudPlayer.lastConnect = System.currentTimeMillis()
@@ -64,9 +79,9 @@ class CloudPlayerListener(
     }
 
     @Subscribe(order = PostOrder.LAST)
-    fun onDisconnect(event: DisconnectEvent) = runBlocking {
+    fun onDisconnect(event: DisconnectEvent) = suspendEvent {
         val player = event.player
-        val cloudPlayer = playerRepository.getPlayer(player.uniqueId) ?: return@runBlocking
+        val cloudPlayer = playerRepository.getPlayer(player.uniqueId) ?: return@suspendEvent
         cloudPlayer.lastDisconnect = System.currentTimeMillis()
         cloudPlayer.proxyId = null
         cloudPlayer.serverId = null
@@ -75,8 +90,8 @@ class CloudPlayerListener(
     }
 
     @Subscribe
-    fun onServerPreConnect(event: ServerPreConnectEvent) = runBlocking {
-        if (!event.result.isAllowed) return@runBlocking
+    fun onServerPreConnect(event: ServerPreConnectEvent) = suspendEvent {
+        if (!event.result.isAllowed) return@suspendEvent
         val targetServer = if (event.originalServer.serverInfo.name == "rcfallback") {
             serverRepository.getFallback()
         } else {
@@ -84,18 +99,18 @@ class CloudPlayerListener(
         }
         if (targetServer == null) {
             event.player.disconnect(Component.text("No fallback server found!"))
-            return@runBlocking
+            return@suspendEvent
         }
         val server = proxyServer.getServer(targetServer.name)
         if (!server.isPresent) {
             event.player.disconnect(Component.text("No fallback server found!"))
-            return@runBlocking
+            return@suspendEvent
         }
         event.result = ServerPreConnectEvent.ServerResult.allowed(server.get())
     }
 
     @Subscribe(order = PostOrder.FIRST)
-    fun onServerConnected(event: ServerConnectedEvent): Unit = runBlocking {
+    fun onServerConnected(event: ServerConnectedEvent) = suspendEvent {
         val player = event.player
         val cloudPlayer = playerRepository.getPlayer(player.uniqueId)
         if (cloudPlayer == null) {
@@ -107,7 +122,7 @@ class CloudPlayerListener(
     }
 
     @Subscribe(order = PostOrder.FIRST)
-    fun onKickedFromServer(event: KickedFromServerEvent) = runBlocking {
+    fun onKickedFromServer(event: KickedFromServerEvent) = suspendEvent {
         val player = event.player
         val cloudPlayer = playerRepository.getPlayer(player.uniqueId)
         if (cloudPlayer != null) {
@@ -121,14 +136,14 @@ class CloudPlayerListener(
             event.server.serverInfo.name,
             ServiceType.MINECRAFT_SERVER
         )
-        val fallback = runBlocking { serverRepository.getFallback(cloudPlayer?.serverId, kickedFromServer?.serviceId) }
+        val fallback = serverRepository.getFallback(cloudPlayer?.serverId, kickedFromServer?.serviceId)
         if (fallback == null) {
             event.result = KickedFromServerEvent.DisconnectPlayer.create(
                 event.serverKickReason.getOrElse {
                     Component.text("You were kicked from the server and no fallback was found!")
                 }
             )
-            return@runBlocking
+            return@suspendEvent
         }
         val server = proxyServer.getServer(fallback.name)
         if (!server.isPresent) {
@@ -137,7 +152,7 @@ class CloudPlayerListener(
                     Component.text("You were kicked from the server and no fallback was found!")
                 }
             )
-            return@runBlocking
+            return@suspendEvent
         }
         if (event.server.serverInfo.name == server.get().serverInfo.name) {
             event.result = KickedFromServerEvent.DisconnectPlayer.create(
@@ -145,7 +160,7 @@ class CloudPlayerListener(
                     Component.text("You were kicked from the server and no fallback was found!")
                 }
             )
-            return@runBlocking
+            return@suspendEvent
         }
         event.result = KickedFromServerEvent.RedirectPlayer.create(server.get())
     }

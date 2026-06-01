@@ -1,6 +1,7 @@
 package dev.redicloud.console.jline
 
 import dev.redicloud.console.Console
+import kotlinx.coroutines.runBlocking
 import org.jline.reader.Candidate
 import org.jline.reader.Completer
 import org.jline.reader.LineReader
@@ -20,10 +21,12 @@ class ConsoleCompleter(val console: Console) : Completer {
         }
 
         candidates.addAll(
-            console.commandManager.getCompletions(
-                console.commandManager.defaultActor,
-                line.line()
-            ).map { Candidate(it) }
+            runBlocking {
+                console.commandManager.getCompletions(
+                    console.commandManager.defaultActor,
+                    line.line()
+                )
+            }.map { Candidate(it) }
         )
     }
 }

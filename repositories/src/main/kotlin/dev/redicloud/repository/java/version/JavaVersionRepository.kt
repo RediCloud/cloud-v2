@@ -12,6 +12,7 @@ import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
+import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.util.*
 import kotlin.time.Duration.Companion.minutes
@@ -19,7 +20,8 @@ import kotlin.time.Duration.Companion.minutes
 class JavaVersionRepository(
     val serviceId: ServiceId,
     databaseConnection: DatabaseConnection,
-    packetManager: PacketManager
+    packetManager: PacketManager,
+    scope: CoroutineScope
 ) : CachedDatabaseBucketRepository<ICloudJavaVersion, CloudJavaVersion>(
     databaseConnection,
     "java-version",
@@ -27,6 +29,7 @@ class JavaVersionRepository(
     CloudJavaVersion::class,
     5.minutes,
     packetManager,
+    scope,
     ServiceType.NODE,
 ),
     ICloudJavaVersionRepository {
@@ -45,7 +48,7 @@ class JavaVersionRepository(
     override suspend fun getVersion(uniqueId: UUID): CloudJavaVersion? = get(uniqueId.toString())
 
     override suspend fun existsVersion(name: String): Boolean =
-        getVersions().any { it.name.lowercase() == name.lowercase() }
+        getVersions().any { it.name.equals(name, ignoreCase = true) }
 
     override suspend fun existsVersion(uniqueId: UUID): Boolean = exists(uniqueId.toString())
 
@@ -67,7 +70,7 @@ class JavaVersionRepository(
     }
 
     override suspend fun getVersion(name: String) =
-        getVersions().firstOrNull { it.name.lowercase() == name.lowercase() }
+        getVersions().firstOrNull { it.name.equals(name, ignoreCase = true) }
 
     override suspend fun getOnlineVersions(): List<CloudJavaVersion> =
         ONLINE_VERSION_CACHE.get()?.toList() ?: emptyList()
@@ -83,7 +86,7 @@ class JavaVersionRepository(
         return versions.map { file ->
             created.forEach { javaVersion ->
                 val byId = file.name.split("-").any { it.lowercase() == javaVersion.id.toString() }
-                val byName = file.name.lowercase() == javaVersion.name.lowercase()
+                val byName = file.name.equals(javaVersion.name, ignoreCase = true)
                 if (byId || byName) return@map javaVersion
             }
             val javaInfo = getVersionInfo(file.absolutePath)

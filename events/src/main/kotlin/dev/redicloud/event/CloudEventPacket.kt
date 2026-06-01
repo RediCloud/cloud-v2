@@ -11,7 +11,7 @@ class CloudEventPacket(
     val managerIdentifier: String
 ) : AbstractPacket() {
 
-    override fun received(manager: IPacketManager) {
+    override suspend fun received(manager: IPacketManager) {
         super.received(manager)
         val eventManager = EventManager.getManager(managerIdentifier)
         if (eventManager == null) {

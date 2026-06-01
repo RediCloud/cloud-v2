@@ -41,13 +41,13 @@ interface IPacketManager {
     suspend fun publishToCategory(packet: AbstractPacket, categoryName: String): IPacketResponse
 }
 
-inline fun <reified T : AbstractPacket> IPacketManager.listen(noinline handler: (T) -> Unit): PacketListener<T> {
+inline fun <reified T : AbstractPacket> IPacketManager.listen(noinline handler: suspend (T) -> Unit): PacketListener<T> {
     val listener = PacketListener(T::class, handler)
     registerListener(listener)
     return listener
 }
 
-fun <T : AbstractPacket> IPacketManager.listen(clazz: KClass<T>, handler: (T) -> Unit): PacketListener<T> {
+fun <T : AbstractPacket> IPacketManager.listen(clazz: KClass<T>, handler: suspend (T) -> Unit): PacketListener<T> {
     val listener = PacketListener(clazz, handler)
     registerListener(listener)
     return listener

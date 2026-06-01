@@ -8,11 +8,13 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.CachedServiceRepository
 import dev.redicloud.repository.service.ServiceRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlin.time.Duration.Companion.minutes
 
 class FileNodeRepository(
     databaseConnection: DatabaseConnection,
-    packetManager: PacketManager
+    packetManager: PacketManager,
+    scope: CoroutineScope
 ) : ServiceRepository(
     databaseConnection,
     packetManager
@@ -26,7 +28,8 @@ class FileNodeRepository(
         IFileNode::class,
         FileNode::class,
         5.minutes,
-        this
+        this,
+        scope
     ) {
         override suspend fun transformShutdownable(service: FileNode): FileNode = service
     }

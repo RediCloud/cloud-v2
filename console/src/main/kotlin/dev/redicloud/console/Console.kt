@@ -37,6 +37,7 @@ import dev.redicloud.utils.coroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -53,6 +54,7 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.UUID
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
@@ -103,7 +105,8 @@ open class Console(
     override var printingEnabled = true
     override var matchingHistorySearch = true
 
-    private val animationScope = CoroutineScope(Dispatchers.Default + coroutineExceptionHandler)
+    private val animationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + coroutineExceptionHandler)
+    var commandScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + coroutineExceptionHandler)
     private var logRecordDispatcher: ThreadRecordDispatcher? = null
 
     init {
@@ -199,7 +202,7 @@ open class Console(
 
     private fun run() {
         CONSOLE_THREAD = Thread({
-            CURRENT_CONSOLE?.eventManager?.fireEvent(ConsoleRunEvent(this@Console))
+            runBlocking { CURRENT_CONSOLE?.eventManager?.fireEvent(ConsoleRunEvent(this@Console)) }
             while (!Thread.currentThread().isInterrupted) {
                 val line = readLineInput() ?: continue
                 CURRENT_CONSOLE?.defaultScreen?.addLine((CURRENT_CONSOLE?.prompt ?: "") + line + "\r\n")
@@ -228,20 +231,22 @@ open class Console(
     private fun handleCommandInput(line: String) {
         if (CURRENT_CONSOLE?.commandManager?.areCommandsDisabled() != false) return
         val commandManager = CURRENT_CONSOLE?.commandManager ?: return
-        @Suppress("TooGenericExceptionCaught")
-        try {
-            val response = commandManager.handleInput(commandManager.defaultActor, line)
-            if (response.type == CommandResponseType.HELP_SENT) return
-            if (response.message != null && response.type != CommandResponseType.BLANK_INPUT &&
-                response.type != CommandResponseType.ERROR
-            ) {
-                commandManager.defaultActor.sendMessage(response.message!!)
+        commandScope.launch {
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                val response = commandManager.handleInput(commandManager.defaultActor, line)
+                if (response.type == CommandResponseType.HELP_SENT) return@launch
+                if (response.message != null && response.type != CommandResponseType.BLANK_INPUT &&
+                    response.type != CommandResponseType.ERROR
+                ) {
+                    commandManager.defaultActor.sendMessage(response.message!!)
+                }
+                if (response.throwable != null && response.type == CommandResponseType.ERROR) {
+                    LOGGER.severe(response.message!!, response.throwable!!)
+                }
+            } catch (e: Exception) {
+                LOGGER.severe("Error while routing/processing command", e)
             }
-            if (response.throwable != null && response.type == CommandResponseType.ERROR) {
-                LOGGER.severe(response.message!!, response.throwable!!)
-            }
-        } catch (e: Exception) {
-            LOGGER.severe("Error while routing/processing command", e)
         }
     }
 
@@ -319,8 +324,8 @@ open class Console(
 
     override fun startAnimation(animation: AbstractConsoleAnimation) {
         val uniqueId = UUID.randomUUID()
-        var started = false
-        animation.addStartHandler { started = true }
+        val latch = CountDownLatch(1)
+        animation.addStartHandler { latch.countDown() }
         val job = animationScope.launch {
             animation.running = true
             animation.run()
@@ -329,7 +334,7 @@ open class Console(
             animation.handleDone()
         }
         runningAnimations[uniqueId] = job to animation
-        while (!started) Thread.sleep(10)
+        latch.await()
     }
 
     override fun cancelAnimations() {
@@ -358,7 +363,7 @@ open class Console(
 
     override fun getScreens(): List<Screen> = screens.toList()
 
-    override fun getScreen(name: String): Screen? = screens.firstOrNull { it.name.lowercase() == name.lowercase() }
+    override fun getScreen(name: String): Screen? = screens.firstOrNull { it.name.equals(name, ignoreCase = true) }
 
     override fun createScreen(
         name: String,

@@ -9,7 +9,7 @@ class UnloadableModulesSuggester(
     private val moduleHandler: ModuleHandler
 ) : AbstractCommandSuggester() {
 
-    override fun suggest(context: CommandContext): Array<String> {
+    override suspend fun suggest(context: CommandContext): Array<String> {
         val modules = moduleHandler.getModuleDatas()
         val loaded = modules.filter { it.lifeCycle == ModuleLifeCycle.LOAD || it.loaded }.map { it.description }
         val results = loaded + moduleHandler.getCachedDescriptions()

@@ -7,7 +7,7 @@ class ServerScreenParser(
     private val console: Console
 ) : ICommandArgumentParser<ServerScreen> {
 
-    override fun parse(parameter: String): ServerScreen? {
+    override suspend fun parse(parameter: String): ServerScreen? {
         val screen = console.getScreen(parameter) ?: return null
         if (screen !is ServerScreen) return null
         return screen

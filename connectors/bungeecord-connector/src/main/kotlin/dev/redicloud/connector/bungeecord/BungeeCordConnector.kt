@@ -39,12 +39,11 @@ class BungeeCordConnector(
         this.eventManager
     )
 
-    init {
+    override suspend fun start() {
+        super.start()
         initApi()
-        runBlocking {
-            registerTasks()
-        }
-        runBlocking { moduleHandler.loadModules() }
+        registerTasks()
+        moduleHandler.loadModules()
     }
 
     override fun registerServer(server: CloudMinecraftServer) {
@@ -102,7 +101,7 @@ class BungeeCordConnector(
         super.onDisable()
     }
 
-    override fun plattformShutdown() {
+    override fun platformShutdown() {
         this.bungeecordShuttingDown = true
         ProxyServer.getInstance().stop()
     }
@@ -111,7 +110,9 @@ class BungeeCordConnector(
         fun register(listener: Listener) {
             ProxyServer.getInstance().pluginManager.registerListener(plugin, listener)
         }
-        register(CloudPlayerListener(this.serviceId, this.playerRepository, this.serverRepository, this.plugin))
+        register(
+            CloudPlayerListener(this.serviceId, this.playerRepository, this.serverRepository, this.plugin, this.scope)
+        )
     }
 
     override fun getConnectorPlugin(): Plugin {

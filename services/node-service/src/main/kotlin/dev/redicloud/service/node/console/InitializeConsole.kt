@@ -20,6 +20,7 @@ import dev.redicloud.repository.java.version.isJavaVersionNotTested
 import dev.redicloud.repository.java.version.isJavaVersionSupported
 import dev.redicloud.service.node.NodeConfiguration
 import dev.redicloud.utils.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import java.util.*
 import java.util.logging.Filter
@@ -186,7 +187,7 @@ class InitializeConsole : Console(
 
     override fun sendHeader() {
         super.sendHeader()
-        getJavaVersion() // Load versions
+        runBlocking { getJavaVersion() } // Load versions
         writeLine("§8» §fChecks§8:")
         writeLine("§f‾‾‾‾‾‾‾‾‾‾‾‾‾")
         writeLine("§8• §fLibraries §8» ${checkLibs()}")
@@ -214,8 +215,8 @@ class InitializeConsole : Console(
         }
     }
 
-    private fun checkJava(): String {
-        return if (isJavaVersionSupported(getJavaVersion())) {
+    private fun checkJava(): String = runBlocking {
+        if (isJavaVersionSupported(getJavaVersion())) {
             "§2✓ §8(§fJava: %hc%${System.getProperty("java.version")}§8)"
         } else if (isJavaVersionNotTested(getJavaVersion())) {
             "§e§l~ §8(§eJava: ${System.getProperty("java.version")}§8| §enot tested§8)"
@@ -228,7 +229,7 @@ class InitializeConsole : Console(
         val nodeFile = NODE_JSON.getFile()
         if (!nodeFile.exists()) {
             writeLine("Node file not found! Starting node setup in 5 seconds...")
-            Thread.sleep(SETUP_RETRY_DELAY_MS)
+            delay(SETUP_RETRY_DELAY_MS)
             return nodeSetup()
         }
         return try {
@@ -243,7 +244,7 @@ class InitializeConsole : Console(
             config
         } catch (_: Exception) {
             writeLine("§cError while reading node file! Starting node setup in 5 seconds...")
-            Thread.sleep(SETUP_RETRY_DELAY_MS)
+            delay(SETUP_RETRY_DELAY_MS)
             nodeSetup()
         }
     }
@@ -276,7 +277,7 @@ class InitializeConsole : Console(
         switchToDefaultScreen()
         emptyPrompt()
         writeLine("You finished the node setup!")
-        Thread.sleep(SETUP_COMPLETE_DELAY_MS)
+        delay(SETUP_COMPLETE_DELAY_MS)
         return config
     }
 
@@ -285,7 +286,7 @@ class InitializeConsole : Console(
         val databaseFile = DATABASE_JSON.getFile()
         if (!databaseFile.exists()) {
             writeLine("Database file not found! Starting database setup in 5 seconds...")
-            Thread.sleep(SETUP_RETRY_DELAY_MS)
+            delay(SETUP_RETRY_DELAY_MS)
             return databaseSetup()
         }
         @Suppress("TooGenericExceptionCaught")
@@ -305,14 +306,14 @@ class InitializeConsole : Console(
                 }
                 emptyPrompt()
                 writeLine("Retrying in 10 seconds...")
-                Thread.sleep(DB_RETRY_DELAY_MS)
+                delay(DB_RETRY_DELAY_MS)
                 return checkDatabase(serviceId)
             }
             return p.first
         } catch (e: Exception) {
             writeLine("§cError while reading database file! Starting database setup in 5 seconds...")
             logger.log(Level.FINE, "Reading file error: ${databaseFile.absolutePath}", e)
-            Thread.sleep(SETUP_RETRY_DELAY_MS)
+            delay(SETUP_RETRY_DELAY_MS)
             return databaseSetup()
         }
     }
@@ -346,7 +347,7 @@ class InitializeConsole : Console(
         if (useToken) {
             writeLine("§cIts currently not possible to use a token!")
             writeLine("Please enter your redis credentials manually!")
-            Thread.sleep(SETUP_COMPLETE_DELAY_MS)
+            delay(SETUP_COMPLETE_DELAY_MS)
         }
         val username: String = databaseUsernameQuestion.ask(this)
         val password: String = databasePasswordQuestion.ask(this)
@@ -374,7 +375,7 @@ class InitializeConsole : Console(
         switchToDefaultScreen()
         emptyPrompt()
         writeLine("You finished the database setup!")
-        Thread.sleep(SETUP_COMPLETE_DELAY_MS)
+        delay(SETUP_COMPLETE_DELAY_MS)
         return checkDatabase(ServiceId(UUID.randomUUID(), ServiceType.NODE))
     }
 }

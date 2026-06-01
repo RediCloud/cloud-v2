@@ -39,37 +39,41 @@ abstract class MinecraftServerService<T> :
     }
 
     override val fileTemplateRepository: AbstractFileTemplateRepository =
-        BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository, packetManager)
+        BaseFileTemplateRepository(this.databaseConnection, this.nodeRepository, packetManager, scope)
     override val serverVersionTypeRepository: CloudServerVersionTypeRepository =
-        CloudServerVersionTypeRepository(this.databaseConnection, null, packetManager)
-    val currentServerData: CurrentServerData = runBlocking {
-        CurrentServerData(
-            getServer().serviceId,
-            getServer().name,
-            getServer().id,
-            getServer().maxPlayers,
-            getServer().connectedPlayers,
-            getServer().state,
-            getServer().configurationTemplate.name,
-            getVersion().displayName
-        )
-    }
-    private val hostServiceId: ServiceId = runBlocking { serverRepository.connect(serviceId) }
-    override val moduleHandler: ModuleHandler =
-        ModuleHandler(
-            serviceId,
-            loadModuleRepositoryUrls(),
-            eventManager,
-            packetManager,
-            runBlocking { getVersionType() },
-            databaseConnection
-        )
+        CloudServerVersionTypeRepository(this.databaseConnection, null, packetManager, scope)
+    lateinit var currentServerData: CurrentServerData
+        private set
+    private lateinit var hostServiceId: ServiceId
+    private lateinit var _moduleHandler: ModuleHandler
+    override val moduleHandler: ModuleHandler get() = _moduleHandler
     abstract val screenProvider: AbstractScreenProvider
     val remoteServerFactory: RemoteServerFactory =
         RemoteServerFactory(this.databaseConnection, this.nodeRepository, this.serverRepository)
 
-    init {
-        runBlocking { packetManager.registerCategoryChannel(currentServerData.configurationTemplateName) }
+    open suspend fun start() {
+        val server = getServer()
+        val version = getVersion()
+        currentServerData = CurrentServerData(
+            server.serviceId,
+            server.name,
+            server.id,
+            server.maxPlayers,
+            server.connectedPlayers,
+            server.state,
+            server.configurationTemplate.name,
+            version.displayName
+        )
+        hostServiceId = serverRepository.connect(serviceId)
+        _moduleHandler = ModuleHandler(
+            serviceId,
+            loadModuleRepositoryUrls(),
+            eventManager,
+            packetManager,
+            getVersionType(),
+            databaseConnection
+        )
+        packetManager.registerCategoryChannel(currentServerData.configurationTemplateName)
         registerDefaults()
     }
 

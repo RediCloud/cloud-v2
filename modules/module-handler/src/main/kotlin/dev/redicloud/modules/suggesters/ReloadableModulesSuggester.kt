@@ -8,7 +8,7 @@ class ReloadableModulesSuggester(
     private val moduleHandler: ModuleHandler
 ) : AbstractCommandSuggester() {
 
-    override fun suggest(context: CommandContext): Array<String> {
+    override suspend fun suggest(context: CommandContext): Array<String> {
         return moduleHandler.getModuleDatas()
             .filter { moduleHandler.isModuleReloadable(it.id) }
             .map { it.id }

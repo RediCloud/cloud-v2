@@ -14,10 +14,14 @@ import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
+import dev.redicloud.utils.withOptionalLock
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
 import java.util.*
-import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
 import kotlin.time.Duration.Companion.minutes
 
@@ -25,7 +29,8 @@ import kotlin.time.Duration.Companion.minutes
 class CloudServerVersionTypeRepository(
     databaseConnection: DatabaseConnection,
     private val console: Console?,
-    packetManager: PacketManager
+    packetManager: PacketManager,
+    scope: CoroutineScope
 ) : CachedDatabaseBucketRepository<ICloudServerVersionType, CloudServerVersionType>(
     databaseConnection,
     "server-version-types",
@@ -33,6 +38,7 @@ class CloudServerVersionTypeRepository(
     CloudServerVersionType::class,
     5.minutes,
     packetManager,
+    scope,
     ServiceType.NODE
 ),
     ICloudServerVersionTypeRepository {
@@ -41,7 +47,7 @@ class CloudServerVersionTypeRepository(
         gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
     }
 
-    private val locks = mutableMapOf<UUID, ReentrantLock>()
+    private val locks = mutableMapOf<UUID, Mutex>()
 
     companion object {
         private const val ANIMATION_TICK_MS = 200L
@@ -68,11 +74,11 @@ class CloudServerVersionTypeRepository(
         }
     }
 
-    fun getLock(type: ICloudServerVersionType): ReentrantLock {
-        return locks.getOrPut(type.uniqueId) { java.util.concurrent.locks.ReentrantLock() }
+    fun getLock(type: ICloudServerVersionType): Mutex {
+        return locks.getOrPut(type.uniqueId) { Mutex() }
     }
 
-    override suspend fun getType(name: String) = getTypes().firstOrNull { it.name.lowercase() == name.lowercase() }
+    override suspend fun getType(name: String) = getTypes().firstOrNull { it.name.equals(name, ignoreCase = true) }
 
     override suspend fun getType(uniqueId: UUID) = get(uniqueId.toString())
 
@@ -81,7 +87,7 @@ class CloudServerVersionTypeRepository(
         return getType(version.typeId!!)
     }
 
-    override suspend fun existsType(name: String) = getTypes().any { it.name.lowercase() == name.lowercase() }
+    override suspend fun existsType(name: String) = getTypes().any { it.name.equals(name, ignoreCase = true) }
 
     override suspend fun existsType(uniqueId: UUID) = exists(uniqueId.toString())
 
@@ -129,29 +135,31 @@ class CloudServerVersionTypeRepository(
             if (console == null) Level.INFO else Level.FINE,
             "Downloading connector for ${toConsoleValue(serverVersionType.name)}..."
         )
-        if (lock) getLock(serverVersionType).lock()
-        @Suppress("TooGenericExceptionCaught")
-        try {
-            check(
-                serverVersionType.getParsedConnectorURL().isValid()
-            ) { "Connector download url of ${serverVersionType.connectorPluginName} is null!" }
-            httpClient.get {
-                url(serverVersionType.getParsedConnectorURL().toExternalForm())
-            }.readBytes().let {
-                if (connectorFile.exists()) connectorFile.delete()
-                connectorFile.createNewFile()
-                connectorFile.writeBytes(it)
+        getLock(serverVersionType).withOptionalLock(lock) {
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                check(
+                    serverVersionType.getParsedConnectorURL().isValid()
+                ) { "Connector download url of ${serverVersionType.connectorPluginName} is null!" }
+                httpClient.get {
+                    url(serverVersionType.getParsedConnectorURL().toExternalForm())
+                }.readRawBytes().let {
+                    withContext(Dispatchers.IO) {
+                        if (connectorFile.exists()) connectorFile.delete()
+                        connectorFile.createNewFile()
+                        connectorFile.writeBytes(it)
+                    }
+                }
+                LOGGER.log(
+                    if (console == null) Level.FINE else Level.INFO,
+                    "Successfully downloaded connector for ${toConsoleValue(serverVersionType.name)}!"
+                )
+            } catch (e: Exception) {
+                LOGGER.severe("§cFailed to download connector ${toConsoleValue(connectorFile.name, false)}!", e)
+                error = true
+            } finally {
+                downloaded = true
             }
-            LOGGER.log(
-                if (console == null) Level.FINE else Level.INFO,
-                "Successfully downloaded connector for ${toConsoleValue(serverVersionType.name)}!"
-            )
-        } catch (e: Exception) {
-            LOGGER.severe("§cFailed to download connector ${toConsoleValue(connectorFile.name, false)}!", e)
-            error = true
-        } finally {
-            downloaded = true
-            if (lock) getLock(serverVersionType).unlock()
         }
     }
 

@@ -8,13 +8,15 @@ import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
+import kotlinx.coroutines.CoroutineScope
 import java.util.UUID
 import kotlin.time.Duration.Companion.minutes
 
 class ConfigurationTemplateRepository(
     databaseConnection: DatabaseConnection,
     private val eventManager: EventManager,
-    packetManager: PacketManager
+    packetManager: PacketManager,
+    scope: CoroutineScope
 ) : CachedDatabaseBucketRepository<ICloudConfigurationTemplate, ConfigurationTemplate>(
     databaseConnection,
     "configuration-template",
@@ -22,6 +24,7 @@ class ConfigurationTemplateRepository(
     ConfigurationTemplate::class,
     5.minutes,
     packetManager,
+    scope,
     ServiceType.NODE
 ),
     ICloudConfigurationTemplateRepository {
@@ -31,7 +34,7 @@ class ConfigurationTemplateRepository(
     }
 
     override suspend fun getTemplate(name: String): ConfigurationTemplate? {
-        return getTemplates().firstOrNull { it.name.lowercase() == name.lowercase() }
+        return getTemplates().firstOrNull { it.name.equals(name, ignoreCase = true) }
     }
 
     override suspend fun existsTemplate(uniqueId: UUID): Boolean {
@@ -39,7 +42,7 @@ class ConfigurationTemplateRepository(
     }
 
     override suspend fun existsTemplate(name: String): Boolean {
-        return getTemplates().any { it.name.lowercase() == name.lowercase() }
+        return getTemplates().any { it.name.equals(name, ignoreCase = true) }
     }
 
     override suspend fun createTemplate(configurationTemplate: ICloudConfigurationTemplate): ConfigurationTemplate {

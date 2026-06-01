@@ -13,7 +13,6 @@ import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.api.service.server.ICloudServerRepository
 import dev.redicloud.repository.server.CloudServer
-import kotlinx.coroutines.runBlocking
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.format.NamedTextColor
@@ -25,119 +24,109 @@ abstract class AbstractCloudNotificationListeners(
 ) {
 
     init {
-        eventManager.listen<NodeSuspendedEvent> {
-            runBlocking {
-                val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
-                val suspender = nodeRepository.getNode(it.suspender)
-                sendMessage("redicloud.node.suspend") {
-                    it.append(
-                        translateIdentifierName(node),
-                        Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
-                        Component.text().content("● ").color(NamedTextColor.RED),
-                        Component.text().content("(").color(NamedTextColor.DARK_GRAY),
-                        Component.text().content(
-                            "%tc%suspended by ${suspender?.identifyName()}"
-                        ).color(NamedTextColor.RED),
-                        Component.text().content(")").color(NamedTextColor.DARK_GRAY)
-                    )
-                }
+        eventManager.listen<NodeSuspendedEvent> { event ->
+            val node = nodeRepository.getNode(event.serviceId) ?: return@listen
+            val suspender = nodeRepository.getNode(event.suspender)
+            sendMessage("redicloud.node.suspend") {
+                it.append(
+                    translateIdentifierName(node),
+                    Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
+                    Component.text().content("● ").color(NamedTextColor.RED),
+                    Component.text().content("(").color(NamedTextColor.DARK_GRAY),
+                    Component.text().content(
+                        "%tc%suspended by ${suspender?.identifyName()}"
+                    ).color(NamedTextColor.RED),
+                    Component.text().content(")").color(NamedTextColor.DARK_GRAY)
+                )
             }
         }
 
-        eventManager.listen<NodeConnectEvent> {
-            runBlocking {
-                val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
-                sendMessage("redicloud.node.connect") {
-                    it.append(
-                        translateIdentifierName(node),
-                        Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
-                        Component.text().content("● ").color(NamedTextColor.GREEN),
-                        Component.text().content("(").color(NamedTextColor.DARK_GRAY),
-                        Component.text().content("connected to the cluster").color(NamedTextColor.WHITE),
-                        Component.text().content(")").color(NamedTextColor.DARK_GRAY)
-                    )
-                }
+        eventManager.listen<NodeConnectEvent> { event ->
+            val node = nodeRepository.getNode(event.serviceId) ?: return@listen
+            sendMessage("redicloud.node.connect") {
+                it.append(
+                    translateIdentifierName(node),
+                    Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
+                    Component.text().content("● ").color(NamedTextColor.GREEN),
+                    Component.text().content("(").color(NamedTextColor.DARK_GRAY),
+                    Component.text().content("connected to the cluster").color(NamedTextColor.WHITE),
+                    Component.text().content(")").color(NamedTextColor.DARK_GRAY)
+                )
             }
         }
 
-        eventManager.listen<NodeDisconnectEvent> {
-            runBlocking {
-                val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
-                sendMessage("redicloud.node.disconnect") {
-                    it.append(
-                        translateIdentifierName(node),
-                        Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
-                        Component.text().content("● ").color(NamedTextColor.RED),
-                        Component.text().content("(").color(NamedTextColor.DARK_GRAY),
-                        Component.text().content("disconnected from the cluster").color(NamedTextColor.WHITE),
-                        Component.text().content(")").color(NamedTextColor.DARK_GRAY)
-                    )
-                }
+        eventManager.listen<NodeDisconnectEvent> { event ->
+            val node = nodeRepository.getNode(event.serviceId) ?: return@listen
+            sendMessage("redicloud.node.disconnect") {
+                it.append(
+                    translateIdentifierName(node),
+                    Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
+                    Component.text().content("● ").color(NamedTextColor.RED),
+                    Component.text().content("(").color(NamedTextColor.DARK_GRAY),
+                    Component.text().content("disconnected from the cluster").color(NamedTextColor.WHITE),
+                    Component.text().content(")").color(NamedTextColor.DARK_GRAY)
+                )
             }
         }
 
-        eventManager.listen<NodeMasterChangedEvent> {
-            runBlocking {
-                val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
-                sendMessage("redicloud.node.master.change") {
-                    it.append(
-                        translateIdentifierName(node),
-                        Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
-                        Component.text().content("● ").color(NamedTextColor.YELLOW),
-                        Component.text().content("(").color(NamedTextColor.DARK_GRAY),
-                        Component.text().content("new master").color(NamedTextColor.WHITE),
-                        Component.text().content(")").color(NamedTextColor.DARK_GRAY)
-                    )
-                }
+        eventManager.listen<NodeMasterChangedEvent> { event ->
+            val node = nodeRepository.getNode(event.serviceId) ?: return@listen
+            sendMessage("redicloud.node.master.change") {
+                it.append(
+                    translateIdentifierName(node),
+                    Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
+                    Component.text().content("● ").color(NamedTextColor.YELLOW),
+                    Component.text().content("(").color(NamedTextColor.DARK_GRAY),
+                    Component.text().content("new master").color(NamedTextColor.WHITE),
+                    Component.text().content(")").color(NamedTextColor.DARK_GRAY)
+                )
             }
         }
 
-        eventManager.listen<CloudServerStateChangeEvent> {
-            runBlocking {
-                val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@runBlocking
-                when (it.state) {
-                    CloudServerState.PREPARING -> {
-                        sendMessage("redicloud.server.state.preparing") {
-                            it.append(
-                                translateIdentifierName(server),
-                                Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
-                                Component.text().content("● ").color(NamedTextColor.YELLOW),
-                                Component.text().content("(").color(NamedTextColor.DARK_GRAY),
-                                Component.text().content("preparing").color(NamedTextColor.WHITE),
-                                Component.text().content(")").color(NamedTextColor.DARK_GRAY)
-                            )
-                        }
+        eventManager.listen<CloudServerStateChangeEvent> { event ->
+            val server = serverRepository.getServer<CloudServer>(event.serviceId) ?: return@listen
+            when (event.state) {
+                CloudServerState.PREPARING -> {
+                    sendMessage("redicloud.server.state.preparing") {
+                        it.append(
+                            translateIdentifierName(server),
+                            Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
+                            Component.text().content("● ").color(NamedTextColor.YELLOW),
+                            Component.text().content("(").color(NamedTextColor.DARK_GRAY),
+                            Component.text().content("preparing").color(NamedTextColor.WHITE),
+                            Component.text().content(")").color(NamedTextColor.DARK_GRAY)
+                        )
                     }
-
-                    CloudServerState.RUNNING -> {
-                        val clickCommand = if (server.serviceId.type == ServiceType.MINECRAFT_SERVER) "/server ${server.name}" else null
-                        sendMessage("redicloud.server.state.running", clickCommand) {
-                            it.append(
-                                translateIdentifierName(server),
-                                Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
-                                Component.text().content("● ").color(NamedTextColor.GREEN),
-                                Component.text().content("(").color(NamedTextColor.DARK_GRAY),
-                                Component.text().content("started").color(NamedTextColor.WHITE),
-                                Component.text().content(")").color(NamedTextColor.DARK_GRAY)
-                            )
-                        }
-                    }
-
-                    CloudServerState.STOPPING -> {
-                        sendMessage("redicloud.server.state.stopping") {
-                            it.append(
-                                translateIdentifierName(server),
-                                Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
-                                Component.text().content("● ").color(NamedTextColor.RED),
-                                Component.text().content("(").color(NamedTextColor.DARK_GRAY),
-                                Component.text().content("stopping").color(NamedTextColor.WHITE),
-                                Component.text().content(")").color(NamedTextColor.DARK_GRAY)
-                            )
-                        }
-                    }
-
-                    else -> return@runBlocking
                 }
+
+                CloudServerState.RUNNING -> {
+                    val clickCommand = if (server.serviceId.type == ServiceType.MINECRAFT_SERVER) "/server ${server.name}" else null
+                    sendMessage("redicloud.server.state.running", clickCommand) {
+                        it.append(
+                            translateIdentifierName(server),
+                            Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
+                            Component.text().content("● ").color(NamedTextColor.GREEN),
+                            Component.text().content("(").color(NamedTextColor.DARK_GRAY),
+                            Component.text().content("started").color(NamedTextColor.WHITE),
+                            Component.text().content(")").color(NamedTextColor.DARK_GRAY)
+                        )
+                    }
+                }
+
+                CloudServerState.STOPPING -> {
+                    sendMessage("redicloud.server.state.stopping") {
+                        it.append(
+                            translateIdentifierName(server),
+                            Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
+                            Component.text().content("● ").color(NamedTextColor.RED),
+                            Component.text().content("(").color(NamedTextColor.DARK_GRAY),
+                            Component.text().content("stopping").color(NamedTextColor.WHITE),
+                            Component.text().content(")").color(NamedTextColor.DARK_GRAY)
+                        )
+                    }
+                }
+
+                else -> return@listen
             }
         }
     }

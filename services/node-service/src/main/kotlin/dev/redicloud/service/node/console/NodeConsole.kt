@@ -21,8 +21,9 @@ import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.service.node.NodeConfiguration
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 
+@Suppress("LongMethod")
 class NodeConsole(
     nodeConfiguration: NodeConfiguration,
     eventManager: EventManager,
@@ -32,73 +33,55 @@ class NodeConsole(
 
     init {
         eventManager.listen<NodeSuspendedEvent> {
-            runBlocking {
-                val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
-                val suspender = nodeRepository.getNode(it.suspender)
-                writeLine(
-                    "${node.identifyName()}§8: §4● §8(%tc%suspended by " +
-                        "${suspender?.identifyName(false) ?: toConsoleValue("unknown")} " +
-                        "because node is reachable§8)"
-                )
-            }
+            val node = nodeRepository.getNode(it.serviceId) ?: return@listen
+            val suspender = nodeRepository.getNode(it.suspender)
+            writeLine(
+                "${node.identifyName()}§8: §4● §8(%tc%suspended by " +
+                    "${suspender?.identifyName(false) ?: toConsoleValue("unknown")} " +
+                    "because node is reachable§8)"
+            )
         }
 
         eventManager.listen<NodeConnectEvent> {
-            runBlocking {
-                val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
-                writeLine("${node.identifyName()}§8: §2● §8(%tc%connected to the cluster§8)")
-            }
+            val node = nodeRepository.getNode(it.serviceId) ?: return@listen
+            writeLine("${node.identifyName()}§8: §2● §8(%tc%connected to the cluster§8)")
         }
 
         eventManager.listen<NodeDisconnectEvent> {
-            runBlocking {
-                val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
-                writeLine("${node.identifyName()}§8: §c● §8(%tc%disconnected from the cluster§8)")
-            }
+            val node = nodeRepository.getNode(it.serviceId) ?: return@listen
+            writeLine("${node.identifyName()}§8: §c● §8(%tc%disconnected from the cluster§8)")
         }
 
         eventManager.listen<NodeMasterChangedEvent> {
-            runBlocking {
-                val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
-                writeLine("${node.identifyName()}§8: §6● §8(%tc%new master§8)")
-            }
+            val node = nodeRepository.getNode(it.serviceId) ?: return@listen
+            writeLine("${node.identifyName()}§8: §6● §8(%tc%new master§8)")
         }
 
         eventManager.listen<CloudServerConnectedEvent> {
-            runBlocking {
-                val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@runBlocking
-                writeLine("${server.identifyName()}§8: §2● §8(%tc%connected to the cluster§8)")
-            }
+            val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@listen
+            writeLine("${server.identifyName()}§8: §2● §8(%tc%connected to the cluster§8)")
         }
 
         eventManager.listen<CloudServerDisconnectedEvent> {
-            runBlocking {
-                val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@runBlocking
-                writeLine("${server.identifyName()}§8: §c● §8(%tc%disconnected from the cluster§8)")
-            }
+            val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@listen
+            writeLine("${server.identifyName()}§8: §c● §8(%tc%disconnected from the cluster§8)")
         }
 
         eventManager.listen<CloudServerDeleteEvent> {
-            runBlocking {
-                writeLine("%hc%${it.name}§8#%tc%${it.serviceId.id}§8: §4● §8(%tc%deleted§8)")
-            }
+            writeLine("%hc%${it.name}§8#%tc%${it.serviceId.id}§8: §4● §8(%tc%deleted§8)")
         }
 
         eventManager.listen<CloudServerStateChangeEvent> {
-            runBlocking {
-                val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@runBlocking
-                if (it.state == CloudServerState.PREPARING) {
-                    writeLine("${server.identifyName()}§8: §6● §8(%tc%preparing start§8)")
-                }
+            val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@listen
+            if (it.state == CloudServerState.PREPARING) {
+                writeLine("${server.identifyName()}§8: §6● §8(%tc%preparing start§8)")
             }
         }
 
         eventManager.listen<CloudServerTransferredEvent> {
-            runBlocking {
-                val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@runBlocking
-                val node = nodeRepository.getNode(server.hostNodeId) ?: return@runBlocking
-                writeLine("${server.identifyName()}§8: §5● §8(%tc%transferred to ${node.identifyName()}§8)")
-            }
+            val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@listen
+            val node = nodeRepository.getNode(server.hostNodeId) ?: return@listen
+            writeLine("${server.identifyName()}§8: §5● §8(%tc%transferred to ${node.identifyName()}§8)")
         }
 
         this.sendHeader()
@@ -106,6 +89,10 @@ class NodeConsole(
     }
 
     override fun handleUserInterrupt(e: Exception) {
-        commandManager.getCommand("exit")!!.getSubCommand("")!!.execute(commandManager.defaultActor, emptyList())
+        commandScope.launch {
+            commandManager.getCommand(
+                "exit"
+            )!!.getSubCommand("")!!.execute(commandManager.defaultActor, emptyList())
+        }
     }
 }

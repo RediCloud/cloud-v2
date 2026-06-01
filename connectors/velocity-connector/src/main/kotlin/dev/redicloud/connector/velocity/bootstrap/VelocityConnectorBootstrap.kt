@@ -11,6 +11,7 @@ import dev.redicloud.connector.velocity.VelocityConnector
 import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.loaders.URLClassLoaderJarLoader
 import dev.redicloud.utils.loadProperties
+import kotlinx.coroutines.runBlocking
 import java.net.URLClassLoader
 import java.util.logging.Logger
 import kotlin.system.exitProcess
@@ -32,6 +33,7 @@ class VelocityConnectorBootstrap @Inject constructor(val proxyServer: ProxyServe
             loadProperties(this.javaClass.classLoader)
             Bootstrap().apply(URLClassLoaderJarLoader(this.javaClass.classLoader as URLClassLoader))
             connector = VelocityConnector(proxyServer)
+            runBlocking { connector!!.start() }
         } catch (e: Exception) {
             System.err.println("Failed to initialize VelocityConnector: ${e.message}")
             System.err.println(e.stackTraceToString())

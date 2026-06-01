@@ -7,7 +7,6 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.ICloudServer
 import dev.redicloud.api.service.server.ICloudServerRepository
 import dev.redicloud.service.base.player.BasePlayerExecutor
-import kotlinx.coroutines.runBlocking
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
 
@@ -22,11 +21,11 @@ class NodePlayerExecutor(
         throw UnsupportedOperationException("Not supported for node service")
     }
 
-    override fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer) {
-        runBlocking { this@NodePlayerExecutor.connect(cloudPlayer, server) }
+    override suspend fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer) {
+        throw UnsupportedOperationException("executeConnect is not supported on a node service")
     }
 
-    override fun executeKick(cloudPlayer: ICloudPlayer, reason: Component) {
-        runBlocking { this@NodePlayerExecutor.kick(cloudPlayer, reason) }
+    override suspend fun executeKick(cloudPlayer: ICloudPlayer, reason: Component) {
+        throw UnsupportedOperationException("executeKick is not supported on a node service")
     }
 }

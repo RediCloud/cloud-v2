@@ -36,13 +36,12 @@ class VelocityConnector(
     override val notificationListeners: AbstractCloudNotificationListeners =
         CloudNotificationListeners(this.proxyServer, this.serverRepository, this.nodeRepository, this.eventManager)
 
-    init {
+    override suspend fun start() {
+        super.start()
         initApi()
-        runBlocking {
-            registerTasks()
-            registerStartedServers()
-        }
-        runBlocking { moduleHandler.loadModules() }
+        registerTasks()
+        registerStartedServers()
+        moduleHandler.loadModules()
     }
 
     override fun registerServer(server: CloudMinecraftServer) {
@@ -102,7 +101,7 @@ class VelocityConnector(
         super.onDisable()
     }
 
-    override fun plattformShutdown() {
+    override fun platformShutdown() {
         this.velocityShuttingDown = true
         this.proxyServer.shutdown()
     }
@@ -110,7 +109,13 @@ class VelocityConnector(
     private fun registerListeners() {
         this.proxyServer.eventManager.register(
             getConnectorPlugin(),
-            CloudPlayerListener(this.serviceId, this.playerRepository, this.serverRepository, this.proxyServer)
+            CloudPlayerListener(
+                this.serviceId,
+                this.playerRepository,
+                this.serverRepository,
+                this.proxyServer,
+                this.scope
+            )
         )
     }
 

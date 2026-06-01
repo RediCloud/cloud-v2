@@ -10,12 +10,14 @@ import dev.redicloud.event.EventManager
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.service.CachedServiceRepository
 import dev.redicloud.repository.service.ServiceRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlin.time.Duration.Companion.minutes
 
 class NodeRepository(
     databaseConnection: DatabaseConnection,
     packetManager: PacketManager,
-    private val eventManager: EventManager
+    private val eventManager: EventManager,
+    scope: CoroutineScope
 ) : ServiceRepository(
     databaseConnection,
     packetManager
@@ -29,7 +31,8 @@ class NodeRepository(
         ICloudNode::class,
         CloudNode::class,
         5.minutes,
-        this
+        this,
+        scope
     ) {
         override suspend fun transformShutdownable(service: CloudNode): CloudNode {
             service.currentMemoryUsage = 0

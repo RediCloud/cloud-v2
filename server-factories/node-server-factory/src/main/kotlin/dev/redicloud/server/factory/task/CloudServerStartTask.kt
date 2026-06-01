@@ -13,10 +13,11 @@ import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.server.factory.*
 import dev.redicloud.server.factory.utils.*
 import dev.redicloud.tasks.CloudTask
-import dev.redicloud.utils.MultiAsyncAction
+import dev.redicloud.utils.ConcurrentBatch
 import dev.redicloud.utils.coroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
 
@@ -69,11 +70,12 @@ class CloudServerStartTask(
         private val logger = LogManager.logger(CloudServerStartTask::class)
 
         @OptIn(DelicateCoroutinesApi::class)
-        private val scope = CoroutineScope(newSingleThreadContext("server-factory-start") + coroutineExceptionHandler)
+        private val scope =
+            CoroutineScope(SupervisorJob() + newSingleThreadContext("server-factory-start") + coroutineExceptionHandler)
     }
 
     override suspend fun execute(): Boolean {
-        val actions = MultiAsyncAction()
+        val actions = ConcurrentBatch()
         serverFactory.getStartList().forEach { info ->
             if (!info.isNextNode(serverFactory.hostingId)) return@forEach
             val name = if (info.serviceId == null) info.configurationTemplate.name else info.serviceId?.toName() ?: "unknown"

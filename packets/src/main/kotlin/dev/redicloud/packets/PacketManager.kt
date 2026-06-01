@@ -15,13 +15,14 @@ import dev.redicloud.utils.coroutineExceptionHandler
 import dev.redicloud.utils.gson.fixKotlinAnnotations
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 
+@Suppress("TooManyFunctions")
 class PacketManager(
     private val databaseConnection: DatabaseConnection,
     override val serviceId: ServiceId
@@ -41,7 +42,7 @@ class PacketManager(
     private val listeners = mutableListOf<PacketListener<out AbstractPacket>>()
     internal val packetResponses = mutableListOf<PacketResponse>()
     internal val packetsOfLast3Seconds = mutableListOf<AbstractPacket>()
-    internal val packetScope = CoroutineScope(Dispatchers.IO + coroutineExceptionHandler)
+    internal val packetScope = CoroutineScope(SupervisorJob() + Dispatchers.IO + coroutineExceptionHandler)
     private val messageListener = createMessageListener()
 
     init {
@@ -52,13 +53,13 @@ class PacketManager(
         ServiceType.entries.forEach {
             typedTopics[it] = databaseConnection.getCommunicationChannel(it.name.lowercase())
         }
+    }
 
-        runBlocking {
-            serviceTopic.subscribe(PackedPacket::class.java, messageListener)
-            broadcastTopic.subscribe(PackedPacket::class.java, messageListener)
-            typedTopics.forEach { (_, topic) ->
-                topic.subscribe(PackedPacket::class.java, messageListener)
-            }
+    suspend fun connect() {
+        serviceTopic.subscribe(PackedPacket::class.java, messageListener)
+        broadcastTopic.subscribe(PackedPacket::class.java, messageListener)
+        typedTopics.forEach { (_, topic) ->
+            topic.subscribe(PackedPacket::class.java, messageListener)
         }
     }
 
@@ -73,27 +74,29 @@ class PacketManager(
                 val packet = gson.fromJson(data, packetClazz.java)
                 if (!packet.allowLocalReceiver && packet.sender == serviceId) return
                 LOGGER.finest("Received packet ${packetClazz.simpleName} in channel $channel")
-                packet.received(this@PacketManager)
-                packetsOfLast3Seconds.add(packet)
                 packetScope.launch {
-                    delay(3.seconds)
-                    packetsOfLast3Seconds.remove(packet)
-                }
-                ArrayList(packetResponses).filterNotNull().forEach {
-                    @Suppress("TooGenericExceptionCaught")
-                    try {
-                        it.handle(packet)
-                    } catch (e: Exception) {
-                        LOGGER.severe("Error while handling packet response ${packet::class.java.simpleName}!", e)
+                    packet.received(this@PacketManager)
+                    packetsOfLast3Seconds.add(packet)
+                    launch {
+                        delay(3.seconds)
+                        packetsOfLast3Seconds.remove(packet)
                     }
-                }
-                listeners.forEach {
-                    if (packet::class == it.packetClazz) {
+                    ArrayList(packetResponses).filterNotNull().forEach {
                         @Suppress("TooGenericExceptionCaught")
                         try {
-                            (it as PacketListener<AbstractPacket>).listener(packet)
+                            it.handle(packet)
                         } catch (e: Exception) {
-                            LOGGER.severe("Error while handling packet ${packet::class.java.simpleName}!", e)
+                            LOGGER.severe("Error while handling packet response ${packet::class.java.simpleName}!", e)
+                        }
+                    }
+                    listeners.forEach {
+                        if (packet::class == it.packetClazz) {
+                            @Suppress("TooGenericExceptionCaught")
+                            try {
+                                (it as PacketListener<AbstractPacket>).listener(packet)
+                            } catch (e: Exception) {
+                                LOGGER.severe("Error while handling packet ${packet::class.java.simpleName}!", e)
+                            }
                         }
                     }
                 }

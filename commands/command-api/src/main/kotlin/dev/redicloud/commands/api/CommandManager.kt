@@ -80,7 +80,7 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
 
     fun getCommand(input: String): CommandBase? = registeredCommands.firstOrNull { it.isThis(input, false) }
 
-    fun getCompletions(actor: K, input: String): List<String> {
+    suspend fun getCompletions(actor: K, input: String): List<String> {
         val split = input.removeLastSpaces().split(" ")
         if (split.isEmpty()) return emptyList()
         val commandBase = getCommand(input)
@@ -103,7 +103,7 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
             .filter { it.isThis(input, commandBase == null) }
     }
 
-    private fun collectSubCommandPaths(actor: K, input: String, possibleCommands: List<CommandBase>): List<String> {
+    private suspend fun collectSubCommandPaths(actor: K, input: String, possibleCommands: List<CommandBase>): List<String> {
         val list = mutableListOf<String>()
         possibleCommands.forEach { command ->
             val possibleSubCommands = command.subCommands
@@ -152,7 +152,7 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
             .filter { it.lowercase().startsWith(firstWord.lowercase()) }
     }
 
-    private fun resolveCompletionResults(
+    private suspend fun resolveCompletionResults(
         subCommandPaths: List<String>,
         split: List<String>,
         input: String,
@@ -182,7 +182,7 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
         }
     }
 
-    private fun resolvePathResult(
+    private suspend fun resolvePathResult(
         results: MutableSet<String>,
         input: String,
         inputR: String,
@@ -210,7 +210,7 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
         }
     }
 
-    private fun collectArgumentSuggestions(
+    private suspend fun collectArgumentSuggestions(
         results: MutableSet<String>,
         input: String,
         inputR: String,
@@ -232,7 +232,7 @@ abstract class CommandManager<K : ICommandActor<*>> : ICommandManager<K> {
     }
 
     @Suppress("ReturnCount")
-    fun handleInput(actor: K, input: String): CommandResponse {
+    suspend fun handleInput(actor: K, input: String): CommandResponse {
         if (input.isBlank()) return CommandResponse(CommandResponseType.BLANK_INPUT, "Command cannot be blank")
         val split = input.removeLastSpaces().split(" ")
         val commandName = split[0].lowercase()

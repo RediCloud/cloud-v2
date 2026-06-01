@@ -8,10 +8,8 @@ import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.modules.repository.ModuleWebRepository
 import dev.redicloud.modules.suggesters.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
-import dev.redicloud.utils.defaultScope
 import dev.redicloud.utils.mapTo
 import dev.redicloud.utils.toSymbol
-import kotlinx.coroutines.launch
 
 @Command("module")
 @CommandAlias(["modules"])
@@ -23,7 +21,7 @@ class ModuleCommand(
 
     @CommandSubPath("list")
     @CommandDescription("List all modules")
-    fun list(actor: ConsoleActor) = defaultScope.launch {
+    suspend fun list(actor: ConsoleActor) {
         val modules = moduleHandler.getModuleDatas()
         actor.sendHeader("Modules")
         actor.sendMessage("")
@@ -61,7 +59,7 @@ class ModuleCommand(
 
     @CommandSubPath("load <id>")
     @CommandDescription("Load a module")
-    fun load(
+    suspend fun load(
         actor: ConsoleActor,
         @CommandParameter("id", true, LoadableModulesSuggester::class) id: String
     ) {
@@ -82,7 +80,7 @@ class ModuleCommand(
 
     @CommandSubPath("unload <id>")
     @CommandDescription("Unload a module")
-    fun unload(
+    suspend fun unload(
         @CommandParameter("id", true, UnloadableModulesSuggester::class) id: String
     ) {
         moduleHandler.unloadModule(id)
@@ -91,7 +89,7 @@ class ModuleCommand(
     @CommandSubPath("reload <id>")
     @CommandDescription("Reload a module")
     @Suppress("UnusedParameter")
-    fun reload(
+    suspend fun reload(
         actor: ConsoleActor,
         @CommandParameter("id", true, ReloadableModulesSuggester::class) id: String
     ) {
@@ -100,15 +98,15 @@ class ModuleCommand(
 
     @CommandSubPath("info <id>")
     @CommandDescription("Get info about a module")
-    fun info(
+    suspend fun info(
         actor: ConsoleActor,
         @CommandParameter("id", true, InstalledModulesSuggester::class) id: String
-    ) = defaultScope.launch {
+    ) {
         moduleHandler.detectModules()
         val data = moduleHandler.getModuleDatas().firstOrNull { it.description.id == id }
         if (data == null) {
             actor.sendMessage("§cModule with id $id not found!")
-            return@launch
+            return
         }
         val targetRepository = moduleHandler.getRepository(data.id)
         actor.sendHeader("Module Info")
@@ -155,7 +153,7 @@ class ModuleCommand(
         @CommandParameter("url") url: String
     ) {
         val repositoryUrls = clusterConfiguration.getList<String>("module-repositories").toMutableList()
-        if (repositoryUrls.any { it.lowercase() == url.lowercase() }) {
+        if (repositoryUrls.any { it.equals(url, ignoreCase = true) }) {
             actor.sendMessage("§cRepository with url $url already exists!")
             return
         }
@@ -177,38 +175,38 @@ class ModuleCommand(
         @CommandParameter("url") url: String
     ) {
         val repositoryUrls = clusterConfiguration.getList<String>("module-repositories").toMutableList()
-        if (!repositoryUrls.none { it.lowercase() == url.lowercase() }) {
+        if (!repositoryUrls.none { it.equals(url, ignoreCase = true) }) {
             actor.sendMessage("§cRepository with url $url not found!")
             return
         }
-        repositoryUrls.removeIf { it.lowercase() == url.lowercase() }
+        repositoryUrls.removeIf { it.equals(url, ignoreCase = true) }
         clusterConfiguration.set("module-repositories", repositoryUrls)
-        moduleHandler.repositories.removeIf { it.repoUrl.lowercase() == url.lowercase() }
+        moduleHandler.repositories.removeIf { it.repoUrl.equals(url, ignoreCase = true) }
         actor.sendMessage("§aRepository with url $url removed!")
     }
 
     @CommandSubPath("install <id>")
     @CommandDescription("Install a module")
-    fun install(
+    suspend fun install(
         @CommandParameter("id", true, InstallableModulesSuggester::class) id: String
-    ) = defaultScope.launch {
+    ) {
         moduleHandler.install(id, true)
     }
 
     @CommandSubPath("update <id>")
     @CommandDescription("Update a module")
-    fun update(
+    suspend fun update(
         actor: ConsoleActor,
         @CommandParameter("id", true, InstalledModulesSuggester::class) id: String
-    ) = defaultScope.launch {
+    ) {
         val targetRepository = moduleHandler.getRepository(id)
         if (targetRepository == null) {
             actor.sendMessage("§cModule with id $id has no repository!")
-            return@launch
+            return
         }
         if (!targetRepository.isUpdateAvailable(id)) {
             actor.sendMessage("§cModule with id $id has no update available!")
-            return@launch
+            return
         }
         actor.sendMessage("Updating module %hc%$id%tc%...")
         var file = moduleHandler.getModuleData(id)?.mapTo {
@@ -229,10 +227,10 @@ class ModuleCommand(
     @CommandSubPath("uninstall <id>")
     @CommandDescription("Uninstall a module")
     @Suppress("UnusedParameter")
-    fun uninstall(
+    suspend fun uninstall(
         actor: ConsoleActor,
         @CommandParameter("id", true, UninstallableModulesSuggester::class) id: String
-    ) = defaultScope.launch {
+    ) {
         moduleHandler.uninstall(id)
     }
 }

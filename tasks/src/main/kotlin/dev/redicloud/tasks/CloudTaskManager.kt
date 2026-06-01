@@ -14,6 +14,7 @@ import dev.redicloud.tasks.executor.PeriodicallyCloudTaskExecutor
 import dev.redicloud.utils.coroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.newFixedThreadPoolContext
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -34,7 +35,7 @@ class CloudTaskManager(
 
     @OptIn(DelicateCoroutinesApi::class)
     internal val scope = CoroutineScope(
-        newFixedThreadPoolContext(threads, "CloudTaskManager") + coroutineExceptionHandler
+        SupervisorJob() + newFixedThreadPoolContext(threads, "CloudTaskManager") + coroutineExceptionHandler
     )
 
     fun register(task: CloudTask): UUID {
