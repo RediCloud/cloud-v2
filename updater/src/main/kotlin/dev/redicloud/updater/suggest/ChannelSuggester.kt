@@ -4,7 +4,8 @@ import dev.redicloud.api.commands.AbstractCommandSuggester
 import dev.redicloud.api.commands.CommandContext
 import dev.redicloud.updater.Updater
 
-class BranchSuggester : AbstractCommandSuggester() {
+/** Suggests available release channels (beta, stable). */
+class ChannelSuggester : AbstractCommandSuggester() {
     override suspend fun suggest(context: CommandContext): Array<String> =
-        Updater.getBranches().toTypedArray()
+        Updater.getAvailableChannels().map { it.label }.toTypedArray()
 }
