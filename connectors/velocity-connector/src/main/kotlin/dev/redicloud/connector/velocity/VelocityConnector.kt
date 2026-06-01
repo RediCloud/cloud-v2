@@ -109,7 +109,7 @@ class VelocityConnector(
     private fun registerListeners() {
         this.proxyServer.eventManager.register(
             getConnectorPlugin(),
-            CloudPlayerListener(this.serviceId, this.playerRepository, this.serverRepository, this.proxyServer)
+            CloudPlayerListener(this.serviceId, this.playerRepository, this.serverRepository, this.proxyServer, this.scope)
         )
     }
 
