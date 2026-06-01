@@ -111,24 +111,26 @@ object Updater {
 
         // Verify checksum if available
         if (release.checksumsUrl != null) {
-            verifyChecksum(target, release.checksumsUrl)
+            val checksumsBytes = downloadBytes(release.checksumsUrl)
+            if (checksumsBytes != null) {
+                verifyChecksum(target, checksumsBytes)
+                // Verify GPG signature of checksums if both signature and key are available
+                if (release.signatureUrl != null && release.signingKeyUrl != null) {
+                    verifyGpgSignature(checksumsBytes, release.signatureUrl, release.signingKeyUrl)
+                }
+            }
         }
 
         return target
     }
 
     /**
-     * Downloads the checksum file and verifies the zip against it.
+     * Verifies the zip file against the downloaded checksums.
      *
      * @throws IllegalStateException if the checksum does not match.
      */
-    private suspend fun verifyChecksum(zipFile: File, checksumsUrl: String) {
-        val response = httpClient.get { url(checksumsUrl) }
-        if (!response.status.isSuccess()) {
-            LogManager.rootLogger().warning("Could not download checksums, skipping verification")
-            return
-        }
-        val checksumLines = response.bodyAsText().lines()
+    private fun verifyChecksum(zipFile: File, checksumsBytes: ByteArray) {
+        val checksumLines = checksumsBytes.decodeToString().lines()
         val expectedHash = checksumLines
             .firstOrNull { it.contains(zipFile.name) }
             ?.split("\\s+".toRegex())
@@ -143,7 +145,48 @@ object Updater {
         check(actualHash.equals(expectedHash, ignoreCase = true)) {
             "Checksum mismatch for ${zipFile.name}: expected $expectedHash, got $actualHash"
         }
-        LogManager.rootLogger().info("Checksum verified for ${zipFile.name}")
+        LogManager.rootLogger().info("SHA256 checksum verified for ${zipFile.name}")
+    }
+
+    /**
+     * Verifies the GPG signature of the checksums file using the public key from the release.
+     *
+     * Logs a warning instead of failing if verification cannot be performed.
+     *
+     * @throws IllegalStateException if the signature is invalid.
+     */
+    @Suppress("TooGenericExceptionCaught")
+    private suspend fun verifyGpgSignature(
+        checksumsBytes: ByteArray,
+        signatureUrl: String,
+        signingKeyUrl: String
+    ) {
+        try {
+            val signatureBytes = downloadBytes(signatureUrl)
+            val keyBytes = downloadBytes(signingKeyUrl)
+            if (signatureBytes == null || keyBytes == null) {
+                LogManager.rootLogger().warning("Could not download GPG signature or key, skipping verification")
+                return
+            }
+
+            val verified = GpgVerifier.verify(
+                data = checksumsBytes,
+                signature = signatureBytes,
+                publicKey = keyBytes
+            )
+            check(verified) { "GPG signature verification failed for checksums" }
+            LogManager.rootLogger().info("GPG signature verified")
+        } catch (e: IllegalStateException) {
+            throw e
+        } catch (e: Exception) {
+            LogManager.rootLogger().warning("GPG verification error: ${e.message}")
+        }
+    }
+
+    /** Downloads raw bytes from a URL, returning `null` on failure. */
+    private suspend fun downloadBytes(url: String): ByteArray? {
+        val response = httpClient.get { url(url) }
+        return if (response.status.isSuccess()) response.readRawBytes() else null
     }
 
     // ------------------------------------------------------------------
@@ -247,7 +290,8 @@ object Updater {
             tagName = tagName,
             zipUrl = assets.firstOrNull { it.name.endsWith(".zip") }?.downloadUrl,
             checksumsUrl = assets.firstOrNull { it.name == "checksums.sha256" }?.downloadUrl,
-            signatureUrl = assets.firstOrNull { it.name == "checksums.sha256.sig" }?.downloadUrl
+            signatureUrl = assets.firstOrNull { it.name == "checksums.sha256.asc" }?.downloadUrl,
+            signingKeyUrl = assets.firstOrNull { it.name == "signing-key.asc" }?.downloadUrl
         )
     }
 }

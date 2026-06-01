@@ -4,6 +4,7 @@ set -euo pipefail
 # ─────────────────────────────────────────────────────────────────────
 # RediCloud Installer
 # Downloads, verifies, and extracts RediCloud from GitHub Releases.
+# No dependencies beyond: bash, curl, unzip, java, sha256sum
 # ─────────────────────────────────────────────────────────────────────
 
 REPO="RediCloud/cloud-v2"
@@ -40,6 +41,21 @@ EOF
     exit 0
 }
 
+# Extract a JSON string value by key from a (single-object) JSON blob.
+# Usage: json_value "key" <<< "$json"
+json_value() {
+    sed -n 's/.*"'"$1"'"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1
+}
+
+# Extract asset name -> browser_download_url pairs from a release JSON.
+# Outputs: <asset_name>\t<url> per line
+json_assets() {
+    awk -F'"' '
+        /"name"[[:space:]]*:/ { name = $4 }
+        /"browser_download_url"[[:space:]]*:/ { if (name) print name "\t" $4; name = "" }
+    '
+}
+
 # ─────────────────────────────────────────────────────────────────────
 # Argument parsing
 # ─────────────────────────────────────────────────────────────────────
@@ -71,11 +87,9 @@ check_java_version() {
     local version_output
     version_output=$(java -version 2>&1 | head -n1)
 
-    # Extract major version number from strings like:
-    #   openjdk version "21.0.3" ...
-    #   java version "1.8.0_392" ...
+    # Extract major version from: openjdk version "21.0.3" or java version "1.8.0_392"
     local major
-    major=$(echo "$version_output" | grep -oP '(?<=version ")(\d+)' | head -1)
+    major=$(echo "$version_output" | sed -n 's/.*version "\([0-9]*\).*/\1/p')
 
     if [[ -z "$major" ]]; then
         fail "Could not determine Java version from: $version_output"
@@ -85,20 +99,23 @@ check_java_version() {
         fail "Java 21+ is required (found: $major). Install from: https://adoptium.net"
     fi
 
-    ok "java $major ($version_output)"
+    ok "java $major"
 }
 
 info "RediCloud Installer"
 info "==================="
 echo
 
-check_command curl  "Install: apt install curl / yum install curl"
-ok "curl $(curl --version | head -1 | awk '{print $2}')"
+check_command curl     "Install: apt install curl / yum install curl"
+ok "curl found"
 
-check_command unzip "Install: apt install unzip / yum install unzip"
+check_command unzip    "Install: apt install unzip / yum install unzip"
 ok "unzip found"
 
-check_command java  "Java 21+ is required. Install from: https://adoptium.net"
+check_command sha256sum "Install: apt install coreutils"
+ok "sha256sum found"
+
+check_command java     "Java 21+ is required. Install from: https://adoptium.net"
 check_java_version
 
 echo
@@ -108,75 +125,47 @@ echo
 # ─────────────────────────────────────────────────────────────────────
 
 resolve_release() {
-    local releases_json
-    releases_json=$(curl -fsSL "$GITHUB_API" 2>/dev/null) \
-        || fail "Failed to fetch releases from GitHub API"
+    local release_json
 
-    if [[ "$VERSION" == "latest" ]]; then
-        # Filter by channel: stable = non-prerelease, beta = prerelease
-        local filter
-        if [[ "$CHANNEL" == "stable" ]]; then
-            filter='select(.prerelease == false and .draft == false)'
-        elif [[ "$CHANNEL" == "beta" ]]; then
-            filter='select(.prerelease == true and .draft == false)'
-        else
-            fail "Unknown channel: $CHANNEL. Use 'stable' or 'beta'."
-        fi
+    if [[ "$VERSION" != "latest" ]]; then
+        # Specific version by tag
+        release_json=$(curl -fsSL "$GITHUB_API/tags/v${VERSION}" 2>/dev/null) \
+            || fail "Release v${VERSION} not found"
+    elif [[ "$CHANNEL" == "stable" ]]; then
+        # /releases/latest returns the most recent non-prerelease, non-draft
+        release_json=$(curl -fsSL "$GITHUB_API/latest" 2>/dev/null) \
+            || fail "No stable release found"
+    elif [[ "$CHANNEL" == "beta" ]]; then
+        # Find the first pre-release tag from the releases list
+        local beta_tag
+        beta_tag=$(curl -fsSL "$GITHUB_API?per_page=30" 2>/dev/null \
+            | awk -F'"' '
+                /"tag_name"[[:space:]]*:/ { tag = $4 }
+                /"prerelease"[[:space:]]*:[[:space:]]*true/ { if (tag) { print tag; exit } }
+            ') || true
 
-        # Pick first (latest) matching release
-        RELEASE_JSON=$(echo "$releases_json" | python3 -c "
-import sys, json
-releases = json.load(sys.stdin)
-for r in releases:
-    pre = r.get('prerelease', False)
-    draft = r.get('draft', False)
-    if draft:
-        continue
-    if '$CHANNEL' == 'stable' and not pre:
-        json.dump(r, sys.stdout)
-        sys.exit(0)
-    elif '$CHANNEL' == 'beta' and pre:
-        json.dump(r, sys.stdout)
-        sys.exit(0)
-sys.exit(1)
-" 2>/dev/null) || fail "No $CHANNEL release found"
+        [[ -z "$beta_tag" ]] && fail "No beta release found"
+
+        release_json=$(curl -fsSL "$GITHUB_API/tags/${beta_tag}" 2>/dev/null) \
+            || fail "Failed to fetch beta release $beta_tag"
     else
-        # Find specific version by tag
-        local tag="v${VERSION}"
-        RELEASE_JSON=$(echo "$releases_json" | python3 -c "
-import sys, json
-releases = json.load(sys.stdin)
-for r in releases:
-    if r.get('tag_name') == '${tag}':
-        json.dump(r, sys.stdout)
-        sys.exit(0)
-sys.exit(1)
-" 2>/dev/null) || fail "Release with tag $tag not found"
+        fail "Unknown channel: $CHANNEL. Use 'stable' or 'beta'."
     fi
 
-    TAG_NAME=$(echo "$RELEASE_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin)['tag_name'])")
-    RELEASE_NAME=$(echo "$TAG_NAME" | sed 's/^v//')
+    TAG_NAME=$(echo "$release_json" | json_value "tag_name")
+    [[ -z "$TAG_NAME" ]] && fail "Could not parse tag_name from release"
+    RELEASE_NAME="${TAG_NAME#v}"
 
-    # Extract asset URLs
-    ZIP_URL=$(echo "$RELEASE_JSON" | python3 -c "
-import sys, json
-assets = json.load(sys.stdin).get('assets', [])
-for a in assets:
-    if a['name'].endswith('.zip'):
-        print(a['browser_download_url'])
-        sys.exit(0)
-sys.exit(1)
-" 2>/dev/null) || fail "No zip asset found in release $TAG_NAME"
+    # Parse asset URLs
+    local assets
+    assets=$(echo "$release_json" | json_assets)
 
-    CHECKSUMS_URL=$(echo "$RELEASE_JSON" | python3 -c "
-import sys, json
-assets = json.load(sys.stdin).get('assets', [])
-for a in assets:
-    if a['name'] == 'checksums.sha256':
-        print(a['browser_download_url'])
-        sys.exit(0)
-print('')
-" 2>/dev/null) || true
+    ZIP_URL=$(echo "$assets" | awk -F'\t' '/\.zip\t/ { print $2; exit }')
+    CHECKSUMS_URL=$(echo "$assets" | awk -F'\t' '$1 == "checksums.sha256" { print $2; exit }')
+    SIGNATURE_URL=$(echo "$assets" | awk -F'\t' '$1 == "checksums.sha256.asc" { print $2; exit }')
+    SIGNING_KEY_URL=$(echo "$assets" | awk -F'\t' '$1 == "signing-key.asc" { print $2; exit }')
+
+    [[ -z "$ZIP_URL" ]] && fail "No zip asset found in release $TAG_NAME"
 }
 
 resolve_release
@@ -201,10 +190,10 @@ ok "Downloaded redicloud ($ZIP_SIZE)"
 # Checksum verification
 # ─────────────────────────────────────────────────────────────────────
 
+CHECKSUMS_FILE="$TMPDIR/checksums.sha256"
+
 if $VERIFY && [[ -n "${CHECKSUMS_URL:-}" ]]; then
-    CHECKSUMS_FILE="$TMPDIR/checksums.sha256"
     if curl -fsSL -o "$CHECKSUMS_FILE" "$CHECKSUMS_URL" 2>/dev/null; then
-        # Extract expected hash for the zip file
         ZIP_ASSET_NAME=$(basename "$ZIP_URL")
         EXPECTED=$(grep "$ZIP_ASSET_NAME" "$CHECKSUMS_FILE" | awk '{print $1}' || true)
 
@@ -213,31 +202,43 @@ if $VERIFY && [[ -n "${CHECKSUMS_URL:-}" ]]; then
             if [[ "$ACTUAL" != "$EXPECTED" ]]; then
                 fail "Checksum mismatch! Expected: $EXPECTED, Got: $ACTUAL"
             fi
-            ok "Checksum verified"
+            ok "SHA256 checksum verified"
         else
-            warn "No checksum entry found for $ZIP_ASSET_NAME, skipping verification"
+            warn "No checksum entry for $ZIP_ASSET_NAME, skipping"
         fi
     else
         warn "Could not download checksums, skipping verification"
     fi
 elif $VERIFY; then
-    warn "No checksums available for this release, skipping verification"
+    warn "No checksums available for this release"
 fi
 
 # ─────────────────────────────────────────────────────────────────────
-# GPG signature (optional, informational only)
+# GPG signature verification (optional, requires gpg on the system)
 # ─────────────────────────────────────────────────────────────────────
 
-if command -v gpg &>/dev/null && [[ -n "${CHECKSUMS_URL:-}" ]]; then
-    SIG_URL="${CHECKSUMS_URL}.sig"
-    SIG_FILE="$TMPDIR/checksums.sha256.sig"
-    if curl -fsSL -o "$SIG_FILE" "$SIG_URL" 2>/dev/null; then
-        if gpg --verify "$SIG_FILE" "$CHECKSUMS_FILE" 2>/dev/null; then
+if command -v gpg &>/dev/null \
+   && [[ -n "${SIGNATURE_URL:-}" ]] \
+   && [[ -n "${SIGNING_KEY_URL:-}" ]] \
+   && [[ -f "$CHECKSUMS_FILE" ]]; then
+
+    KEY_FILE="$TMPDIR/signing-key.asc"
+    SIG_FILE="$TMPDIR/checksums.sha256.asc"
+
+    if curl -fsSL -o "$KEY_FILE" "$SIGNING_KEY_URL" 2>/dev/null \
+       && curl -fsSL -o "$SIG_FILE" "$SIGNATURE_URL" 2>/dev/null; then
+        # Import the public key and verify
+        gpg --batch --quiet --import "$KEY_FILE" 2>/dev/null || true
+        if gpg --batch --verify "$SIG_FILE" "$CHECKSUMS_FILE" 2>/dev/null; then
             ok "GPG signature verified"
         else
-            warn "GPG signature verification failed (key may not be imported)"
+            warn "GPG signature verification failed"
         fi
+    else
+        warn "Could not download signing key or signature, skipping GPG verification"
     fi
+elif ! command -v gpg &>/dev/null; then
+    info "gpg not found, skipping signature verification (optional)"
 fi
 
 # ─────────────────────────────────────────────────────────────────────

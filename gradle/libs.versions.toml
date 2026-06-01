@@ -52,6 +52,7 @@ jline-jansi = { module = "org.jline:jline-terminal-jansi", version.ref = "jline"
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
 bcprov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle" }
+bcpg = { module = "org.bouncycastle:bcpg-jdk18on", version.ref = "bouncycastle" }
 adventure-api = { module = "net.kyori:adventure-api", version.ref = "adventure" }
 adventure-bukkit = { module = "net.kyori:adventure-platform-bukkit", version.ref = "adventure-platform" }
 adventure-bungeecord = { module = "net.kyori:adventure-platform-bungeecord", version.ref = "adventure-platform" }
