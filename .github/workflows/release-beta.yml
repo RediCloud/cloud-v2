@@ -122,14 +122,96 @@ jobs:
       - name: Publish Maven artifacts
         run: ./gradlew publish -PcloudVersion=${{ steps.version.outputs.display }}
 
+      # --- Generate release body ---
+      - name: Generate release body
+        id: body
+        run: |
+          VERSION="${{ steps.version.outputs.display }}"
+          FULL="${{ steps.version.outputs.full }}"
+          REPO="${{ github.repository }}"
+          FINGERPRINT="2ABA6BC97D5FE276C1C7FCA47D569523230B5367"
+
+          # Find previous tag for changelog range
+          git fetch --tags --quiet
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [[ -n "$PREV_TAG" ]]; then
+            RANGE="${PREV_TAG}..HEAD"
+            COMPARE_URL="https://github.com/${REPO}/compare/${PREV_TAG}...v${VERSION}"
+          else
+            RANGE="HEAD"
+            COMPARE_URL=""
+          fi
+
+          # Parse conventional commits into categories
+          FEATURES=""
+          FIXES=""
+          REFACTORS=""
+          CI_BUILD=""
+          OTHER=""
+
+          while IFS= read -r line; do
+            HASH=$(echo "$line" | cut -d' ' -f1)
+            SHORT_HASH="${HASH:0:7}"
+            MSG=$(echo "$line" | cut -d' ' -f2-)
+
+            case "$MSG" in
+              feat*)    FEATURES="${FEATURES}\n- ${MSG#feat:} (\`${SHORT_HASH}\`)" ;;
+              feat\(*) FEATURES="${FEATURES}\n- ${MSG#feat*: } (\`${SHORT_HASH}\`)" ;;
+              fix*)     FIXES="${FIXES}\n- ${MSG#fix:} (\`${SHORT_HASH}\`)" ;;
+              fix\(*)  FIXES="${FIXES}\n- ${MSG#fix*: } (\`${SHORT_HASH}\`)" ;;
+              refactor*) REFACTORS="${REFACTORS}\n- ${MSG#refactor*: } (\`${SHORT_HASH}\`)" ;;
+              ci*|build*) CI_BUILD="${CI_BUILD}\n- ${MSG} (\`${SHORT_HASH}\`)" ;;
+              *)        OTHER="${OTHER}\n- ${MSG} (\`${SHORT_HASH}\`)" ;;
+            esac
+          done < <(git log --oneline --no-merges ${RANGE} 2>/dev/null)
+
+          # Build changelog section
+          CHANGELOG=""
+          [[ -n "$FEATURES" ]] && CHANGELOG="${CHANGELOG}\n#### Features\n${FEATURES}\n"
+          [[ -n "$FIXES" ]] && CHANGELOG="${CHANGELOG}\n#### Bug Fixes\n${FIXES}\n"
+          [[ -n "$REFACTORS" ]] && CHANGELOG="${CHANGELOG}\n#### Refactoring\n${REFACTORS}\n"
+          [[ -n "$CI_BUILD" ]] && CHANGELOG="${CHANGELOG}\n#### CI / Build\n${CI_BUILD}\n"
+          [[ -n "$OTHER" ]] && CHANGELOG="${CHANGELOG}\n#### Other\n${OTHER}\n"
+
+          # Compose full body
+          {
+            echo "body<<BODY_EOF"
+            echo "> [!WARNING]"
+            echo "> This is a **pre-release**. Not recommended for production use."
+            echo ""
+            echo "### Quick Install"
+            echo '```bash'
+            echo "curl -fsSL https://raw.githubusercontent.com/${REPO}/dev/install.sh | bash -s -- --channel beta --version ${VERSION}"
+            echo '```'
+            echo ""
+            echo "### Upgrade"
+            echo '```'
+            echo "version download beta ${VERSION}"
+            echo "version switch beta ${VERSION}"
+            echo '```'
+            echo ""
+            echo "### Verification"
+            echo "SHA-256 checksums and GPG signature are included as release assets."
+            echo '```'
+            echo "Signing key fingerprint: ${FINGERPRINT}"
+            echo '```'
+            echo ""
+            echo "### Changelog"
+            echo -e "$CHANGELOG"
+            if [[ -n "$COMPARE_URL" ]]; then
+              echo "**Full Changelog**: ${COMPARE_URL}"
+            fi
+            echo "BODY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
       # --- Create GitHub Pre-Release ---
       - name: Create GitHub Pre-Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.display }}
           name: ${{ steps.version.outputs.display }}
+          body: ${{ steps.body.outputs.body }}
           prerelease: true
-          generate_release_notes: true
           files: |
             redicloud-${{ steps.version.outputs.full }}.zip
             checksums.sha256
