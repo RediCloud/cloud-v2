@@ -7,18 +7,19 @@ import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
-import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.server.factory.utils.StartDataSnapshot
 import dev.redicloud.utils.JarView
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class FileCopier(
     serverProcess: ServerProcess,
     cloudServer: CloudServer,
     private val serverVersionTypeRepository: CloudServerVersionTypeRepository,
-    fileTemplateRepository: AbstractFileTemplateRepository,
+    val templates: List<FileTemplate>,
     private val snapshot: StartDataSnapshot
 ) {
 
@@ -28,14 +29,9 @@ class FileCopier(
 
     val serviceId = cloudServer.serviceId
     val configurationTemplate = serverProcess.configurationTemplate
-    val templates: List<FileTemplate>
     val workDirectory: File
 
     init {
-        // get templates by given configuration template and collect also inherited templates
-        templates = configurationTemplate.fileTemplateIds.mapNotNull { runBlocking { fileTemplateRepository.getTemplate(it) } }
-            .flatMap { runBlocking { fileTemplateRepository.collectTemplates(it) } }
-        // create work directory
         workDirectory = if (configurationTemplate.static) {
             File(STATIC_FOLDER.getFile().absolutePath, "${cloudServer.name}-${serviceId.id}")
         } else {
@@ -49,11 +45,13 @@ class FileCopier(
         val pluginFolder = File(workDirectory, snapshot.versionType.connectorFolder)
         if (!pluginFolder.exists()) return
         val plugins = pluginFolder.listFiles()?.filter { it.isFile }?.filter { it.extension == "jar" } ?: return
-        plugins.forEach { jar ->
-            val jarView = JarView(jar)
-            if (!jarView.hasEntry("redicloud.properties")) return@forEach
-            jarView.close()
-            jar.delete()
+        withContext(Dispatchers.IO) {
+            plugins.forEach { jar ->
+                val jarView = JarView(jar)
+                if (!jarView.hasEntry("redicloud.properties")) return@forEach
+                jarView.close()
+                jar.delete()
+            }
         }
     }
 
@@ -99,7 +97,9 @@ class FileCopier(
             }
             val pluginFolder = File(workDirectory, snapshot.versionType.connectorFolder)
             if (!pluginFolder.exists()) pluginFolder.mkdirs()
-            connectorFile.copyTo(File(pluginFolder, connectorFile.name), overwrite = true)
+            withContext(Dispatchers.IO) {
+                connectorFile.copyTo(File(pluginFolder, connectorFile.name), overwrite = true)
+            }
         }
     }
 
@@ -115,12 +115,14 @@ class FileCopier(
             } else if (!versionHandler.isDownloaded(snapshot.version)) {
                 versionHandler.download(snapshot.version, lock = false)
             }
-            if (force && configurationTemplate.static || !configurationTemplate.static) {
-                versionHandler.getFolder(snapshot.version).copyRecursively(workDirectory)
-            } else {
-                val jar = versionHandler.getJar(snapshot.version)
-                if (jar.exists()) {
-                    jar.copyTo(File(workDirectory, jar.name), overwrite = true)
+            withContext(Dispatchers.IO) {
+                if (force && configurationTemplate.static || !configurationTemplate.static) {
+                    versionHandler.getFolder(snapshot.version).copyRecursively(workDirectory)
+                } else {
+                    val jar = versionHandler.getJar(snapshot.version)
+                    if (jar.exists()) {
+                        jar.copyTo(File(workDirectory, jar.name), overwrite = true)
+                    }
                 }
             }
             snapshot.versionType.doFileEdits(workDirectory, action)
@@ -134,8 +136,10 @@ class FileCopier(
     suspend fun copyTemplates(force: Boolean = true) {
         if (!force && configurationTemplate.static) return
         logger.fine("Copying templates for $serviceId")
-        templates.forEach {
-            it.folder.copyRecursively(workDirectory, overwrite = false)
+        withContext(Dispatchers.IO) {
+            templates.forEach {
+                it.folder.copyRecursively(workDirectory, overwrite = false)
+            }
         }
     }
 }

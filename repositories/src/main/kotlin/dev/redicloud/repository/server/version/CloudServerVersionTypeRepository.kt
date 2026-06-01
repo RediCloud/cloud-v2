@@ -17,7 +17,9 @@ import dev.redicloud.utils.gson.gsonInterfaceFactory
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
 import java.util.*
 import java.util.logging.Level
 import kotlin.time.Duration.Companion.minutes
@@ -142,9 +144,11 @@ class CloudServerVersionTypeRepository(
             httpClient.get {
                 url(serverVersionType.getParsedConnectorURL().toExternalForm())
             }.readRawBytes().let {
-                if (connectorFile.exists()) connectorFile.delete()
-                connectorFile.createNewFile()
-                connectorFile.writeBytes(it)
+                withContext(Dispatchers.IO) {
+                    if (connectorFile.exists()) connectorFile.delete()
+                    connectorFile.createNewFile()
+                    connectorFile.writeBytes(it)
+                }
             }
             LOGGER.log(
                 if (console == null) Level.FINE else Level.INFO,

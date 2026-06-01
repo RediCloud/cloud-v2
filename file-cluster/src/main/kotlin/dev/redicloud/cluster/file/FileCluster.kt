@@ -19,8 +19,10 @@ import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.utils.findFreePort
 import dev.redicloud.utils.isPortFree
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.apache.sshd.common.file.virtualfs.VirtualFileSystemFactory
 import org.apache.sshd.common.util.net.SshdSocketAddress
 import org.apache.sshd.server.SshServer
@@ -178,14 +180,14 @@ class FileCluster(
         session.setPassword(fileNode.password)
         session.setConfig("serviceId", serviceId.toName())
         session.setConfig("StrictHostKeyChecking", "no")
-        session.connect()
+        withContext(Dispatchers.IO) { session.connect() }
         check(session.isConnected) { "Session is not connected!" }
         return session
     }
 
     suspend fun openChannel(session: Session): ChannelSftp {
         val channel = session.openChannel("sftp") as ChannelSftp
-        channel.connect()
+        withContext(Dispatchers.IO) { channel.connect() }
         check(channel.isConnected) { "Channel is not connected!" }
         return channel
     }
@@ -222,10 +224,12 @@ class FileCluster(
     }
 
     suspend fun shareFile(channel: ChannelSftp, file: File, destinationFolder: String, fileName: String) {
-        channel.cd(channel.home)
-        channel.cd(parsePath(destinationFolder))
-        channel.put(parsePath(file.absolutePath), fileName)
-        channel.cd(channel.home)
+        withContext(Dispatchers.IO) {
+            channel.cd(channel.home)
+            channel.cd(parsePath(destinationFolder))
+            channel.put(parsePath(file.absolutePath), fileName)
+            channel.cd(channel.home)
+        }
     }
 
     suspend fun unzip(serviceId: ServiceId, file: String, unzipPath: String): AbstractPacket? {
@@ -244,7 +248,9 @@ class FileCluster(
         val fileNode = fileNodeRepository.getFileNode(serviceId) ?: error(
             "File node with service id $serviceId is not registered in the file cluster!"
         )
-        channel.get(parsePath(targetFile), parsePath(destinationFile.absolutePath))
+        withContext(Dispatchers.IO) {
+            channel.get(parsePath(targetFile), parsePath(destinationFile.absolutePath))
+        }
         return destinationFile
     }
 

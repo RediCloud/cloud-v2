@@ -41,7 +41,9 @@ import dev.redicloud.server.factory.utils.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.ConcurrentBatch
 import dev.redicloud.utils.zipFile
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
 import kotlin.time.Duration.Companion.milliseconds
@@ -113,8 +115,10 @@ class ServerFactory(
             this.unregisterServer(serviceId, server)
             val workDir = File(STATIC_FOLDER.getFile(), "${server.name}-${server.serviceId.id}")
             if (workDir.exists() && workDir.isDirectory) {
-                if (!workDir.deleteRecursively()) {
-                    workDir.deleteOnExit()
+                withContext(Dispatchers.IO) {
+                    if (!workDir.deleteRecursively()) {
+                        workDir.deleteOnExit()
+                    }
                 }
             }
             eventManager.fireEvent(CloudServerDeleteEvent(server.serviceId, server.name))
@@ -240,11 +244,14 @@ class ServerFactory(
         cloudServer: CloudServer,
         snapshotData: StartDataSnapshot
     ) {
+        val templates = serverProcess.configurationTemplate.fileTemplateIds
+            .mapNotNull { fileTemplateRepository.getTemplate(it) }
+            .flatMap { fileTemplateRepository.collectTemplates(it) }
         val copier = FileCopier(
             serverProcess,
             cloudServer,
             serverVersionTypeRepository,
-            fileTemplateRepository,
+            templates,
             snapshotData
         )
         serverProcess.fileCopier = copier
@@ -344,11 +351,14 @@ class ServerFactory(
             nodeRepository.updateNode(thisNode)
 
             // copy the files to copy server necessary files
+            val templates = newConfigurationTemplate.fileTemplateIds
+                .mapNotNull { fileTemplateRepository.getTemplate(it) }
+                .flatMap { fileTemplateRepository.collectTemplates(it) }
             val copier = FileCopier(
                 serverProcess,
                 server,
                 serverVersionTypeRepository,
-                fileTemplateRepository,
+                templates,
                 snapshotData
             )
             serverProcess.fileCopier = copier
@@ -463,7 +473,7 @@ class ServerFactory(
                 )
             }
             fileCluster.deleteFolderRecursive(channel, toUniversalPath(workFolder))
-            workFolder.deleteRecursively()
+            withContext(Dispatchers.IO) { workFolder.deleteRecursively() }
             val event = CloudServerTransferredEvent(serverId, server.hostNodeId)
             server.hostNodeId = nodeId
             serverRepository.updateServer(server)

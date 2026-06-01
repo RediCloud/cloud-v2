@@ -15,7 +15,9 @@ import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.*
 import io.ktor.client.request.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import java.io.File
@@ -117,10 +119,13 @@ open class URLServerVersionHandler(
         }
 
         val folder = getFolder(version)
-        if (folder.exists()) folder.deleteRecursively()
-        folder.mkdirs()
-        if (jar.exists()) jar.delete()
-        jar.writeBytes(response.readBytes())
+        val bytes = response.readBytes()
+        withContext(Dispatchers.IO) {
+            if (folder.exists()) folder.deleteRecursively()
+            folder.mkdirs()
+            if (jar.exists()) jar.delete()
+            jar.writeBytes(bytes)
+        }
     }
 
     private suspend fun downloadDefaultFiles(version: ICloudServerVersion, folder: File) {
@@ -163,8 +168,11 @@ open class URLServerVersionHandler(
                 )
                 return
             }
-            file.createNewFile()
-            file.writeBytes(response.readBytes())
+            val bytes = response.readBytes()
+            withContext(Dispatchers.IO) {
+                file.createNewFile()
+                file.writeBytes(bytes)
+            }
         } catch (e: Exception) {
             logger.warning(
                 "§cFailed to download default file ${toConsoleValue(
@@ -248,21 +256,25 @@ open class URLServerVersionHandler(
 
             val versionDir = getFolder(version)
             val tempDir = File(TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath, UUID.randomUUID().toString())
-            tempDir.mkdirs()
-            versionDir.copyRecursively(tempDir, true)
+            withContext(Dispatchers.IO) {
+                tempDir.mkdirs()
+                versionDir.copyRecursively(tempDir, true)
+            }
             val tempJar = File(tempDir, jar.name)
 
             val type = resolveVersionType(version)
             val javaVersion = resolveJavaVersion(version)
             executePatchProcess(version, type, javaVersion, tempDir, tempJar)
 
-            if (!versionDir.exists()) versionDir.mkdirs()
-            tempJar.copyTo(jar, true)
-            cleanupPatchedFiles(version, type, tempDir, tempJar)
-            versionDir.deleteRecursively()
-            tempDir.copyRecursively(versionDir, true)
-            tempDir.deleteRecursively()
-            File(versionDir, ".patched").createNewFile()
+            withContext(Dispatchers.IO) {
+                if (!versionDir.exists()) versionDir.mkdirs()
+                tempJar.copyTo(jar, true)
+                cleanupPatchedFiles(version, type, tempDir, tempJar)
+                versionDir.deleteRecursively()
+                tempDir.copyRecursively(versionDir, true)
+                tempDir.deleteRecursively()
+                File(versionDir, ".patched").createNewFile()
+            }
         } catch (e: CloudVersionException) {
             error = true
             throw e
