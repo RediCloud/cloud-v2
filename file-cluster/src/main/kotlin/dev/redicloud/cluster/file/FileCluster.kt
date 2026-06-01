@@ -28,29 +28,12 @@ import org.apache.sshd.server.auth.password.PasswordAuthenticator
 import org.apache.sshd.server.auth.pubkey.PublickeyAuthenticator
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider
 import org.apache.sshd.sftp.server.SftpSubsystemFactory
-import org.bouncycastle.asn1.x500.X500Name
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
-import org.bouncycastle.cert.X509CertificateHolder
-import org.bouncycastle.cert.X509v3CertificateBuilder
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
-import org.bouncycastle.openssl.jcajce.JcaPEMWriter
-import org.bouncycastle.operator.ContentSigner
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import java.io.File
-import java.io.FileWriter
-import java.math.BigInteger
 import java.net.InetSocketAddress
 import java.nio.file.Paths
-import java.security.KeyPair
-import java.security.KeyPairGenerator
-import java.security.PrivateKey
-import java.security.PublicKey
-import java.security.cert.X509Certificate
-import java.time.Instant
-import java.time.temporal.ChronoUnit
-import java.util.*
 import java.util.logging.Filter
 import java.util.logging.Level
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class FileCluster(
@@ -67,15 +50,14 @@ class FileCluster(
         private const val PASSWORD_LENGTH = 32
         private const val SFTP_PORT_RANGE_START = 4000
         private const val SFTP_PORT_RANGE_END = 5000
-        private const val RSA_KEY_SIZE = 2048
-        private const val CERTIFICATE_EXPIRATION_DAYS = 31
-        private const val UNZIP_DELAY_MS = 500L
+        private val UNZIP_DELAY_MS = 500.milliseconds
     }
 
     private val ipFilter = IPFilter(this.eventManager, this.fileNodeRepository)
     private var sshd: SshServer? = null
     private val jsch = JSch()
     var port = -1
+        private set
 
     init {
         LogManager.rootLogger().filter = Filter { record
@@ -119,8 +101,7 @@ class FileCluster(
         sshd!!.passwordAuthenticator = PasswordAuthenticator { username, password, session ->
             runBlocking {
                 val node = fileNodeRepository.getFileNode(serviceId) ?: return@runBlocking false
-                val clientAddress = session.clientAddress
-                val hostname = when (clientAddress) {
+                val hostname = when (val clientAddress = session.clientAddress) {
                     is SshdSocketAddress -> {
                         clientAddress.hostName
                     }
@@ -152,14 +133,14 @@ class FileCluster(
 
         thisNode.startSession(hostname)
         thisNode.connected = true
-        runBlocking { fileNodeRepository.updateFileNode(thisNode) }
+        fileNodeRepository.updateFileNode(thisNode)
         eventManager.fireEvent(FileNodeConnectedEvent(thisNode.serviceId))
     }
 
-    private fun generatePort(fileNode: FileNode): Int {
+    private suspend fun generatePort(fileNode: FileNode): Int {
         if (System.getProperty("redicloud.filecluster.port") != null) {
             fileNode.port = System.getProperty("redicloud.filecluster.port").toInt()
-            runBlocking { fileNodeRepository.updateFileNode(fileNode) }
+            fileNodeRepository.updateFileNode(fileNode)
             return fileNode.port
         }
         val range = SFTP_PORT_RANGE_START..SFTP_PORT_RANGE_END
@@ -169,51 +150,11 @@ class FileCluster(
             val newPort = findFreePort(range)
             check(range.contains(newPort)) { "Port $newPort is not in range $range!" }
             fileNode.port = newPort
-            runBlocking { fileNodeRepository.updateFileNode(fileNode) }
+            fileNodeRepository.updateFileNode(fileNode)
             newPort
         }
         check(port != -1) { "No free port found for file cluster!" }
         return port
-    }
-
-    // TODO: implement certificate-based authentication for file cluster
-    @Suppress("UnusedPrivateMember")
-    private fun generateKey(): KeyPair {
-        val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
-        keyPairGenerator.initialize(RSA_KEY_SIZE)
-        return keyPairGenerator.generateKeyPair()
-    }
-
-    // TODO: implement certificate-based authentication for file cluster
-    @Suppress("UnusedPrivateMember")
-    private fun saveCertificateToFile(certificate: X509Certificate, file: File) {
-        if (!file.parentFile.exists()) file.parentFile.mkdirs()
-        if (file.exists()) file.delete()
-        file.createNewFile()
-        val pemWriter = JcaPEMWriter(FileWriter(file))
-        pemWriter.writeObject(certificate)
-        pemWriter.close()
-    }
-
-    // TODO: implement certificate-based authentication for file cluster
-    @Suppress("UnusedPrivateMember")
-    private fun signCertificate(publicKey: PublicKey, privateKey: PrivateKey): X509Certificate {
-        val subject = X500Name("CN=Self-Signed")
-        val now = Instant.now()
-        val expirationTime = now.plus(CERTIFICATE_EXPIRATION_DAYS.toLong() * 3, ChronoUnit.DAYS)
-        val serialNumber = BigInteger.valueOf(now.toEpochMilli())
-        val publicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.encoded)
-        val builder = X509v3CertificateBuilder(
-            subject,
-            serialNumber,
-            Date.from(now),
-            Date.from(expirationTime),
-            subject,
-            publicKeyInfo
-        )
-        val contentSigner: ContentSigner = JcaContentSignerBuilder("SHA256WithRSA").build(privateKey)
-        val certificateHolder: X509CertificateHolder = builder.build(contentSigner)
-        return JcaX509CertificateConverter().getCertificate(certificateHolder)
     }
 
     suspend fun disconnect(immediately: Boolean) {
@@ -225,7 +166,7 @@ class FileCluster(
         thisNode.endSession()
         thisNode.connected = false
         fileNodeRepository.shutdownAction.run()
-        runBlocking { fileNodeRepository.updateFileNode(thisNode) }
+        fileNodeRepository.updateFileNode(thisNode)
         eventManager.fireEvent(FileNodeDisconnectedEvent(thisNode.serviceId))
     }
 
