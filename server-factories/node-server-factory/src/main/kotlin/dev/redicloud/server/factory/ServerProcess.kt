@@ -26,9 +26,10 @@ import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.blockPort
 import dev.redicloud.utils.findFreePort
 import dev.redicloud.utils.freePort
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.seconds
 
@@ -40,7 +41,8 @@ class ServerProcess(
     private val bindHost: String,
     private val clusterConfiguration: ClusterConfiguration,
     override val serverId: ServiceId,
-    override val hostServiceId: ServiceId
+    override val hostServiceId: ServiceId,
+    private val scope: CoroutineScope
 ) : ICloudServerProcess {
 
     override val port: Int
@@ -113,7 +115,7 @@ class ServerProcess(
         }
         // create handler and listen for exit
         processHandler = ScreenProcessHandler(process!!, serverScreen)
-        processHandler!!.onExit { runBlocking { stop(internalCall = true) } }
+        processHandler!!.onExit { scope.launch { stop(internalCall = true) } }
 
         cloudServer.state = CloudServerState.STARTING
         cloudServer.port = port

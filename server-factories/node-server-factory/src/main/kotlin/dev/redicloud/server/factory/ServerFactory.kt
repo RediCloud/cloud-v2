@@ -41,6 +41,7 @@ import dev.redicloud.server.factory.utils.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.ConcurrentBatch
 import dev.redicloud.utils.zipFile
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -63,7 +64,8 @@ class ServerFactory(
     private val clusterConfiguration: ClusterConfiguration,
     private val configurationTemplateRepository: ConfigurationTemplateRepository,
     private val eventManager: EventManager,
-    private val fileCluster: FileCluster
+    private val fileCluster: FileCluster,
+    private val scope: CoroutineScope
 ) : ICloudServerFactory, RemoteServerFactory(databaseConnection, nodeRepository, serverRepository) {
 
     companion object {
@@ -197,7 +199,8 @@ class ServerFactory(
             bindHost,
             clusterConfiguration,
             serviceId,
-            hostingId
+            hostingId,
+            scope
         )
     }
 
@@ -314,7 +317,8 @@ class ServerFactory(
             bindHost,
             clusterConfiguration,
             serviceId,
-            hostingId
+            hostingId,
+            scope
         )
         hostedProcesses.add(serverProcess)
         @Suppress("TooGenericExceptionCaught")

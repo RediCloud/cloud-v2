@@ -72,7 +72,7 @@ class NodeService(
             fileTemplateRepository, javaVersionRepository,
             packetManager, configuration.hostAddress, console,
             clusterConfiguration, configurationTemplateRepository,
-            eventManager, fileCluster
+            eventManager, fileCluster, scope
         )
         moduleHandler = ModuleHandler(serviceId, loadModuleRepositoryUrls(), eventManager, packetManager, null, databaseConnection)
         playerExecutor = NodePlayerExecutor(this.playerRepository, serverRepository, packetManager, serviceId)

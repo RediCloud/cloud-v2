@@ -23,7 +23,6 @@ import dev.redicloud.module.rest.handler.server.ProxyServerInfoHandler
 import dev.redicloud.module.rest.handler.version.ServerVersionInfoHandler
 import dev.redicloud.module.rest.handler.version.type.ServerVersionTypeInfoHandler
 import io.javalin.Javalin
-import kotlinx.coroutines.runBlocking
 
 class RestModule : CloudModule(), CloudInjectable {
 
@@ -47,7 +46,7 @@ class RestModule : CloudModule(), CloudInjectable {
 
     @ModuleTask(ModuleLifeCycle.LOAD)
     @Suppress("LongParameterList")
-    fun load(
+    suspend fun load(
         @Named("this") nodeId: ServiceId,
         nodeRepository: ICloudNodeRepository,
         serverRepository: ICloudServerRepository,
@@ -61,7 +60,7 @@ class RestModule : CloudModule(), CloudInjectable {
         app = Javalin.create()
         config = getStorage("rest-server")
         // verify the node exists before proceeding, throws if not found
-        runBlocking { nodeRepository.getNode(nodeId)!! }
+        nodeRepository.getNode(nodeId)!!
 
         playerFetcher = PlayerFetcher(playerRepository)
         nodeFetcher = NodeFetcher(nodeRepository)
