@@ -17,9 +17,11 @@ import java.security.MessageDigest
 import java.util.*
 import java.util.jar.JarFile
 
+@Suppress("TooManyFunctions")
 object Updater {
 
     private const val GITHUB_API = "https://api.github.com/repos/RediCloud/cloud-v2/releases"
+    private const val BUFFER_SIZE = 8192
 
     private val updateInfoFile = File(".update-info")
 
@@ -161,8 +163,8 @@ object Updater {
         // Find the freshly extracted node-service JAR
         updateToVersion = mainFolderJars().firstOrNull { jar ->
             val props = getJarProperties(jar)
-            props["full-version"]?.let { CloudVersion.parseOrNull(it) } == release.version
-                || props["version"] == release.version.base
+            props["full-version"]?.let { CloudVersion.parseOrNull(it) } == release.version ||
+                props["version"] == release.version.base
         } ?: error("Could not find extracted JAR for ${release.version.display}")
 
         val currentFull = CLOUD_VERSION_FULL
@@ -226,7 +228,7 @@ object Updater {
     private fun sha256(file: File): String {
         val digest = MessageDigest.getInstance("SHA-256")
         file.inputStream().use { input ->
-            val buffer = ByteArray(8192)
+            val buffer = ByteArray(BUFFER_SIZE)
             var read: Int
             while (input.read(buffer).also { read = it } != -1) {
                 digest.update(buffer, 0, read)

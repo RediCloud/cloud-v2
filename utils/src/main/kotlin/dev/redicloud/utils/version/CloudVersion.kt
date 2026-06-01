@@ -59,6 +59,7 @@ data class CloudVersion(
      * 3. Among pre-releases: compare channel order, then build number.
      * 4. Build metadata (`+gitSha`) is ignored.
      */
+    @Suppress("ReturnCount")
     override fun compareTo(other: CloudVersion): Int {
         var cmp = major.compareTo(other.major)
         if (cmp != 0) return cmp
@@ -97,15 +98,15 @@ data class CloudVersion(
                         "Expected: <major>.<minor>.<patch>[-<channel>.<build>][+<gitSha>]"
                 )
 
-            val (majorStr, minorStr, patchStr, channelStr, buildStr, gitSha) = match.destructured
+            val groups = match.groupValues
 
             return CloudVersion(
-                major = majorStr.toInt(),
-                minor = minorStr.toInt(),
-                patch = patchStr.toInt(),
-                channel = if (channelStr.isBlank()) VersionChannel.STABLE else VersionChannel.fromLabel(channelStr),
-                build = if (buildStr.isBlank()) 0 else buildStr.toInt(),
-                gitSha = gitSha
+                major = groups[1].toInt(),
+                minor = groups[2].toInt(),
+                patch = groups[3].toInt(),
+                channel = groups[4].let { if (it.isBlank()) VersionChannel.STABLE else VersionChannel.fromLabel(it) },
+                build = groups[5].let { if (it.isBlank()) 0 else it.toInt() },
+                gitSha = groups[6]
             )
         }
 
