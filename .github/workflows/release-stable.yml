@@ -1,0 +1,132 @@
+name: Stable Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Build & Publish Stable
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: ./.github/actions/setup
+
+      # --- Determine version ---
+      - name: Determine version
+        id: version
+        run: |
+          BASE_VERSION=$(grep '^cloudVersion=' gradle.properties | cut -d'=' -f2)
+          GIT_SHA=$(git rev-parse --short=7 HEAD)
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          FULL_VERSION="${BASE_VERSION}+${GIT_SHA}"
+
+          echo "base=${BASE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "git=${GIT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "full=${FULL_VERSION}" >> "$GITHUB_OUTPUT"
+
+          echo "### Stable Release" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Version:** ${FULL_VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Commit:** ${GIT_SHA}" >> "$GITHUB_STEP_SUMMARY"
+
+      # --- Generate version properties ---
+      - name: Generate version properties
+        run: |
+          PROPS_CONTENT="version=${{ steps.version.outputs.base }}
+          channel=stable
+          build=0
+          git=${{ steps.version.outputs.git }}
+          branch=${{ steps.version.outputs.branch }}
+          full-version=${{ steps.version.outputs.full }}"
+
+          RESOURCE_DIRS=(
+            "services/node-service/src/main/resources"
+          )
+          for dir in connectors/*/; do
+            name=$(basename "$dir")
+            [[ "$name" == "build" || "$name" == "src" ]] && continue
+            RESOURCE_DIRS+=("connectors/${name}/src/main/resources")
+          done
+
+          for dir in "${RESOURCE_DIRS[@]}"; do
+            mkdir -p "$dir"
+            echo "$PROPS_CONTENT" > "${dir}/redicloud-version.properties"
+          done
+
+      # --- Replace start script placeholders ---
+      - name: Prepare start scripts
+        run: |
+          VERSION="${{ steps.version.outputs.base }}"
+          find scripts/start/ -type f \( -name '*.sh' -o -name '*.bat' \) -exec \
+            sed -i "s/%version%/${VERSION}/g" {} +
+
+      # --- Build ---
+      - name: Build
+        run: ./gradlew build -x test -PcloudVersion=${{ steps.version.outputs.base }}
+
+      # --- Assemble export ---
+      - name: Assemble release artifacts
+        run: |
+          mkdir -p export/connectors export/modules export/api-files export/start-scripts
+
+          cp services/node-service/build/libs/redicloud-node-service-*.jar export/
+          cp connectors/*-connector/build/libs/*.jar export/connectors/
+          cp -r api-files/* export/api-files/
+          cp scripts/start/* export/start-scripts/
+          cp modules/*/build/libs/*.jar export/modules/ 2>/dev/null || true
+          rm -f export/modules/*module-handler*.jar
+
+      # --- Create zip ---
+      - name: Create zip archive
+        run: |
+          cd export
+          zip -r "../redicloud-${{ steps.version.outputs.full }}.zip" .
+          cd ..
+
+      # --- Checksums ---
+      - name: Generate SHA256 checksums
+        run: |
+          sha256sum "redicloud-${{ steps.version.outputs.full }}.zip" > checksums.sha256
+          cd export
+          sha256sum **/*.jar >> ../checksums.sha256
+          cd ..
+
+      # --- GPG signing ---
+      - name: Import GPG key
+        if: ${{ env.GPG_PRIVATE_KEY != '' }}
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
+            --passphrase-fd 0 --detach-sign --armor checksums.sha256
+
+      # --- Publish to GitHub Packages ---
+      - name: Publish Maven artifacts
+        run: ./gradlew publish -PcloudVersion=${{ steps.version.outputs.base }}
+
+      # --- Create GitHub Release ---
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.base }}
+          name: ${{ steps.version.outputs.base }}
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            redicloud-${{ steps.version.outputs.full }}.zip
+            checksums.sha256
+            checksums.sha256.sig
+          fail_on_unmatched_files: false
