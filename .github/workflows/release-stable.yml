@@ -68,8 +68,7 @@ jobs:
       - name: Prepare start scripts
         run: |
           VERSION="${{ steps.version.outputs.base }}"
-          find scripts/start/ -type f \( -name '*.sh' -o -name '*.bat' \) -exec \
-            sed -i "s/%version%/${VERSION}/g" {} +
+          sed -i "s/%version%/${VERSION}/g" scripts/start.sh
 
       # --- Build ---
       - name: Build
@@ -78,12 +77,12 @@ jobs:
       # --- Assemble export ---
       - name: Assemble release artifacts
         run: |
-          mkdir -p export/connectors export/modules export/api-files export/start-scripts
+          mkdir -p export/connectors export/modules export/api-files
 
           cp services/node-service/build/libs/redicloud-node-service-*.jar export/
           cp connectors/*-connector/build/libs/*.jar export/connectors/
           cp -r api-files/* export/api-files/
-          cp scripts/start/* export/start-scripts/
+          cp scripts/start.sh export/
           cp modules/*/build/libs/*.jar export/modules/ 2>/dev/null || true
           rm -f export/modules/*module-handler*.jar
 
