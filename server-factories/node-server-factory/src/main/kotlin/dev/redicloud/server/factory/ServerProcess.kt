@@ -64,16 +64,16 @@ class ServerProcess(
          * Keep in sync with `scripts/start/start.sh`.
          */
         private val JPMS_OPENS = listOf(
-            "--add-opens=java.base/java.lang=ALL-UNNAMED",          // Redisson, Gson, Guice, Kotlin Reflect
-            "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",  // Guice, Kotlin Reflect
+            "--add-opens=java.base/java.lang=ALL-UNNAMED", // Redisson, Gson, Guice, Kotlin Reflect
+            "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED", // Guice, Kotlin Reflect
             "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED", // Redisson
-            "--add-opens=java.base/java.text=ALL-UNNAMED",          // Gson date/time
-            "--add-opens=java.base/java.util=ALL-UNNAMED",          // Redisson, Gson
-            "--add-opens=java.base/java.math=ALL-UNNAMED",          // Redisson, Gson
+            "--add-opens=java.base/java.text=ALL-UNNAMED", // Gson date/time
+            "--add-opens=java.base/java.util=ALL-UNNAMED", // Redisson, Gson
+            "--add-opens=java.base/java.math=ALL-UNNAMED", // Redisson, Gson
             "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED", // Netty Unsafe
-            "--add-opens=java.base/java.nio=ALL-UNNAMED",           // Netty DirectByteBuffer
-            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",         // Netty NIO selector
-            "--add-opens=java.base/java.net=ALL-UNNAMED",           // Ktor CIO, ClassLoader
+            "--add-opens=java.base/java.nio=ALL-UNNAMED", // Netty DirectByteBuffer
+            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED", // Netty NIO selector
+            "--add-opens=java.base/java.net=ALL-UNNAMED", // Ktor CIO, ClassLoader
             "--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED" // Ktor HTTPS
         )
         val SERVER_STOP_TIMEOUT = System.getProperty("redicloud.server.stop.timeout", "20").toInt()
