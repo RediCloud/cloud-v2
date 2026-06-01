@@ -80,6 +80,9 @@ tasks {
 
 tasks.withType<Jar> {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    // Exclude signature files from shaded dependencies (e.g. Bouncy Castle)
+    // to prevent "Invalid signature file digest" errors at runtime
+    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA")
     manifest {
         attributes["Main-Class"] = "dev.redicloud.libloader.boot.Bootstrap"
         attributes["Premain-Class"] = "dev.redicloud.libloader.boot.Agent"
