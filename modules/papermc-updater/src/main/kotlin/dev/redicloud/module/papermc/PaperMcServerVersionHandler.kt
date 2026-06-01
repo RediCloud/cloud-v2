@@ -64,26 +64,25 @@ class PaperMcServerVersionHandler(
             }
             console.startAnimation(animation)
         }
-        if (lock) getLock(version).lock()
-        val jar = getJar(version)
-        @Suppress("TooGenericExceptionCaught")
-        try {
-            if (jar.exists() && !force) return jar
-            downloadJar(version, jar)
-            downloadDefaultFiles(version, getFolder(version), logger)
-            lastUpdateChecks[version] = System.currentTimeMillis()
-        } catch (e: CloudVersionException) {
-            error = true
-            throw e
-        } catch (e: Exception) {
-            error = true
-            throw CloudVersionException("Failed to download version ${version.displayName}", e)
-        } finally {
-            downloaded = true
-            if (lock) getLock(version).unlock()
+        return getLock(version).withOptionalLock(lock) {
+            val jar = getJar(version)
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                if (jar.exists() && !force) return@withOptionalLock jar
+                downloadJar(version, jar)
+                downloadDefaultFiles(version, getFolder(version), logger)
+                lastUpdateChecks[version] = System.currentTimeMillis()
+            } catch (e: CloudVersionException) {
+                error = true
+                throw e
+            } catch (e: Exception) {
+                error = true
+                throw CloudVersionException("Failed to download version ${version.displayName}", e)
+            } finally {
+                downloaded = true
+            }
+            jar
         }
-
-        return jar
     }
 
     @Suppress("ThrowsCount")
@@ -263,42 +262,42 @@ class PaperMcServerVersionHandler(
             }
             console.startAnimation(animation)
         }
-        if (lock) getLock(version).lock()
-        @Suppress("TooGenericExceptionCaught")
-        try {
-            val jar = getJar(version)
-            if (!jar.exists()) download(version, true, lock = false)
+        getLock(version).withOptionalLock(lock) {
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                val jar = getJar(version)
+                if (!jar.exists()) download(version, true, lock = false)
 
-            val versionDir = getFolder(version)
-            val tempDir = File(TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath, UUID.randomUUID().toString())
-            withContext(Dispatchers.IO) {
-                tempDir.mkdirs()
-                versionDir.copyRecursively(tempDir, true)
+                val versionDir = getFolder(version)
+                val tempDir = File(TEMP_SERVER_VERSION_FOLDER.getFile().absolutePath, UUID.randomUUID().toString())
+                withContext(Dispatchers.IO) {
+                    tempDir.mkdirs()
+                    versionDir.copyRecursively(tempDir, true)
+                }
+                val tempJar = File(tempDir, jar.name)
+
+                val type = resolveVersionType(version)
+                val javaVersion = resolveJavaVersion(version)
+                executePatchProcess(version, type, javaVersion, tempDir, tempJar)
+
+                withContext(Dispatchers.IO) {
+                    if (!versionDir.exists()) versionDir.mkdirs()
+                    tempJar.copyTo(jar, true)
+                    cleanupPatchedFiles(version, type, tempDir, tempJar)
+                    versionDir.deleteRecursively()
+                    tempDir.copyRecursively(versionDir, true)
+                    tempDir.deleteRecursively()
+                    File(versionDir, ".patched").createNewFile()
+                }
+            } catch (e: CloudVersionException) {
+                error = true
+                throw e
+            } catch (e: Exception) {
+                error = true
+                throw CloudVersionException("Failed to patch version ${version.displayName}", e)
+            } finally {
+                patched = true
             }
-            val tempJar = File(tempDir, jar.name)
-
-            val type = resolveVersionType(version)
-            val javaVersion = resolveJavaVersion(version)
-            executePatchProcess(version, type, javaVersion, tempDir, tempJar)
-
-            withContext(Dispatchers.IO) {
-                if (!versionDir.exists()) versionDir.mkdirs()
-                tempJar.copyTo(jar, true)
-                cleanupPatchedFiles(version, type, tempDir, tempJar)
-                versionDir.deleteRecursively()
-                tempDir.copyRecursively(versionDir, true)
-                tempDir.deleteRecursively()
-                File(versionDir, ".patched").createNewFile()
-            }
-        } catch (e: CloudVersionException) {
-            error = true
-            throw e
-        } catch (e: Exception) {
-            error = true
-            throw CloudVersionException("Failed to patch version ${version.displayName}", e)
-        } finally {
-            patched = true
-            if (lock) getLock(version).unlock()
         }
     }
 

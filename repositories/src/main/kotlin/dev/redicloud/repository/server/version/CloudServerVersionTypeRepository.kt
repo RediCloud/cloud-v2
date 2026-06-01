@@ -16,6 +16,7 @@ import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import dev.redicloud.utils.withOptionalLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -134,32 +135,31 @@ class CloudServerVersionTypeRepository(
             if (console == null) Level.INFO else Level.FINE,
             "Downloading connector for ${toConsoleValue(serverVersionType.name)}..."
         )
-        val mutex = getLock(serverVersionType)
-        if (lock) mutex.lock()
-        @Suppress("TooGenericExceptionCaught")
-        try {
-            check(
-                serverVersionType.getParsedConnectorURL().isValid()
-            ) { "Connector download url of ${serverVersionType.connectorPluginName} is null!" }
-            httpClient.get {
-                url(serverVersionType.getParsedConnectorURL().toExternalForm())
-            }.readRawBytes().let {
-                withContext(Dispatchers.IO) {
-                    if (connectorFile.exists()) connectorFile.delete()
-                    connectorFile.createNewFile()
-                    connectorFile.writeBytes(it)
+        getLock(serverVersionType).withOptionalLock(lock) {
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                check(
+                    serverVersionType.getParsedConnectorURL().isValid()
+                ) { "Connector download url of ${serverVersionType.connectorPluginName} is null!" }
+                httpClient.get {
+                    url(serverVersionType.getParsedConnectorURL().toExternalForm())
+                }.readRawBytes().let {
+                    withContext(Dispatchers.IO) {
+                        if (connectorFile.exists()) connectorFile.delete()
+                        connectorFile.createNewFile()
+                        connectorFile.writeBytes(it)
+                    }
                 }
+                LOGGER.log(
+                    if (console == null) Level.FINE else Level.INFO,
+                    "Successfully downloaded connector for ${toConsoleValue(serverVersionType.name)}!"
+                )
+            } catch (e: Exception) {
+                LOGGER.severe("§cFailed to download connector ${toConsoleValue(connectorFile.name, false)}!", e)
+                error = true
+            } finally {
+                downloaded = true
             }
-            LOGGER.log(
-                if (console == null) Level.FINE else Level.INFO,
-                "Successfully downloaded connector for ${toConsoleValue(serverVersionType.name)}!"
-            )
-        } catch (e: Exception) {
-            LOGGER.severe("§cFailed to download connector ${toConsoleValue(connectorFile.name, false)}!", e)
-            error = true
-        } finally {
-            downloaded = true
-            if (lock) mutex.unlock()
         }
     }
 

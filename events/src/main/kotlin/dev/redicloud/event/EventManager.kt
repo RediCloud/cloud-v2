@@ -39,13 +39,10 @@ class EventManager(
     }
 
     fun unregister(classLoader: ClassLoader) {
-        lock.lock()
-        try {
+        lock.withLock {
             handlers.values.forEach { list ->
                 list.removeIf { it.listener::class.java.classLoader == classLoader }
             }
-        } finally {
-            lock.unlock()
         }
     }
 
@@ -72,13 +69,10 @@ class EventManager(
     }
 
     override fun unregisterListener(listener: Any) {
-        lock.lock()
-        try {
+        lock.withLock {
             handlers.values.forEach { list ->
                 list.removeIf { it.listener == listener }
             }
-        } finally {
-            lock.unlock()
         }
     }
 
