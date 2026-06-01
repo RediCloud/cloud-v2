@@ -354,27 +354,8 @@ class ServerFactory(
             thisNode.hostedServers.add(server.serviceId)
             nodeRepository.updateNode(thisNode)
 
-            // copy the files to copy server necessary files
-            val templates = newConfigurationTemplate.fileTemplateIds
-                .mapNotNull { fileTemplateRepository.getTemplate(it) }
-                .flatMap { fileTemplateRepository.collectTemplates(it) }
-            val copier = FileCopier(
-                serverProcess,
-                server,
-                serverVersionTypeRepository,
-                templates,
-                snapshotData
-            )
+            val copier = prepareServerFiles(serverProcess, server, newConfigurationTemplate, snapshotData)
             serverProcess.fileCopier = copier
-
-            // copy all templates
-            copier.copyTemplates(false)
-            // copy all version files
-            copier.copyVersionFiles(false) { serverProcess.replacePlaceholders(it, snapshotData) }
-            // delete old connector files
-            copier.deleteConnectors()
-            // copy connector
-            copier.copyConnector()
 
             // start the server
             return serverProcess.start(server, serverScreen, snapshotData)
@@ -388,6 +369,29 @@ class ServerFactory(
             }
             return UnknownErrorStartResult(e)
         }
+    }
+
+    private suspend fun prepareServerFiles(
+        serverProcess: ServerProcess,
+        server: CloudServer,
+        configurationTemplate: ConfigurationTemplate,
+        snapshotData: StartDataSnapshot
+    ): FileCopier {
+        val templates = configurationTemplate.fileTemplateIds
+            .mapNotNull { fileTemplateRepository.getTemplate(it) }
+            .flatMap { fileTemplateRepository.collectTemplates(it) }
+        val copier = FileCopier(
+            serverProcess,
+            server,
+            serverVersionTypeRepository,
+            templates,
+            snapshotData
+        )
+        copier.copyTemplates(false)
+        copier.copyVersionFiles(false) { serverProcess.replacePlaceholders(it, snapshotData) }
+        copier.deleteConnectors()
+        copier.copyConnector()
+        return copier
     }
 
     @Suppress("ThrowsCount")

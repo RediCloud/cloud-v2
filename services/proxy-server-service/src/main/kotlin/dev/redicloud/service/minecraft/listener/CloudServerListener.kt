@@ -6,7 +6,6 @@ import dev.redicloud.api.events.listen
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.service.minecraft.ProxyServerService
 
-
 class CloudServerListener(
     private val proxyServerService: ProxyServerService<*, *>
 ) {

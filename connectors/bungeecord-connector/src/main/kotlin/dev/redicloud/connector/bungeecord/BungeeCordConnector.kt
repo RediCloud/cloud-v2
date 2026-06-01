@@ -110,7 +110,9 @@ class BungeeCordConnector(
         fun register(listener: Listener) {
             ProxyServer.getInstance().pluginManager.registerListener(plugin, listener)
         }
-        register(CloudPlayerListener(this.serviceId, this.playerRepository, this.serverRepository, this.plugin, this.scope))
+        register(
+            CloudPlayerListener(this.serviceId, this.playerRepository, this.serverRepository, this.plugin, this.scope)
+        )
     }
 
     override fun getConnectorPlugin(): Plugin {

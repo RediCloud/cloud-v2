@@ -121,6 +121,7 @@ class VersionCommand(
 
     @CommandSubPath("switch [branch] [build]")
     @CommandDescription("Switch to a downloaded version")
+    @Suppress("ReturnCount")
     suspend fun switch(
         actor: ConsoleActor,
         @CommandParameter("branch", false, BranchSuggester::class) branchParam: String?,

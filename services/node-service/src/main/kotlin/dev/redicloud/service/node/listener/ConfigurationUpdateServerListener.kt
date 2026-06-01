@@ -11,7 +11,6 @@ import dev.redicloud.event.EventManager
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.service.node.repository.node.LOGGER
 
-
 class ConfigurationUpdateServerListener(
     serviceId: ServiceId,
     eventManager: EventManager,

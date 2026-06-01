@@ -10,6 +10,7 @@ import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.service.base.repository.pingService
 import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
 import dev.redicloud.service.node.NodeService
+import dev.redicloud.service.node.repository.node.LOGGER
 import dev.redicloud.service.node.repository.node.suspendNode
 import dev.redicloud.utils.*
 import kotlinx.coroutines.delay
@@ -68,7 +69,7 @@ class ClusterCommand(private val nodeService: NodeService) : ICommand {
             actor.sendMessage("")
             actor.sendHeader("Nodes")
         } catch (e: Exception) {
-            e.printStackTrace()
+            LOGGER.severe("Failed to list nodes", e)
         }
     }
 

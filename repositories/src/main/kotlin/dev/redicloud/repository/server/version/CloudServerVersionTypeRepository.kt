@@ -14,9 +14,9 @@ import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
+import dev.redicloud.utils.withOptionalLock
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import dev.redicloud.utils.withOptionalLock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
