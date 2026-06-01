@@ -89,22 +89,11 @@ abstract class CachedServiceRepository<I : ICloudService, K : CloudService>(
         return exists(serviceId.id.toString())
     }
 
-    suspend fun createService(cloudService: I): K {
-        require(cloudService.serviceId.type == targetServiceType) {
-            "Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})"
-        }
-        if (cloudService.connected && !connectedServices.contains(cloudService.serviceId)) {
-            connectedServices.add(cloudService.serviceId)
-        } else if (!cloudService.connected) {
-            connectedServices.remove(cloudService.serviceId)
-        }
-        if (!registeredServices.contains(cloudService.serviceId)) {
-            registeredServices.add(cloudService.serviceId)
-        }
-        return set(cloudService.serviceId.id.toString(), cloudService)
-    }
+    suspend fun createService(cloudService: I): K = saveService(cloudService)
 
-    suspend fun updateService(cloudService: I): K {
+    suspend fun updateService(cloudService: I): K = saveService(cloudService)
+
+    private suspend fun saveService(cloudService: I): K {
         require(cloudService.serviceId.type == targetServiceType) {
             "Service type does not match (expected ${targetServiceType.name}, got ${cloudService.serviceId.type.name})"
         }

@@ -7,7 +7,6 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.ICloudServer
 import dev.redicloud.api.service.server.ICloudServerRepository
 import dev.redicloud.service.base.player.BasePlayerExecutor
-import kotlinx.coroutines.runBlocking
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
 import net.minestom.server.MinecraftServer
@@ -25,11 +24,16 @@ class MinestomPlayerExecutor(
         return Audiences.players { it.uuid == minestomPlayer.uuid }
     }
 
-    override fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer) {
-        runBlocking { this@MinestomPlayerExecutor.connect(cloudPlayer, server) }
+    override suspend fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer) {
+        throw UnsupportedOperationException("executeConnect is not supported on a sub server")
     }
 
-    override fun executeKick(cloudPlayer: ICloudPlayer, reason: Component) {
-        runBlocking { this@MinestomPlayerExecutor.executeKick(cloudPlayer, reason) }
+    override suspend fun executeKick(cloudPlayer: ICloudPlayer, reason: Component) {
+        val player = MinecraftServer.getConnectionManager().getOnlinePlayerByUuid(cloudPlayer.uniqueId)
+        if (player == null) {
+            LOGGER.warning("Player ${cloudPlayer.uniqueId} not found on this server for kick")
+            return
+        }
+        player.kick(reason)
     }
 }
