@@ -117,6 +117,7 @@ tasks {
 
     withType<ProcessResources> {
         from(generateVersionProperties)
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 }
 
