@@ -27,7 +27,7 @@ fun sha256(file: File): String {
  *
  * @return `true` if the hash matches (case-insensitive), `false` otherwise.
  */
-fun sha256(file: File, expectedSha256: String): Boolean {
+fun verifyFileHash(file: File, expectedSha256: String): Boolean {
     val actualHash = sha256(file)
     return actualHash.equals(expectedSha256, ignoreCase = true)
 }
