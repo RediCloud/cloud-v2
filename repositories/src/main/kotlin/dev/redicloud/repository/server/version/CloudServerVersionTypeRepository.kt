@@ -55,7 +55,7 @@ class CloudServerVersionTypeRepository(
         val LOGGER = LogManager.logger(CloudServerVersionTypeRepository::class)
         val DEFAULT_TYPES_CACHE = SingleCache(1.minutes) {
             gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
-            val json = getTextOfAPIWithFallback("api-files/server-version-types.json")
+            val json = getTextFromGitHub("api-files/server-version-types.json")
             val list: MutableList<CloudServerVersionType> = gson.fromJsonToList<CloudServerVersionType>(
                 json
             ).toMutableList()

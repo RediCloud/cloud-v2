@@ -24,4 +24,8 @@ suspend fun getTextFromGitHub(path: String): String {
  * Previously tried api.redicloud.dev first with a GitHub fallback.
  * Now goes directly to GitHub raw content.
  */
+@Deprecated(
+    message = "Use getTextFromGitHub() directly",
+    replaceWith = ReplaceWith("getTextFromGitHub(path)")
+)
 suspend fun getTextOfAPIWithFallback(path: String): String = getTextFromGitHub(path)

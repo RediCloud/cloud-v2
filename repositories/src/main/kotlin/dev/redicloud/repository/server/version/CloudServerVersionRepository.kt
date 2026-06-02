@@ -9,7 +9,7 @@ import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.cache.CachedDatabaseBucketRepository
 import dev.redicloud.repository.server.version.serverversion.ServerVersion
 import dev.redicloud.utils.SingleCache
-import dev.redicloud.utils.getTextOfAPIWithFallback
+import dev.redicloud.utils.getTextFromGitHub
 import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
@@ -37,7 +37,7 @@ class CloudServerVersionRepository(
         val LOGGER = LogManager.logger(CloudServerVersionRepository::class)
         val DEFAULT_VERSIONS_CACHE = SingleCache(1.minutes) {
             gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
-            val json = getTextOfAPIWithFallback("api-files/versions.json")
+            val json = getTextFromGitHub("api-files/versions.json")
             gson.fromJsonToList<CloudServerVersion>(json)
         }
     }
