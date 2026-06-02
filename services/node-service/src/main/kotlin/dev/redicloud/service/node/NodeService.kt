@@ -37,7 +37,11 @@ import dev.redicloud.service.node.tasks.player.PlayerProxyConnectionStateTask
 import dev.redicloud.service.node.packets.upgrade.ClusterUpgradePacket
 import dev.redicloud.service.node.packets.upgrade.ClusterUpgradeResponsePacket
 import dev.redicloud.service.node.tasks.service.CloudInvalidServerUnregisterTask
+import dev.redicloud.migration.MigrationResult
+import dev.redicloud.migration.MigrationRunner
 import dev.redicloud.updater.Updater
+import dev.redicloud.utils.CLOUD_VERSION_PARSED
+import dev.redicloud.utils.version.CloudVersion
 import kotlinx.coroutines.runBlocking
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -85,6 +89,12 @@ class NodeService(
         initShutdownHook()
 
         Updater.check()
+
+        // Run migrations (or auto-upgrade if this node is behind the cluster)
+        val currentVersion = CLOUD_VERSION_PARSED
+        if (currentVersion != null) {
+            if (!handleMigrations(currentVersion)) return
+        }
 
         nodeRepository.connect(this)
         @Suppress("TooGenericExceptionCaught")
@@ -372,6 +382,52 @@ class NodeService(
         check(
             thisNode.maxMemory <= Runtime.getRuntime().freeMemory()
         ) { "Not enough memory available! Please increase the max memory of this node!" }
+    }
+
+    /**
+     * Runs the migration runner. If the cluster schema version is ahead of this node,
+     * automatically downloads the correct version and shuts down for restart.
+     *
+     * @return `true` if startup can continue, `false` if the node is shutting down
+     */
+    @Suppress("TooGenericExceptionCaught")
+    private suspend fun handleMigrations(currentVersion: CloudVersion): Boolean {
+        val runner = MigrationRunner(databaseConnection)
+        val result = try {
+            runner.run(currentVersion)
+        } catch (e: Exception) {
+            LOGGER.severe("Migration failed! Node cannot start.", e)
+            shutdown()
+            return false
+        }
+
+        return when (result) {
+            is MigrationResult.Success -> true
+            is MigrationResult.UpgradeRequired -> {
+                autoUpgrade(result.targetVersion)
+                false
+            }
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
+    private suspend fun autoUpgrade(targetVersion: CloudVersion) {
+        LOGGER.info("Auto-upgrading to ${targetVersion.display}...")
+        try {
+            val releases = Updater.getReleasesByChannel(targetVersion.channel)
+            val release = releases.firstOrNull { it.version == targetVersion }
+            if (release == null) {
+                LOGGER.severe("Could not find release for version ${targetVersion.display}. Manual upgrade required.")
+                shutdown()
+                return
+            }
+            Updater.download(release)
+            Updater.switchVersion(release)
+            LOGGER.info("Auto-upgrade to ${targetVersion.display} complete. Shutting down for restart...")
+        } catch (e: Exception) {
+            LOGGER.severe("Auto-upgrade failed. Manual upgrade required.", e)
+        }
+        shutdown()
     }
 
     private fun registerPackets() {

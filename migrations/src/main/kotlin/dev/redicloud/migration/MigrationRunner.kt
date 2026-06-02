@@ -38,16 +38,32 @@ class MigrationRunner(
     }
 
     /**
-     * Runs all pending migrations.
+     * Runs all pending migrations, or signals that the node needs an upgrade first.
+     *
+     * Call this after the database connection is established but **before** the node registers as connected.
      *
      * @param currentVersion the version of the running JAR (from build properties)
-     * @throws IllegalStateException if migrations fail or the wait-state times out
+     * @return [MigrationResult.Success] if migrations ran (or none were needed),
+     *         [MigrationResult.UpgradeRequired] if the node JAR is behind the cluster schema version.
+     * @throws IllegalStateException if a migration fails or the wait-state times out
      */
-    suspend fun run(currentVersion: CloudVersion) {
-        val context = MigrationContext(databaseConnection, workingDirectory)
+    suspend fun run(currentVersion: CloudVersion): MigrationResult {
+        val schemaVersion = getSchemaVersion()
 
+        // If the cluster schema is ahead of our JAR, we need to upgrade first
+        if (schemaVersion != null && schemaVersion > currentVersion) {
+            LOGGER.info(
+                "Cluster schema version (${schemaVersion.display}) is ahead of this node (${currentVersion.display}). " +
+                    "Upgrade required."
+            )
+            return MigrationResult.UpgradeRequired(schemaVersion)
+        }
+
+        val context = MigrationContext(databaseConnection, workingDirectory)
         runDatabaseMigrations(currentVersion, context)
         runLocalMigrations(currentVersion, context)
+
+        return MigrationResult.Success
     }
 
     // ------------------------------------------------------------------
