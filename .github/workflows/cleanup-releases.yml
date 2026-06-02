@@ -1,0 +1,123 @@
+name: Cleanup Old Releases
+
+on:
+  workflow_call:
+    inputs:
+      channel:
+        description: "Release channel: beta or stable"
+        required: true
+        type: string
+
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "Release channel"
+        required: true
+        type: choice
+        options:
+          - beta
+          - stable
+
+jobs:
+  cleanup:
+    name: Cleanup old pre-releases
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          sparse-checkout: gradle.properties
+          sparse-checkout-cone-mode: false
+
+      - name: Delete outdated beta and dev releases and tags
+        run: |
+          set -euo pipefail
+
+          VERSION=$(grep '^cloudVersion=' gradle.properties | cut -d'=' -f2)
+          CHANNEL="${{ inputs.channel }}"
+          REPO="${{ github.repository }}"
+
+          # Parse current version into components
+          IFS='.' read -r CUR_MAJOR CUR_MINOR CUR_PATCH <<< "$VERSION"
+
+          echo "### Cleanup Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Version:** ${VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Channel:** ${CHANNEL}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          DELETED_COUNT=0
+
+          # Fetch all releases (paginated)
+          PAGE=1
+          ALL_RELEASES="[]"
+          while true; do
+            BATCH=$(gh api "repos/${REPO}/releases?per_page=100&page=${PAGE}" 2>/dev/null || echo "[]")
+            COUNT=$(echo "$BATCH" | jq 'length')
+            if [[ "$COUNT" -eq 0 ]]; then
+              break
+            fi
+            ALL_RELEASES=$(echo "$ALL_RELEASES $BATCH" | jq -s 'add')
+            PAGE=$((PAGE + 1))
+          done
+
+          echo "Found $(echo "$ALL_RELEASES" | jq 'length') total releases"
+
+          # Filter to only beta and dev pre-releases (tags matching v*-beta.* or v*-dev.*)
+          PRE_RELEASES=$(echo "$ALL_RELEASES" | jq -c '[.[] | select(.prerelease == true and (.tag_name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+-(beta|dev)\\.[0-9]+$")))]')
+          echo "Found $(echo "$PRE_RELEASES" | jq 'length') beta/dev pre-releases"
+
+          # Iterate over pre-releases and decide which to delete
+          while IFS= read -r release; do
+            TAG=$(echo "$release" | jq -r '.tag_name')
+            RELEASE_ID=$(echo "$release" | jq -r '.id')
+
+            # Extract version from tag: v2.5.0-beta.3 -> 2.5.0, v2.5.0-dev.7 -> 2.5.0
+            RELEASE_VERSION=$(echo "$TAG" | sed -E 's/^v([0-9]+\.[0-9]+\.[0-9]+)-(beta|dev)\.[0-9]+$/\1/')
+            IFS='.' read -r REL_MAJOR REL_MINOR REL_PATCH <<< "$RELEASE_VERSION"
+
+            DELETE=false
+
+            if [[ "$CHANNEL" == "beta" ]]; then
+              # Beta release: delete all beta/dev pre-releases from OLDER versions
+              if [[ "$REL_MAJOR" -lt "$CUR_MAJOR" ]]; then
+                DELETE=true
+              elif [[ "$REL_MAJOR" -eq "$CUR_MAJOR" && "$REL_MINOR" -lt "$CUR_MINOR" ]]; then
+                DELETE=true
+              elif [[ "$REL_MAJOR" -eq "$CUR_MAJOR" && "$REL_MINOR" -eq "$CUR_MINOR" && "$REL_PATCH" -lt "$CUR_PATCH" ]]; then
+                DELETE=true
+              fi
+            elif [[ "$CHANNEL" == "stable" ]]; then
+              # Stable release: delete all beta/dev pre-releases of the SAME version and older
+              if [[ "$REL_MAJOR" -lt "$CUR_MAJOR" ]]; then
+                DELETE=true
+              elif [[ "$REL_MAJOR" -eq "$CUR_MAJOR" && "$REL_MINOR" -lt "$CUR_MINOR" ]]; then
+                DELETE=true
+              elif [[ "$REL_MAJOR" -eq "$CUR_MAJOR" && "$REL_MINOR" -eq "$CUR_MINOR" && "$REL_PATCH" -le "$CUR_PATCH" ]]; then
+                DELETE=true
+              fi
+            fi
+
+            if [[ "$DELETE" == "true" ]]; then
+              echo "Deleting release: ${TAG} (id: ${RELEASE_ID})"
+              gh api -X DELETE "repos/${REPO}/releases/${RELEASE_ID}" || echo "  Warning: failed to delete release ${TAG}"
+
+              # Also delete the associated tag
+              echo "Deleting tag: ${TAG}"
+              gh api -X DELETE "repos/${REPO}/git/refs/tags/${TAG}" || echo "  Warning: failed to delete tag ${TAG}"
+
+              echo "- Deleted **${TAG}**" >> "$GITHUB_STEP_SUMMARY"
+              DELETED_COUNT=$((DELETED_COUNT + 1))
+            else
+              echo "Keeping release: ${TAG}"
+            fi
+          done < <(echo "$PRE_RELEASES" | jq -c '.[]')
+
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Total deleted:** ${DELETED_COUNT}" >> "$GITHUB_STEP_SUMMARY"
