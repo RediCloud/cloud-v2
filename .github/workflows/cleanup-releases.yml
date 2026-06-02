@@ -20,7 +20,7 @@ on:
 
 jobs:
   cleanup:
-    name: Cleanup old beta releases
+    name: Cleanup old pre-releases
     runs-on: ubuntu-latest
 
     permissions:
@@ -36,7 +36,7 @@ jobs:
           sparse-checkout: gradle.properties
           sparse-checkout-cone-mode: false
 
-      - name: Delete outdated beta releases and tags
+      - name: Delete outdated beta and dev releases and tags
         run: |
           set -euo pipefail
 
@@ -69,24 +69,23 @@ jobs:
 
           echo "Found $(echo "$ALL_RELEASES" | jq 'length') total releases"
 
-          # Filter to only beta pre-releases (tags matching v*-beta.*)
-          BETA_RELEASES=$(echo "$ALL_RELEASES" | jq -c '[.[] | select(.prerelease == true and (.tag_name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+-beta\\.[0-9]+$")))]')
-          echo "Found $(echo "$BETA_RELEASES" | jq 'length') beta releases"
+          # Filter to only beta and dev pre-releases (tags matching v*-beta.* or v*-dev.*)
+          PRE_RELEASES=$(echo "$ALL_RELEASES" | jq -c '[.[] | select(.prerelease == true and (.tag_name | test("^v[0-9]+\\.[0-9]+\\.[0-9]+-(beta|dev)\\.[0-9]+$")))]')
+          echo "Found $(echo "$PRE_RELEASES" | jq 'length') beta/dev pre-releases"
 
-          # Iterate over beta releases and decide which to delete
+          # Iterate over pre-releases and decide which to delete
           while IFS= read -r release; do
             TAG=$(echo "$release" | jq -r '.tag_name')
             RELEASE_ID=$(echo "$release" | jq -r '.id')
 
-            # Extract version from tag: v2.5.0-beta.3 -> 2.5.0
-            RELEASE_VERSION=$(echo "$TAG" | sed -E 's/^v([0-9]+\.[0-9]+\.[0-9]+)-beta\.[0-9]+$/\1/')
+            # Extract version from tag: v2.5.0-beta.3 -> 2.5.0, v2.5.0-dev.7 -> 2.5.0
+            RELEASE_VERSION=$(echo "$TAG" | sed -E 's/^v([0-9]+\.[0-9]+\.[0-9]+)-(beta|dev)\.[0-9]+$/\1/')
             IFS='.' read -r REL_MAJOR REL_MINOR REL_PATCH <<< "$RELEASE_VERSION"
 
             DELETE=false
 
             if [[ "$CHANNEL" == "beta" ]]; then
-              # Beta release: delete all betas from OLDER versions
-              # Older means: major < cur OR (major == cur AND minor < cur) OR (major == cur AND minor == cur AND patch < cur)
+              # Beta release: delete all beta/dev pre-releases from OLDER versions
               if [[ "$REL_MAJOR" -lt "$CUR_MAJOR" ]]; then
                 DELETE=true
               elif [[ "$REL_MAJOR" -eq "$CUR_MAJOR" && "$REL_MINOR" -lt "$CUR_MINOR" ]]; then
@@ -95,7 +94,7 @@ jobs:
                 DELETE=true
               fi
             elif [[ "$CHANNEL" == "stable" ]]; then
-              # Stable release: delete all betas of the SAME version and older
+              # Stable release: delete all beta/dev pre-releases of the SAME version and older
               if [[ "$REL_MAJOR" -lt "$CUR_MAJOR" ]]; then
                 DELETE=true
               elif [[ "$REL_MAJOR" -eq "$CUR_MAJOR" && "$REL_MINOR" -lt "$CUR_MINOR" ]]; then
@@ -118,7 +117,7 @@ jobs:
             else
               echo "Keeping release: ${TAG}"
             fi
-          done < <(echo "$BETA_RELEASES" | jq -c '.[]')
+          done < <(echo "$PRE_RELEASES" | jq -c '.[]')
 
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "**Total deleted:** ${DELETED_COUNT}" >> "$GITHUB_STEP_SUMMARY"
