@@ -326,9 +326,8 @@ jobs:
   # ──────────────────────────────────────────────
   cleanup:
     name: Cleanup Old Betas
-    needs: [version, publish]
+    needs: publish
     uses: ./.github/workflows/cleanup-releases.yml
     with:
-      version: ${{ needs.version.outputs.base }}
       channel: beta
     secrets: inherit

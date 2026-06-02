@@ -3,10 +3,6 @@ name: Cleanup Old Releases
 on:
   workflow_call:
     inputs:
-      version:
-        description: "Current release version (e.g. 2.5.1)"
-        required: true
-        type: string
       channel:
         description: "Release channel: beta or stable"
         required: true
@@ -14,10 +10,6 @@ on:
 
   workflow_dispatch:
     inputs:
-      version:
-        description: "Current release version (e.g. 2.5.1)"
-        required: true
-        type: string
       channel:
         description: "Release channel"
         required: true
@@ -38,11 +30,17 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+          sparse-checkout: gradle.properties
+          sparse-checkout-cone-mode: false
+
       - name: Delete outdated beta releases and tags
         run: |
           set -euo pipefail
 
-          VERSION="${{ inputs.version }}"
+          VERSION=$(grep '^cloudVersion=' gradle.properties | cut -d'=' -f2)
           CHANNEL="${{ inputs.channel }}"
           REPO="${{ github.repository }}"
 
