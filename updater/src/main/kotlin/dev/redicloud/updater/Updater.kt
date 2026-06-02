@@ -97,6 +97,13 @@ object Updater {
     // Download & verify
     // ------------------------------------------------------------------
 
+    /**
+     * The manifest for the currently running release, loaded lazily on first use.
+     * Other modules (e.g. connector verification) can query this to look up artifact hashes.
+     */
+    var cachedManifest: ManifestInfo? = null
+        private set
+
     /** Downloads a release zip into the `versions/` directory. */
     suspend fun download(release: ReleaseInfo): File {
         val zipUrl = release.zipUrl
@@ -110,60 +117,94 @@ object Updater {
         target.writeBytes(response.readRawBytes())
 
         // Verify integrity -- fail-closed: if assets exist but verification fails, abort.
-        val checksumsBytes = release.checksumsUrl?.let { downloadBytes(it) }
-        if (checksumsBytes != null) {
-            verifyChecksum(target, checksumsBytes)
-            if (release.signatureUrl != null) {
-                verifyGpgSignature(checksumsBytes, release.signatureUrl)
+        val manifestBytes = release.manifestUrl?.let { downloadBytes(it) }
+        if (manifestBytes != null) {
+            if (release.manifestSignatureUrl != null) {
+                verifyGpgSignature(manifestBytes, release.manifestSignatureUrl)
             } else {
                 LogManager.rootLogger().warning("No GPG signature available for this release")
             }
+            val manifest = parseManifest(manifestBytes)
+            cachedManifest = manifest
+            verifyArtifactHash(target, manifest)
         } else {
-            LogManager.rootLogger().warning("No checksums available for this release, integrity not verified")
+            LogManager.rootLogger().warning("No manifest available for this release, integrity not verified")
         }
 
         return target
     }
 
     /**
-     * Verifies the zip file against the downloaded checksums.
+     * Loads and caches the manifest for the current release (by tag).
+     * Used by connector verification to look up expected hashes.
      *
-     * @throws IllegalStateException if the checksum does not match.
+     * @return the manifest, or `null` if unavailable.
      */
-    private fun verifyChecksum(zipFile: File, checksumsBytes: ByteArray) {
-        val checksumLines = checksumsBytes.decodeToString().lines()
-        val expectedHash = checksumLines
-            .firstOrNull { it.contains(zipFile.name) }
-            ?.split("\\s+".toRegex())
-            ?.firstOrNull()
-
-        checkNotNull(expectedHash) {
-            "No checksum entry found for ${zipFile.name} in checksums file"
+    suspend fun loadManifestForCurrentRelease(): ManifestInfo? {
+        if (cachedManifest != null) return cachedManifest
+        val current = CLOUD_VERSION_PARSED ?: return null
+        val release = getReleasesByChannel(current.channel)
+            .firstOrNull { it.version == current }
+            ?: return null
+        val manifestBytes = release.manifestUrl?.let { downloadBytes(it) } ?: return null
+        if (release.manifestSignatureUrl != null) {
+            verifyGpgSignature(manifestBytes, release.manifestSignatureUrl)
         }
+        val manifest = parseManifest(manifestBytes)
+        cachedManifest = manifest
+        return manifest
+    }
 
-        val actualHash = sha256(zipFile)
-        check(actualHash.equals(expectedHash, ignoreCase = true)) {
-            "Checksum mismatch for ${zipFile.name}: expected $expectedHash, got $actualHash"
-        }
-        LogManager.rootLogger().info("SHA256 checksum verified for ${zipFile.name}")
+    /** Parses manifest JSON bytes into a [ManifestInfo]. */
+    private fun parseManifest(manifestBytes: ByteArray): ManifestInfo {
+        val json = manifestBytes.decodeToString()
+        return gson.fromJson(json, ManifestInfo::class.java)
+            ?: error("Failed to parse manifest.json")
     }
 
     /**
-     * Verifies the GPG signature of the checksums file using the embedded trusted public key.
+     * Verifies an artifact file against the manifest.
+     *
+     * @throws IllegalStateException if the hash does not match.
+     */
+    private fun verifyArtifactHash(file: File, manifest: ManifestInfo) {
+        val expectedHash = manifest.findHashByFilename(file.name)
+        checkNotNull(expectedHash) {
+            "No manifest entry found for ${file.name}"
+        }
+        val actualHash = sha256(file)
+        check(actualHash.equals(expectedHash, ignoreCase = true)) {
+            "Checksum mismatch for ${file.name}: expected $expectedHash, got $actualHash"
+        }
+        LogManager.rootLogger().info("SHA-256 verified for ${file.name}")
+    }
+
+    /**
+     * Verifies a file's SHA-256 against an expected hash string.
+     *
+     * @return `true` if the hash matches, `false` otherwise.
+     */
+    fun verifyFileHash(file: File, expectedSha256: String): Boolean {
+        val actualHash = sha256(file)
+        return actualHash.equals(expectedSha256, ignoreCase = true)
+    }
+
+    /**
+     * Verifies the GPG signature of the manifest using the embedded trusted public key.
      *
      * Fail-closed: if the signature exists but is invalid or the download fails, the update is aborted.
      *
      * @throws IllegalStateException if the signature is invalid or cannot be verified.
      */
     private suspend fun verifyGpgSignature(
-        checksumsBytes: ByteArray,
+        manifestBytes: ByteArray,
         signatureUrl: String
     ) {
         val signatureBytes = downloadBytes(signatureUrl)
             ?: error("Failed to download GPG signature from $signatureUrl")
 
         val verified = GpgVerifier.verify(
-            data = checksumsBytes,
+            data = manifestBytes,
             signature = signatureBytes
         )
         check(verified) { "GPG signature verification failed: signature is invalid or key is not trusted" }
@@ -276,8 +317,8 @@ object Updater {
             version = version,
             tagName = tagName,
             zipUrl = assets.firstOrNull { it.name.endsWith(".zip") }?.downloadUrl,
-            checksumsUrl = assets.firstOrNull { it.name == "checksums.sha256" }?.downloadUrl,
-            signatureUrl = assets.firstOrNull { it.name == "checksums.sha256.asc" }?.downloadUrl
+            manifestUrl = assets.firstOrNull { it.name == "manifest.json" }?.downloadUrl,
+            manifestSignatureUrl = assets.firstOrNull { it.name == "manifest.json.asc" }?.downloadUrl
         )
     }
 }
