@@ -83,9 +83,9 @@ class FileCopier(
                         return
                     }
                 } catch (e: Exception) {
+                    val url = snapshot.versionType.connectorDownloadUrl ?: "n/a"
                     logger.warning(
-                        "Failed to download connector for ${snapshot.versionType.name} " +
-                            "from ${snapshot.versionType.getParsedConnectorURL().toExternalForm()}",
+                        "Failed to download connector for ${snapshot.versionType.name} from $url",
                         e
                     )
                     logger.warning("The server will not connect to the cloud cluster!")

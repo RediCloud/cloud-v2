@@ -16,6 +16,8 @@ interface ICloudServerVersionType : ProcessConfiguration {
     var connectorDownloadUrl: String?
     var connectorFolder: String
     var libPattern: String?
+    /** Optional SHA-256 hash for custom connector integrity verification. */
+    var connectorSha256: String?
 
     fun getParsedConnectorFile(nodeFolder: Boolean): File
 

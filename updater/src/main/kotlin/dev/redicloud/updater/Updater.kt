@@ -13,7 +13,6 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import java.io.File
-import java.security.MessageDigest
 import java.util.*
 import java.util.jar.JarFile
 
@@ -21,7 +20,6 @@ import java.util.jar.JarFile
 object Updater {
 
     private const val GITHUB_API = "https://api.github.com/repos/RediCloud/cloud-v2/releases"
-    private const val BUFFER_SIZE = 8192
 
     private val updateInfoFile = File(".update-info")
 
@@ -99,10 +97,13 @@ object Updater {
 
     /**
      * The manifest for the currently running release, loaded lazily on first use.
-     * Other modules (e.g. connector verification) can query this to look up artifact hashes.
+     * Also published to [ManifestHolder] so other modules can query artifact hashes.
      */
     var cachedManifest: ManifestInfo? = null
-        private set
+        private set(value) {
+            field = value
+            ManifestHolder.manifest = value
+        }
 
     /** Downloads a release zip into the `versions/` directory. */
     suspend fun download(release: ReleaseInfo): File {
@@ -177,16 +178,6 @@ object Updater {
             "Checksum mismatch for ${file.name}: expected $expectedHash, got $actualHash"
         }
         LogManager.rootLogger().info("SHA-256 verified for ${file.name}")
-    }
-
-    /**
-     * Verifies a file's SHA-256 against an expected hash string.
-     *
-     * @return `true` if the hash matches, `false` otherwise.
-     */
-    fun verifyFileHash(file: File, expectedSha256: String): Boolean {
-        val actualHash = sha256(file)
-        return actualHash.equals(expectedSha256, ignoreCase = true)
     }
 
     /**
@@ -295,18 +286,6 @@ object Updater {
 
     private fun mainFolderJars(): List<File> =
         File(".").listFiles()?.filter { it.extension == "jar" } ?: emptyList()
-
-    private fun sha256(file: File): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        file.inputStream().use { input ->
-            val buffer = ByteArray(BUFFER_SIZE)
-            var read: Int
-            while (input.read(buffer).also { read = it } != -1) {
-                digest.update(buffer, 0, read)
-            }
-        }
-        return digest.digest().joinToString("") { "%02x".format(it) }
-    }
 
     /** Converts a GitHub release to our domain model, or `null` if the tag is unparseable. */
     private fun GitHubRelease.toReleaseInfo(): ReleaseInfo? {

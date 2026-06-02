@@ -21,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.*
 import java.util.logging.Level
 import kotlin.time.Duration.Companion.minutes
@@ -109,7 +110,13 @@ class CloudServerVersionTypeRepository(
 
     override suspend fun downloadConnector(serverVersionType: ICloudServerVersionType, force: Boolean, lock: Boolean) {
         val connectorFile = serverVersionType.getParsedConnectorFile(true)
-        if (connectorFile.exists() && !force) return
+
+        // Local-first: if connector already exists (e.g. from release zip), verify and skip download
+        if (connectorFile.exists() && !force) {
+            verifyConnectorIfPossible(serverVersionType, connectorFile)
+            return
+        }
+
         var canceled = false
         var downloaded = false
         var error = false
@@ -140,16 +147,20 @@ class CloudServerVersionTypeRepository(
             try {
                 check(
                     serverVersionType.getParsedConnectorURL().isValid()
-                ) { "Connector download url of ${serverVersionType.connectorPluginName} is null!" }
+                ) { "Connector download url of ${serverVersionType.connectorPluginName} is not reachable!" }
                 httpClient.get {
                     url(serverVersionType.getParsedConnectorURL().toExternalForm())
-                }.readRawBytes().let {
+                }.readRawBytes().let { bytes ->
                     withContext(Dispatchers.IO) {
                         if (connectorFile.exists()) connectorFile.delete()
                         connectorFile.createNewFile()
-                        connectorFile.writeBytes(it)
+                        connectorFile.writeBytes(bytes)
                     }
                 }
+
+                // Verify integrity after download
+                verifyConnectorIfPossible(serverVersionType, connectorFile)
+
                 LOGGER.log(
                     if (console == null) Level.FINE else Level.INFO,
                     "Successfully downloaded connector for ${toConsoleValue(serverVersionType.name)}!"
@@ -159,6 +170,43 @@ class CloudServerVersionTypeRepository(
                 error = true
             } finally {
                 downloaded = true
+            }
+        }
+    }
+
+    /**
+     * Verifies a connector file's SHA-256 hash if a hash is available.
+     *
+     * For custom connectors, the hash comes from [ICloudServerVersionType.connectorSha256].
+     * For built-in connectors, the hash comes from the release manifest (looked up by filename).
+     *
+     * @throws IllegalStateException if a hash is available but does not match.
+     */
+    private fun verifyConnectorIfPossible(
+        serverVersionType: ICloudServerVersionType,
+        connectorFile: File
+    ) {
+        // 1. Check custom sha256 field (for community connectors)
+        val customHash = serverVersionType.connectorSha256
+        if (customHash != null) {
+            check(verifyFileHash(connectorFile, customHash)) {
+                "SHA-256 mismatch for connector ${connectorFile.name}: " +
+                    "expected $customHash, got ${sha256(connectorFile)}"
+            }
+            LOGGER.info("SHA-256 verified for connector ${toConsoleValue(connectorFile.name, false)}")
+            return
+        }
+
+        // 2. Check release manifest (for built-in connectors)
+        val manifest = ManifestHolder.manifest
+        if (manifest != null) {
+            val expectedHash = manifest.findHashByFilename(connectorFile.name)
+            if (expectedHash != null) {
+                check(verifyFileHash(connectorFile, expectedHash)) {
+                    "SHA-256 mismatch for connector ${connectorFile.name}: " +
+                        "expected $expectedHash, got ${sha256(connectorFile)}"
+                }
+                LOGGER.info("SHA-256 verified for connector ${toConsoleValue(connectorFile.name, false)} (manifest)")
             }
         }
     }

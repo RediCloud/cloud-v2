@@ -1,4 +1,4 @@
-package dev.redicloud.updater
+package dev.redicloud.utils
 
 /**
  * Represents a signed release manifest (`manifest.json`).
