@@ -142,12 +142,14 @@ resolve_release() {
 
     if [[ "$VERSION" != "latest" ]]; then
         # Specific version by tag
-        release_json=$(curl -fsSL "$GITHUB_API/tags/v${VERSION}" 2>/dev/null) \
-            || fail "Release v${VERSION} not found"
+        if ! release_json=$(curl -fsSL "$GITHUB_API/tags/v${VERSION}" 2>/dev/null); then
+            fail "Release v${VERSION} not found"
+        fi
     elif [[ "$CHANNEL" == "stable" ]]; then
         # /releases/latest returns the most recent non-prerelease, non-draft
-        release_json=$(curl -fsSL "$GITHUB_API/latest" 2>/dev/null) \
-            || fail "No stable release found"
+        if ! release_json=$(curl -fsSL "$GITHUB_API/latest" 2>/dev/null); then
+            fail "No stable release found"
+        fi
     elif [[ "$CHANNEL" == "beta" ]]; then
         # Find the first pre-release tag from the releases list
         local beta_tag
@@ -157,16 +159,17 @@ resolve_release() {
                 /"prerelease"[[:space:]]*:[[:space:]]*true/ { if (tag) { print tag; exit } }
             ') || true
 
-        [[ -z "$beta_tag" ]] && fail "No beta release found"
+        if [[ -z "$beta_tag" ]]; then fail "No beta release found"; fi
 
-        release_json=$(curl -fsSL "$GITHUB_API/tags/${beta_tag}" 2>/dev/null) \
-            || fail "Failed to fetch beta release $beta_tag"
+        if ! release_json=$(curl -fsSL "$GITHUB_API/tags/${beta_tag}" 2>/dev/null); then
+            fail "Failed to fetch beta release $beta_tag"
+        fi
     else
         fail "Unknown channel: $CHANNEL. Use 'stable' or 'beta'."
     fi
 
     TAG_NAME=$(echo "$release_json" | json_value "tag_name")
-    [[ -z "$TAG_NAME" ]] && fail "Could not parse tag_name from release"
+    if [[ -z "$TAG_NAME" ]]; then fail "Could not parse tag_name from release"; fi
     RELEASE_NAME="${TAG_NAME#v}"
 
     # Parse asset URLs
@@ -177,7 +180,7 @@ resolve_release() {
     MANIFEST_URL=$(echo "$assets" | awk -F'\t' '$1 == "manifest.json" { print $2; exit }')
     SIGNATURE_URL=$(echo "$assets" | awk -F'\t' '$1 == "manifest.json.asc" { print $2; exit }')
 
-    [[ -z "$ZIP_URL" ]] && fail "No zip asset found in release $TAG_NAME"
+    if [[ -z "$ZIP_URL" ]]; then fail "No zip asset found in release $TAG_NAME"; fi
 }
 
 resolve_release
@@ -192,8 +195,9 @@ TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
 ZIP_FILE="$TMPDIR/redicloud.zip"
-curl -fsSL -o "$ZIP_FILE" "$ZIP_URL" \
-    || fail "Failed to download $ZIP_URL"
+if ! curl -fsSL -o "$ZIP_FILE" "$ZIP_URL"; then
+    fail "Failed to download $ZIP_URL"
+fi
 
 ZIP_SIZE=$(du -h "$ZIP_FILE" | cut -f1)
 ok "Downloaded redicloud ($ZIP_SIZE)"
@@ -208,7 +212,7 @@ if $VERIFY && [[ -n "${MANIFEST_URL:-}" ]]; then
     if curl -fsSL -o "$MANIFEST_FILE" "$MANIFEST_URL" 2>/dev/null; then
         # Extract the sha256 for the zip asset from the manifest JSON.
         # The zip key contains the full filename; we search for its sha256 value.
-        ZIP_ASSET_NAME=$(basename "$ZIP_URL")
+        ZIP_ASSET_NAME=$(basename "$ZIP_URL" | sed 's/%2B/+/g; s/%20/ /g')
         EXPECTED=$(awk -v name="$ZIP_ASSET_NAME" '
             index($0, "\"" name "\"") > 0 { found=1 }
             found && /"sha256"/ {
