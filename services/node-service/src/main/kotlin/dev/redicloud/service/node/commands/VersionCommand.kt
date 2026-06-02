@@ -23,7 +23,7 @@ class VersionCommand(
 
     companion object {
         private const val ANIMATION_TICK_MS = 200L
-        private const val SWITCH_CONFIRM_TIMEOUT_MS = 30000
+        private const val UPGRADE_CONFIRM_TIMEOUT_MS = 30000
     }
 
     @CommandSubPath("")
@@ -55,73 +55,25 @@ class VersionCommand(
                 "An update is available: %hc%${release.version.display}"
             )
             actor.sendMessage(
-                "Download: %hc%version download ${release.channel.label} ${release.version.display}"
-            )
-            actor.sendMessage(
-                "Switch:   %hc%version switch ${release.channel.label} ${release.version.display}"
+                "Upgrade: %hc%version upgrade ${release.channel.label} ${release.version.display}"
             )
         } else {
             actor.sendMessage("You are running the latest version!")
         }
     }
 
-    @CommandSubPath("download [channel] [version]")
-    @CommandDescription("Downloads a version")
-    suspend fun download(
-        actor: ConsoleActor,
-        @CommandParameter("channel", false, ChannelSuggester::class) channelParam: String?,
-        @CommandParameter("version", false, VersionSuggester::class) versionParam: String?
-    ) {
-        val channel = channelParam?.let { VersionChannel.fromLabelOrNull(it) }
-            ?: CLOUD_VERSION_PARSED?.channel
-            ?: VersionChannel.STABLE
+    private val upgradeConfirms = mutableMapOf<String, Long>()
 
-        val release = resolveRelease(actor, channel, versionParam) ?: return
-
-        var canceled = false
-        var error = false
-        var downloaded = false
-        val animation = AnimatedLineAnimation(
-            console,
-            ANIMATION_TICK_MS
-        ) {
-            if (canceled) {
-                null
-            } else if (downloaded) {
-                canceled = true
-                "Downloaded ${toConsoleValue(release.version.display)}§8: ${if (error) "§4x" else "§2ok"}"
-            } else {
-                "Downloading ${toConsoleValue(release.version.display)}§8: %loading%"
-            }
-        }
-        console.startAnimation(animation)
-        @Suppress("TooGenericExceptionCaught")
-        try {
-            Updater.download(release)
-            downloaded = true
-            actor.sendMessage(
-                "Switch with: %hc%version switch ${channel.label} ${release.version.display}"
-            )
-        } catch (e: Exception) {
-            error = true
-            downloaded = true
-            actor.sendMessage("§cFailed to download the version!")
-            LOGGER.severe("Failed to download the version", e)
-        }
-    }
-
-    private val switchConfirms = mutableMapOf<String, Long>()
-
-    @CommandSubPath("switch [channel] [version]")
-    @CommandDescription("Switch to a downloaded version")
+    @CommandSubPath("upgrade [channel] [version]")
+    @CommandDescription("Downloads and installs a version upgrade")
     @Suppress("ReturnCount")
-    suspend fun switch(
+    suspend fun upgrade(
         actor: ConsoleActor,
         @CommandParameter("channel", false, ChannelSuggester::class) channelParam: String?,
         @CommandParameter("version", false, VersionSuggester::class) versionParam: String?
     ) {
         if (Updater.updateToVersion != null) {
-            actor.sendMessage("§cAn update was already installed! Restart the node service to apply the changes!")
+            actor.sendMessage("§cAn upgrade is already pending! Restart the node service to apply the changes!")
             return
         }
 
@@ -137,42 +89,73 @@ class VersionCommand(
             return
         }
 
-        // Check if downloaded
-        val installed = Updater.localInstalledVersions()
-        val channelVersions = installed[channel] ?: emptyList()
-        if (release.version !in channelVersions) {
-            actor.sendMessage("§cVersion not downloaded!")
-            actor.sendMessage("§cDownload with: %hc%version download ${channel.label} ${release.version.display}")
-            return
-        }
-
         // Confirm channel change
         val confirmKey = release.version.display
         if (current != null && release.channel != current.channel &&
-            switchConfirms.getOrDefault(confirmKey, 0) + SWITCH_CONFIRM_TIMEOUT_MS < System.currentTimeMillis()
+            upgradeConfirms.getOrDefault(confirmKey, 0) + UPGRADE_CONFIRM_TIMEOUT_MS < System.currentTimeMillis()
         ) {
             actor.sendMessage("§cYou are switching to a different channel (${channel.label})!")
             actor.sendMessage("§cThis can cause issues. Backup your data first!")
             actor.sendMessage("§cType the command again to confirm!")
-            switchConfirms[confirmKey] = System.currentTimeMillis()
+            upgradeConfirms[confirmKey] = System.currentTimeMillis()
             return
         }
 
         // Confirm downgrade
         if (current != null && release.version < current &&
-            switchConfirms.getOrDefault(confirmKey, 0) + SWITCH_CONFIRM_TIMEOUT_MS < System.currentTimeMillis()
+            upgradeConfirms.getOrDefault(confirmKey, 0) + UPGRADE_CONFIRM_TIMEOUT_MS < System.currentTimeMillis()
         ) {
             actor.sendMessage("§cYou are downgrading to ${release.version.display}!")
             actor.sendMessage("§cThis can cause issues and data loss!")
             actor.sendMessage("§cType the command again to confirm!")
-            switchConfirms[confirmKey] = System.currentTimeMillis()
+            upgradeConfirms[confirmKey] = System.currentTimeMillis()
+            return
+        }
+        upgradeConfirms.remove(confirmKey)
+
+        // Download with animation
+        var animCanceled = false
+        var downloadError = false
+        var downloadDone = false
+        val animation = AnimatedLineAnimation(
+            console,
+            ANIMATION_TICK_MS
+        ) {
+            if (animCanceled) {
+                null
+            } else if (downloadDone) {
+                animCanceled = true
+                "Downloaded ${toConsoleValue(release.version.display)}§8: ${if (downloadError) "§4x" else "§2ok"}"
+            } else {
+                "Downloading ${toConsoleValue(release.version.display)}§8: %loading%"
+            }
+        }
+        console.startAnimation(animation)
+
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            Updater.download(release)
+            downloadDone = true
+        } catch (e: Exception) {
+            downloadError = true
+            downloadDone = true
+            actor.sendMessage("§cFailed to download the version!")
+            LOGGER.severe("Failed to download the version", e)
             return
         }
 
-        switchConfirms.remove(confirmKey)
-        Updater.switchVersion(release)
-        actor.sendMessage("Activated version: %hc%${release.version.display}")
-        actor.sendMessage("§cRestart the node service to apply the changes!")
+        // Switch version
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            Updater.switchVersion(release)
+        } catch (e: Exception) {
+            actor.sendMessage("§cFailed to install the version!")
+            LOGGER.severe("Failed to install the version", e)
+            return
+        }
+
+        actor.sendMessage("Upgraded to version %hc%${release.version.display}")
+        actor.sendMessage("§eChanges will be applied on next restart.")
     }
 
     @CommandSubPath("channels")
@@ -230,7 +213,7 @@ class VersionCommand(
         val installedVersions = Updater.localInstalledVersions()
         if (installedVersions.isEmpty()) {
             actor.sendMessage("No versions downloaded!")
-            actor.sendMessage("Download with: ${toConsoleValue("version download <channel> [version]")}")
+            actor.sendMessage("Upgrade with: ${toConsoleValue("version upgrade [channel] [version]")}")
             return
         }
         val current = CLOUD_VERSION_PARSED
