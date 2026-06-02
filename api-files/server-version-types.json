@@ -29,8 +29,8 @@
         "secret": "'%PROXY_SECRET%'"
       }
     },
-    "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%-%branch%-%build%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/v2/files/%branch%/%build%/connectors/redicloud-bukkit-connector-%cloud_version%-%branch%-%build%.jar",
+    "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://github.com/RediCloud/cloud-v2/releases/download/v%cloud_version%/redicloud-bukkit-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
     "libPattern": "(cache|versions|libraries)"
   },
@@ -60,8 +60,8 @@
         "max-players": "%MAX_PLAYERS%"
       }
     },
-    "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%-%branch%-%build%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/v2/files/%branch%/%build%/connectors/redicloud-bukkit-connector-%cloud_version%-%branch%-%build%.jar",
+    "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://github.com/RediCloud/cloud-v2/releases/download/v%cloud_version%/redicloud-bukkit-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
     "libPattern": "(bundler)"
   },
@@ -87,8 +87,8 @@
         "": "%PROXY_SECRET%"
       }
     },
-    "connectorPluginName": "redicloud-velocity-connector-%cloud_version%-%branch%-%build%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/v2/files/%branch%/%build%/connectors/redicloud-velocity-connector-%cloud_version%-%branch%-%build%.jar",
+    "connectorPluginName": "redicloud-velocity-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://github.com/RediCloud/cloud-v2/releases/download/v%cloud_version%/redicloud-velocity-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
     "libPattern": null
   },
@@ -110,8 +110,8 @@
         "player_limit": "%MAX_PLAYERS%"
       }
     },
-    "connectorPluginName": "redicloud-bungeecord-connector-%cloud_version%-%branch%-%build%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/v2/files/%branch%/%build%/connectors/redicloud-bungeecord-connector-%cloud_version%-%branch%-%build%.jar",
+    "connectorPluginName": "redicloud-bungeecord-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://github.com/RediCloud/cloud-v2/releases/download/v%cloud_version%/redicloud-bungeecord-connector-%cloud_version%.jar",
     "connectorFolder": "plugins"
   },
   {
@@ -132,8 +132,8 @@
         "player_limit": "%MAX_PLAYERS%"
       }
     },
-    "connectorPluginName": "redicloud-bungeecord-connector-%cloud_version%-%branch%-%build%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/v2/files/%branch%/%build%/connectors/redicloud-bungeecord-connector-%cloud_version%-%branch%-%build%.jar",
+    "connectorPluginName": "redicloud-bungeecord-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://github.com/RediCloud/cloud-v2/releases/download/v%cloud_version%/redicloud-bungeecord-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
     "libPattern": null
   },
@@ -161,8 +161,8 @@
         "max-players": "%MAX_PLAYERS%"
       }
     },
-    "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%-%branch%-%build%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/v2/files/%branch%/%build%/connectors/redicloud-bukkit-connector-%cloud_version%-%branch%-%build%.jar",
+    "connectorPluginName": "redicloud-bukkit-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://github.com/RediCloud/cloud-v2/releases/download/v%cloud_version%/redicloud-bukkit-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
     "libPattern": "(cache|versions|libraries)"
   },
@@ -177,8 +177,8 @@
     "environmentVariables": {},
     "defaultFiles": [],
     "fileEdits": {},
-    "connectorPluginName": "redicloud-minestom-connector-%cloud_version%-%branch%-%build%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/v2/files/%branch%/%build%/connectors/redicloud-minestom-connector-%cloud_version%-%branch%-%build%.jar",
+    "connectorPluginName": "redicloud-minestom-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://github.com/RediCloud/cloud-v2/releases/download/v%cloud_version%/redicloud-minestom-connector-%cloud_version%.jar",
     "connectorFolder": "extensions",
     "libPattern": null
   },
@@ -193,8 +193,8 @@
     "environmentVariables": {},
     "defaultFiles": [],
     "fileEdits": {},
-    "connectorPluginName": "redicloud-limbo-connector-%cloud_version%-%branch%-%build%.jar",
-    "connectorDownloadUrl": "https://api.redicloud.dev/v2/files/%branch%/%build%/connectors/redicloud-limbo-connector-%cloud_version%-%branch%-%build%.jar",
+    "connectorPluginName": "redicloud-limbo-connector-%cloud_version%.jar",
+    "connectorDownloadUrl": "https://github.com/RediCloud/cloud-v2/releases/download/v%cloud_version%/redicloud-limbo-connector-%cloud_version%.jar",
     "connectorFolder": "plugins",
     "libPattern": null
   }

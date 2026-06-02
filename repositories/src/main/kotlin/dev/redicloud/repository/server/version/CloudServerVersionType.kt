@@ -21,6 +21,7 @@ class CloudServerVersionType(
     override var connectorDownloadUrl: String?,
     override var connectorFolder: String,
     override var libPattern: String? = null,
+    override var connectorSha256: String? = null,
     override val jvmArguments: MutableList<String> = mutableListOf(),
     override val environmentVariables: MutableMap<String, String> = mutableMapOf(),
     override val programParameters: MutableList<String> = mutableListOf(),
@@ -105,7 +106,8 @@ class CloudServerVersionType(
         if (connectorPluginName != other.connectorPluginName) return false
         if (connectorDownloadUrl != other.connectorDownloadUrl) return false
         if (connectorFolder != other.connectorFolder) return false
-        return libPattern == other.libPattern
+        if (libPattern != other.libPattern) return false
+        return connectorSha256 == other.connectorSha256
     }
 
     override fun hashCode(): Int {
@@ -118,6 +120,7 @@ class CloudServerVersionType(
         result = 31 * result + (connectorDownloadUrl?.hashCode() ?: 0)
         result = 31 * result + connectorFolder.hashCode()
         result = 31 * result + (libPattern?.hashCode() ?: 0)
+        result = 31 * result + (connectorSha256?.hashCode() ?: 0)
         result = 31 * result + jvmArguments.hashCode()
         result = 31 * result + environmentVariables.hashCode()
         result = 31 * result + programParameters.hashCode()
@@ -137,6 +140,7 @@ class CloudServerVersionType(
             connectorDownloadUrl = connectorDownloadUrl,
             connectorFolder = connectorFolder,
             libPattern = libPattern,
+            connectorSha256 = connectorSha256,
             jvmArguments = jvmArguments.toMutableList(),
             environmentVariables = environmentVariables.toMutableMap(),
             programParameters = programParameters.toMutableList(),

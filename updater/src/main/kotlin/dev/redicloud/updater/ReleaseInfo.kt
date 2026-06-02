@@ -11,8 +11,8 @@ data class ReleaseInfo(
     val version: CloudVersion,
     val tagName: String,
     val zipUrl: String?,
-    val checksumsUrl: String?,
-    val signatureUrl: String?
+    val manifestUrl: String?,
+    val manifestSignatureUrl: String?
 ) {
     val channel: VersionChannel
         get() = version.channel

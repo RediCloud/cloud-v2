@@ -36,7 +36,7 @@ class JavaVersionRepository(
 
     companion object {
         val ONLINE_VERSION_CACHE = EasyCache<List<CloudJavaVersion>, Unit>(1.minutes) {
-            val json = getTextOfAPIWithFallback("api-files/java-versions.json")
+            val json = getTextFromGitHub("api-files/java-versions.json")
             gson.fromJsonToList<CloudJavaVersion>(json)
         }
     }

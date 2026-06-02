@@ -174,8 +174,8 @@ resolve_release() {
     assets=$(echo "$release_json" | json_assets)
 
     ZIP_URL=$(echo "$assets" | awk -F'\t' '/\.zip\t/ { print $2; exit }')
-    CHECKSUMS_URL=$(echo "$assets" | awk -F'\t' '$1 == "checksums.sha256" { print $2; exit }')
-    SIGNATURE_URL=$(echo "$assets" | awk -F'\t' '$1 == "checksums.sha256.asc" { print $2; exit }')
+    MANIFEST_URL=$(echo "$assets" | awk -F'\t' '$1 == "manifest.json" { print $2; exit }')
+    SIGNATURE_URL=$(echo "$assets" | awk -F'\t' '$1 == "manifest.json.asc" { print $2; exit }')
 
     [[ -z "$ZIP_URL" ]] && fail "No zip asset found in release $TAG_NAME"
 }
@@ -199,30 +199,40 @@ ZIP_SIZE=$(du -h "$ZIP_FILE" | cut -f1)
 ok "Downloaded redicloud ($ZIP_SIZE)"
 
 # ─────────────────────────────────────────────────────────────────────
-# Checksum verification
+# Manifest-based checksum verification
 # ─────────────────────────────────────────────────────────────────────
 
-CHECKSUMS_FILE="$TMPDIR/checksums.sha256"
+MANIFEST_FILE="$TMPDIR/manifest.json"
 
-if $VERIFY && [[ -n "${CHECKSUMS_URL:-}" ]]; then
-    if curl -fsSL -o "$CHECKSUMS_FILE" "$CHECKSUMS_URL" 2>/dev/null; then
+if $VERIFY && [[ -n "${MANIFEST_URL:-}" ]]; then
+    if curl -fsSL -o "$MANIFEST_FILE" "$MANIFEST_URL" 2>/dev/null; then
+        # Extract the sha256 for the zip asset from the manifest JSON.
+        # The zip key contains the full filename; we search for its sha256 value.
         ZIP_ASSET_NAME=$(basename "$ZIP_URL")
-        EXPECTED=$(grep "$ZIP_ASSET_NAME" "$CHECKSUMS_FILE" | awk '{print $1}' || true)
+        EXPECTED=$(awk -v name="$ZIP_ASSET_NAME" '
+            index($0, "\"" name "\"") > 0 { found=1 }
+            found && /"sha256"/ {
+                gsub(/.*"sha256"[[:space:]]*:[[:space:]]*"/, "")
+                gsub(/".*/, "")
+                print
+                exit
+            }
+        ' "$MANIFEST_FILE")
 
         if [[ -n "$EXPECTED" ]]; then
             ACTUAL=$(sha256sum "$ZIP_FILE" | awk '{print $1}')
             if [[ "$ACTUAL" != "$EXPECTED" ]]; then
                 fail "Checksum mismatch! Expected: $EXPECTED, Got: $ACTUAL"
             fi
-            ok "SHA256 checksum verified"
+            ok "SHA-256 checksum verified (from manifest)"
         else
-            warn "No checksum entry for $ZIP_ASSET_NAME, skipping"
+            fail "Manifest present but no entry found for $ZIP_ASSET_NAME. The release may be corrupted."
         fi
     else
-        warn "Could not download checksums, skipping verification"
+        fail "Failed to download release manifest. Cannot verify integrity."
     fi
 elif $VERIFY; then
-    warn "No checksums available for this release"
+    fail "No manifest available for this release. Cannot verify integrity."
 fi
 
 # ─────────────────────────────────────────────────────────────────────
@@ -231,10 +241,10 @@ fi
 
 if command -v gpg &>/dev/null \
    && [[ -n "${SIGNATURE_URL:-}" ]] \
-   && [[ -f "$CHECKSUMS_FILE" ]]; then
+   && [[ -f "$MANIFEST_FILE" ]]; then
 
     KEY_FILE="$TMPDIR/trusted-key.asc"
-    SIG_FILE="$TMPDIR/checksums.sha256.asc"
+    SIG_FILE="$TMPDIR/manifest.json.asc"
 
     # Write the embedded trusted key to a temp file
     echo "$TRUSTED_KEY" > "$KEY_FILE"
@@ -257,7 +267,7 @@ if command -v gpg &>/dev/null \
         fi
 
         # Verify the signature -- fail-closed
-        if gpg --batch --verify "$SIG_FILE" "$CHECKSUMS_FILE" 2>/dev/null; then
+        if gpg --batch --verify "$SIG_FILE" "$MANIFEST_FILE" 2>/dev/null; then
             ok "GPG signature verified (trusted key: ${TRUSTED_FINGERPRINT:0:16}...)"
         else
             fail "GPG signature verification FAILED. The release may be tampered with."
