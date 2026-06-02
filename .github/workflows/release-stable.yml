@@ -40,30 +40,6 @@ jobs:
           echo "- **Version:** ${FULL_VERSION}" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Commit:** ${GIT_SHA}" >> "$GITHUB_STEP_SUMMARY"
 
-      # --- Generate version properties ---
-      - name: Generate version properties
-        run: |
-          PROPS_CONTENT="version=${{ steps.version.outputs.base }}
-          channel=stable
-          build=0
-          git=${{ steps.version.outputs.git }}
-          branch=${{ steps.version.outputs.branch }}
-          full-version=${{ steps.version.outputs.full }}"
-
-          RESOURCE_DIRS=(
-            "services/node-service/src/main/resources"
-          )
-          for dir in connectors/*/; do
-            name=$(basename "$dir")
-            [[ "$name" == "build" || "$name" == "src" ]] && continue
-            RESOURCE_DIRS+=("connectors/${name}/src/main/resources")
-          done
-
-          for dir in "${RESOURCE_DIRS[@]}"; do
-            mkdir -p "$dir"
-            echo "$PROPS_CONTENT" > "${dir}/redicloud-version.properties"
-          done
-
       # --- Replace start script placeholders ---
       - name: Prepare start scripts
         run: |
@@ -72,6 +48,11 @@ jobs:
 
       # --- Build ---
       - name: Build
+        env:
+          REDICLOUD_CHANNEL: stable
+          REDICLOUD_BUILD: "0"
+          REDICLOUD_GIT: ${{ steps.version.outputs.git }}
+          REDICLOUD_BRANCH: ${{ steps.version.outputs.branch }}
         run: ./gradlew build -x test -PcloudVersion=${{ steps.version.outputs.base }}
 
       # --- Assemble export ---

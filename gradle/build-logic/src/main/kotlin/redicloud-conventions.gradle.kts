@@ -77,8 +77,9 @@ tasks {
         }
     }
 
-    // Generate redicloud-version.properties for local builds.
-    // CI overwrites this file before the build, so this only provides dev defaults.
+    // Generate redicloud-version.properties.
+    // CI sets REDICLOUD_CHANNEL, REDICLOUD_BUILD, REDICLOUD_GIT, REDICLOUD_BRANCH env vars.
+    // Without these env vars (local builds), defaults to channel=dev, build=local.
     val generateVersionProperties by registering {
         val outputDir = project.layout.buildDirectory.dir("generated/resources/version")
         val versionString = project.version.toString()
@@ -90,8 +91,12 @@ tasks {
                     .inputStream.bufferedReader().readText().trim()
             }.getOrDefault("unknown")
         val branch = providers.environmentVariable("REDICLOUD_BRANCH").orNull ?: "dev"
-        val fullVersion = if (channel == "stable") "$versionString+$gitSha"
-            else "$versionString-$channel.$buildNum+$gitSha"
+        val channelAlreadyInVersion = versionString.contains("-$channel.")
+        val fullVersion = when {
+            channel == "stable" -> "$versionString+$gitSha"
+            channelAlreadyInVersion -> "$versionString+$gitSha"
+            else -> "$versionString-$channel.$buildNum+$gitSha"
+        }
 
         inputs.property("version", versionString)
         inputs.property("channel", channel)
