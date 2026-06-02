@@ -34,6 +34,8 @@ import dev.redicloud.service.node.tasks.node.NodeChooseMasterTask
 import dev.redicloud.service.node.tasks.node.NodePingTask
 import dev.redicloud.service.node.tasks.node.NodeSelfSuspendTask
 import dev.redicloud.service.node.tasks.player.PlayerProxyConnectionStateTask
+import dev.redicloud.service.node.packets.upgrade.ClusterUpgradePacket
+import dev.redicloud.service.node.packets.upgrade.ClusterUpgradeResponsePacket
 import dev.redicloud.service.node.tasks.service.CloudInvalidServerUnregisterTask
 import dev.redicloud.updater.Updater
 import kotlinx.coroutines.runBlocking
@@ -373,7 +375,8 @@ class NodeService(
     }
 
     private fun registerPackets() {
-        // node-specific packets registered in BaseService
+        packetManager.registerPacket(ClusterUpgradePacket::class)
+        packetManager.registerPacket(ClusterUpgradeResponsePacket::class)
     }
 
     private suspend fun connectFileCluster() {
@@ -393,7 +396,7 @@ class NodeService(
             console.commandManager.registerCommand(command)
         }
         register(ExitCommand(this))
-        register(VersionCommand(console))
+        register(VersionCommand(console, serviceId, nodeRepository, packetManager))
         register(ClusterCommand(this))
         register(
             CloudServerVersionCommand(

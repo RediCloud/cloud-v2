@@ -1,10 +1,17 @@
 package dev.redicloud.service.node.commands
 
 import dev.redicloud.api.commands.*
+import dev.redicloud.api.packets.AbstractPacket
+import dev.redicloud.api.packets.IPacketManager
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.service.node.ICloudNode
+import dev.redicloud.api.service.node.ICloudNodeRepository
+import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
-import dev.redicloud.service.node.console.NodeConsole
+import dev.redicloud.service.node.packets.upgrade.ClusterUpgradePacket
+import dev.redicloud.service.node.packets.upgrade.ClusterUpgradeResponsePacket
 import dev.redicloud.service.node.repository.node.LOGGER
 import dev.redicloud.updater.ReleaseInfo
 import dev.redicloud.updater.Updater
@@ -13,17 +20,25 @@ import dev.redicloud.updater.suggest.VersionSuggester
 import dev.redicloud.utils.*
 import dev.redicloud.utils.version.CloudVersion
 import dev.redicloud.utils.version.VersionChannel
+import kotlinx.coroutines.delay
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @Command("version")
 @CommandAlias(["ver"])
 @CommandDescription("Displays the current version of the node service")
 class VersionCommand(
-    val console: NodeConsole
+    private val console: Console,
+    private val serviceId: ServiceId,
+    private val nodeRepository: ICloudNodeRepository,
+    private val packetManager: IPacketManager
 ) : ICommand {
 
     companion object {
         private const val ANIMATION_TICK_MS = 200L
         private const val UPGRADE_CONFIRM_TIMEOUT_MS = 30000
+        private val CLUSTER_UPGRADE_TIMEOUT = 120.seconds
     }
 
     @CommandSubPath("")
@@ -65,8 +80,8 @@ class VersionCommand(
     private val upgradeConfirms = mutableMapOf<String, Long>()
 
     @CommandSubPath("upgrade [channel] [version]")
-    @CommandDescription("Downloads and installs a version upgrade")
-    @Suppress("ReturnCount")
+    @CommandDescription("Downloads and installs a version upgrade on all cluster nodes")
+    @Suppress("ReturnCount", "LongMethod")
     suspend fun upgrade(
         actor: ConsoleActor,
         @CommandParameter("channel", false, ChannelSuggester::class) channelParam: String?,
@@ -113,49 +128,99 @@ class VersionCommand(
         }
         upgradeConfirms.remove(confirmKey)
 
-        // Download with animation
-        var animCanceled = false
-        var downloadError = false
-        var downloadDone = false
-        val animation = AnimatedLineAnimation(
-            console,
-            ANIMATION_TICK_MS
-        ) {
-            if (animCanceled) {
-                null
-            } else if (downloadDone) {
-                animCanceled = true
-                "Downloaded ${toConsoleValue(release.version.display)}§8: ${if (downloadError) "§4x" else "§2ok"}"
-            } else {
-                "Downloading ${toConsoleValue(release.version.display)}§8: %loading%"
+        // Collect cluster nodes
+        val allNodes = nodeRepository.getConnectedNodes()
+        val otherNodes = allNodes.filter { it.serviceId != serviceId }
+
+        // Build status tracker: nodeId -> status string
+        val nodeStatuses = ConcurrentHashMap<ServiceId, String>()
+        nodeStatuses[serviceId] = "§epending"
+        otherNodes.forEach { nodeStatuses[it.serviceId] = "§epending" }
+
+        // Pre-upgrade overview
+        actor.sendHeader("Cluster Upgrade")
+        actor.sendMessage("Upgrading cluster to %hc%${release.version.display}§8:")
+
+        // Start live-status animations (one per node)
+        val animationsDone = ConcurrentHashMap<ServiceId, Boolean>()
+
+        fun createNodeAnimation(node: ICloudNode, isThis: Boolean): AnimatedLineAnimation {
+            val label = if (isThis) "${node.name} §7(§athis§7)" else node.name
+            return AnimatedLineAnimation(console, ANIMATION_TICK_MS) {
+                val status = nodeStatuses[node.serviceId] ?: "§7unknown"
+                if (animationsDone[node.serviceId] == true) {
+                    null
+                } else if (status.contains("pending") || status.contains("downloading")) {
+                    "  §8- %hc%$label §8: $status %loading%"
+                } else {
+                    animationsDone[node.serviceId] = true
+                    "  §8- %hc%$label §8: $status"
+                }
             }
         }
-        console.startAnimation(animation)
 
+        // This node first
+        val thisNode = allNodes.first { it.serviceId == serviceId }
+        console.startAnimation(createNodeAnimation(thisNode, true))
+
+        // Other nodes
+        otherNodes.forEach { node ->
+            console.startAnimation(createNodeAnimation(node, false))
+        }
+
+        // Phase 1: Local upgrade
+        nodeStatuses[serviceId] = "§edownloading"
         @Suppress("TooGenericExceptionCaught")
         try {
             Updater.download(release)
-            downloadDone = true
-        } catch (e: Exception) {
-            downloadError = true
-            downloadDone = true
-            actor.sendMessage("§cFailed to download the version!")
-            LOGGER.severe("Failed to download the version", e)
-            return
-        }
-
-        // Switch version
-        @Suppress("TooGenericExceptionCaught")
-        try {
             Updater.switchVersion(release)
+            nodeStatuses[serviceId] = "§aupgraded"
         } catch (e: Exception) {
-            actor.sendMessage("§cFailed to install the version!")
-            LOGGER.severe("Failed to install the version", e)
+            nodeStatuses[serviceId] = "§cfailed §8(${e.message})"
+            LOGGER.severe("Failed to upgrade local node", e)
+            delay((ANIMATION_TICK_MS * 2).milliseconds)
+            actor.sendMessage("")
+            actor.sendMessage("§cLocal upgrade failed! Aborting cluster upgrade.")
+            actor.sendHeader("Cluster Upgrade")
             return
         }
 
-        actor.sendMessage("Upgraded to version %hc%${release.version.display}")
-        actor.sendMessage("§eChanges will be applied on next restart.")
+        // Phase 2: Remote upgrade
+        if (otherNodes.isNotEmpty()) {
+            otherNodes.forEach { nodeStatuses[it.serviceId] = "§edownloading" }
+
+            val receiverIds = otherNodes.map { it.serviceId }.toTypedArray()
+            val packet = ClusterUpgradePacket(
+                targetVersion = release.version.display,
+                targetChannel = channel.label
+            )
+
+            packetManager.publish(packet, *receiverIds)
+                .withTimeOut(CLUSTER_UPGRADE_TIMEOUT)
+                .waitForResponse(otherNodes.size) { response: AbstractPacket? ->
+                    if (response is ClusterUpgradeResponsePacket) {
+                        val senderId = response.sender ?: return@waitForResponse
+                        if (response.success) {
+                            nodeStatuses[senderId] = "§aupgraded"
+                        } else {
+                            nodeStatuses[senderId] = "§cfailed §8(${response.errorMessage ?: "unknown"})"
+                        }
+                    }
+                }
+        }
+
+        // Wait for animations to finish rendering
+        delay((ANIMATION_TICK_MS * 2).milliseconds)
+
+        // Summary
+        actor.sendMessage("")
+        val allSuccess = nodeStatuses.values.all { it.contains("upgraded") }
+        if (!allSuccess) {
+            actor.sendMessage("§cNot all nodes were upgraded successfully!")
+        }
+        actor.sendMessage("§eThe entire cluster must be shut down for the upgrade to take effect.")
+        actor.sendMessage("§eMigrations will run automatically on next startup.")
+        actor.sendHeader("Cluster Upgrade")
     }
 
     @CommandSubPath("channels")
