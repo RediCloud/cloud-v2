@@ -210,7 +210,7 @@ if $VERIFY && [[ -n "${MANIFEST_URL:-}" ]]; then
         # The zip key contains the full filename; we search for its sha256 value.
         ZIP_ASSET_NAME=$(basename "$ZIP_URL")
         EXPECTED=$(awk -v name="$ZIP_ASSET_NAME" '
-            $0 ~ "\"" name "\"" { found=1 }
+            index($0, "\"" name "\"") > 0 { found=1 }
             found && /"sha256"/ {
                 gsub(/.*"sha256"[[:space:]]*:[[:space:]]*"/, "")
                 gsub(/".*/, "")
