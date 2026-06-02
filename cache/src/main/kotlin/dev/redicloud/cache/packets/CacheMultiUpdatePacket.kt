@@ -8,7 +8,7 @@ class CacheMultiUpdatePacket(
     val toUpdate: Map<String, String?>
 ) : CachePacket(name) {
 
-    override fun received(manager: IPacketManager) {
+    override suspend fun received(manager: IPacketManager) {
         super.received(manager)
         if (cache == null) return
         toUpdate.forEach { (key, valueJson) ->
@@ -21,5 +21,4 @@ class CacheMultiUpdatePacket(
             cache!!.setCached(key, value)
         }
     }
-
 }

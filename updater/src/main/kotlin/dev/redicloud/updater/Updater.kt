@@ -1,13 +1,14 @@
 package dev.redicloud.updater
 
-import com.google.gson.reflect.TypeToken
 import dev.redicloud.api.commands.ICommandManager
 import dev.redicloud.logging.LogManager
-import dev.redicloud.updater.suggest.BranchSuggester
-import dev.redicloud.updater.suggest.BuildsSuggester
+import dev.redicloud.updater.suggest.ChannelSuggester
+import dev.redicloud.updater.suggest.VersionSuggester
 import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
+import dev.redicloud.utils.version.CloudVersion
+import dev.redicloud.utils.version.VersionChannel
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -15,147 +16,288 @@ import java.io.File
 import java.util.*
 import java.util.jar.JarFile
 
+@Suppress("TooManyFunctions")
 object Updater {
 
-    val versionInfoFile: File = File(".update-info")
-    var updateToVersion: File? = null
+    private const val GITHUB_API = "https://api.github.com/repos/RediCloud/cloud-v2/releases"
 
+    private val updateInfoFile = File(".update-info")
+
+    /** The file to start after a version switch (set by [switchVersion]). */
+    var updateToVersion: File? = null
+        private set
+
+    // ------------------------------------------------------------------
+    // Startup
+    // ------------------------------------------------------------------
+
+    /** Called on startup to clean up after a previous version switch. */
     suspend fun check() {
-        if (versionInfoFile.exists()) {
-            val info = gson.fromJson(versionInfoFile.readText(charset("UTF-8")), UpdateInfo::class.java)
-            mainFolderJars().map { it to getJarProperties(it) }.filter { it.second.isNotEmpty() }.filterNot {
-                it.second["branch"] == BRANCH && it.second["build"] == BUILD && it.second["version"] == CLOUD_VERSION
-            }.map { it.first }.forEach {
-                it.delete()
-            }
-            versionInfoFile.delete()
+        if (updateInfoFile.exists()) {
+            cleanUpOldJars()
+            updateInfoFile.delete()
         }
-        val updateInfo = updateAvailable()
-        if (updateInfo.first && updateInfo.second != null) {
-            LogManager.rootLogger().info("An update is available: ${updateInfo.second!!.branch}#${updateInfo.second!!.build}")
-            LogManager.rootLogger().info("You can download the update with the command: version download $BRANCH ${updateInfo.second!!.build}")
-            LogManager.rootLogger().info("And switch the update with the command: version switch $BRANCH ${updateInfo.second!!.build}")
+        val (available, release) = updateAvailable()
+        if (available && release != null) {
+            LogManager.rootLogger().info("Update available: ${release.version.display}")
+            LogManager.rootLogger().info("  Download:  version download ${release.version.display}")
+            LogManager.rootLogger().info("  Switch:    version switch ${release.version.display}")
         } else {
             LogManager.rootLogger().info("You are running the latest version!")
         }
     }
 
     fun registerSuggesters(commandManager: ICommandManager<*>) {
-        commandManager.registerSuggesters(BranchSuggester(), BuildsSuggester())
+        commandManager.registerSuggesters(ChannelSuggester(), VersionSuggester())
     }
 
-    suspend fun download(branch: String, build: Int): File {
+    // ------------------------------------------------------------------
+    // GitHub Releases API
+    // ------------------------------------------------------------------
 
+    /** Fetches all non-draft releases from GitHub. */
+    suspend fun getReleases(): List<ReleaseInfo> {
         val response = httpClient.get {
-            url(getRootAPIUrl() + "/files/$branch/$build/redicloud.zip")
+            url(GITHUB_API)
+            header("Accept", "application/vnd.github+json")
         }
-        if (!response.status.isSuccess()) {
-            throw IllegalStateException("Failed to download the latest build")
-        }
-        val versionsFolder = File("versions")
-        if (!versionsFolder.exists()) {
-            versionsFolder.mkdir()
-        }
-        val file = File("versions/redicloud-$branch#$build.zip")
-        file.writeBytes(response.readBytes())
-        return file
+        if (!response.status.isSuccess()) return emptyList()
+        val ghReleases = gson.fromJsonToList<GitHubRelease>(response.bodyAsText())
+        return ghReleases
+            .filterNot { it.draft }
+            .mapNotNull { it.toReleaseInfo() }
     }
 
-    fun switchVersion(branch: String, build: Int) {
-        val versionsFolder = File("versions")
-        if (!versionsFolder.exists()) {
-            throw IllegalStateException("Version is not located in the versions folder")
+    /** Returns releases filtered by [channel]. */
+    suspend fun getReleasesByChannel(channel: VersionChannel): List<ReleaseInfo> =
+        getReleases().filter { it.channel == channel }.sortedBy { it.version }
+
+    /** Returns the available channels that have at least one release. */
+    suspend fun getAvailableChannels(): List<VersionChannel> =
+        getReleases().map { it.channel }.distinct().sortedBy { it.order }
+
+    // ------------------------------------------------------------------
+    // Update check
+    // ------------------------------------------------------------------
+
+    /** Checks whether an update is available for the current channel. */
+    suspend fun updateAvailable(): Pair<Boolean, ReleaseInfo?> {
+        val current = CLOUD_VERSION_PARSED ?: return false to null
+        if (BUILD == "local") return false to null
+
+        val latest = getReleasesByChannel(current.channel).lastOrNull()
+            ?: return false to null
+
+        return (latest.version > current) to latest
+    }
+
+    // ------------------------------------------------------------------
+    // Download & verify
+    // ------------------------------------------------------------------
+
+    /**
+     * The manifest for the currently running release, loaded lazily on first use.
+     * Also published to [ManifestHolder] so other modules can query artifact hashes.
+     */
+    var cachedManifest: ManifestInfo? = null
+        private set(value) {
+            field = value
+            ManifestHolder.manifest = value
         }
-        val file = File("versions/redicloud-$branch#$build.zip")
-        if (file.extension != "zip") {
-            throw IllegalArgumentException("File must be a zip file")
+
+    /** Downloads a release zip into the `versions/` directory. */
+    suspend fun download(release: ReleaseInfo): File {
+        val zipUrl = release.zipUrl
+            ?: error("Release ${release.version.display} has no zip asset")
+
+        val versionsDir = File("versions").also { it.mkdirs() }
+        val target = File(versionsDir, "redicloud-${release.version.display}.zip")
+
+        val response = httpClient.get { url(zipUrl) }
+        check(response.status.isSuccess()) { "Download failed: HTTP ${response.status}" }
+        target.writeBytes(response.readRawBytes())
+
+        // Verify integrity -- fail-closed: if assets exist but verification fails, abort.
+        val manifestBytes = release.manifestUrl?.let { downloadBytes(it) }
+        if (manifestBytes != null) {
+            if (release.manifestSignatureUrl != null) {
+                verifyGpgSignature(manifestBytes, release.manifestSignatureUrl)
+            } else {
+                LogManager.rootLogger().warning("No GPG signature available for this release")
+            }
+            val manifest = parseManifest(manifestBytes)
+            cachedManifest = manifest
+            verifyArtifactHash(target, manifest)
+        } else {
+            LogManager.rootLogger().warning("No manifest available for this release, integrity not verified")
         }
-        unzipFile(file.absolutePath, File(".").absolutePath)
-        var version: String = "unknown"
-        updateToVersion = mainFolderJars().map { it to getJarProperties(it) }.filter {
-            it.second["branch"] == branch && it.second["build"] == build.toString()
-        }.map {
-            version = it.second["version"] ?: "unknown"
-            it.first
-        }.firstOrNull() ?: throw IllegalStateException("Failed to find the version in the main folder")
-        if (versionInfoFile.exists()) {
-            versionInfoFile.delete()
+
+        return target
+    }
+
+    /**
+     * Loads and caches the manifest for the current release (by tag).
+     * Used by connector verification to look up expected hashes.
+     *
+     * @return the manifest, or `null` if unavailable.
+     */
+    suspend fun loadManifestForCurrentRelease(): ManifestInfo? {
+        if (cachedManifest != null) return cachedManifest
+        val current = CLOUD_VERSION_PARSED ?: return null
+        val release = getReleasesByChannel(current.channel)
+            .firstOrNull { it.version == current }
+            ?: return null
+        val manifestBytes = release.manifestUrl?.let { downloadBytes(it) } ?: return null
+        if (release.manifestSignatureUrl != null) {
+            verifyGpgSignature(manifestBytes, release.manifestSignatureUrl)
         }
-        versionInfoFile.createNewFile()
-        versionInfoFile.writeText(gson.toJson(UpdateInfo(version, build.toString(), branch, BRANCH, BUILD, CLOUD_VERSION)))
-}
+        val manifest = parseManifest(manifestBytes)
+        cachedManifest = manifest
+        return manifest
+    }
+
+    /** Parses manifest JSON bytes into a [ManifestInfo]. */
+    private fun parseManifest(manifestBytes: ByteArray): ManifestInfo {
+        val json = manifestBytes.decodeToString()
+        return gson.fromJson(json, ManifestInfo::class.java)
+            ?: error("Failed to parse manifest.json")
+    }
+
+    /**
+     * Verifies an artifact file against the manifest.
+     *
+     * @throws IllegalStateException if the hash does not match.
+     */
+    private fun verifyArtifactHash(file: File, manifest: ManifestInfo) {
+        val expectedHash = manifest.findHashByFilename(file.name)
+        checkNotNull(expectedHash) {
+            "No manifest entry found for ${file.name}"
+        }
+        val actualHash = sha256(file)
+        check(actualHash.equals(expectedHash, ignoreCase = true)) {
+            "Checksum mismatch for ${file.name}: expected $expectedHash, got $actualHash"
+        }
+        LogManager.rootLogger().info("SHA-256 verified for ${file.name}")
+    }
+
+    /**
+     * Verifies the GPG signature of the manifest using the embedded trusted public key.
+     *
+     * Fail-closed: if the signature exists but is invalid or the download fails, the update is aborted.
+     *
+     * @throws IllegalStateException if the signature is invalid or cannot be verified.
+     */
+    private suspend fun verifyGpgSignature(
+        manifestBytes: ByteArray,
+        signatureUrl: String
+    ) {
+        val signatureBytes = downloadBytes(signatureUrl)
+            ?: error("Failed to download GPG signature from $signatureUrl")
+
+        val verified = GpgVerifier.verify(
+            data = manifestBytes,
+            signature = signatureBytes
+        )
+        check(verified) { "GPG signature verification failed: signature is invalid or key is not trusted" }
+        LogManager.rootLogger().info("GPG signature verified (trusted key)")
+    }
+
+    /** Downloads raw bytes from a URL, returning `null` on failure. */
+    private suspend fun downloadBytes(url: String): ByteArray? {
+        val response = httpClient.get { url(url) }
+        return if (response.status.isSuccess()) response.readRawBytes() else null
+    }
+
+    // ------------------------------------------------------------------
+    // Version switch
+    // ------------------------------------------------------------------
+
+    /** Extracts a downloaded version and writes the `.update-info` marker. */
+    fun switchVersion(release: ReleaseInfo) {
+        val versionsDir = File("versions")
+        val zipFile = File(versionsDir, "redicloud-${release.version.display}.zip")
+        check(zipFile.exists()) {
+            "Version ${release.version.display} is not downloaded. Run: version download ${release.version.display}"
+        }
+
+        unzipFile(zipFile.absolutePath, File(".").absolutePath)
+
+        // Find the freshly extracted node-service JAR
+        updateToVersion = mainFolderJars().firstOrNull { jar ->
+            val props = getJarProperties(jar)
+            props["full-version"]?.let { CloudVersion.parseOrNull(it) } == release.version ||
+                props["version"] == release.version.base
+        } ?: error("Could not find extracted JAR for ${release.version.display}")
+
+        val currentFull = CLOUD_VERSION_FULL
+        val info = UpdateInfo(
+            newVersion = release.version.full,
+            oldVersion = currentFull
+        )
+        updateInfoFile.writeText(gson.toJson(info))
+    }
+
+    // ------------------------------------------------------------------
+    // Local versions
+    // ------------------------------------------------------------------
+
+    /** Lists locally downloaded versions grouped by channel. */
+    fun localInstalledVersions(): Map<VersionChannel, List<CloudVersion>> {
+        val versionsDir = File("versions")
+        if (!versionsDir.exists()) return emptyMap()
+
+        return versionsDir.listFiles()
+            ?.filter { it.extension == "zip" }
+            ?.mapNotNull { file ->
+                val name = file.nameWithoutExtension.removePrefix("redicloud-")
+                CloudVersion.parseOrNull(name)
+            }
+            ?.groupBy { it.channel }
+            ?: emptyMap()
+    }
+
+    // ------------------------------------------------------------------
+    // Internal helpers
+    // ------------------------------------------------------------------
+
+    private fun cleanUpOldJars() {
+        val currentVersion = CLOUD_VERSION_FULL
+        mainFolderJars()
+            .map { it to getJarProperties(it) }
+            .filter { (_, props) -> props.isNotEmpty() }
+            .filterNot { (_, props) -> props["full-version"] == currentVersion }
+            .forEach { (file, _) -> file.delete() }
+    }
 
     private fun getJarProperties(file: File): Map<String, String> {
-        if (!file.exists() || file.extension != "jar") {
-            return emptyMap()
-        }
-        val jarFile = JarFile(file)
-        val properties = jarFile.getJarEntry("redicloud-version.properties")?.let {
-            jarFile.getInputStream(it).use { stream ->
-                val p = Properties()
-                p.load(stream)
-                p
+        if (!file.exists() || file.extension != "jar") return emptyMap()
+        return runCatching {
+            JarFile(file).use { jar ->
+                jar.getJarEntry("redicloud-version.properties")?.let { entry ->
+                    jar.getInputStream(entry).use { stream ->
+                        val props = Properties()
+                        props.load(stream)
+                        props.entries.associate { it.key.toString() to it.value.toString() }
+                    }
+                } ?: emptyMap()
             }
-        } ?: throw IllegalStateException("redicloud-version.properties not found in jar file")
-        return properties.map { it.key.toString() to it.value.toString() }.toMap()
+        }.getOrDefault(emptyMap())
     }
 
-    private fun mainFolderJars(): List<File> {
-        val mainFolder = File(".")
-        return mainFolder.listFiles()?.filter { it.extension == "jar" } ?: emptyList()
-    }
+    private fun mainFolderJars(): List<File> =
+        File(".").listFiles()?.filter { it.extension == "jar" } ?: emptyList()
 
-    fun localInstalledVersions(): Map<String, List<Int>> {
-        val versionsFolder = File("versions")
-        if (!versionsFolder.exists()) {
-            return emptyMap()
-        }
-        val result = mutableMapOf<String, MutableList<Int>>()
-        versionsFolder.listFiles()!!.filter { it.extension == "zip" }
-            .map { it.nameWithoutExtension.replace("redicloud-", "") }
-            .map { it.split("#") }
-            .filter { it.size == 2 }
-            .forEach {
-                val branch = it[0]
-                val build = it[1].toInt()
-                if (result.containsKey(branch)) {
-                    result[branch]!!.add(build)
-                } else {
-                    result[branch] = mutableListOf(build)
-                }
-            }
-        return result
-    }
+    /** Converts a GitHub release to our domain model, or `null` if the tag is unparseable. */
+    private fun GitHubRelease.toReleaseInfo(): ReleaseInfo? {
+        val versionStr = tagName.removePrefix("v")
+        val version = CloudVersion.parseOrNull(versionStr) ?: return null
 
-    suspend fun updateAvailable(): Pair<Boolean, BuildInfo?> {
-        if (BUILD == "local" || BRANCH == "local") return false to null
-        val builds = getBuilds(BRANCH).filter { it.stored }
-        val latestBuild = builds.filter { it.stored }.filter { it.branch == BRANCH }.maxByOrNull { it.build }
-        if (latestBuild == null) {
-            LogManager.rootLogger().warning("Failed to get the latest build for branch $BRANCH")
-            return false to null
-        }
-        val updateAvailable = latestBuild.build > (BUILD.toIntOrNull() ?: -1)
-        return updateAvailable to latestBuild
+        return ReleaseInfo(
+            version = version,
+            tagName = tagName,
+            zipUrl = assets.firstOrNull { it.name.endsWith(".zip") }?.downloadUrl,
+            manifestUrl = assets.firstOrNull { it.name == "manifest.json" }?.downloadUrl,
+            manifestSignatureUrl = assets.firstOrNull { it.name == "manifest.json.asc" }?.downloadUrl
+        )
     }
-
-    suspend fun getBuilds(branch: String?): List<BuildInfo> {
-        if (branch == null) return emptyList()
-        val response = httpClient.get {
-            url(getRootAPIUrl() + "/builds/?branch=$branch")
-        }
-        if (!response.status.isSuccess()) return emptyList()
-        val builds = gson.fromJsonToList<BuildInfo>(response.bodyAsText())
-        return builds.sortedBy { it.build }
-    }
-
-    suspend fun getBranches(): List<String> {
-        val response = httpClient.get {
-            url(getRootAPIUrl() + "/builds/")
-        }
-        if (!response.status.isSuccess()) return emptyList()
-        val info = gson.fromJson(response.bodyAsText(), BranchList::class.java)
-        return info.branches
-    }
-
 }

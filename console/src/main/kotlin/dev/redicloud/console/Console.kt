@@ -7,12 +7,43 @@ import dev.redicloud.api.utils.LOG_FOLDER
 import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.commands.ConsoleCommandManager
 import dev.redicloud.console.events.ConsoleRunEvent
-import dev.redicloud.console.jline.*
-import dev.redicloud.console.utils.*
-import dev.redicloud.logging.*
-import dev.redicloud.logging.handler.*
-import dev.redicloud.utils.*
-import kotlinx.coroutines.*
+import dev.redicloud.console.jline.ConsoleCompleter
+import dev.redicloud.console.jline.ConsoleInputReader
+import dev.redicloud.console.jline.ConsoleLineReader
+import dev.redicloud.console.jline.ConsoleQuestion
+import dev.redicloud.console.jline.IConsole
+import dev.redicloud.console.utils.AnsiInstaller
+import dev.redicloud.console.utils.ColoredConsoleLogFormatter
+import dev.redicloud.console.utils.ConsoleColor
+import dev.redicloud.console.utils.Screen
+import dev.redicloud.console.utils.getLevelColor
+import dev.redicloud.console.utils.getNormedLevelName
+import dev.redicloud.logging.LogManager
+import dev.redicloud.logging.LogOutputStream
+import dev.redicloud.logging.Logger
+import dev.redicloud.logging.clearHandlers
+import dev.redicloud.logging.getDefaultLogLevel
+import dev.redicloud.logging.handler.AcceptingLogHandler
+import dev.redicloud.logging.handler.FILE_LOG_FORMATTER
+import dev.redicloud.logging.handler.LogFileHandler
+import dev.redicloud.logging.handler.LogFormatter
+import dev.redicloud.logging.handler.ThreadRecordDispatcher
+import dev.redicloud.utils.CLOUD_VERSION
+import dev.redicloud.utils.CLOUD_VERSION_CHANNEL
+import dev.redicloud.utils.CLOUD_VERSION_FULL
+import dev.redicloud.utils.DEV_BUILD
+import dev.redicloud.utils.GIT
+import dev.redicloud.utils.USER_NAME
+import dev.redicloud.utils.coroutineExceptionHandler
+import dev.redicloud.utils.getGithubRepository
+import dev.redicloud.utils.getGithubUser
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.fusesource.jansi.Ansi
 import org.fusesource.jansi.AnsiConsole
 import org.jline.reader.EndOfFileException
@@ -24,14 +55,17 @@ import org.jline.utils.InfoCmp
 import org.jline.utils.StyleResolver
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.UUID
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Level
 import java.util.logging.LogRecord
+import java.util.logging.Logger.getLogger
 import kotlin.system.exitProcess
 
-
+@Suppress("TooManyFunctions")
 open class Console(
     val host: String,
     val eventManager: IEventManager?,
@@ -43,6 +77,7 @@ open class Console(
     companion object {
         val LOGGER: Logger = LogManager.logger(Console::class.java)
         private val DATE_FORMAT = SimpleDateFormat("HH:mm:ss.SSS")
+        private const val HISTORY_SIZE = 500
         private var FIRST_INIT = true
         lateinit var TERMINAL: Terminal
         private var CONSOLE_THREAD: Thread? = null
@@ -58,16 +93,24 @@ open class Console(
     private var currentScreen: Screen = defaultScreen
     private val screens: MutableList<Screen> = mutableListOf(defaultScreen)
     override val commandManager = ConsoleCommandManager(this)
-    override var lineFormat: String = System.getProperty("redicloud.console.lineformat", "§8[§f%time%§8] %level%§8: %tc%%message%")
+    override var lineFormat: String = System.getProperty(
+        "redicloud.console.lineformat",
+        "§8[§f%time%§8] %level%§8: %tc%%message%"
+    )
     private val runningAnimations: MutableMap<UUID, Pair<Job, AbstractConsoleAnimation>> = mutableMapOf()
     override var prompt: String = System.getProperty("redicloud.console.prompt", "§8• %hc%%user%§8@%tc%%host% §8➔ §r")
-    var highlightColor: ConsoleColor = ConsoleColor.valueOf(System.getProperty("redicloud.console.highlight", "CYAN").uppercase())
-    var textColor: ConsoleColor = ConsoleColor.valueOf(System.getProperty("redicloud.console.hightlight", "WHITE").uppercase())
+    var highlightColor: ConsoleColor = ConsoleColor.valueOf(
+        System.getProperty("redicloud.console.highlight", "CYAN").uppercase()
+    )
+    var textColor: ConsoleColor = ConsoleColor.valueOf(
+        System.getProperty("redicloud.console.hightlight", "WHITE").uppercase()
+    )
 
     override var printingEnabled = true
     override var matchingHistorySearch = true
 
-    private val animationScope = CoroutineScope(Dispatchers.Default + coroutineExceptionHandler)
+    private val animationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + coroutineExceptionHandler)
+    var commandScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + coroutineExceptionHandler)
     private var logRecordDispatcher: ThreadRecordDispatcher? = null
 
     init {
@@ -80,7 +123,7 @@ open class Console(
                 .build()
             LINE_READER = ConsoleLineReader().apply {
                 completer = ConsoleCompleter(this@Console)
-                //highlighter = ConsoleHighlighter(this@Console)
+                // highlighter = ConsoleHighlighter(this@Console)
                 option(LineReader.Option.AUTO_GROUP, false)
                 option(LineReader.Option.AUTO_MENU_LIST, true)
                 option(LineReader.Option.AUTO_FRESH_LINE, true)
@@ -89,7 +132,7 @@ open class Console(
                 option(LineReader.Option.DISABLE_EVENT_EXPANSION, true)
 
                 variable(LineReader.BELL_STYLE, "none")
-                variable(LineReader.HISTORY_SIZE, 500)
+                variable(LineReader.HISTORY_SIZE, HISTORY_SIZE)
                 variable(LineReader.COMPLETION_STYLE_LIST_BACKGROUND, "inverse")
                 variable(LineReader.HISTORY_FILE, CONSOLE_HISTORY_FILE.getFile().path)
             }
@@ -114,16 +157,20 @@ open class Console(
         val rootLogger = LogManager.rootLogger()
         val consoleFormatter = if (hasColorSupport()) {
             ColoredConsoleLogFormatter(this)
-        } else LogFormatter(true)
+        } else {
+            LogFormatter(true)
+        }
         val logFileWithPattern = "${LOG_FOLDER.getFile().absolutePath}/node-%g.log"
         LOG_FOLDER.createIfNotExists()
         clearHandlers(rootLogger)
         rootLogger.level = logLevel
         logRecordDispatcher = ThreadRecordDispatcher(rootLogger)
         rootLogger.logRecordDispatcher = logRecordDispatcher
-        rootLogger.addHandler(AcceptingLogHandler
-            {  logRecord, s -> writeLog(logRecord, s) }
-            .withFormatter(consoleFormatter))
+        rootLogger.addHandler(
+            AcceptingLogHandler
+                { logRecord, s -> writeLog(logRecord, s) }
+                .withFormatter(consoleFormatter)
+        )
         if (saveLogToFile) {
             rootLogger.addHandler(LogFileHandler(logFileWithPattern, append = true).withFormatter(FILE_LOG_FORMATTER))
         }
@@ -133,10 +180,8 @@ open class Console(
     }
 
     open fun sendHeader() {
-        var devInfo = ""
-        if (DEV_BUILD) {
-            devInfo = " §8| §cDevelopment Build"
-        }
+        val channelTag = if (DEV_BUILD) " §8| §c${CLOUD_VERSION_CHANNEL.uppercase()}" else ""
+        val commitUrl = "https://github.com/${getGithubUser()}/${getGithubRepository()}/commit/$GIT"
         writeLine("")
         writeLine("")
         writeLine("")
@@ -149,7 +194,8 @@ open class Console(
         writeLine("§fA redis based cluster cloud system for Minecraft")
         writeLine("")
         writeLine("")
-        writeLine("§8» §fVersion§8: %hc%$CLOUD_VERSION §8| §fGIT§8: %hc%$BRANCH§8#§f$BUILD$devInfo")
+        writeLine("§8» §fVersion§8: %hc%$CLOUD_VERSION_FULL$channelTag")
+        writeLine("§8» §fCommit§8:  %hc%$commitUrl")
         writeLine("§8» §fDiscord§8: %hc%https://discord.gg/g2HV52VV4G")
         writeLine("")
         writeLine("")
@@ -159,44 +205,52 @@ open class Console(
 
     private fun run() {
         CONSOLE_THREAD = Thread({
-            fun readLineInput(): String? {
-                try {
-                    return LINE_READER.readLine(CURRENT_CONSOLE?.prompt ?: "")
-                } catch (_: EndOfFileException) {
-                } catch (e: UserInterruptException) {
-                    handleUserInterrupt(e)
-                }
-                return null
-            }
-            CURRENT_CONSOLE?.eventManager?.fireEvent(ConsoleRunEvent(this@Console))
-            var line: String? = null
+            runBlocking { CURRENT_CONSOLE?.eventManager?.fireEvent(ConsoleRunEvent(this@Console)) }
             while (!Thread.currentThread().isInterrupted) {
-                line = readLineInput() ?: continue
+                val line = readLineInput() ?: continue
                 CURRENT_CONSOLE?.defaultScreen?.addLine((CURRENT_CONSOLE?.prompt ?: "") + line + "\r\n")
                 CURRENT_CONSOLE?.runningAnimations?.forEach { (_, animation) -> animation.second.addToCursorUp(1) }
 
                 CURRENT_CONSOLE?.inputReader?.forEach { it.acceptInput(line) }
                 CURRENT_CONSOLE?.inputReader?.clear()
 
-                if (CURRENT_CONSOLE?.commandManager?.areCommandsDisabled() == false) {
-                    val commandManager = CURRENT_CONSOLE?.commandManager ?: continue
-                    try {
-                        val response = commandManager.handleInput(commandManager.defaultActor, line)
-                        if (response.type == CommandResponseType.HELP_SENT) continue
-                        if (response.message != null && response.type != CommandResponseType.BLANK_INPUT
-                            && response.type != CommandResponseType.ERROR) {
-                            commandManager.defaultActor.sendMessage(response.message!!)
-                        }
-                        if (response.throwable != null && response.type == CommandResponseType.ERROR) {
-                            LOGGER.severe(response.message!!, response.throwable!!)
-                        }
-                    }catch (e: Exception) {
-                        LOGGER.severe("Error while routing/processing command", e)
-                    }
-                }
+                handleCommandInput(line)
             }
         }, "RC Console")
         CONSOLE_THREAD!!.start()
+    }
+
+    private fun readLineInput(): String? {
+        @Suppress("TooGenericExceptionCaught")
+        try {
+            return LINE_READER.readLine(CURRENT_CONSOLE?.prompt ?: "")
+        } catch (_: EndOfFileException) {
+        } catch (e: UserInterruptException) {
+            handleUserInterrupt(e)
+        }
+        return null
+    }
+
+    private fun handleCommandInput(line: String) {
+        if (CURRENT_CONSOLE?.commandManager?.areCommandsDisabled() != false) return
+        val commandManager = CURRENT_CONSOLE?.commandManager ?: return
+        commandScope.launch {
+            @Suppress("TooGenericExceptionCaught")
+            try {
+                val response = commandManager.handleInput(commandManager.defaultActor, line)
+                if (response.type == CommandResponseType.HELP_SENT) return@launch
+                if (response.message != null && response.type != CommandResponseType.BLANK_INPUT &&
+                    response.type != CommandResponseType.ERROR
+                ) {
+                    commandManager.defaultActor.sendMessage(response.message!!)
+                }
+                if (response.throwable != null && response.type == CommandResponseType.ERROR) {
+                    LOGGER.severe(response.message!!, response.throwable!!)
+                }
+            } catch (e: Exception) {
+                LOGGER.severe("Error while routing/processing command", e)
+            }
+        }
     }
 
     private fun print(text: String) {
@@ -219,7 +273,14 @@ open class Console(
         return reader.readNextInput()
     }
 
-    fun formatText(input: String, ensureEndsWith: String, useLineFormat: Boolean = true, level: String = "§f INFO", ansi: Ansi? = null, restoreCursor: Boolean = false): String {
+    fun formatText(
+        input: String,
+        ensureEndsWith: String,
+        useLineFormat: Boolean = true,
+        level: String = "§f INFO",
+        ansi: Ansi? = null,
+        restoreCursor: Boolean = false
+    ): String {
         val l = if (useLineFormat) lineFormat.replace("%message%", input) else input
         val formatted = l
             .replace("%level%", level)
@@ -229,10 +290,14 @@ open class Console(
             .replace("%version%", CLOUD_VERSION)
             .replace("%user%", USER_NAME)
             .replace("%host%", this.host)
-        var content = if (ansiSupported) ConsoleColor.toColoredString('§', formatted) else ConsoleColor.stripColor(
-            '§',
-            formatted
-        )
+        var content = if (ansiSupported) {
+            ConsoleColor.toColoredString('§', formatted)
+        } else {
+            ConsoleColor.stripColor(
+                '§',
+                formatted
+            )
+        }
         var endWith = content.endsWith(ensureEndsWith)
         if (ansi != null) {
             var a = ansi.a(content)
@@ -249,8 +314,8 @@ open class Console(
     }
 
     private fun disableJLineLogger() {
-        java.util.logging.Logger.getLogger("org.jline").apply { level = java.util.logging.Level.OFF }
-        java.util.logging.Logger.getLogger(StyleResolver::class.java.name).apply { level = java.util.logging.Level.OFF }
+        getLogger("org.jline").apply { level = Level.OFF }
+        getLogger(StyleResolver::class.java.name).apply { level = Level.OFF }
     }
 
     fun updatePrompt() {
@@ -262,17 +327,17 @@ open class Console(
 
     override fun startAnimation(animation: AbstractConsoleAnimation) {
         val uniqueId = UUID.randomUUID()
-        var started = false
-        animation.addStartHandler { started = true }
+        val latch = CountDownLatch(1)
+        animation.addStartHandler { latch.countDown() }
         val job = animationScope.launch {
             animation.running = true
             animation.run()
             runningAnimations.remove(uniqueId)
             animation.running = false
-            animation.handleDone();
+            animation.handleDone()
         }
         runningAnimations[uniqueId] = job to animation
-        while (!started) Thread.sleep(10)
+        latch.await()
     }
 
     override fun cancelAnimations() {
@@ -301,8 +366,7 @@ open class Console(
 
     override fun getScreens(): List<Screen> = screens.toList()
 
-    override fun getScreen(name: String): Screen? = screens.firstOrNull { it.name.lowercase() == name.lowercase() }
-
+    override fun getScreen(name: String): Screen? = screens.firstOrNull { it.name.equals(name, ignoreCase = true) }
 
     override fun createScreen(
         name: String,
@@ -317,7 +381,7 @@ open class Console(
     }
 
     override fun createScreen(screen: Screen): Screen {
-        if (screen.console != this) throw IllegalArgumentException("Screen is not from this console")
+        require(screen.console == this) { "Screen is not from this console" }
         screens.add(screen)
         return screen
     }
@@ -326,7 +390,7 @@ open class Console(
         name: String
     ) {
         val screen = getScreen(name) ?: return
-        if (screen.isDefault()) throw IllegalArgumentException("Cannot delete default screen")
+        require(!screen.isDefault()) { "Cannot delete default screen" }
         if (screen.isActive()) {
             switchToDefaultScreen()
         }
@@ -344,7 +408,6 @@ open class Console(
             printLock.unlock()
         }
     }
-
 
     override fun commandHistory(): List<String> =
         LINE_READER.history.map { it.line() }.toList()
@@ -374,7 +437,12 @@ open class Console(
         printLock.lock()
         try {
             s.split("\n").forEach {
-                val text = formatText(it, "\n", true, getLevelColor(logRecord.level).ansiCode + getNormedLevelName(logRecord.level))
+                val text = formatText(
+                    it,
+                    "\n",
+                    true,
+                    getLevelColor(logRecord.level).ansiCode + getNormedLevelName(logRecord.level)
+                )
                 defaultScreen.addToHistory(text)
                 this.print(text)
                 runningAnimations.values.forEach { it.second.addToCursorUp(1) }
@@ -384,7 +452,17 @@ open class Console(
         }
     }
 
-    override fun writeRaw(rawText: String, ensureEndsWith: String, level: String, lineFormat: Boolean, cursorUp: Boolean, eraseLine: Boolean, ansi: Ansi?, restoreCursor: Boolean, printDirectly: Boolean): Console {
+    override fun writeRaw(
+        rawText: String,
+        ensureEndsWith: String,
+        level: String,
+        lineFormat: Boolean,
+        cursorUp: Boolean,
+        eraseLine: Boolean,
+        ansi: Ansi?,
+        restoreCursor: Boolean,
+        printDirectly: Boolean
+    ): Console {
         printLock.lock()
         try {
             if (printDirectly) {
@@ -418,7 +496,7 @@ open class Console(
             if (history) {
                 if (source == null) {
                     defaultScreen.addLine(content)
-                }else {
+                } else {
                     source.addLine(content)
                 }
             }
@@ -486,5 +564,4 @@ open class Console(
         }
         if (uninstallAnsiOnClose) AnsiConsole.systemUninstall()
     }
-
 }

@@ -34,5 +34,4 @@ interface IDatabaseConnection {
     fun getKeysByPattern(pattern: String): List<String>
 
     fun getCommunicationChannel(key: String): ICommunicationChannel
-
 }

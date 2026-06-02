@@ -16,27 +16,27 @@ val PARSERS = mutableMapOf<KClass<*>, ICommandArgumentParser<*>>(
 )
 
 class StringCommandArgumentParser : ICommandArgumentParser<String> {
-    override fun parse(parameter: String): String = parameter
+    override suspend fun parse(parameter: String): String = parameter
 }
 
 class IntCommandArgumentParser : ICommandArgumentParser<Int> {
-    override fun parse(parameter: String): Int? = parameter.toIntOrNull()
+    override suspend fun parse(parameter: String): Int? = parameter.toIntOrNull()
 }
 
 class LongCommandArgumentParser : ICommandArgumentParser<Long> {
-    override fun parse(parameter: String): Long? = parameter.toLongOrNull()
+    override suspend fun parse(parameter: String): Long? = parameter.toLongOrNull()
 }
 
 class DoubleCommandArgumentParser : ICommandArgumentParser<Double> {
-    override fun parse(parameter: String): Double? = parameter.toDoubleOrNull()
+    override suspend fun parse(parameter: String): Double? = parameter.toDoubleOrNull()
 }
 
 class FloatCommandArgumentParser : ICommandArgumentParser<Float> {
-    override fun parse(parameter: String): Float? = parameter.toFloatOrNull()
+    override suspend fun parse(parameter: String): Float? = parameter.toFloatOrNull()
 }
 
 class BooleanCommandArgumentParser : ICommandArgumentParser<Boolean> {
-    override fun parse(parameter: String): Boolean? {
+    override suspend fun parse(parameter: String): Boolean? {
         return when (parameter.lowercase()) {
             "true" -> true
             "yes" -> true
@@ -50,13 +50,13 @@ class BooleanCommandArgumentParser : ICommandArgumentParser<Boolean> {
 }
 
 class ByteCommandArgumentParser : ICommandArgumentParser<Byte> {
-    override fun parse(parameter: String): Byte? = parameter.toByteOrNull()
+    override suspend fun parse(parameter: String): Byte? = parameter.toByteOrNull()
 }
 
 class ShortCommandArgumentParser : ICommandArgumentParser<Short> {
-    override fun parse(parameter: String): Short? = parameter.toShortOrNull()
+    override suspend fun parse(parameter: String): Short? = parameter.toShortOrNull()
 }
 
 class CharCommandArgumentParser : ICommandArgumentParser<Char> {
-    override fun parse(parameter: String): Char? = parameter.firstOrNull()
+    override suspend fun parse(parameter: String): Char? = parameter.firstOrNull()
 }

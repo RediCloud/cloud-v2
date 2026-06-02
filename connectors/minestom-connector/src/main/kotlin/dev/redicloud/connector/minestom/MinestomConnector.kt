@@ -7,24 +7,24 @@ import dev.redicloud.connector.minestom.provider.MinestomServerPlayerProvider
 import dev.redicloud.service.base.player.BasePlayerExecutor
 import dev.redicloud.service.minecraft.MinecraftServerService
 import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
-import kotlinx.coroutines.runBlocking
 import net.minestom.server.MinecraftServer
 import net.minestom.server.extensions.Extension
 
 class MinestomConnector(val extension: Extension) : MinecraftServerService<Extension>() {
 
     internal var minestomShuttingDown = false
-    override val screenProvider: AbstractScreenProvider
-        = MinestomScreenProvider(this.packetManager, this.extension)
-    override var playerProvider: IServerPlayerProvider
-        = MinestomServerPlayerProvider()
-    override val playerExecutor: BasePlayerExecutor
-        = MinestomPlayerExecutor(this.playerRepository, this.serverRepository, this.packetManager, this.serviceId)
+    override val screenProvider: AbstractScreenProvider =
+        MinestomScreenProvider(this.packetManager)
+    override var playerProvider: IServerPlayerProvider =
+        MinestomServerPlayerProvider()
+    override val playerExecutor: BasePlayerExecutor =
+        MinestomPlayerExecutor(this.playerRepository, this.serverRepository, this.packetManager, this.serviceId)
 
-    init {
+    override suspend fun start() {
+        super.start()
         initApi()
         registerTasks()
-        runBlocking { moduleHandler.loadModules() }
+        moduleHandler.loadModules()
     }
 
     override fun onDisable() {
@@ -35,11 +35,10 @@ class MinestomConnector(val extension: Extension) : MinecraftServerService<Exten
         super.onDisable()
     }
 
-    override fun plattformShutdown() {
+    override fun platformShutdown() {
         this.minestomShuttingDown = true
         MinecraftServer.stopCleanly()
     }
 
     override fun getConnectorPlugin(): Extension = this.extension
-
 }

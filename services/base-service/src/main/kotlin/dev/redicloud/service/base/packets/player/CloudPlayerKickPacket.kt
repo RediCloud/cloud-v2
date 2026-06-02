@@ -16,5 +16,4 @@ class CloudPlayerKickPacket(
 
     val reason: Component
         get() = GsonComponentSerializer.gson().deserialize(jsonReason)
-
 }

@@ -39,5 +39,4 @@ class SyncedLock(
     override suspend fun isHeldByCurrentThread(): Boolean {
         return handle.isHeldByCurrentThread
     }
-
 }

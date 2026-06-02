@@ -1,16 +1,18 @@
 package dev.redicloud.console.animation
 
 import dev.redicloud.console.Console
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import org.fusesource.jansi.Ansi
 import java.time.Instant
+import kotlin.time.Duration.Companion.milliseconds
 
 abstract class AbstractConsoleAnimation(
     val updateInterval: Long,
     val staticCursor: Boolean,
     val console: Console
-) : Runnable {
+) {
 
     protected val finishHandlers: MutableList<() -> Unit> = mutableListOf()
     protected val startHandlers: MutableList<() -> Unit> = mutableListOf()
@@ -44,19 +46,15 @@ abstract class AbstractConsoleAnimation(
 
     protected abstract fun handleTick(): Boolean
 
-    override fun run() {
+    suspend fun run() {
         this.startInstant = Instant.now()
         this.console.forceWriteLine(System.lineSeparator())
         var first = false
-        while (!Thread.currentThread().isInterrupted && !this.handleTick() && running) {
+        while (!this.handleTick() && running) {
+            currentCoroutineContext().ensureActive()
             if (!first) this.startHandlers.forEach { it() }
             first = true
-            try {
-                Thread.sleep(this.updateInterval)
-            }catch (e: InterruptedException) {
-                Thread.currentThread().interrupt()
-                break
-            }
+            delay(this.updateInterval.milliseconds)
         }
     }
 
@@ -64,5 +62,4 @@ abstract class AbstractConsoleAnimation(
         this.finishHandlers.forEach { it() }
         this.finishHandlers.clear()
     }
-
 }

@@ -1,20 +1,20 @@
 package dev.redicloud.utils
 
+import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.seconds
 
-
 class EasyCacheTest : UtilTest() {
 
     @Test
-    fun testGet() {
+    fun testGet() = runBlocking {
         val cache = SingleCache(10.seconds) { "test" }
         assertEquals("test", cache.get(), "Cache should return the value")
     }
 
     @Test
-    fun testTimeout() {
+    fun testTimeout() = runBlocking {
         var getCount = 0
         val cache = SingleCache(1.seconds) {
             getCount++
@@ -27,7 +27,7 @@ class EasyCacheTest : UtilTest() {
     }
 
     @Test
-    fun testCache() {
+    fun testCache() = runBlocking {
         var getCount = 0
         val cache = SingleCache(5.seconds) {
             getCount++
@@ -38,5 +38,4 @@ class EasyCacheTest : UtilTest() {
         assertEquals("test", cache.get(), "Cache should return the value")
         assertEquals(1, getCount, "Cache should have been called once")
     }
-
 }

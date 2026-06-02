@@ -1,3 +1,7 @@
+plugins {
+    id("redicloud-conventions")
+}
+
 group = "dev.redicloud.example.plugin"
 
 repositories {
@@ -23,9 +27,9 @@ dependencies {
     compileOnly("dev.redicloud.api:base-api:<cloud-version>")
      */
 
-    compileOnly(BuildDependencies.SPIGOT_API)
+    compileOnly(libs.spigot.api)
 
     // Internal usage, ignore it! You don't need to add this
     compileOnly(project(":apis:base-api"))
-    compileOnly(BuildDependencies.KYORI_ADVENTURE_API)
+    compileOnly(libs.adventure.api)
 }

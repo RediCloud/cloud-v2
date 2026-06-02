@@ -72,27 +72,22 @@ fun unzipFile(zipFilePath: String, destinationFolderPath: String) {
 
     ZipInputStream(BufferedInputStream(FileInputStream(zipFile))).use { zipIn ->
         var entry = zipIn.nextEntry
-
         while (entry != null) {
             val entryFile = File(destinationFolder, entry.name)
             if (entry.isDirectory) {
                 entryFile.mkdirs()
             } else {
-                entryFile.parentFile?.mkdirs()
-
-                FileOutputStream(entryFile).use { fileOut ->
-                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                    var bytesRead = zipIn.read(buffer)
-
-                    while (bytesRead != -1) {
-                        fileOut.write(buffer, 0, bytesRead)
-                        bytesRead = zipIn.read(buffer)
-                    }
-                }
+                extractEntry(zipIn, entryFile)
             }
-
             zipIn.closeEntry()
             entry = zipIn.nextEntry
         }
+    }
+}
+
+private fun extractEntry(zipIn: ZipInputStream, entryFile: File) {
+    entryFile.parentFile?.mkdirs()
+    FileOutputStream(entryFile).use { fileOut ->
+        zipIn.copyTo(fileOut, DEFAULT_BUFFER_SIZE)
     }
 }

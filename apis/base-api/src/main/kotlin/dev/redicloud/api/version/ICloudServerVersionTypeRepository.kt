@@ -32,5 +32,4 @@ interface ICloudServerVersionTypeRepository {
         serverVersionRepository: ICloudServerVersionRepository,
         silent: Boolean = false
     )
-
 }

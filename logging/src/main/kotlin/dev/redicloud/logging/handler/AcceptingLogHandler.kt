@@ -10,7 +10,6 @@ class AcceptingLogHandler(val block: (LogRecord, String) -> Unit) : AbstractLogH
         this.level = Level.ALL
     }
 
-
     override fun publish(record: LogRecord) {
         if (!super.isLoggable(record)) return
         this.block(record, super.getFormatter().format(record))
@@ -20,6 +19,4 @@ class AcceptingLogHandler(val block: (LogRecord, String) -> Unit) : AbstractLogH
         super.setFormatter(formatter)
         return this
     }
-
-
 }

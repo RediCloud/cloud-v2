@@ -24,6 +24,7 @@ class PaperMcUpdaterModule : CloudModule(), CloudInjectable {
     lateinit var handler: PaperMcServerVersionHandler
 
     @ModuleTask(ModuleLifeCycle.LOAD)
+    @Suppress("UnusedParameter")
     fun onLoad(
         @Named("this") serviceId: ServiceId,
         serverVersionRepository: ICloudServerVersionRepository,
@@ -48,5 +49,4 @@ class PaperMcUpdaterModule : CloudModule(), CloudInjectable {
     fun onUnload() {
         IServerVersionHandler.unregisterHandler(handler)
     }
-
 }

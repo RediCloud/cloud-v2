@@ -19,5 +19,4 @@ interface ICloudConfigurationTemplateRepository {
     suspend fun deleteTemplate(configurationTemplate: ICloudConfigurationTemplate): Boolean
 
     suspend fun getTemplates(): List<ICloudConfigurationTemplate>
-
 }

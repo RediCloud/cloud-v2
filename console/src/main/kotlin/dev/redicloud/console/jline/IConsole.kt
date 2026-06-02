@@ -6,9 +6,8 @@ import dev.redicloud.console.commands.ConsoleCommandManager
 import dev.redicloud.console.utils.Screen
 import org.fusesource.jansi.Ansi
 
-
+@Suppress("TooManyFunctions")
 interface IConsole {
-
 
     var printingEnabled: Boolean
     var matchingHistorySearch: Boolean
@@ -62,16 +61,17 @@ interface IConsole {
 
     fun disableCommands()
 
+    @Suppress("LongParameterList")
     fun writeRaw(
-         rawText: String,
-         ensureEndsWith: String = "",
-         level: String = "§f INFO",
-         lineFormat: Boolean = true,
-         cursorUp: Boolean = false,
-         eraseLine: Boolean = true,
-         ansi: Ansi? = null,
-         restoreCursor: Boolean = false,
-         printDirectly: Boolean = false
+        rawText: String,
+        ensureEndsWith: String = "",
+        level: String = "§f INFO",
+        lineFormat: Boolean = true,
+        cursorUp: Boolean = false,
+        eraseLine: Boolean = true,
+        ansi: Ansi? = null,
+        restoreCursor: Boolean = false,
+        printDirectly: Boolean = false
     ): Console
 
     fun forceWriteLine(text: String, source: Screen? = null, history: Boolean = true): Console
@@ -89,5 +89,4 @@ interface IConsole {
     fun clearScreen()
 
     fun close(processExit: Boolean = false)
-
 }

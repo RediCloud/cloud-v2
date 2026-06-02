@@ -20,5 +20,4 @@ abstract class CloudTaskExecutor(val cloudTask: CloudTask) {
     fun cancel() {
         job?.cancel()
     }
-
 }

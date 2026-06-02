@@ -11,5 +11,4 @@ enum class ServiceType {
     fun isServer(): Boolean {
         return this == MINECRAFT_SERVER || this == PROXY_SERVER
     }
-
 }

@@ -1,7 +1,7 @@
 package dev.redicloud.api.template.configuration
 
-import dev.redicloud.api.utils.ProcessConfiguration
 import dev.redicloud.api.service.ServiceId
+import dev.redicloud.api.utils.ProcessConfiguration
 import java.util.UUID
 
 interface ICloudConfigurationTemplate : Comparable<ICloudConfigurationTemplate>, ProcessConfiguration {
@@ -25,5 +25,4 @@ interface ICloudConfigurationTemplate : Comparable<ICloudConfigurationTemplate>,
     var joinPermission: String?
     var maxPlayers: Int
     var timeAfterStopUselessServer: Long
-
 }

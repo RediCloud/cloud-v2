@@ -5,6 +5,7 @@ import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.loaders.URLClassLoaderJarLoader
 import dev.redicloud.logging.configureLogger
 import dev.redicloud.utils.loadProperties
+import kotlinx.coroutines.runBlocking
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 import java.net.URLClassLoader
@@ -16,14 +17,17 @@ class BukkitConnectorBootstrap : JavaPlugin() {
     private var connector: BukkitConnector? = null
 
     override fun onLoad() {
+        @Suppress("TooGenericExceptionCaught")
         try {
             loadProperties(this::class.java.classLoader)
             Bootstrap().apply(URLClassLoaderJarLoader(this::class.java.classLoader as URLClassLoader))
             configureLogger("org.redisson", Level.OFF)
             configureLogger("io.netty", Level.INFO)
             connector = BukkitConnector(this)
-        }catch (e: Exception) {
-            e.printStackTrace()
+            runBlocking { connector!!.start() }
+        } catch (e: Exception) {
+            System.err.println("Failed to initialize BukkitConnector: ${e.message}")
+            System.err.println(e.stackTraceToString())
         }
     }
 
@@ -39,5 +43,4 @@ class BukkitConnectorBootstrap : JavaPlugin() {
         connector!!.bukkitShuttingDown = true
         connector!!.onDisable()
     }
-
 }

@@ -46,5 +46,4 @@ open class SyncedMap<K, V>(
     override fun containsKey(key: K): Boolean {
         return handle.containsKey(key)
     }
-
 }

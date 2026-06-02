@@ -4,7 +4,6 @@ import org.fusesource.jansi.Ansi
 import java.util.logging.Level
 import java.util.regex.Pattern
 
-
 enum class ConsoleColor(
     val displayName: String,
     val index: Char,
@@ -39,7 +38,7 @@ enum class ConsoleColor(
         private val VALUES = values()
         private const val LOOKUP = "0123456789abcdefklmnor"
         private const val RGB_ANSI = "\u001B[38;2;%d;%d;%dm"
-        
+
         fun toColoredString(triggerChar: Char, input: String): String {
             val contentBuilder = StringBuilder(convertRGBColors(triggerChar, input))
             var breakIndex = contentBuilder.length - 1
@@ -57,8 +56,6 @@ enum class ConsoleColor(
             }
             return contentBuilder.toString()
         }
-
-
 
         private fun convertRGBColors(triggerChar: Char, input: String): String {
             val replacePattern = Pattern.compile("$triggerChar#([\\da-fA-F]){6}")
@@ -84,7 +81,6 @@ enum class ConsoleColor(
             return sb.toString()
         }
 
-        
         fun stripColor(triggerChar: Char, input: String): String {
             val contentBuilder = StringBuilder(stripRGBColors(triggerChar, input))
             var breakIndex = contentBuilder.length - 1
@@ -97,7 +93,6 @@ enum class ConsoleColor(
             return contentBuilder.toString()
         }
 
-        
         private fun stripRGBColors(triggerChar: Char, input: String): String {
             val replacePattern = Pattern.compile("$triggerChar#([\\da-fA-F]){6}")
             return replacePattern.matcher(input).replaceAll("")
@@ -117,29 +112,31 @@ enum class ConsoleColor(
             text = text.trim { it <= ' ' }
             return if (text.length > 2 && text[text.length - 2] == triggerChar) {
                 byChar(text[text.length - 1])
-            } else null
+            } else {
+                null
+            }
         }
     }
 }
 
 fun getLevelColor(level: Level): ConsoleColor {
-    return when(level) {
+    return when (level) {
         Level.INFO -> ConsoleColor.WHITE
         Level.WARNING -> ConsoleColor.YELLOW
         Level.SEVERE -> ConsoleColor.RED
         else -> {
             if (level.intValue() >= Level.FINEST.intValue() && level.intValue() <= Level.FINE.intValue()) {
                 ConsoleColor.BLUE
-            }else {
+            } else {
                 ConsoleColor.WHITE
             }
         }
     }
 }
 
-private val LEVEL_NAME_LENGTH = 5
-fun getNormedLevelName(level: Level, spaces: Boolean = true): String {
-    var name = when(level) {
+private const val LEVEL_NAME_LENGTH = 5
+fun getNormedLevelName(level: Level): String {
+    var name = when (level) {
         Level.INFO -> "INFO"
         Level.WARNING -> "WARN"
         Level.SEVERE -> "ERROR"

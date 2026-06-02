@@ -2,9 +2,9 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("redicloud-conventions")
+    alias(libs.plugins.shadow)
 }
-apply(plugin = "com.github.johnrengelman.shadow")
 
 group = "dev.redicloud.connector"
 
@@ -18,15 +18,7 @@ dependencies {
     shade(project(":apis:base-api"))
     shade(project(":services:base-service"))
     shade(project(":services:minecraft-server-service"))
-    shade(project(":repositories:node-repository"))
-    shade(project(":repositories:service-repository"))
-    shade(project(":repositories:server-repository"))
-    shade(project(":repositories:file-template-repository"))
-    shade(project(":repositories:configuration-template-repository"))
-    shade(project(":repositories:server-version-repository"))
-    shade(project(":repositories:java-version-repository"))
-    shade(project(":repositories:player-repository"))
-    shade(project(":repositories:cache-repository"))
+    shade(project(":repositories"))
     shade(project(":database"))
     shade(project(":utils"))
     shade(project(":events"))
@@ -35,27 +27,29 @@ dependencies {
     shade(project(":logging"))
     shade(project(":console"))
     shade(project(":tasks"))
-    shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
+    shade(libs.libloader.bootstrap)
     shade(project(":modules:module-handler"))
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":apis:connector-api"))
 
-    compileOnly(BuildDependencies.SPIGOT_API)
+    compileOnly(libs.spigot.api)
     shade(project(":connectors:bukkit-legacy"))
 
-    compileOnly(BuildDependencies.KYORI_ADVENTURE_API)
-    compileOnly(BuildDependencies.KYORI_ADVENTURE_BUKKIT)
+    compileOnly(libs.adventure.api)
+    compileOnly(libs.adventure.bukkit)
 }
 
-val shadowModJar by tasks.creating(ShadowJar::class) {
-    archiveFileName.set(Builds.getOutputFileName(project) + "-shadow.jar")
+val shadowModJar by tasks.registering(ShadowJar::class) {
+    dependsOn(tasks.jar, tasks.named("shadowJar"))
+    val v = if (project.version == "unspecified") project.parent?.version ?: "unknown" else project.version
+    archiveFileName.set("redicloud-${project.name}-$v-shadow.jar")
 
     relocate("io.netty", "dev.redicloud.netty")
     relocate("com.google.gson", "dev.redicloud.gson")
     relocate("com.google.common", "dev.redicloud.common")
 
     from(provider { zipTree(tasks.jar.get().archiveFile) })
-    destinationDirectory.set(buildDir.resolve("shadowing"))
+    destinationDirectory.set(layout.buildDirectory.dir("shadowing"))
     archiveVersion.set("")
     manifest.from(provider {
         zipTree(tasks.jar.get().archiveFile)
@@ -64,10 +58,10 @@ val shadowModJar by tasks.creating(ShadowJar::class) {
     })
 }
 
-val copyShadowedJar by tasks.creating {
+val copyShadowedJar by tasks.registering {
     dependsOn(shadowModJar)
     doLast {
-        shadowModJar.archiveFile.get().asFile.inputStream().use { src ->
+        shadowModJar.get().archiveFile.get().asFile.inputStream().use { src ->
             tasks.jar.get().archiveFile.get().asFile.apply { parentFile.mkdirs() }
                 .outputStream()
                 .use { dst -> src.copyTo(dst) }

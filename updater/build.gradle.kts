@@ -1,3 +1,7 @@
+plugins {
+    id("redicloud-conventions")
+}
+
 group = "dev.redicloud"
 
 dependencies {
@@ -5,4 +9,6 @@ dependencies {
     shade(project(":logging"))
     shade(project(":utils"))
     shade(project(":tasks"))
+    shade(libs.bcpg)
+    shade(libs.bcprov)
 }

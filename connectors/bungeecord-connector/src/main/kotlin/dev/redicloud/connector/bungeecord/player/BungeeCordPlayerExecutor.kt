@@ -7,7 +7,6 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.ICloudServer
 import dev.redicloud.api.service.server.ICloudServerRepository
 import dev.redicloud.service.base.player.BasePlayerExecutor
-import kotlinx.coroutines.runBlocking
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.platform.bungeecord.BungeeAudiences
 import net.kyori.adventure.text.Component
@@ -32,25 +31,23 @@ class BungeeCordPlayerExecutor(
         return audiences!!.player(player.uniqueId)
     }
 
-    override fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer) {
+    override suspend fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer) {
         val player = ProxyServer.getInstance().getPlayer(cloudPlayer.uniqueId)
         if (player == null || !player.isConnected) {
-            runBlocking { this@BungeeCordPlayerExecutor.connect(cloudPlayer, server) }
+            LOGGER.warning("Player ${cloudPlayer.uniqueId} not found on this proxy despite proxyId matching")
             return
         }
         val serverInfo = ProxyServer.getInstance().getServerInfo(server.name) ?: return
         player.connect(serverInfo)
     }
 
-    override fun executeKick(cloudPlayer: ICloudPlayer, reason: Component) {
+    override suspend fun executeKick(cloudPlayer: ICloudPlayer, reason: Component) {
         val player = ProxyServer.getInstance().getPlayer(cloudPlayer.uniqueId)
         if (player == null || !player.isConnected) {
-            runBlocking { this@BungeeCordPlayerExecutor.executeKick(cloudPlayer, reason) }
+            LOGGER.warning("Player ${cloudPlayer.uniqueId} not found on this proxy despite proxyId matching")
             return
         }
         val components = BungeeComponentSerializer.get().serialize(reason)
         player.disconnect(*components)
     }
-
-
 }

@@ -4,7 +4,6 @@ import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.api.utils.toCloudFile
 import dev.redicloud.utils.unzipFile
-import kotlinx.coroutines.runBlocking
 
 class UnzipPacket(
     val zipLocation: String,
@@ -16,12 +15,11 @@ class UnzipPacket(
     Windows: https://www.somacon.com/p161.php
     Linux: apt install unzip
      */
-    override fun received(manager: IPacketManager) {
+    override suspend fun received(manager: IPacketManager) {
         super.received(manager)
         val zipLocation = toCloudFile(zipLocation)
         val unzipLocation = toCloudFile(unzipLocation)
         unzipFile(zipLocation.absolutePath, unzipLocation.absolutePath)
-        runBlocking { respond(UnzipResponse()) }
+        respond(UnzipResponse())
     }
-
 }

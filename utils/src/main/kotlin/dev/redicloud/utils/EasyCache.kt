@@ -1,6 +1,7 @@
 package dev.redicloud.utils
 
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 
 open class EasyCache<T, I>(
@@ -8,15 +9,23 @@ open class EasyCache<T, I>(
     val block: suspend (I?) -> T?
 ) {
 
-    private var cachedValues: MutableMap<I, Pair<Long, T?>> = mutableMapOf()
+    private val cachedValues: ConcurrentHashMap<I, Pair<Long, T?>> = ConcurrentHashMap()
+
+    @Volatile
     private var singleCachedValue: Pair<Long, T?>? = null
 
-    fun get(key: I? = null): T? {
+    suspend fun get(key: I? = null): T? {
         if (!isCacheValid(key)) {
-            setCached(key, runBlocking { block(key) })
+            setCached(key, block(key))
         }
         return getCached(key)
     }
+
+    /**
+     * Blocking bridge for non-suspend callers. Prefer [get] in coroutine contexts.
+     * Should be removed once all callers support suspend.
+     */
+    fun getBlocking(key: I? = null): T? = runBlocking { get(key) }
 
     fun isCached(key: I?): Boolean {
         if (key == null) return singleCachedValue != null
@@ -37,10 +46,15 @@ open class EasyCache<T, I>(
     }
 
     fun isCacheValid(key: I?): Boolean {
-        return isCached(key) && System.currentTimeMillis() - (if (key != null) cachedValues[key]!!.first else singleCachedValue?.first
-            ?: -1) < cacheTime.inWholeMilliseconds
+        return isCached(key) && System.currentTimeMillis() - (
+            if (key != null) {
+                cachedValues[key]!!.first
+            } else {
+                singleCachedValue?.first
+                    ?: -1
+            }
+            ) < cacheTime.inWholeMilliseconds
     }
-
 }
 
 class SingleCache<I>(

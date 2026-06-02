@@ -25,5 +25,4 @@ class HelpCommand(val commandManager: CommandManager<*>) : ICommand {
         }
         actor.sendHeader("Help")
     }
-
 }

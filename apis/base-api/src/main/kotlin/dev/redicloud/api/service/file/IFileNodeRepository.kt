@@ -15,5 +15,4 @@ interface IFileNodeRepository {
     suspend fun getRegisteredFileNodes(): List<IFileNode>
 
     suspend fun getConnectedFileNodes(): List<IFileNode>
-
 }

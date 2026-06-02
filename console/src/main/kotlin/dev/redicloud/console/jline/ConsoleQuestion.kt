@@ -11,6 +11,7 @@ class ConsoleQuestion(
     val completer: List<String> = mutableListOf()
 ) {
 
+    @Suppress("LoopWithTooManyJumpStatements")
     suspend inline fun <reified T> ask(console: Console): T {
         console.disableCommands()
         var result: T? = null
@@ -32,14 +33,13 @@ class ConsoleQuestion(
                 ?: throw IllegalArgumentException("No parser found for class ${T::class.simpleName}")
             try {
                 result = parser.parse(input) as T?
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 console.writeLine("$linePrefix §cError while parsing input! Please try again!")
             }
         }
         console.enableCommands()
         return result
     }
-
 }
 
 interface ConsoleQuestionCondition {

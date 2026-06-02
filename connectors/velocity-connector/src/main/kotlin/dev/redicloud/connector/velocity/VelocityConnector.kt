@@ -4,41 +4,44 @@ import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.proxy.ProxyServer
 import com.velocitypowered.api.proxy.server.ServerInfo
 import dev.redicloud.api.provider.IServerPlayerProvider
-import dev.redicloud.connector.velocity.bootstrap.VelocityConnectorBootstrap
+import dev.redicloud.api.service.ServiceId
+import dev.redicloud.connector.velocity.listener.CloudNotificationListeners
 import dev.redicloud.connector.velocity.listener.CloudPlayerListener
+import dev.redicloud.connector.velocity.player.VelocityPlayerExecutor
 import dev.redicloud.connector.velocity.provider.VelocityScreenProvider
 import dev.redicloud.connector.velocity.provider.VelocityServerPlayerProvider
 import dev.redicloud.repository.server.CloudMinecraftServer
-import dev.redicloud.service.minecraft.ProxyServerService
-import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
-import dev.redicloud.api.service.ServiceId
-import dev.redicloud.connector.velocity.listener.CloudNotificationListeners
-import dev.redicloud.connector.velocity.player.VelocityPlayerExecutor
 import dev.redicloud.service.base.player.BasePlayerExecutor
+import dev.redicloud.service.minecraft.ProxyServerService
 import dev.redicloud.service.minecraft.listener.AbstractCloudNotificationListeners
+import dev.redicloud.service.minecraft.provider.AbstractScreenProvider
 import kotlinx.coroutines.runBlocking
 import java.net.InetSocketAddress
 
 class VelocityConnector(
-    private val bootstrap: VelocityConnectorBootstrap,
     private val proxyServer: ProxyServer
 ) : ProxyServerService<PluginContainer, ServerInfo>() {
-
 
     internal var velocityShuttingDown: Boolean = false
     override var playerProvider: IServerPlayerProvider = VelocityServerPlayerProvider(proxyServer)
     override val screenProvider: AbstractScreenProvider = VelocityScreenProvider(this.packetManager, this.proxyServer)
-    override val playerExecutor: BasePlayerExecutor = VelocityPlayerExecutor(this.proxyServer, this.playerRepository, this.serverRepository, this.packetManager, this.serviceId)
-    override val notificationListeners: AbstractCloudNotificationListeners = CloudNotificationListeners(this.proxyServer, this.serverRepository, this.nodeRepository, this.eventManager)
+    override val playerExecutor: BasePlayerExecutor =
+        VelocityPlayerExecutor(
+            this.proxyServer,
+            this.playerRepository,
+            this.serverRepository,
+            this.packetManager,
+            this.serviceId
+        )
+    override val notificationListeners: AbstractCloudNotificationListeners =
+        CloudNotificationListeners(this.proxyServer, this.serverRepository, this.nodeRepository, this.eventManager)
 
-
-    init {
+    override suspend fun start() {
+        super.start()
         initApi()
-        runBlocking {
-            registerTasks()
-            registerStartedServers()
-        }
-        runBlocking { moduleHandler.loadModules() }
+        registerTasks()
+        registerStartedServers()
+        moduleHandler.loadModules()
     }
 
     override fun registerServer(server: CloudMinecraftServer) {
@@ -98,14 +101,25 @@ class VelocityConnector(
         super.onDisable()
     }
 
-    override fun plattformShutdown() {
+    override fun platformShutdown() {
         this.velocityShuttingDown = true
         this.proxyServer.shutdown()
     }
 
     private fun registerListeners() {
-        this.proxyServer.eventManager.register(getConnectorPlugin(), CloudPlayerListener(this.serviceId, this.playerRepository, this.serverRepository, this.proxyServer))
+        this.proxyServer.eventManager.register(
+            getConnectorPlugin(),
+            CloudPlayerListener(
+                this.serviceId,
+                this.playerRepository,
+                this.serverRepository,
+                this.proxyServer,
+                this.scope
+            )
+        )
     }
 
-    override fun getConnectorPlugin(): PluginContainer = this.proxyServer.pluginManager.getPlugin("redicloud-connector").get()
+    override fun getConnectorPlugin(): PluginContainer = this.proxyServer.pluginManager.getPlugin(
+        "redicloud-connector"
+    ).get()
 }

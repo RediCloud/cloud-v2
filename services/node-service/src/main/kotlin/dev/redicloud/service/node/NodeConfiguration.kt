@@ -6,7 +6,7 @@ import dev.redicloud.utils.gson.gson
 import java.io.File
 import java.util.UUID
 
-data class NodeConfiguration (
+data class NodeConfiguration(
     val nodeName: String,
     val uniqueId: UUID,
     val hostAddress: String
@@ -18,7 +18,6 @@ data class NodeConfiguration (
         fun fromFile(file: File): NodeConfiguration {
             return gson.fromJson(file.readText(), NodeConfiguration::class.java)
         }
-
     }
 
     fun toFile(file: File) {
@@ -32,5 +31,4 @@ data class NodeConfiguration (
         cachedServiceId = ServiceId(uniqueId, ServiceType.NODE)
         return cachedServiceId!!
     }
-
 }

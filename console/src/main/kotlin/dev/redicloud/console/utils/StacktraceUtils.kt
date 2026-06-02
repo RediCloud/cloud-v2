@@ -10,7 +10,7 @@ fun stacktraceToString(throwable: Throwable, cause: Boolean = false): String {
         if (throwable.cause != null) {
             builder.append(stacktraceToString(throwable.cause!!, true))
         }
-    }else {
+    } else {
         builder.append("Caused by: ${throwable.javaClass.name}: ${throwable.message}\n")
         throwable.stackTrace.forEach {
             builder.append(it.toString())

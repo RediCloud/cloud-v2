@@ -1,6 +1,5 @@
 package dev.redicloud.api.database.grid.lock
 
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 
 interface ISyncedLock {
@@ -13,5 +12,4 @@ interface ISyncedLock {
     suspend fun isLocked(): Boolean
     suspend fun isHeldByThread(threadId: Long): Boolean
     suspend fun isHeldByCurrentThread(): Boolean
-
 }

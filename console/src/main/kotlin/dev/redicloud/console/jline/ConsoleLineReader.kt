@@ -11,7 +11,9 @@ class ConsoleLineReader : LineReaderImpl(Console.TERMINAL, "RediCloud-Console", 
         return if (this.history.previous()) {
             this.setBuffer(this.history.current())
             true
-        } else false
+        } else {
+            false
+        }
     }
 
     override fun historySearchForward(): Boolean {
@@ -20,11 +22,12 @@ class ConsoleLineReader : LineReaderImpl(Console.TERMINAL, "RediCloud-Console", 
         return if (this.history.previous()) {
             this.setBuffer(this.history.current())
             true
-        } else false
+        } else {
+            false
+        }
     }
 
     override fun upLineOrSearch(): Boolean = this.historySearchBackward()
 
     override fun downLineOrSearch(): Boolean = this.historySearchForward()
-
 }

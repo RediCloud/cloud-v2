@@ -11,5 +11,4 @@ interface ICommandArgument {
     val annotatedSuggesterParameter: Array<String>
     val actorArgument: Boolean
     val pathFormat: String
-
 }

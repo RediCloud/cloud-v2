@@ -39,5 +39,4 @@ class NodeInfoHandler(
         }
         ctx.json(nodes)
     }
-
 }

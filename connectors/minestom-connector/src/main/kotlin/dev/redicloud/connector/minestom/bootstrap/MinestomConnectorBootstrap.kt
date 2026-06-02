@@ -5,6 +5,7 @@ import dev.redicloud.libloader.boot.Bootstrap
 import dev.redicloud.libloader.boot.apply.impl.JarResourceLoader
 import dev.redicloud.logging.configureLogger
 import dev.redicloud.utils.loadProperties
+import kotlinx.coroutines.runBlocking
 import net.minestom.server.MinecraftServer
 import net.minestom.server.extensions.Extension
 import net.minestom.server.extensions.ExtensionClassLoader
@@ -17,6 +18,7 @@ class MinestomConnectorBootstrap : Extension() {
     lateinit var classLoader: ExtensionClassLoader
 
     override fun preInitialize() {
+        @Suppress("TooGenericExceptionCaught")
         try {
             classLoader = this.javaClass.classLoader as ExtensionClassLoader
             loadProperties(this::class.java.classLoader)
@@ -26,8 +28,10 @@ class MinestomConnectorBootstrap : Extension() {
             configureLogger("org.redisson", Level.OFF)
             configureLogger("io.netty", Level.INFO)
             connector = MinestomConnector(this)
+            runBlocking { connector!!.start() }
         } catch (e: Exception) {
-            e.printStackTrace()
+            System.err.println("Failed to initialize MinestomConnector: ${e.message}")
+            System.err.println(e.stackTraceToString())
         }
     }
 
@@ -44,6 +48,4 @@ class MinestomConnectorBootstrap : Extension() {
         connector?.minestomShuttingDown = true
         connector?.onDisable()
     }
-
-
 }

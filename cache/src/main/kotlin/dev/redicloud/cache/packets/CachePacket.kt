@@ -8,14 +8,13 @@ import dev.redicloud.cache.IClusterCacheObject
 
 abstract class CachePacket(
     val cacheName: String
-): AbstractPacket() {
+) : AbstractPacket() {
 
     @Expose(deserialize = false, serialize = false)
     var cache: ClusterCache<out IClusterCacheObject>? = null
 
-    override fun received(manager: IPacketManager) {
+    override suspend fun received(manager: IPacketManager) {
         super.received(manager)
         cache = ClusterCache.CACHES[cacheName]
     }
-
 }

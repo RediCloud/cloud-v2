@@ -1,18 +1,20 @@
 package dev.redicloud.service.base.repository
 
+import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.template.file.ICloudFileTemplate
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.packets.PacketManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplate
-import dev.redicloud.api.service.ServiceId
+import kotlinx.coroutines.CoroutineScope
 
 class BaseFileTemplateRepository(
     databaseConnection: DatabaseConnection,
     nodeRepository: NodeRepository,
-    packetManager: PacketManager
-) : AbstractFileTemplateRepository(databaseConnection, nodeRepository, packetManager) {
+    packetManager: PacketManager,
+    scope: CoroutineScope
+) : AbstractFileTemplateRepository(databaseConnection, nodeRepository, packetManager, scope) {
 
     override suspend fun pushTemplates(serviceId: ServiceId) {
         TODO("Not yet implemented")
@@ -21,5 +23,4 @@ class BaseFileTemplateRepository(
     override suspend fun updateTemplate(template: ICloudFileTemplate): FileTemplate {
         TODO("Not yet implemented")
     }
-
 }

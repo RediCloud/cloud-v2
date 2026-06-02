@@ -5,8 +5,7 @@ import dev.redicloud.api.version.IServerVersionHandler
 
 class ServerVersionHandlerParser : ICommandArgumentParser<IServerVersionHandler> {
 
-    override fun parse(parameter: String): IServerVersionHandler? {
-        return IServerVersionHandler.CACHE_HANDLERS.find { it.name.lowercase() == parameter.lowercase() }
+    override suspend fun parse(parameter: String): IServerVersionHandler? {
+        return IServerVersionHandler.CACHE_HANDLERS.find { it.name.equals(parameter, ignoreCase = true) }
     }
-
 }

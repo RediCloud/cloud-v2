@@ -1,6 +1,8 @@
 import dev.redicloud.libloader.plugin.LibraryLoader
 
-apply(plugin = "dev.redicloud.libloader")
+plugins {
+    id("redicloud-conventions")
+}
 
 group = "dev.redicloud.service"
 
@@ -15,14 +17,7 @@ dependencies {
     shade(project(":apis:base-api"))
     shade(project(":apis:node-api"))
     shade(project(":services:base-service"))
-    shade(project(":repositories:node-repository"))
-    shade(project(":repositories:service-repository"))
-    shade(project(":repositories:server-repository"))
-    shade(project(":repositories:file-template-repository"))
-    shade(project(":repositories:configuration-template-repository"))
-    shade(project(":repositories:server-version-repository"))
-    shade(project(":repositories:java-version-repository"))
-    shade(project(":repositories:player-repository"))
+    shade(project(":repositories"))
     shade(project(":database"))
     shade(project(":utils"))
     shade(project(":events"))
@@ -34,13 +29,12 @@ dependencies {
     shade(project(":file-cluster"))
     shade(project(":server-factories:node-server-factory"))
     shade(project(":server-factories:remote-server-factory"))
-    shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
-    shade(project(":repositories:cache-repository"))
+    shade(libs.libloader.bootstrap)
     shade(project(":modules:module-handler"))
     shade(project(":updater"))
-    shade(BuildDependencies.LOGBACK_CLASSIC)
-    shade(BuildDependencies.LOGBACK_CORE)
-    dependency(BuildDependencies.KYORI_ADVENTURE_API)
-    compileOnly(BuildDependencies.JLINE_JANSI)
-    compileOnly(BuildDependencies.JSCH)
+    shade(libs.logback.classic)
+    shade(libs.logback.core)
+    dependency(libs.adventure.api)
+    compileOnly(libs.jline.jansi)
+    compileOnly(libs.jsch)
 }

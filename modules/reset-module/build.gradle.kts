@@ -1,3 +1,7 @@
+plugins {
+    id("redicloud-conventions")
+}
+
 group = "dev.redicloud.module"
 
 dependencies {
@@ -7,5 +11,5 @@ dependencies {
     compileOnly(project(":utils"))
     compileOnly(project(":database"))
 
-    dependency(BuildDependencies.JAVALIN)
+    dependency(libs.javalin)
 }

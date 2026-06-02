@@ -13,7 +13,6 @@ class CloudAutoStartServerTask(
 ) : AbstractCloudFactoryTask(serverFactory) {
 
     override suspend fun execute(): Boolean {
-
         if (serverFactory.shutdown) return true
 
         val templates = configurationTemplateRepository.getTemplates()
@@ -43,5 +42,4 @@ class CloudAutoStartServerTask(
 
         return false
     }
-
 }

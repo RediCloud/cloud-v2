@@ -1,8 +1,34 @@
 plugins {
+    id("redicloud-conventions")
     kotlin("kapt")
 }
 
 group = "dev.redicloud.connector"
+
+// Generate BuildConstants.kt so the @Plugin annotation has a compile-time version constant
+val generateBuildConstants by tasks.registering {
+    val outputDir = layout.buildDirectory.dir("generated/sources/buildConstants/kotlin")
+    val versionString = project.version.toString()
+    inputs.property("version", versionString)
+    outputs.dir(outputDir)
+    doLast {
+        val dir = outputDir.get().asFile.resolve("dev/redicloud/connector/velocity")
+        dir.mkdirs()
+        dir.resolve("BuildConstants.kt").writeText(
+            """
+            |package dev.redicloud.connector.velocity
+            |
+            |internal object BuildConstants {
+            |    const val VERSION = "$versionString"
+            |}
+            """.trimMargin()
+        )
+    }
+}
+
+sourceSets.main {
+    kotlin.srcDir(generateBuildConstants)
+}
 
 repositories {
     mavenCentral()
@@ -15,15 +41,7 @@ dependencies {
     shade(project(":services:base-service"))
     shade(project(":services:minecraft-server-service"))
     shade(project(":services:proxy-server-service"))
-    shade(project(":repositories:node-repository"))
-    shade(project(":repositories:service-repository"))
-    shade(project(":repositories:server-repository"))
-    shade(project(":repositories:file-template-repository"))
-    shade(project(":repositories:configuration-template-repository"))
-    shade(project(":repositories:server-version-repository"))
-    shade(project(":repositories:java-version-repository"))
-    shade(project(":repositories:player-repository"))
-    shade(project(":repositories:cache-repository"))
+    shade(project(":repositories"))
     shade(project(":database"))
     shade(project(":utils"))
     shade(project(":events"))
@@ -35,8 +53,8 @@ dependencies {
     shade(project(":server-factories:remote-server-factory"))
     shade(project(":modules:module-handler"))
     shade(project(":apis:connector-api"))
-    shade(BuildDependencies.CLOUD_LIBLOADER_BOOTSTRAP)
+    shade(libs.libloader.bootstrap)
 
-    compileOnly(BuildDependencies.VELOCITY_API)
-    kapt(BuildDependencies.VELOCITY_API)
+    compileOnly(libs.velocity.api)
+    kapt(libs.velocity.api)
 }

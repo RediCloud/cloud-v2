@@ -34,9 +34,7 @@ class ModuleWebRepository(
                 url("$repoUrl/.redicloud")
             }
         }
-        if (!response.status.isSuccess()) {
-            throw IllegalStateException("Repository is down? ${response.status.value} for $repoUrl")
-        }
+        check(response.status.isSuccess()) { "Repository is down? ${response.status.value} for $repoUrl" }
     }
 
     private suspend inline fun <reified T> request(apiUrl: String): Response<T> {
@@ -78,8 +76,8 @@ class ModuleWebRepository(
     }
 
     suspend fun getModuleBytes(moduleId: String, version: String): ByteArray? {
-        val response = httpClient.get{
-            url("${repoUrl.removeSuffix("/")}/$moduleId/$version/${moduleId}-$version.jar")
+        val response = httpClient.get {
+            url("${repoUrl.removeSuffix("/")}/$moduleId/$version/$moduleId-$version.jar")
         }
         return response.readBytes()
     }
@@ -95,11 +93,11 @@ class ModuleWebRepository(
         return lastVersion != description.version
     }
 
-    //TODO: download console animation
+    // Download console animation
     suspend fun download(moduleId: String, version: String): File {
         MODULES_FOLDER.createIfNotExists()
         val localFile = File(MODULES_FOLDER.getFile(), "$moduleId-$version.jar")
-        val bytes = getModuleBytes(moduleId, version) ?: throw IllegalStateException("Module not found: $moduleId-$version")
+        val bytes = getModuleBytes(moduleId, version) ?: error("Module not found: $moduleId-$version")
         val tmpFile = File(MODULES_FOLDER.getFile(), "$moduleId-$version.jar.download")
         tmpFile.createNewFile()
         tmpFile.writeBytes(bytes)
@@ -108,7 +106,6 @@ class ModuleWebRepository(
         moduleHandler.detectModules()
         return localFile
     }
-
 }
 
 data class Response<T>(val json: String, val responseObject: T?, val responseCode: Int)

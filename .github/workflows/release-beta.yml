@@ -1,0 +1,268 @@
+name: Beta Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Build & Publish Beta
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      packages: write
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - uses: ./.github/actions/setup
+
+      # --- Determine version ---
+      - name: Determine version
+        id: version
+        run: |
+          BASE_VERSION=$(grep '^cloudVersion=' gradle.properties | cut -d'=' -f2)
+          BUILD_NUMBER=${{ github.run_number }}
+          GIT_SHA=$(git rev-parse --short=7 HEAD)
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          FULL_VERSION="${BASE_VERSION}-beta.${BUILD_NUMBER}+${GIT_SHA}"
+          DISPLAY_VERSION="${BASE_VERSION}-beta.${BUILD_NUMBER}"
+
+          echo "base=${BASE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "build=${BUILD_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "git=${GIT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "full=${FULL_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "display=${DISPLAY_VERSION}" >> "$GITHUB_OUTPUT"
+
+          echo "### Beta Release" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Version:** ${FULL_VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Base:** ${BASE_VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Build:** ${BUILD_NUMBER}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Commit:** ${GIT_SHA}" >> "$GITHUB_STEP_SUMMARY"
+
+      # --- Generate version properties ---
+      - name: Generate version properties
+        run: |
+          PROPS_CONTENT="version=${{ steps.version.outputs.base }}
+          channel=beta
+          build=${{ steps.version.outputs.build }}
+          git=${{ steps.version.outputs.git }}
+          branch=${{ steps.version.outputs.branch }}
+          full-version=${{ steps.version.outputs.full }}"
+
+          RESOURCE_DIRS=(
+            "services/node-service/src/main/resources"
+          )
+          for dir in connectors/*/; do
+            name=$(basename "$dir")
+            [[ "$name" == "build" || "$name" == "src" ]] && continue
+            RESOURCE_DIRS+=("connectors/${name}/src/main/resources")
+          done
+
+          for dir in "${RESOURCE_DIRS[@]}"; do
+            mkdir -p "$dir"
+            echo "$PROPS_CONTENT" > "${dir}/redicloud-version.properties"
+          done
+
+      # --- Replace start script placeholders ---
+      - name: Prepare start scripts
+        run: |
+          VERSION="${{ steps.version.outputs.display }}"
+          sed -i "s/%version%/${VERSION}/g" scripts/start.sh
+
+      # --- Build ---
+      - name: Build
+        run: ./gradlew build -x test -PcloudVersion=${{ steps.version.outputs.display }}
+
+      # --- Assemble export ---
+      - name: Assemble release artifacts
+        run: |
+          mkdir -p export/connectors export/modules export/api-files
+
+          cp services/node-service/build/libs/redicloud-node-service-*.jar export/
+          cp connectors/*-connector/build/libs/*.jar export/connectors/
+          cp -r api-files/* export/api-files/
+          cp scripts/start.sh export/
+          cp modules/*/build/libs/*.jar export/modules/ 2>/dev/null || true
+          rm -f export/modules/*module-handler*.jar
+
+      # --- Create zip ---
+      - name: Create zip archive
+        run: |
+          cd export
+          zip -r "../redicloud-${{ steps.version.outputs.full }}.zip" .
+          cd ..
+
+      # --- Generate manifest ---
+      - name: Generate release manifest
+        run: |
+          VERSION="${{ steps.version.outputs.base }}"
+          FULL="${{ steps.version.outputs.full }}"
+          DISPLAY="${{ steps.version.outputs.display }}"
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          ZIP_NAME="redicloud-${FULL}.zip"
+
+          # Start JSON
+          cat > manifest.json <<MANIFEST_HEAD
+          {
+            "version": "${VERSION}",
+            "fullVersion": "${FULL}",
+            "channel": "beta",
+            "timestamp": "${TIMESTAMP}",
+            "minJavaVersion": 21,
+            "artifacts": {
+          MANIFEST_HEAD
+
+          # Collect artifacts: zip + all JARs in export/
+          FIRST=true
+          for file in "$ZIP_NAME" $(find export -name '*.jar' | sort); do
+            HASH=$(sha256sum "$file" | awk '{print $1}')
+            SIZE=$(stat --printf="%s" "$file")
+
+            # Determine artifact type and key
+            if [[ "$file" == *.zip ]]; then
+              KEY="$file"
+              TYPE="distribution"
+            elif [[ "$file" == *connector* ]]; then
+              KEY="${file#export/}"
+              TYPE="connector"
+            elif [[ "$file" == *node-service* ]]; then
+              KEY="${file#export/}"
+              TYPE="service"
+            else
+              KEY="${file#export/}"
+              TYPE="module"
+            fi
+
+            if $FIRST; then
+              FIRST=false
+            else
+              echo "," >> manifest.json
+            fi
+            printf '    "%s": {"sha256": "%s", "size": %s, "type": "%s"}' \
+              "$KEY" "$HASH" "$SIZE" "$TYPE" >> manifest.json
+          done
+
+          # Close JSON
+          cat >> manifest.json <<'MANIFEST_TAIL'
+
+            }
+          }
+          MANIFEST_TAIL
+
+      # --- GPG signing ---
+      - name: GPG sign manifest
+        if: ${{ env.GPG_PRIVATE_KEY != '' }}
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          gpg --batch --yes --pinentry-mode loopback \
+            --detach-sign --armor manifest.json
+
+      # --- Publish to GitHub Packages ---
+      - name: Publish Maven artifacts
+        run: ./gradlew publish -PcloudVersion=${{ steps.version.outputs.display }}
+
+      # --- Generate release body ---
+      - name: Generate release body
+        id: body
+        run: |
+          VERSION="${{ steps.version.outputs.display }}"
+          FULL="${{ steps.version.outputs.full }}"
+          REPO="${{ github.repository }}"
+          FINGERPRINT="2ABA6BC97D5FE276C1C7FCA47D569523230B5367"
+
+          # Find previous tag for changelog range
+          git fetch --tags --quiet
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [[ -n "$PREV_TAG" ]]; then
+            RANGE="${PREV_TAG}..HEAD"
+            COMPARE_URL="https://github.com/${REPO}/compare/${PREV_TAG}...v${VERSION}"
+          else
+            RANGE="HEAD"
+            COMPARE_URL=""
+          fi
+
+          # Parse conventional commits into categories
+          FEATURES=""
+          FIXES=""
+          REFACTORS=""
+          CI_BUILD=""
+          OTHER=""
+
+          while IFS= read -r line; do
+            HASH=$(echo "$line" | cut -d' ' -f1)
+            SHORT_HASH="${HASH:0:7}"
+            MSG=$(echo "$line" | cut -d' ' -f2-)
+
+            case "$MSG" in
+              feat*)    FEATURES="${FEATURES}\n- ${MSG#feat:} (\`${SHORT_HASH}\`)" ;;
+              feat\(*) FEATURES="${FEATURES}\n- ${MSG#feat*: } (\`${SHORT_HASH}\`)" ;;
+              fix*)     FIXES="${FIXES}\n- ${MSG#fix:} (\`${SHORT_HASH}\`)" ;;
+              fix\(*)  FIXES="${FIXES}\n- ${MSG#fix*: } (\`${SHORT_HASH}\`)" ;;
+              refactor*) REFACTORS="${REFACTORS}\n- ${MSG#refactor*: } (\`${SHORT_HASH}\`)" ;;
+              ci*|build*) CI_BUILD="${CI_BUILD}\n- ${MSG} (\`${SHORT_HASH}\`)" ;;
+              *)        OTHER="${OTHER}\n- ${MSG} (\`${SHORT_HASH}\`)" ;;
+            esac
+          done < <(git log --oneline --no-merges ${RANGE} 2>/dev/null)
+
+          # Build changelog section
+          CHANGELOG=""
+          [[ -n "$FEATURES" ]] && CHANGELOG="${CHANGELOG}\n#### Features\n${FEATURES}\n"
+          [[ -n "$FIXES" ]] && CHANGELOG="${CHANGELOG}\n#### Bug Fixes\n${FIXES}\n"
+          [[ -n "$REFACTORS" ]] && CHANGELOG="${CHANGELOG}\n#### Refactoring\n${REFACTORS}\n"
+          [[ -n "$CI_BUILD" ]] && CHANGELOG="${CHANGELOG}\n#### CI / Build\n${CI_BUILD}\n"
+          [[ -n "$OTHER" ]] && CHANGELOG="${CHANGELOG}\n#### Other\n${OTHER}\n"
+
+          # Compose full body
+          {
+            echo "body<<BODY_EOF"
+            echo "> [!WARNING]"
+            echo "> This is a **pre-release**. Not recommended for production use."
+            echo ""
+            echo "### Quick Install"
+            echo '```bash'
+            echo "curl -fsSL https://raw.githubusercontent.com/${REPO}/dev/install.sh | bash -s -- --channel beta --version ${VERSION}"
+            echo '```'
+            echo ""
+            echo "### Upgrade"
+            echo '```'
+            echo "version download beta ${VERSION}"
+            echo "version switch beta ${VERSION}"
+            echo '```'
+            echo ""
+            echo "### Verification"
+            echo "A signed release manifest (\`manifest.json\` + \`manifest.json.asc\`) is included as release asset."
+            echo '```'
+            echo "Signing key fingerprint: ${FINGERPRINT}"
+            echo '```'
+            echo ""
+            echo "### Changelog"
+            echo -e "$CHANGELOG"
+            if [[ -n "$COMPARE_URL" ]]; then
+              echo "**Full Changelog**: ${COMPARE_URL}"
+            fi
+            echo "BODY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      # --- Create GitHub Pre-Release ---
+      - name: Create GitHub Pre-Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.display }}
+          name: ${{ steps.version.outputs.display }}
+          body: ${{ steps.body.outputs.body }}
+          prerelease: true
+          files: |
+            redicloud-${{ steps.version.outputs.full }}.zip
+            manifest.json
+            manifest.json.asc
+            export/connectors/*.jar
+          fail_on_unmatched_files: false

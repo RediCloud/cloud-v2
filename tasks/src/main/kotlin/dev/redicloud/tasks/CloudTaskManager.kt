@@ -2,13 +2,19 @@ package dev.redicloud.tasks
 
 import dev.redicloud.api.events.CloudEvent
 import dev.redicloud.api.events.IEventManager
-import dev.redicloud.logging.LogManager
 import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.api.packets.IPacketManager
-import dev.redicloud.tasks.executor.*
+import dev.redicloud.logging.LogManager
+import dev.redicloud.tasks.executor.AtTimeCloudExecutor
+import dev.redicloud.tasks.executor.CloudTaskExecutor
+import dev.redicloud.tasks.executor.EventBasedCloudExecutor
+import dev.redicloud.tasks.executor.InstantCloudExecutor
+import dev.redicloud.tasks.executor.PacketBasedCloudExecutor
+import dev.redicloud.tasks.executor.PeriodicallyCloudTaskExecutor
 import dev.redicloud.utils.coroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.newFixedThreadPoolContext
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -28,10 +34,12 @@ class CloudTaskManager(
     internal val tasks = ConcurrentHashMap<UUID, CloudTask>()
 
     @OptIn(DelicateCoroutinesApi::class)
-    internal val scope = CoroutineScope(newFixedThreadPoolContext(threads, "CloudTaskManager") + coroutineExceptionHandler)
+    internal val scope = CoroutineScope(
+        SupervisorJob() + newFixedThreadPoolContext(threads, "CloudTaskManager") + coroutineExceptionHandler
+    )
 
     fun register(task: CloudTask): UUID {
-        if (tasks.containsKey(task.id)) throw IllegalArgumentException("Task with id ${task.id} is already registered")
+        require(!tasks.containsKey(task.id)) { "Task with id ${task.id} is already registered" }
         tasks[task.id] = task
         task.start(this)
         return task.id
@@ -48,7 +56,6 @@ class CloudTaskManager(
     fun builder(): CloudTaskExecutorBuilder = CloudTaskExecutorBuilder(this)
 
     fun getTasks(): List<CloudTask> = tasks.values.toList()
-
 }
 
 class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManager) {
@@ -70,25 +77,25 @@ class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManage
     }
 
     fun atTime(atTime: Long): CloudTaskExecutorBuilder {
-        if (atTime < System.currentTimeMillis()) throw IllegalArgumentException("At time must be in the future")
+        require(atTime >= System.currentTimeMillis()) { "At time must be in the future" }
         executors.add(AtTimeCloudExecutor(this.task!!, atTime))
         return this
     }
 
     fun delay(delay: Long): CloudTaskExecutorBuilder {
-        if (delay < 0) throw IllegalArgumentException("Delay must be positive")
+        require(delay >= 0) { "Delay must be positive" }
         executors.add(AtTimeCloudExecutor(this.task!!, System.currentTimeMillis() + delay))
         return this
     }
 
     fun delay(duration: Duration): CloudTaskExecutorBuilder {
-        if (duration.inWholeMilliseconds < 0) throw IllegalArgumentException("Delay must be positive")
+        require(duration.inWholeMilliseconds >= 0) { "Delay must be positive" }
         executors.add(AtTimeCloudExecutor(this.task!!, System.currentTimeMillis() + duration.inWholeMilliseconds))
         return this
     }
 
     fun period(period: Duration, maxExecutions: Int = -1): CloudTaskExecutorBuilder {
-        if (period.inWholeMilliseconds < 0) throw IllegalArgumentException("Period must be positive")
+        require(period.inWholeMilliseconds >= 0) { "Period must be positive" }
         executors.add(PeriodicallyCloudTaskExecutor(this.task!!, period, maxExecutions))
         return this
     }
@@ -104,9 +111,9 @@ class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManage
     }
 
     fun register(): CloudTask {
-        if (this.task == null) throw IllegalStateException("Task must be set")
-        if (this.executors.isEmpty() && this.events.isEmpty() && this.packets.isEmpty() && !instant) {
-            throw IllegalStateException("At least one executor must be set")
+        checkNotNull(this.task) { "Task must be set" }
+        check(this.executors.isNotEmpty() || this.events.isNotEmpty() || this.packets.isNotEmpty() || instant) {
+            "At least one executor must be set"
         }
         val task = this.task!!
         executors.add(EventBasedCloudExecutor(task, manager.eventManager, events))
@@ -116,5 +123,4 @@ class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManage
         manager.register(task)
         return task
     }
-
 }

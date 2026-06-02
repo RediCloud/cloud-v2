@@ -37,5 +37,4 @@ class CloudPlayerTitlePacket(
     fun createTitle(): Title {
         return Title.title(title, subTitle, times)
     }
-
 }

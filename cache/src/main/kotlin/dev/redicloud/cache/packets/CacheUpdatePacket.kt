@@ -9,7 +9,7 @@ class CacheUpdatePacket(
     val valueJson: String?
 ) : CachePacket(name) {
 
-    override fun received(manager: IPacketManager) {
+    override suspend fun received(manager: IPacketManager) {
         super.received(manager)
         if (cache == null) return
         if (valueJson == null) {
@@ -20,5 +20,4 @@ class CacheUpdatePacket(
         val value = gson.fromJson(valueJson, clazz.java)
         cache!!.setCached(key, value)
     }
-
 }

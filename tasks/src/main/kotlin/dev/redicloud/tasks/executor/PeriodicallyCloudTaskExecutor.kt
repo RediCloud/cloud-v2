@@ -18,5 +18,4 @@ class PeriodicallyCloudTaskExecutor(
             cloudTask.preExecute(this)?.join()
         }
     }
-
 }

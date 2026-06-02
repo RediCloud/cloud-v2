@@ -9,7 +9,7 @@ class LoadableModulesSuggester(
     private val moduleHandler: ModuleHandler
 ) : AbstractCommandSuggester() {
 
-    override fun suggest(context: CommandContext): Array<String> {
+    override suspend fun suggest(context: CommandContext): Array<String> {
         val descriptions = moduleHandler.getCachedDescriptions()
             .filter {
                 val data = moduleHandler.getModuleData(it.id)
@@ -19,7 +19,7 @@ class LoadableModulesSuggester(
             ?.filter { it.exists() }
             ?.filter { it.isFile }
             ?.filter { it.extension == "jar" }
-            ?.filter { file -> moduleHandler.getCachedDescriptions().none { it.cachedFile == file} }
+            ?.filter { file -> moduleHandler.getCachedDescriptions().none { it.cachedFile == file } }
             ?.filter { file ->
                 val description = kotlin.runCatching {
                     moduleHandler.loadDescription(file)
@@ -31,5 +31,4 @@ class LoadableModulesSuggester(
         val results = descriptions.map { it.id } + files.map { it.name }
         return results.toTypedArray()
     }
-
 }

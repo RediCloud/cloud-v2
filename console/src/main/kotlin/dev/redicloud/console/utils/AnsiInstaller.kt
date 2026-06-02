@@ -14,10 +14,9 @@ class AnsiInstaller {
             AnsiConsole.systemInstall()
             ansiSupported = true
             true
-        }catch (e: Exception) {
+        } catch (_: Exception) {
             ansiSupported = false
             false
         }
     }
-
 }

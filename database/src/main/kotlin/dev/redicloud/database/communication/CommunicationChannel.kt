@@ -32,5 +32,4 @@ class CommunicationChannel(
     override suspend fun unsubscribeAll() {
         topic.removeAllListeners()
     }
-
 }

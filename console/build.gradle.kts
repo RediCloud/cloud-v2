@@ -1,5 +1,5 @@
 plugins {
-    `maven-publish`
+    id("redicloud-conventions")
 }
 
 val publishToRepository by extra(true)
@@ -18,6 +18,6 @@ dependencies {
 
     testImplementation(project(":commands:command-api"))
 
-    dependency(BuildDependencies.JLINE_CONSOLE)
-    dependency(BuildDependencies.JLINE_JANSI)
+    dependency(libs.jline.console)
+    dependency(libs.jline.jansi)
 }

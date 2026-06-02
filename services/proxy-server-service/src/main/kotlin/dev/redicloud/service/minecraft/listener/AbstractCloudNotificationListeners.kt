@@ -13,7 +13,6 @@ import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.api.service.server.ICloudServerRepository
 import dev.redicloud.repository.server.CloudServer
-import kotlinx.coroutines.runBlocking
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.format.NamedTextColor
@@ -24,26 +23,26 @@ abstract class AbstractCloudNotificationListeners(
     eventManager: IEventManager
 ) {
 
-    private val onSuspendNode = eventManager.listen<NodeSuspendedEvent> {
-        runBlocking {
-            val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
-            val suspender = nodeRepository.getNode(it.suspender)
+    init {
+        eventManager.listen<NodeSuspendedEvent> { event ->
+            val node = nodeRepository.getNode(event.serviceId) ?: return@listen
+            val suspender = nodeRepository.getNode(event.suspender)
             sendMessage("redicloud.node.suspend") {
                 it.append(
                     translateIdentifierName(node),
                     Component.text().content(": ").color(NamedTextColor.DARK_GRAY),
                     Component.text().content("● ").color(NamedTextColor.RED),
                     Component.text().content("(").color(NamedTextColor.DARK_GRAY),
-                    Component.text().content("%tc%suspended by ${suspender?.identifyName()}").color(NamedTextColor.RED),
+                    Component.text().content(
+                        "%tc%suspended by ${suspender?.identifyName()}"
+                    ).color(NamedTextColor.RED),
                     Component.text().content(")").color(NamedTextColor.DARK_GRAY)
                 )
             }
         }
-    }
 
-    private val onNodeConnect = eventManager.listen<NodeConnectEvent> {
-        runBlocking {
-            val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
+        eventManager.listen<NodeConnectEvent> { event ->
+            val node = nodeRepository.getNode(event.serviceId) ?: return@listen
             sendMessage("redicloud.node.connect") {
                 it.append(
                     translateIdentifierName(node),
@@ -55,11 +54,9 @@ abstract class AbstractCloudNotificationListeners(
                 )
             }
         }
-    }
 
-    private val onNodeDisconnect = eventManager.listen<NodeDisconnectEvent> {
-        runBlocking {
-            val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
+        eventManager.listen<NodeDisconnectEvent> { event ->
+            val node = nodeRepository.getNode(event.serviceId) ?: return@listen
             sendMessage("redicloud.node.disconnect") {
                 it.append(
                     translateIdentifierName(node),
@@ -71,11 +68,9 @@ abstract class AbstractCloudNotificationListeners(
                 )
             }
         }
-    }
 
-    private val onNodeMasterChange = eventManager.listen<NodeMasterChangedEvent> {
-        runBlocking {
-            val node = nodeRepository.getNode(it.serviceId) ?: return@runBlocking
+        eventManager.listen<NodeMasterChangedEvent> { event ->
+            val node = nodeRepository.getNode(event.serviceId) ?: return@listen
             sendMessage("redicloud.node.master.change") {
                 it.append(
                     translateIdentifierName(node),
@@ -87,12 +82,10 @@ abstract class AbstractCloudNotificationListeners(
                 )
             }
         }
-    }
 
-    private val onServerStateChangeEvent = eventManager.listen<CloudServerStateChangeEvent> {
-        runBlocking {
-            val server = serverRepository.getServer<CloudServer>(it.serviceId) ?: return@runBlocking
-            when (it.state) {
+        eventManager.listen<CloudServerStateChangeEvent> { event ->
+            val server = serverRepository.getServer<CloudServer>(event.serviceId) ?: return@listen
+            when (event.state) {
                 CloudServerState.PREPARING -> {
                     sendMessage("redicloud.server.state.preparing") {
                         it.append(
@@ -133,7 +126,7 @@ abstract class AbstractCloudNotificationListeners(
                     }
                 }
 
-                else -> return@runBlocking
+                else -> return@listen
             }
         }
     }
@@ -145,5 +138,4 @@ abstract class AbstractCloudNotificationListeners(
     }
 
     abstract fun sendMessage(permission: String, clickCommand: String? = null, lambda: (TextComponent.Builder) -> Unit)
-
 }

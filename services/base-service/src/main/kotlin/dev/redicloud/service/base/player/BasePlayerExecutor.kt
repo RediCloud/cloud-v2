@@ -8,6 +8,7 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.service.server.ICloudServer
 import dev.redicloud.api.service.server.ICloudServerRepository
+import dev.redicloud.logging.LogManager
 import dev.redicloud.service.base.packets.player.*
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.bossbar.BossBar
@@ -18,6 +19,7 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.title.Title
 import java.util.*
 
+@Suppress("TooManyFunctions")
 abstract class BasePlayerExecutor(
     private val playerRepository: ICloudPlayerRepository,
     private val serverRepository: ICloudServerRepository,
@@ -199,18 +201,14 @@ abstract class BasePlayerExecutor(
     }
 
     override suspend fun connect(cloudPlayer: ICloudPlayer, serviceId: ServiceId) {
-        if (serviceId.type != ServiceType.MINECRAFT_SERVER) {
-            throw IllegalArgumentException("ServiceId type must be MINECRAFT_SERVER")
-        }
+        require(serviceId.type == ServiceType.MINECRAFT_SERVER) { "ServiceId type must be MINECRAFT_SERVER" }
         val server = serverRepository.getServer<ICloudServer>(serviceId)
             ?: throw NullPointerException("Server with serviceId $serviceId not found")
         this.connect(cloudPlayer, server)
     }
 
     override suspend fun connect(cloudPlayer: ICloudPlayer, server: ICloudServer) {
-        if (server.serviceId.type != ServiceType.MINECRAFT_SERVER) {
-            throw IllegalArgumentException("Server type must be MINECRAFT_SERVER")
-        }
+        require(server.serviceId.type == ServiceType.MINECRAFT_SERVER) { "Server type must be MINECRAFT_SERVER" }
         if (!cloudPlayer.connected || cloudPlayer.proxyId == null) return
         if (cloudPlayer.proxyId == thisServiceId) {
             this.executeConnect(cloudPlayer, server)
@@ -238,8 +236,11 @@ abstract class BasePlayerExecutor(
 
     abstract fun audience(player: ICloudPlayer): Audience
 
-    abstract fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer)
+    abstract suspend fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer)
 
-    abstract fun executeKick(cloudPlayer: ICloudPlayer, reason: Component)
+    abstract suspend fun executeKick(cloudPlayer: ICloudPlayer, reason: Component)
 
+    companion object {
+        val LOGGER = LogManager.logger(BasePlayerExecutor::class)
+    }
 }

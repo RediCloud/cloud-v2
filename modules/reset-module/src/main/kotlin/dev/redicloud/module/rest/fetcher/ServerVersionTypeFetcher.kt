@@ -12,7 +12,7 @@ class ServerVersionTypeFetcher(
         return try {
             val uuid = UUID.fromString(id)
             serverVersionType.getType(uuid)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             null
         }
     }
@@ -23,5 +23,4 @@ class ServerVersionTypeFetcher(
         }
         return serverVersionType.getType(name)
     }
-
 }

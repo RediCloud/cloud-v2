@@ -1,22 +1,19 @@
 package dev.redicloud.service.minecraft
 
 import dev.redicloud.api.service.ServiceId
-import dev.redicloud.repository.server.CloudMinecraftServer
-import dev.redicloud.service.minecraft.listener.CloudServerListener
 import dev.redicloud.api.service.ServiceType
+import dev.redicloud.repository.server.CloudMinecraftServer
 import dev.redicloud.service.minecraft.listener.AbstractCloudNotificationListeners
-import dev.redicloud.utils.coroutineExceptionHandler
-import kotlinx.coroutines.runBlocking
+import dev.redicloud.service.minecraft.listener.CloudServerListener
 
 abstract class ProxyServerService<T, S> : MinecraftServerService<T>() {
 
     protected val registeredServers: MutableMap<ServiceId, S> = mutableMapOf()
     abstract val notificationListeners: AbstractCloudNotificationListeners
 
-    init {
-        runBlocking(coroutineExceptionHandler) {
-            registerListeners()
-        }
+    override suspend fun start() {
+        super.start()
+        registerListeners()
     }
 
     abstract fun registerServer(server: CloudMinecraftServer)
@@ -37,5 +34,4 @@ abstract class ProxyServerService<T, S> : MinecraftServerService<T>() {
             registerServer(it)
         }
     }
-
 }

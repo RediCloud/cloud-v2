@@ -8,10 +8,9 @@ class InstalledModulesSuggester(
     private val moduleHandler: ModuleHandler
 ) : AbstractCommandSuggester() {
 
-    override fun suggest(context: CommandContext): Array<String> {
+    override suspend fun suggest(context: CommandContext): Array<String> {
         return moduleHandler.getCachedDescriptions()
             .map { it.id }
             .toTypedArray()
     }
-
 }

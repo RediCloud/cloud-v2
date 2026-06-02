@@ -63,5 +63,4 @@ class SyncedMutableList<E>(
     override fun remove(element: E): Boolean {
         return handle.remove(element)
     }
-
 }

@@ -3,7 +3,6 @@ package dev.redicloud.utils
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-
 class HistoryTest : UtilTest() {
 
     @Test
@@ -17,5 +16,4 @@ class HistoryTest : UtilTest() {
             assertEquals(i.toString(), history.subList(0, 5)[i - 6], "History should contain $i")
         }
     }
-
 }

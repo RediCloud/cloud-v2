@@ -14,5 +14,4 @@ interface ICurrentServerData {
     val state: CloudServerState
     val configurationTemplateName: String
     val serverVersionName: String
-
 }

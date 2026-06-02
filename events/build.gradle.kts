@@ -1,3 +1,7 @@
+plugins {
+    id("redicloud-conventions")
+}
+
 group = "dev.redicloud"
 
 repositories {
@@ -10,6 +14,6 @@ dependencies {
     compileOnly(project(":packets"))
     compileOnly(project(":logging"))
 
-    dependency(BuildDependencies.KOTLINX_COROUTINES)
-    dependency(BuildDependencies.GSON)
+    dependency(libs.kotlinx.coroutines)
+    dependency(libs.gson)
 }

@@ -8,7 +8,7 @@ import dev.redicloud.testing.pre.PreServerVersion
 class ServerVersion(
     var name: PreServerVersion,
     var javaVersion: PreJavaVersion,
-) : ICloudExecutable{
+) : ICloudExecutable {
     override fun apply(cluster: RediCloudCluster) {
         val node = cluster.nodes.first()
         node.execute("sv edit ${name.versionName} javaversion ${javaVersion.versionName}")

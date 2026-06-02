@@ -10,10 +10,9 @@ class ClusterMessagePacket(
     val level: Level = Level.INFO
 ) : AbstractPacket() {
 
-    //TODO error support
-    override fun received(manager: IPacketManager) {
+    // TODO error support
+    override suspend fun received(manager: IPacketManager) {
         super.received(manager)
         BaseService.LOGGER.log(level, message)
     }
-
 }

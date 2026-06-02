@@ -6,13 +6,13 @@ import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.repository.node.LOGGER
-import dev.redicloud.updater.BuildInfo
+import dev.redicloud.updater.ReleaseInfo
 import dev.redicloud.updater.Updater
-import dev.redicloud.updater.suggest.BranchSuggester
-import dev.redicloud.updater.suggest.BuildsSuggester
+import dev.redicloud.updater.suggest.ChannelSuggester
+import dev.redicloud.updater.suggest.VersionSuggester
 import dev.redicloud.utils.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import dev.redicloud.utils.version.CloudVersion
+import dev.redicloud.utils.version.VersionChannel
 
 @Command("version")
 @CommandAlias(["ver"])
@@ -21,13 +21,19 @@ class VersionCommand(
     val console: NodeConsole
 ) : ICommand {
 
+    companion object {
+        private const val ANIMATION_TICK_MS = 200L
+        private const val SWITCH_CONFIRM_TIMEOUT_MS = 30000
+    }
+
     @CommandSubPath("")
     @CommandDescription("Displays the current version of the node service")
     fun version(
         actor: ConsoleActor
     ) {
         actor.sendHeader("Version")
-        actor.sendMessage("Version§8: %hc%$CLOUD_VERSION")
+        actor.sendMessage("Version§8: %hc%$CLOUD_VERSION_FULL")
+        actor.sendMessage("Channel§8: %hc%$CLOUD_VERSION_CHANNEL")
         actor.sendMessage("Git§8: %hc%$GIT")
         actor.sendMessage("Branch§8: %hc%$BRANCH")
         actor.sendMessage("CI-Build§8: %hc%$BUILD")
@@ -36,191 +42,182 @@ class VersionCommand(
 
     @CommandSubPath("checkupdate")
     @CommandDescription("Checks if an update is available")
-    fun checkUpdate(
+    suspend fun checkUpdate(
         actor: ConsoleActor
-    ) = defaultScope.launch {
+    ) {
         if (BUILD == "local") {
             actor.sendMessage("You are running a local build, updates are not available!")
-            return@launch
+            return
         }
-        val updateInfo = Updater.updateAvailable()
-        if (updateInfo.first && updateInfo.second != null) {
-            actor.sendMessage("An update is available: %hc%${updateInfo.second!!.branch}§8#%tc%${updateInfo.second!!.build} §8(%tc%${updateInfo.second!!.version}§8)")
-            actor.sendMessage("You can download the update with the command: %hc%version download $BRANCH ${updateInfo.second}")
-            actor.sendMessage("And switch the update with the command: %hc%version switch $BRANCH ${updateInfo.second!!.build}")
+        val (available, release) = Updater.updateAvailable()
+        if (available && release != null) {
+            actor.sendMessage(
+                "An update is available: %hc%${release.version.display}"
+            )
+            actor.sendMessage(
+                "Download: %hc%version download ${release.channel.label} ${release.version.display}"
+            )
+            actor.sendMessage(
+                "Switch:   %hc%version switch ${release.channel.label} ${release.version.display}"
+            )
         } else {
             actor.sendMessage("You are running the latest version!")
         }
     }
 
-    @CommandSubPath("download [branch] [build]")
+    @CommandSubPath("download [channel] [version]")
     @CommandDescription("Downloads a version")
-    fun download(
+    suspend fun download(
         actor: ConsoleActor,
-        @CommandParameter("branch", false, BranchSuggester::class) _branch: String?,
-        @CommandParameter("build", false, BuildsSuggester::class) _build: String?
-    ) = defaultScope.launch {
-        val branch = _branch ?: BRANCH
-        val build = _build ?: "latest"
-        val buildId = if (build == "latest") {
-            val builds = Updater.getBuilds(branch)
-            if (builds.isEmpty()) {
-                actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
-                return@launch
-            }
-            builds.filter { it.stored }.maxOfOrNull { it.build } ?: run {
-                actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
-                return@launch
-            }
-        }else if (build.toIntOrNull() == null) {
-            actor.sendMessage("§cInvalid build number")
-            return@launch
-        }else {
-            build.toInt()
-        }
+        @CommandParameter("channel", false, ChannelSuggester::class) channelParam: String?,
+        @CommandParameter("version", false, VersionSuggester::class) versionParam: String?
+    ) {
+        val channel = channelParam?.let { VersionChannel.fromLabelOrNull(it) }
+            ?: CLOUD_VERSION_PARSED?.channel
+            ?: VersionChannel.STABLE
+
+        val release = resolveRelease(actor, channel, versionParam) ?: return
+
         var canceled = false
         var error = false
         var downloaded = false
         val animation = AnimatedLineAnimation(
             console,
-            200
+            ANIMATION_TICK_MS
         ) {
             if (canceled) {
                 null
             } else if (downloaded) {
                 canceled = true
-                "Downloaded version ${toConsoleValue("$branch§8#%tc%$buildId")}§8: ${if (error) "§4✘" else "§2✓"}"
+                "Downloaded ${toConsoleValue(release.version.display)}§8: ${if (error) "§4x" else "§2ok"}"
             } else {
-                "Downloading version ${toConsoleValue("$branch§8#%tc%$buildId")}§8: %loading%"
+                "Downloading ${toConsoleValue(release.version.display)}§8: %loading%"
             }
         }
         console.startAnimation(animation)
+        @Suppress("TooGenericExceptionCaught")
         try {
-            val file = Updater.download(branch, buildId)
+            Updater.download(release)
             downloaded = true
-            actor.sendMessage("You can switch the version with the command: %hc%version switch $branch $buildId")
-        }catch (e: Exception) {
+            actor.sendMessage(
+                "Switch with: %hc%version switch ${channel.label} ${release.version.display}"
+            )
+        } catch (e: Exception) {
             error = true
+            downloaded = true
             actor.sendMessage("§cFailed to download the version!")
             LOGGER.severe("Failed to download the version", e)
         }
     }
 
-    private val switchConfirms = mutableMapOf<Pair<String, String>, Long>()
+    private val switchConfirms = mutableMapOf<String, Long>()
 
-    @CommandSubPath("switch [branch] [build]")
+    @CommandSubPath("switch [channel] [version]")
     @CommandDescription("Switch to a downloaded version")
-    fun switch(
+    @Suppress("ReturnCount")
+    suspend fun switch(
         actor: ConsoleActor,
-        @CommandParameter("branch", false, BranchSuggester::class) _branch: String?,
-        @CommandParameter("build", false, BuildsSuggester::class) _build: String?
-    ) = defaultScope.launch {
+        @CommandParameter("channel", false, ChannelSuggester::class) channelParam: String?,
+        @CommandParameter("version", false, VersionSuggester::class) versionParam: String?
+    ) {
         if (Updater.updateToVersion != null) {
             actor.sendMessage("§cAn update was already installed! Restart the node service to apply the changes!")
-            return@launch
+            return
         }
-        val branch = _branch ?: BRANCH
-        val build = _build ?: "latest"
-        if (BUILD == build && BRANCH == branch) {
+
+        val channel = channelParam?.let { VersionChannel.fromLabelOrNull(it) }
+            ?: CLOUD_VERSION_PARSED?.channel
+            ?: VersionChannel.STABLE
+
+        val release = resolveRelease(actor, channel, versionParam) ?: return
+        val current = CLOUD_VERSION_PARSED
+
+        if (current != null && release.version == current) {
             actor.sendMessage("You are already running this version!")
-            return@launch
+            return
         }
-        val buildId = if (build == "latest") {
-            val builds = Updater.getBuilds(branch)
-            if (builds.isEmpty()) {
-                actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
-                return@launch
-            }
-            builds.filter { it.stored }.maxOfOrNull { it.build } ?: run {
-                actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch, false)}!")
-                return@launch
-            }
-        }else if (build.toIntOrNull() == null) {
-            actor.sendMessage("§cInvalid build number")
-            return@launch
-        }else {
-            build.toInt()
+
+        // Check if downloaded
+        val installed = Updater.localInstalledVersions()
+        val channelVersions = installed[channel] ?: emptyList()
+        if (release.version !in channelVersions) {
+            actor.sendMessage("§cVersion not downloaded!")
+            actor.sendMessage("§cDownload with: %hc%version download ${channel.label} ${release.version.display}")
+            return
         }
-        val installedVersions = Updater.localInstalledVersions()
-        if (!installedVersions.containsKey(branch) || !installedVersions[branch]!!.contains(buildId)) {
-            actor.sendMessage("§cThe version is not downloaded!")
-            actor.sendMessage("§cYou can download the version with the command: %hc%version download <branch> <build>")
-            return@launch
-        }
-        val confirmIdentifier = Pair(branch, build)
-        if (branch.lowercase() != BRANCH.lowercase()
-            && switchConfirms.getOrDefault(confirmIdentifier, 0) + 30000 < System.currentTimeMillis()) {
-            actor.sendMessage("§cYou are trying to switch to a different branch!")
-            actor.sendMessage("§cAre you sure you want to switch to the branch ${toConsoleValue("$branch#$build", false)}?")
-            actor.sendMessage("§cThis can cause issues and data loss! Backup your data before switching is recommended!")
+
+        // Confirm channel change
+        val confirmKey = release.version.display
+        if (current != null && release.channel != current.channel &&
+            switchConfirms.getOrDefault(confirmKey, 0) + SWITCH_CONFIRM_TIMEOUT_MS < System.currentTimeMillis()
+        ) {
+            actor.sendMessage("§cYou are switching to a different channel (${channel.label})!")
+            actor.sendMessage("§cThis can cause issues. Backup your data first!")
             actor.sendMessage("§cType the command again to confirm!")
-            switchConfirms[confirmIdentifier] = System.currentTimeMillis()
-            return@launch
+            switchConfirms[confirmKey] = System.currentTimeMillis()
+            return
         }
-        if (branch == BRANCH && buildId < (BUILD.toIntOrNull() ?: -1)
-            && switchConfirms.getOrDefault(confirmIdentifier, 0) + 30000 < System.currentTimeMillis()) {
-            actor.sendMessage("§cYou are trying to switch to an older version!")
-            actor.sendMessage("§cAre you sure you want to switch to the version ${toConsoleValue("$branch#$build", false)}?")
-            actor.sendMessage("§cThis can cause issues and data loss! Backup your data before switching is recommended!")
+
+        // Confirm downgrade
+        if (current != null && release.version < current &&
+            switchConfirms.getOrDefault(confirmKey, 0) + SWITCH_CONFIRM_TIMEOUT_MS < System.currentTimeMillis()
+        ) {
+            actor.sendMessage("§cYou are downgrading to ${release.version.display}!")
+            actor.sendMessage("§cThis can cause issues and data loss!")
             actor.sendMessage("§cType the command again to confirm!")
-            switchConfirms[confirmIdentifier] = System.currentTimeMillis()
-            return@launch
+            switchConfirms[confirmKey] = System.currentTimeMillis()
+            return
         }
-        switchConfirms.remove(confirmIdentifier)
-        val file = Updater.switchVersion(branch, buildId)
-        actor.sendMessage("Activated the version: %hc%$branch§8#%tc%$buildId")
-        actor.sendMessage("§cYou have to restart the node service to apply the changes!")
+
+        switchConfirms.remove(confirmKey)
+        Updater.switchVersion(release)
+        actor.sendMessage("Activated version: %hc%${release.version.display}")
+        actor.sendMessage("§cRestart the node service to apply the changes!")
     }
 
-    @CommandSubPath("branches")
-    @CommandDescription("Displays all available branches")
-    fun branches(
+    @CommandSubPath("channels")
+    @CommandDescription("Displays all available release channels")
+    suspend fun channels(
         actor: ConsoleActor
-    ) = defaultScope.launch {
-        val branches = Updater.getBranches().toMutableList()
-        if (BRANCH == "local") {
-            branches.add("local")
+    ) {
+        val channels = Updater.getAvailableChannels()
+        if (channels.isEmpty()) {
+            actor.sendMessage("§cFailed to get available channels!")
+            return
         }
-        if (branches.isEmpty()) {
-            actor.sendMessage("§cFailed to get the branches!")
-            return@launch
-        }
-        actor.sendMessage("Available branches:")
-        branches.forEach {
-            if (it == BRANCH) {
-                actor.sendMessage("§8- %hc%$it §7(§acurrent§7)")
-            }else {
-                actor.sendMessage("§8- %hc%$it")
+        val currentChannel = CLOUD_VERSION_PARSED?.channel
+        actor.sendMessage("Available channels:")
+        channels.forEach { ch ->
+            if (ch == currentChannel) {
+                actor.sendMessage("§8- %hc%${ch.label} §7(§acurrent§7)")
+            } else {
+                actor.sendMessage("§8- %hc%${ch.label}")
             }
         }
     }
 
-    @CommandSubPath("builds [branch]")
-    @CommandDescription("Displays all available builds for a branch")
-    fun builds(
+    @CommandSubPath("releases [channel]")
+    @CommandDescription("Displays all available releases for a channel")
+    suspend fun releases(
         actor: ConsoleActor,
-        @CommandParameter("branch", false, BranchSuggester::class) _branch: String?
-    ) = defaultScope.launch {
-        val branch = _branch ?: BRANCH
-        val builds = mutableListOf<BuildInfo>()
-        builds.addAll(Updater.getBuilds(branch))
-        if (builds.isEmpty()) {
-            actor.sendMessage("§cFailed to get the builds! Make sure the branch exists!")
-            return@launch
+        @CommandParameter("channel", false, ChannelSuggester::class) channelParam: String?
+    ) {
+        val channel = channelParam?.let { VersionChannel.fromLabelOrNull(it) }
+            ?: CLOUD_VERSION_PARSED?.channel
+            ?: VersionChannel.STABLE
+
+        val releases = Updater.getReleasesByChannel(channel)
+        if (releases.isEmpty()) {
+            actor.sendMessage("§cNo releases found for channel ${toConsoleValue(channel.label)}!")
+            return
         }
-        if (BRANCH == "local" && BUILD == "local") {
-            builds.add(BuildInfo(BRANCH, BUILD.toIntOrNull() ?: -1, CLOUD_VERSION, -1, false))
-        }
-        if (builds.isEmpty()) {
-            actor.sendMessage("§cNo builds found for the branch ${toConsoleValue(branch)}!")
-            return@launch
-        }
-        actor.sendMessage("Available builds for branch ${toConsoleValue(branch)}:")
-        builds.forEach {
-            if (it.build.toString() == BUILD) {
-                actor.sendMessage("§8- %hc%${if (it.build == -1) "local" else it.build} §8| %tc%${it.version} §7(§acurrent§7)")
-            }else {
-                actor.sendMessage("§8- %hc%${it.build} §8| %tc%${it.version}")
+        val current = CLOUD_VERSION_PARSED
+        actor.sendMessage("Available releases for ${toConsoleValue(channel.label)}:")
+        releases.forEach { rel ->
+            if (current != null && rel.version == current) {
+                actor.sendMessage("§8- %hc%${rel.version.display} §7(§acurrent§7)")
+            } else {
+                actor.sendMessage("§8- %hc%${rel.version.display}")
             }
         }
     }
@@ -229,24 +226,52 @@ class VersionCommand(
     @CommandDescription("Displays all downloaded versions")
     fun downloaded(
         actor: ConsoleActor
-    ) = runBlocking {
+    ) {
         val installedVersions = Updater.localInstalledVersions()
         if (installedVersions.isEmpty()) {
             actor.sendMessage("No versions downloaded!")
-            actor.sendMessage("Use the command ${toConsoleValue("version download <branch> <build>")} to download a version!")
-            return@runBlocking
+            actor.sendMessage("Download with: ${toConsoleValue("version download <channel> [version]")}")
+            return
         }
+        val current = CLOUD_VERSION_PARSED
         actor.sendMessage("Downloaded versions:")
-        installedVersions.forEach { (branch, builds) ->
-            actor.sendMessage("§8- %hc%$branch:")
-            builds.forEach {
-                if (it.toString() == BUILD && branch == BRANCH) {
-                    actor.sendMessage("  §8➥ %tc%$it§7(§acurrent§7)")
-                }else {
-                    actor.sendMessage("  §8➥ %tc%$it")
+        installedVersions.forEach { (channel, versions) ->
+            actor.sendMessage("§8- %hc%${channel.label}:")
+            versions.forEach { ver ->
+                if (current != null && ver == current) {
+                    actor.sendMessage("  §8- %tc%${ver.display} §7(§acurrent§7)")
+                } else {
+                    actor.sendMessage("  §8- %tc%${ver.display}")
                 }
             }
         }
     }
 
+    /** Resolves a [ReleaseInfo] from user input, handling "latest" and explicit version strings. */
+    private suspend fun resolveRelease(
+        actor: ConsoleActor,
+        channel: VersionChannel,
+        versionParam: String?
+    ): ReleaseInfo? {
+        if (versionParam == null || versionParam == "latest") {
+            val releases = Updater.getReleasesByChannel(channel)
+            if (releases.isEmpty()) {
+                actor.sendMessage("§cNo releases found for channel ${toConsoleValue(channel.label)}!")
+                return null
+            }
+            return releases.last()
+        }
+
+        val targetVersion = CloudVersion.parseOrNull(versionParam)
+        if (targetVersion == null) {
+            actor.sendMessage("§cInvalid version format: ${toConsoleValue(versionParam, false)}")
+            return null
+        }
+
+        val releases = Updater.getReleasesByChannel(channel)
+        return releases.firstOrNull { it.version == targetVersion } ?: run {
+            actor.sendMessage("§cVersion ${toConsoleValue(versionParam, false)} not found!")
+            null
+        }
+    }
 }

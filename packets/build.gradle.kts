@@ -1,3 +1,7 @@
+plugins {
+    id("redicloud-conventions")
+}
+
 group = "dev.redicloud"
 
 repositories {
@@ -10,5 +14,5 @@ dependencies {
     compileOnly(project(":utils"))
     compileOnly(project(":logging"))
 
-    dependency(BuildDependencies.GSON)
+    dependency(libs.gson)
 }

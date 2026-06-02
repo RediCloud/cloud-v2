@@ -8,7 +8,6 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.server.ICloudServer
 import dev.redicloud.api.service.server.ICloudServerRepository
 import dev.redicloud.service.base.player.BasePlayerExecutor
-import kotlinx.coroutines.runBlocking
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
 import kotlin.jvm.optionals.getOrNull
@@ -25,23 +24,22 @@ class VelocityPlayerExecutor(
         return proxyServer.getPlayer(player.uniqueId).getOrNull()!!
     }
 
-    override fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer) {
+    override suspend fun executeConnect(cloudPlayer: ICloudPlayer, server: ICloudServer) {
         val player = proxyServer.getPlayer(cloudPlayer.uniqueId).getOrNull()
         if (player == null || !player.isActive) {
-            runBlocking { this@VelocityPlayerExecutor.connect(cloudPlayer, server) }
+            LOGGER.warning("Player ${cloudPlayer.uniqueId} not found on this proxy despite proxyId matching")
             return
         }
         val serverInfo = proxyServer.getServer(server.name).getOrNull() ?: return
         player.createConnectionRequest(serverInfo).fireAndForget()
     }
 
-    override fun executeKick(cloudPlayer: ICloudPlayer, reason: Component) {
+    override suspend fun executeKick(cloudPlayer: ICloudPlayer, reason: Component) {
         val player = proxyServer.getPlayer(cloudPlayer.uniqueId).getOrNull()
         if (player == null || !player.isActive) {
-            runBlocking { this@VelocityPlayerExecutor.kick(cloudPlayer, reason) }
+            LOGGER.warning("Player ${cloudPlayer.uniqueId} not found on this proxy despite proxyId matching")
             return
         }
         player.disconnect(reason)
     }
-
 }

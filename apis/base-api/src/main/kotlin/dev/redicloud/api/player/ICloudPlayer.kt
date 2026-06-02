@@ -14,5 +14,4 @@ interface ICloudPlayer {
     val firstConnect: Long?
     val protocolId: Int
     val connected: Boolean
-
 }

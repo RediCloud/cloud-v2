@@ -7,7 +7,6 @@ import com.google.gson.TypeAdapterFactory
 import com.google.gson.reflect.TypeToken
 import kotlin.reflect.KClass
 
-
 class InterfaceTypeAdapterFactory : TypeAdapterFactory {
 
     private val routes: MutableMap<Class<*>, Class<*>> = mutableMapOf()
@@ -45,5 +44,4 @@ class InterfaceTypeAdapterFactory : TypeAdapterFactory {
             register(it.interfaceClass.java, it.implClass.java)
         }
     }
-
 }

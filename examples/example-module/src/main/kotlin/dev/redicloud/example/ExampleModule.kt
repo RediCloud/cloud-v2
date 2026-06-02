@@ -10,7 +10,6 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.utils.CloudInjectable
 import java.util.logging.Logger
 
-
 class ExampleModule @Inject constructor(
     @Named("service") val logger: Logger
 ) : CloudModule(), CloudInjectable {
@@ -34,5 +33,4 @@ class ExampleModule @Inject constructor(
     fun earlyUnload(@Named("this") serviceId: ServiceId) {
         logger.info("Last unload task: ${serviceId.toName()}")
     }
-
 }

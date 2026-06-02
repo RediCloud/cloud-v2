@@ -14,10 +14,12 @@ class DefaultHelpFormatter(private val commandManager: CommandManager<*>) : ICom
             val predictedCommands = commandManager.registeredCommands
                 .filter { it.isThis(context.input, true) }
                 .filter { actor.hasPermission(it.permission) }
-            if (predictedCommands.isEmpty()) return CommandResponse(
-                CommandResponseType.INVALID_COMMAND,
-                "Command '$commandName' was not found!"
-            )
+            if (predictedCommands.isEmpty()) {
+                return CommandResponse(
+                    CommandResponseType.INVALID_COMMAND,
+                    "Command '$commandName' was not found!"
+                )
+            }
             actor.sendHeader("Help")
             actor.sendMessage("")
             actor.sendMessage("§cCommand was not found! %tc%Here are some suggestions")
@@ -64,13 +66,18 @@ class DefaultHelpFormatter(private val commandManager: CommandManager<*>) : ICom
         return CommandResponse(
             CommandResponseType.INVALID_SUB_PATH,
             "Invalid sub path for command '$commandName${
-                if (parameters.isEmpty()) "" else (" ${
-                    parameters.joinToString(
-                        " "
-                    )
-                }").removeLastSpaces()
+                if (parameters.isEmpty()) {
+                    ""
+                } else {
+                    (
+                        " ${
+                            parameters.joinToString(
+                                " "
+                            )
+                        }"
+                        ).removeLastSpaces()
+                }
             }'"
         )
     }
-
 }

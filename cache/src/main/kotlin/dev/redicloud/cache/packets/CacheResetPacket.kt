@@ -6,10 +6,9 @@ class CacheResetPacket(
     name: String
 ) : CachePacket(name) {
 
-        override fun received(manager: IPacketManager) {
-            super.received(manager)
-            if (cache == null) return
-            cache!!.resetCache()
-        }
-
+    override suspend fun received(manager: IPacketManager) {
+        super.received(manager)
+        if (cache == null) return
+        cache!!.resetCache()
+    }
 }

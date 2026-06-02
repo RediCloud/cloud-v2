@@ -1,5 +1,5 @@
 package dev.redicloud.api.commands
 
 interface ICommandArgumentParser<T> {
-    fun parse(parameter: String): T?
+    suspend fun parse(parameter: String): T?
 }

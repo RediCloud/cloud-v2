@@ -1,9 +1,7 @@
 package dev.redicloud.database.grid.map.cache
 
-import dev.redicloud.api.database.grid.map.ISyncedMutableMap
 import dev.redicloud.api.database.grid.map.cache.ISyncedCacheMutableMap
 import dev.redicloud.database.DatabaseConnection
-import org.redisson.api.options.LocalCachedMapOptions
 
 class SyncedCacheMutableMap<K, V>(
     key: String,
@@ -40,5 +38,4 @@ class SyncedCacheMutableMap<K, V>(
     override fun put(key: K, value: V): V? {
         return handle.put(key, value)
     }
-
 }

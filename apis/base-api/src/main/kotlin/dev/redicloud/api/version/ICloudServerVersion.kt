@@ -17,5 +17,4 @@ interface ICloudServerVersion : ProcessConfiguration {
     val online: Boolean
     val used: Boolean
     val displayName: String
-
 }

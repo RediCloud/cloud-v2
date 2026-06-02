@@ -21,5 +21,4 @@ class CloudPlayerHeaderFooterPacket(
 
     val footer: Component
         get() = GsonComponentSerializer.gson().deserialize(jsonFooter)
-
 }

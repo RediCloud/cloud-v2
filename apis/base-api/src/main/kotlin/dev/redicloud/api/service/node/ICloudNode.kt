@@ -9,5 +9,4 @@ interface ICloudNode : ICloudService {
     val master: Boolean
     val currentMemoryUsage: Long
     var maxMemory: Long
-
 }

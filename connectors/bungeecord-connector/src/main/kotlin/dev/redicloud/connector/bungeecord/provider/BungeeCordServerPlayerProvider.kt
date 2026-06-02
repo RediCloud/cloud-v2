@@ -17,5 +17,4 @@ class BungeeCordServerPlayerProvider : IServerPlayerProvider {
     override fun getMaxPlayerCount(): Int {
         return ProxyServer.getInstance().config.playerLimit
     }
-
 }

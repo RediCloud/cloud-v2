@@ -1,6 +1,5 @@
 package dev.redicloud.module.papermc
 
-
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import dev.redicloud.api.version.ICloudServerVersionType
@@ -15,7 +14,7 @@ class PaperMcApiRequester(
 ) {
 
     companion object {
-        val BASE_URL = "https://api.papermc.io/v2"
+        const val BASE_URL = "https://api.papermc.io/v2"
         val gson = Gson()
         suspend inline fun <reified T> request(apiUrl: String): Response<T> {
             val response = httpClient.get { url("$BASE_URL$apiUrl") }
@@ -43,7 +42,7 @@ class PaperMcApiRequester(
             val r = versionRepository.parse(v)
             if (r == null) {
                 println("Unknown version: $v in [${versionRepository.versions().joinToString(", ") { it.name }}]")
-            }else {
+            } else {
                 println("Parsed version: ${r.name} for $v")
             }
             r
@@ -54,13 +53,12 @@ class PaperMcApiRequester(
 
     fun getDownloadUrl(type: ICloudServerVersionType, minecraftVersion: IServerVersion, build: Int): String {
         return "$BASE_URL/projects/${type.name.lowercase()}/versions/${minecraftVersion.name}/builds/$build/downloads/" +
-                "${type.name.lowercase()}-${minecraftVersion.name}-$build.jar"
+            "${type.name.lowercase()}-${minecraftVersion.name}-$build.jar"
     }
 
     suspend fun getLatestBuild(type: ICloudServerVersionType, minecraftVersion: IServerVersion): Int {
         return getBuilds(type, minecraftVersion).maxByOrNull { it } ?: -1
     }
-
 }
 
 data class Response<T>(val json: String, val responseObject: T?, val responseCode: Int)
