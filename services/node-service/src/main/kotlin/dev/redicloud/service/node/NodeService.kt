@@ -15,6 +15,8 @@ import dev.redicloud.cluster.file.FileNodeRepository
 import dev.redicloud.console.Console
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
+import dev.redicloud.migration.MigrationResult
+import dev.redicloud.migration.MigrationRunner
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
@@ -26,6 +28,8 @@ import dev.redicloud.service.base.BaseService
 import dev.redicloud.service.node.commands.*
 import dev.redicloud.service.node.console.NodeConsole
 import dev.redicloud.service.node.listener.ConfigurationUpdateServerListener
+import dev.redicloud.service.node.packets.upgrade.ClusterUpgradePacket
+import dev.redicloud.service.node.packets.upgrade.ClusterUpgradeResponsePacket
 import dev.redicloud.service.node.player.NodePlayerExecutor
 import dev.redicloud.service.node.repository.node.connect
 import dev.redicloud.service.node.repository.template.file.NodeFileTemplateRepository
@@ -34,11 +38,7 @@ import dev.redicloud.service.node.tasks.node.NodeChooseMasterTask
 import dev.redicloud.service.node.tasks.node.NodePingTask
 import dev.redicloud.service.node.tasks.node.NodeSelfSuspendTask
 import dev.redicloud.service.node.tasks.player.PlayerProxyConnectionStateTask
-import dev.redicloud.service.node.packets.upgrade.ClusterUpgradePacket
-import dev.redicloud.service.node.packets.upgrade.ClusterUpgradeResponsePacket
 import dev.redicloud.service.node.tasks.service.CloudInvalidServerUnregisterTask
-import dev.redicloud.migration.MigrationResult
-import dev.redicloud.migration.MigrationRunner
 import dev.redicloud.updater.Updater
 import dev.redicloud.utils.CLOUD_VERSION_PARSED
 import dev.redicloud.utils.version.CloudVersion
@@ -410,22 +410,15 @@ class NodeService(
         }
     }
 
-    @Suppress("TooGenericExceptionCaught")
     private suspend fun autoUpgrade(targetVersion: CloudVersion) {
         LOGGER.info("Auto-upgrading to ${targetVersion.display}...")
-        try {
-            val releases = Updater.getReleasesByChannel(targetVersion.channel)
-            val release = releases.firstOrNull { it.version == targetVersion }
-            if (release == null) {
+        when (val result = UpgradeOrchestrator.upgradeLocal(targetVersion.channel, targetVersion)) {
+            is UpgradeOrchestrator.Result.Success ->
+                LOGGER.info("Auto-upgrade to ${targetVersion.display} complete. Shutting down for restart...")
+            is UpgradeOrchestrator.Result.ReleaseNotFound ->
                 LOGGER.severe("Could not find release for version ${targetVersion.display}. Manual upgrade required.")
-                shutdown()
-                return
-            }
-            Updater.download(release)
-            Updater.switchVersion(release)
-            LOGGER.info("Auto-upgrade to ${targetVersion.display} complete. Shutting down for restart...")
-        } catch (e: Exception) {
-            LOGGER.severe("Auto-upgrade failed. Manual upgrade required.", e)
+            is UpgradeOrchestrator.Result.Failed ->
+                LOGGER.severe("Auto-upgrade failed. Manual upgrade required.")
         }
         shutdown()
     }

@@ -40,7 +40,9 @@ object Updater {
         val (available, release) = updateAvailable()
         if (available && release != null) {
             LogManager.rootLogger().info("Update available: ${release.version.display}")
-            LogManager.rootLogger().info("  Upgrade:   version upgrade ${release.channel.label} ${release.version.display}")
+            LogManager.rootLogger().info(
+                "  Upgrade:   version upgrade ${release.channel.label} ${release.version.display}"
+            )
         } else {
             LogManager.rootLogger().info("You are running the latest version!")
         }
