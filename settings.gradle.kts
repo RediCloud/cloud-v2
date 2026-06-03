@@ -88,6 +88,9 @@ findProject(":connectors:minestom-connector")?.name = "minestom-connector"
 include("updater")
 findProject(":updater")?.name = "updater"
 
+include("migrations")
+findProject(":migrations")?.name = "migrations"
+
 include("apis:connector-api")
 findProject(":apis:connector-api")?.name = "connector-api"
 

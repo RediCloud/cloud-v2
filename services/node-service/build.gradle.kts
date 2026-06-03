@@ -32,6 +32,7 @@ dependencies {
     shade(libs.libloader.bootstrap)
     shade(project(":modules:module-handler"))
     shade(project(":updater"))
+    shade(project(":migrations"))
     shade(libs.logback.classic)
     shade(libs.logback.core)
     dependency(libs.adventure.api)

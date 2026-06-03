@@ -40,8 +40,7 @@ object Updater {
         val (available, release) = updateAvailable()
         if (available && release != null) {
             LogManager.rootLogger().info("Update available: ${release.version.display}")
-            LogManager.rootLogger().info("  Download:  version download ${release.version.display}")
-            LogManager.rootLogger().info("  Switch:    version switch ${release.version.display}")
+            LogManager.rootLogger().info("  Upgrade:   version upgrade ${release.channel.label} ${release.version.display}")
         } else {
             LogManager.rootLogger().info("You are running the latest version!")
         }
@@ -217,7 +216,7 @@ object Updater {
         val versionsDir = File("versions")
         val zipFile = File(versionsDir, "redicloud-${release.version.display}.zip")
         check(zipFile.exists()) {
-            "Version ${release.version.display} is not downloaded. Run: version download ${release.version.display}"
+            "Version ${release.version.display} is not downloaded. Run: version upgrade ${release.version.display}"
         }
 
         unzipFile(zipFile.absolutePath, File(".").absolutePath)
