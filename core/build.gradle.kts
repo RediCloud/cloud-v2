@@ -9,11 +9,12 @@ repositories {
 }
 
 dependencies {
-    compileOnly(project(":apis:base-api"))
     compileOnly(project(":utils"))
-    compileOnly(project(":packets"))
+    compileOnly(project(":apis:base-api"))
     compileOnly(project(":logging"))
+    compileOnly(project(":tasks"))
 
-    dependency(libs.kotlinx.coroutines)
+    dependency(libs.redisson)
     dependency(libs.gson)
+    dependency(libs.kotlinx.coroutines)
 }

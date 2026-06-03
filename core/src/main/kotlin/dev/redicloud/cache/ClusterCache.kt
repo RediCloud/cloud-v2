@@ -1,5 +1,6 @@
 package dev.redicloud.cache
 
+import dev.redicloud.api.cache.IClusterCacheObject
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType

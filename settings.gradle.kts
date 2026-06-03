@@ -18,15 +18,12 @@ pluginManagement {
 
 includeBuild("gradle/build-logic")
 
-include("database")
-include("packets")
+include("core")
 include("utils")
-include("events")
 include("console")
 include("logging")
 include("tasks")
 include("file-cluster")
-include("cache")
 
 
 include("server-factories:node-server-factory")

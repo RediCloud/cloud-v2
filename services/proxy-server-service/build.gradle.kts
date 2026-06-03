@@ -6,12 +6,9 @@ group = "dev.redicloud.service"
 
 dependencies {
     compileOnly(project(":apis:base-api"))
-    compileOnly(project(":database"))
-    compileOnly(project(":packets"))
-    compileOnly(project(":cache"))
+    compileOnly(project(":core"))
     compileOnly(project(":utils"))
     compileOnly(project(":repositories"))
-    compileOnly(project(":events"))
     compileOnly(project(":tasks"))
     compileOnly(project(":console"))
     compileOnly(project(":logging"))

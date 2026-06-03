@@ -13,16 +13,13 @@ repositories {
 }
 
 dependencies {
-    shade(project(":cache"))
+    shade(project(":core"))
     shade(project(":apis:base-api"))
     shade(project(":apis:node-api"))
     shade(project(":services:base-service"))
     shade(project(":repositories"))
-    shade(project(":database"))
     shade(project(":utils"))
-    shade(project(":events"))
     shade(project(":console"))
-    shade(project(":packets"))
     shade(project(":commands:command-api"))
     shade(project(":logging"))
     shade(project(":tasks"))

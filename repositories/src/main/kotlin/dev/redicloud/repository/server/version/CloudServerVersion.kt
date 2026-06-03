@@ -1,8 +1,8 @@
 package dev.redicloud.repository.server.version
 
+import dev.redicloud.api.cache.IClusterCacheObject
 import dev.redicloud.api.version.ICloudServerVersion
 import dev.redicloud.api.version.IServerVersion
-import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.version.serverversion.ServerVersion

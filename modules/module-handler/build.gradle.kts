@@ -12,9 +12,7 @@ dependencies {
     compileOnly(project(":apis:base-api"))
     compileOnly(project(":utils"))
     compileOnly(project(":logging"))
-    compileOnly(project(":events"))
-    compileOnly(project(":packets"))
+    compileOnly(project(":core"))
     compileOnly(project(":commands:command-api"))
-    compileOnly(project(":database"))
     compileOnly(libs.kotlin.reflect)
 }
