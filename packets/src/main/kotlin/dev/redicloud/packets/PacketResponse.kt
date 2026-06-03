@@ -7,6 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class PacketResponse(
@@ -26,7 +27,7 @@ class PacketResponse(
             handle(it)
         }
         timeOutJob = manager.packetScope.launch {
-            delay(timeOut.inWholeMilliseconds)
+            delay(timeOut)
             manager.packetResponses.remove(this@PacketResponse)
         }
         return this
@@ -41,7 +42,7 @@ class PacketResponse(
                 timeOutJob?.cancel()
                 return null
             }
-            delay(this.timeOut.inWholeMilliseconds / 15)
+            delay((this.timeOut.inWholeMilliseconds / 15).milliseconds)
         }
         return responses.first()
     }
