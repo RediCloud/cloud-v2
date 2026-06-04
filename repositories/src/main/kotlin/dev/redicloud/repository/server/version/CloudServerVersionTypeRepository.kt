@@ -2,9 +2,6 @@ package dev.redicloud.repository.server.version
 
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.version.*
-import dev.redicloud.console.Console
-import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
@@ -14,6 +11,7 @@ import dev.redicloud.utils.*
 import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
+import dev.redicloud.utils.toConsoleValue
 import dev.redicloud.utils.withOptionalLock
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -29,7 +27,7 @@ import kotlin.time.Duration.Companion.minutes
 @Suppress("TooManyFunctions") // Repository with CRUD + sync + download operations
 class CloudServerVersionTypeRepository(
     databaseConnection: DatabaseConnection,
-    private val console: Console?,
+    private val listener: IVersionHandlerListener? = null,
     packetManager: PacketManager,
     scope: CoroutineScope
 ) : CachedDatabaseBucketRepository<ICloudServerVersionType, CloudServerVersionType>(
@@ -51,7 +49,6 @@ class CloudServerVersionTypeRepository(
     private val locks = mutableMapOf<UUID, Mutex>()
 
     companion object {
-        private const val ANIMATION_TICK_MS = 200L
         val LOGGER = LogManager.logger(CloudServerVersionTypeRepository::class)
         val DEFAULT_TYPES_CACHE = SingleCache(1.minutes) {
             gsonInterfaceFactory.register(IServerVersion::class, ServerVersion::class)
@@ -117,29 +114,10 @@ class CloudServerVersionTypeRepository(
             return
         }
 
-        var canceled = false
-        var downloaded = false
+        listener?.onConnectorDownloadStart(serverVersionType)
         var error = false
-        val animation = if (console != null) {
-            AnimatedLineAnimation(
-                console,
-                ANIMATION_TICK_MS
-            ) {
-                if (canceled) {
-                    null
-                } else if (downloaded) {
-                    canceled = true
-                    "Downloaded connector ${toConsoleValue(serverVersionType.name)}§8: ${if (error) "§4✘" else "§2✓"}"
-                } else {
-                    "Downloading connector ${toConsoleValue(serverVersionType.name)}§8: %tc%%loading%"
-                }
-            }
-        } else {
-            null
-        }
-        console?.startAnimation(animation!!)
         LOGGER.log(
-            if (console == null) Level.INFO else Level.FINE,
+            if (listener == null) Level.INFO else Level.FINE,
             "Downloading connector for ${toConsoleValue(serverVersionType.name)}..."
         )
         getLock(serverVersionType).withOptionalLock(lock) {
@@ -162,14 +140,14 @@ class CloudServerVersionTypeRepository(
                 verifyConnectorIfPossible(serverVersionType, connectorFile)
 
                 LOGGER.log(
-                    if (console == null) Level.FINE else Level.INFO,
+                    if (listener == null) Level.FINE else Level.INFO,
                     "Successfully downloaded connector for ${toConsoleValue(serverVersionType.name)}!"
                 )
             } catch (e: Exception) {
                 LOGGER.severe("§cFailed to download connector ${toConsoleValue(connectorFile.name, false)}!", e)
                 error = true
             } finally {
-                downloaded = true
+                listener?.onConnectorDownloadComplete(serverVersionType, error)
             }
         }
     }

@@ -2,12 +2,12 @@ package dev.redicloud.service.node.commands
 
 import dev.redicloud.api.commands.*
 import dev.redicloud.console.commands.ConsoleActor
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.template.file.AbstractFileTemplateRepository
 import dev.redicloud.repository.template.file.FileTemplate
 import dev.redicloud.service.base.suggester.ConnectedCloudNodeSuggester
 import dev.redicloud.service.base.suggester.FileTemplateSuggester
+import dev.redicloud.utils.toConsoleValue
 import java.util.*
 
 @Command("filetemplate")

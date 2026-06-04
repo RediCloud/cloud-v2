@@ -2,7 +2,6 @@ package dev.redicloud.service.node.commands
 
 import dev.redicloud.api.commands.*
 import dev.redicloud.console.commands.ConsoleActor
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.java.version.getVersionInfo
@@ -10,6 +9,7 @@ import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.service.base.suggester.JavaVersionSuggester
 import dev.redicloud.utils.OSType
 import dev.redicloud.utils.getOperatingSystemType
+import dev.redicloud.utils.toConsoleValue
 import dev.redicloud.utils.toSymbol
 import java.io.File
 import java.util.*

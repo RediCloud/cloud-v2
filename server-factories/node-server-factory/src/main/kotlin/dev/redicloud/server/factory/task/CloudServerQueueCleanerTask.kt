@@ -1,13 +1,13 @@
 package dev.redicloud.server.factory.task
 
 import dev.redicloud.api.service.server.CloudServerState
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.tasks.CloudTask
+import dev.redicloud.utils.toConsoleValue
 import kotlin.time.Duration.Companion.minutes
 
 class CloudServerQueueCleanerTask(

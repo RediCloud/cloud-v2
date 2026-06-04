@@ -4,7 +4,6 @@ import dev.redicloud.api.commands.*
 import dev.redicloud.api.service.ServiceId
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.ConsoleActor
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.service.base.repository.pingService
@@ -13,6 +12,7 @@ import dev.redicloud.service.node.NodeService
 import dev.redicloud.service.node.repository.node.LOGGER
 import dev.redicloud.service.node.repository.node.suspendNode
 import dev.redicloud.utils.*
+import dev.redicloud.utils.toConsoleValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds

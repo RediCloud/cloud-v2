@@ -9,7 +9,6 @@ import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.console.commands.ConsoleActor
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.service.node.UpgradeOrchestrator
 import dev.redicloud.service.node.packets.upgrade.ClusterUpgradePacket
 import dev.redicloud.service.node.packets.upgrade.ClusterUpgradeResponsePacket
@@ -18,6 +17,7 @@ import dev.redicloud.updater.Updater
 import dev.redicloud.updater.suggest.ChannelSuggester
 import dev.redicloud.updater.suggest.VersionSuggester
 import dev.redicloud.utils.*
+import dev.redicloud.utils.toConsoleValue
 import dev.redicloud.utils.version.CloudVersion
 import dev.redicloud.utils.version.VersionChannel
 import kotlinx.coroutines.delay

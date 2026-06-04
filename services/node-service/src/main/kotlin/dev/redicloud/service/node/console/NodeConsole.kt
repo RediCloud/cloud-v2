@@ -15,12 +15,12 @@ import dev.redicloud.commands.api.PARSERS
 import dev.redicloud.console.Console
 import dev.redicloud.console.utils.Screen
 import dev.redicloud.console.utils.ScreenParser
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.event.EventManager
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
 import dev.redicloud.repository.server.ServerRepository
 import dev.redicloud.service.node.NodeConfiguration
+import dev.redicloud.utils.toConsoleValue
 import kotlinx.coroutines.launch
 
 @Suppress("LongMethod")

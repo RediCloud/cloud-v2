@@ -4,9 +4,9 @@ import dev.redicloud.api.commands.*
 import dev.redicloud.console.Console
 import dev.redicloud.console.commands.ConsoleActor
 import dev.redicloud.console.utils.Screen
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.server.factory.screens.ServerScreen
 import dev.redicloud.server.factory.screens.ServerScreenSuggester
+import dev.redicloud.utils.toConsoleValue
 
 @Command("screen")
 @CommandAlias(["scr"])
