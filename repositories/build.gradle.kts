@@ -10,7 +10,6 @@ dependencies {
     compileOnly(project(":core"))
     compileOnly(project(":logging"))
     compileOnly(project(":tasks"))
-    compileOnly(project(":console"))
     compileOnly(libs.redisson)
 
     dependency(libs.kotlinx.coroutines)
