@@ -1,7 +1,7 @@
 # Table of contents
 
-* [💎 Features](README.md)
-* [🔧 Installation](installation.md)
+* [Features](README.md)
+* [Installation](installation.md)
 
 ## Commands
 
@@ -30,8 +30,8 @@
 * [Test framework](development/test-framework.md)
 * [API](development/api/README.md)
   * [Server version handlers](development/api/server-version-handlers.md)
-  * [Connector implemention](development/api/connector-implemention.md)
+  * [Connector implementation](development/api/connector-implemention.md)
   * [Server factory](development/api/server-factory.md)
-  * [Connector api](development/api/connector-api.md)
+  * [Connector API](development/api/connector-api.md)
   * [Events](development/api/events.md)
   * [Custom player provider](development/api/custom-player-provider.md)

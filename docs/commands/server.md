@@ -22,11 +22,11 @@ Use the following command to stop a server:
 
 Optionally, the boolean `true` or `false` can be passed to force-stop the server (kill the process).
 
-Patterns like `server stop Lobby-*` can also be provided or simply separate several servers with a commar: `server stop Lobby-1,Lobby-4`
+Patterns like `server stop Lobby-*` can also be provided or simply separate several servers with a comma: `server stop Lobby-1,Lobby-4`
 
 
 
-## Transfare server
+## Transfer server
 
 A static server is always stored on a specific node. To change the node from a static server you can use the transfer command. Please note that the target node must be connected for this.
 

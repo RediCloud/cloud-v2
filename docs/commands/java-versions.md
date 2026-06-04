@@ -6,7 +6,7 @@ It is possible to set a separate Java version for each server version. The cloud
 
 ## Auto locate
 
-Mit `jv auto-locate` werden automatisch alle installierten java version aus folgenden verzechnissen geladen und als server version erstellt:
+With `jv auto-locate` all installed Java versions are automatically detected from the following directories and registered as server versions:
 
 **Windows**:
 

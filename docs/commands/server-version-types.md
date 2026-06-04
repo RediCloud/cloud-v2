@@ -36,11 +36,15 @@ With `svt handlers` you will see all registered version handlers.
 
 ## Connector settings
 
-The connector represents the interface between the cloud and the server. E.g. in the case of paper in the form of a plugin. It is also possible to use your own connectors, which you have implemented yourself. To do this, change the connector download url to your own with `svt edit <name> connector url <url>`.
+The connector represents the interface between the cloud and the server. E.g. in the case of Paper in the form of a plugin. It is also possible to use your own connectors, which you have implemented yourself.
+
+By default, connectors are downloaded from **GitHub Releases** and verified using **SHA-256 checksums** from a signed `manifest.json`. This ensures connector integrity.
+
+To use a custom connector, change the connector download URL with `svt edit <name> connector url <url>`.
 
 With `svt edit <name> connector file <filename>` you can set the name under which the connector file is saved.
 
-Depending on the server software, there is always a different folder on the server for plugins. As an example, in minestom it is the extensions folder. To set this you can use `svt edit <name> connector folder <folder>`.
+Depending on the server software, there is always a different folder on the server for plugins. As an example, in Minestom it is the extensions folder. To set this you can use `svt edit <name> connector folder <folder>`.
 
 
 

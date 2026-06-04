@@ -1,33 +1,34 @@
-# 💎 Features
+# Features
 
-! The cloud is still in development. Not all planned features are listed. If you are missing a feature or have an idea, join the RediCloud discord. !
-
-* redis for communication and storage&#x20;
-* node clustering (decentralized)&#x20;
-* start minecraft services ([spigot](https://getbukkit.org/download/spigot) , [bukkit](https://getbukkit.org/download/craftbukkit), [paper](https://papermc.io/) based forks, [minestom-ce](https://github.com/hollow-cube/minestom-ce))&#x20;
-* start proxy services ([bungeecord](https://www.spigotmc.org/wiki/bungeecord/) , [waterfall](https://github.com/PaperMC/Waterfall), [velocity](https://github.com/PaperMC/Velocity))&#x20;
-* minestom impl also usable
-* version handler api (auto update)&#x20;
-* online files / version (live update without cloud restart)&#x20;
-* console + commands
-* dynamic and static services
-* templates (clustered via sftp)
-* api for developer (modules/plugins/connectors)
-* mc version: 1.8-latest support
-* custom server versions (like custom paper)&#x20;
-* auto java version detection&#x20;
-* multi java versions support (versions: 8-21)&#x20;
-* modify program arguments and jvm flags for each group / server version&#x20;
-* easy dev plugin test -> [test-framework](development/test-framework.md)&#x20;
-* module system&#x20;
-* report server crashes&#x20;
-* log server exceptions to node&#x20;
-* suspend system (suspend time outed nodes...)&#x20;
-* server version support (auto update, pre versions...)&#x20;
-* static server transfer to other nodes&#x20;
-* smart server start (retry other nodes on failed start)&#x20;
-* print server error directly to node console (loop, spam protection)&#x20;
-* clean console design&#x20;
-* Small further details (designs, small functions) can be changed per property, no code editing needed!
-* [updater](commands/version-updater.md) command&#x20;
-* ...
+* Redis for communication and storage
+* Node clustering (decentralized)
+* Start Minecraft services ([Spigot](https://getbukkit.org/download/spigot), [Bukkit](https://getbukkit.org/download/craftbukkit), [Paper](https://papermc.io/) based forks, [Minestom](https://github.com/hollow-cube/minestom-ce))
+* Start proxy services ([BungeeCord](https://www.spigotmc.org/wiki/bungeecord/), [Waterfall](https://github.com/PaperMC/Waterfall), [Velocity](https://github.com/PaperMC/Velocity))
+* Minestom implementation also usable
+* Version handler API (auto update)
+* Online files / versions (live update without cloud restart)
+* Console + commands
+* Dynamic and static services
+* Templates (clustered via SFTP)
+* API for developers (modules/plugins/connectors)
+* MC version: 1.8-latest support
+* Custom server versions (like custom Paper)
+* Auto Java version detection
+* Multi Java versions support (versions: 8-21)
+* Modify program arguments and JVM flags for each group / server version
+* Easy dev plugin testing -> [test-framework](development/test-framework.md)
+* Module system
+* Report server crashes
+* Log server exceptions to node
+* Suspend system (suspend timed-out nodes)
+* Server version support (auto update, pre-release versions)
+* Static server transfer to other nodes
+* Smart server start (retry other nodes on failed start)
+* Print server errors directly to node console (loop & spam protection)
+* Clean console design
+* Small details (designs, small functions) can be changed per property, no code editing needed
+* [Updater](commands/version-updater.md) command with cluster-wide upgrade support
+* Migration framework for automatic database and file migrations on version upgrades
+* GPG signature and SHA-256 checksum verification for all downloads
+* Connector downloads via GitHub Releases with signed manifest verification
+* Consolidated start script (`start.sh`) with debug, screen, and verbose flags
