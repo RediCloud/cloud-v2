@@ -4,6 +4,9 @@ import dev.redicloud.api.events.CloudEvent
 import dev.redicloud.api.events.IEventManager
 import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.api.packets.IPacketManager
+import dev.redicloud.api.tasks.ICloudTask
+import dev.redicloud.api.tasks.ICloudTaskExecutorBuilder
+import dev.redicloud.api.tasks.ICloudTaskManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.tasks.executor.AtTimeCloudExecutor
 import dev.redicloud.tasks.executor.CloudTaskExecutor
@@ -25,7 +28,7 @@ class CloudTaskManager(
     internal val eventManager: IEventManager,
     internal val packetManager: IPacketManager,
     threads: Int
-) {
+) : ICloudTaskManager {
 
     companion object {
         val LOGGER = LogManager.logger(CloudTaskManager::class)
@@ -38,27 +41,28 @@ class CloudTaskManager(
         SupervisorJob() + newFixedThreadPoolContext(threads, "CloudTaskManager") + coroutineExceptionHandler
     )
 
-    fun register(task: CloudTask): UUID {
+    override fun register(task: ICloudTask): UUID {
+        require(task is CloudTask) { "Task must be an instance of CloudTask" }
         require(!tasks.containsKey(task.id)) { "Task with id ${task.id} is already registered" }
         tasks[task.id] = task
         task.start(this)
         return task.id
     }
 
-    fun unregister(id: UUID): CloudTask? {
+    override fun unregister(id: UUID): ICloudTask? {
         val task = tasks.remove(id)
         task?.cancel()
         return task
     }
 
-    fun unregister(task: CloudTask): CloudTask? = unregister(task.id)
+    override fun unregister(task: ICloudTask): ICloudTask? = unregister(task.id)
 
-    fun builder(): CloudTaskExecutorBuilder = CloudTaskExecutorBuilder(this)
+    override fun builder(): ICloudTaskExecutorBuilder = CloudTaskExecutorBuilder(this)
 
-    fun getTasks(): List<CloudTask> = tasks.values.toList()
+    override fun getTasks(): List<ICloudTask> = tasks.values.toList()
 }
 
-class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManager) {
+class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManager) : ICloudTaskExecutorBuilder {
 
     private var task: CloudTask? = null
     private var executors: MutableList<CloudTaskExecutor> = mutableListOf()
@@ -66,51 +70,52 @@ class CloudTaskExecutorBuilder internal constructor(val manager: CloudTaskManage
     private var packets: MutableList<KClass<out AbstractPacket>> = mutableListOf()
     private var instant: Boolean = false
 
-    fun task(task: CloudTask): CloudTaskExecutorBuilder {
+    override fun task(task: ICloudTask): ICloudTaskExecutorBuilder {
+        require(task is CloudTask) { "Task must be an instance of CloudTask" }
         this.task = task
         return this
     }
 
-    fun instant(): CloudTaskExecutorBuilder {
+    override fun instant(): ICloudTaskExecutorBuilder {
         this.instant = true
         return this
     }
 
-    fun atTime(atTime: Long): CloudTaskExecutorBuilder {
+    override fun atTime(atTime: Long): ICloudTaskExecutorBuilder {
         require(atTime >= System.currentTimeMillis()) { "At time must be in the future" }
         executors.add(AtTimeCloudExecutor(this.task!!, atTime))
         return this
     }
 
-    fun delay(delay: Long): CloudTaskExecutorBuilder {
+    override fun delay(delay: Long): ICloudTaskExecutorBuilder {
         require(delay >= 0) { "Delay must be positive" }
         executors.add(AtTimeCloudExecutor(this.task!!, System.currentTimeMillis() + delay))
         return this
     }
 
-    fun delay(duration: Duration): CloudTaskExecutorBuilder {
+    override fun delay(duration: Duration): ICloudTaskExecutorBuilder {
         require(duration.inWholeMilliseconds >= 0) { "Delay must be positive" }
         executors.add(AtTimeCloudExecutor(this.task!!, System.currentTimeMillis() + duration.inWholeMilliseconds))
         return this
     }
 
-    fun period(period: Duration, maxExecutions: Int = -1): CloudTaskExecutorBuilder {
+    override fun period(period: Duration, maxExecutions: Int): ICloudTaskExecutorBuilder {
         require(period.inWholeMilliseconds >= 0) { "Period must be positive" }
         executors.add(PeriodicallyCloudTaskExecutor(this.task!!, period, maxExecutions))
         return this
     }
 
-    fun event(eventClazz: KClass<out CloudEvent>): CloudTaskExecutorBuilder {
+    override fun event(eventClazz: KClass<out CloudEvent>): ICloudTaskExecutorBuilder {
         events.add(eventClazz)
         return this
     }
 
-    fun packet(packetClazz: KClass<out AbstractPacket>): CloudTaskExecutorBuilder {
+    override fun packet(packetClazz: KClass<out AbstractPacket>): ICloudTaskExecutorBuilder {
         packets.add(packetClazz)
         return this
     }
 
-    fun register(): CloudTask {
+    override fun register(): ICloudTask {
         checkNotNull(this.task) { "Task must be set" }
         check(this.executors.isNotEmpty() || this.events.isNotEmpty() || this.packets.isNotEmpty() || instant) {
             "At least one executor must be set"
