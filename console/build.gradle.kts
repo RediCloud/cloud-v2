@@ -2,8 +2,6 @@ plugins {
     id("redicloud-conventions")
 }
 
-val publishToRepository by extra(true)
-
 group = "dev.redicloud"
 
 repositories {

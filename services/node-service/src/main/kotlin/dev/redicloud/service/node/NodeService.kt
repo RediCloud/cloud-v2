@@ -2,6 +2,7 @@ package dev.redicloud.service.node
 
 import dev.redicloud.api.commands.ICommand
 import dev.redicloud.api.commands.ICommandManager
+import dev.redicloud.api.console.ICloudConsole
 import dev.redicloud.api.events.internal.module.ModuleHandlerInitializedEvent
 import dev.redicloud.api.events.internal.node.NodeConnectEvent
 import dev.redicloud.api.events.internal.node.NodeDisconnectEvent
@@ -10,9 +11,11 @@ import dev.redicloud.api.events.internal.server.CloudServerDisconnectedEvent
 import dev.redicloud.api.service.server.factory.ICloudRemoteServerFactory
 import dev.redicloud.api.utils.TEMP_FOLDER
 import dev.redicloud.api.version.IServerVersionHandler
+import dev.redicloud.api.version.IVersionHandlerListener
 import dev.redicloud.cluster.file.FileCluster
 import dev.redicloud.cluster.file.FileNodeRepository
 import dev.redicloud.console.Console
+import dev.redicloud.console.utils.ConsoleVersionHandlerListener
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.database.config.DatabaseConfiguration
 import dev.redicloud.migration.MigrationResult
@@ -62,6 +65,7 @@ class NodeService(
     override val moduleHandler: ModuleHandler
     override val playerExecutor: NodePlayerExecutor
     val console: NodeConsole
+    val versionHandlerListener: ConsoleVersionHandlerListener
     val fileNodeRepository: FileNodeRepository
     val fileCluster: FileCluster
     val serverFactory: ServerFactory
@@ -71,7 +75,8 @@ class NodeService(
         fileNodeRepository = FileNodeRepository(databaseConnection, packetManager, scope)
         fileCluster = FileCluster(serviceId, configuration.hostAddress, fileNodeRepository, packetManager, nodeRepository, eventManager)
         fileTemplateRepository = NodeFileTemplateRepository(databaseConnection, nodeRepository, fileCluster, packetManager, scope)
-        serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, console, packetManager, scope)
+        versionHandlerListener = ConsoleVersionHandlerListener(console)
+        serverVersionTypeRepository = CloudServerVersionTypeRepository(databaseConnection, versionHandlerListener, packetManager, scope)
         serverFactory = ServerFactory(
             databaseConnection, nodeRepository, serverRepository,
             serverVersionRepository, serverVersionTypeRepository,
@@ -117,8 +122,8 @@ class NodeService(
                 serverVersionRepository,
                 serverVersionTypeRepository,
                 nodeRepository,
-                console,
-                javaVersionRepository
+                javaVersionRepository,
+                listener = versionHandlerListener
             )
         )
 
@@ -488,6 +493,8 @@ class NodeService(
         super.configure()
         bind(ICommandManager::class).toInstance(console.commandManager)
         bind(Console::class).toInstance(console)
+        bind(ICloudConsole::class.java).toInstance(console)
+        bind(IVersionHandlerListener::class.java).toInstance(versionHandlerListener)
         bind(ICloudRemoteServerFactory::class).toInstance(serverFactory)
     }
 }
