@@ -3,14 +3,15 @@ package dev.redicloud.repository.server.version
 import dev.redicloud.api.cache.IClusterCacheObject
 import dev.redicloud.api.version.ICloudServerVersion
 import dev.redicloud.api.version.IServerVersion
-import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.version.serverversion.ServerVersion
-import dev.redicloud.utils.ConfigurationFileEditor
 import dev.redicloud.utils.gson.GsonInterface
-import dev.redicloud.utils.toConsoleValue
-import java.io.File
 import java.util.UUID
 
+/**
+ * Default implementation of [ICloudServerVersion].
+ * Represents a downloadable server version (e.g. Paper 1.20.4 build #123)
+ * with process configuration inherited from [ProcessConfiguration][dev.redicloud.api.utils.ProcessConfiguration].
+ */
 @Suppress("LongParameterList")
 class CloudServerVersion(
     override val uniqueId: UUID,
@@ -32,45 +33,16 @@ class CloudServerVersion(
     override val fileEdits: MutableMap<String, MutableMap<String, String>> = mutableMapOf()
 ) : Comparable<CloudServerVersion>, IClusterCacheObject, ICloudServerVersion {
 
-    companion object {
-        private val logger = LogManager.logger(CloudServerVersion::class)
-    }
-
     override val displayName: String
         get() {
             return "${projectName}_${version.name}"
         }
 
-    fun doFileEdits(folder: File, action: (String) -> String = { it }) {
-        fileEdits.forEach { (file, editInfo) ->
-            val fileToEdit = File(folder, file)
-            if (!fileToEdit.exists()) {
-                logger.warning("File $fileToEdit does not exist! So it can not be edited!")
-                return@forEach
-            }
-            val editor = ConfigurationFileEditor.ofFile(fileToEdit)
-            if (editor == null) {
-                logger.warning(
-                    "§cFile ${toConsoleValue(fileToEdit, false)} is not a configuration file! So it can not be edited!"
-                )
-                return@forEach
-            }
-            editInfo.forEach { (key, value) ->
-                try {
-                    editor.setValue(key, action(value))
-                } catch (_: IllegalStateException) {
-                    logger.warning(
-                        "§cKey ${toConsoleValue(
-                            key,
-                            false
-                        )} does not exist in file ${toConsoleValue(fileToEdit, false)}!"
-                    )
-                }
-            }
-            editor.saveToFile(fileToEdit)
-        }
-    }
-
+    /**
+     * Checks whether this version is structurally similar to [other],
+     * comparing type, project, download URL, version name, lib pattern,
+     * patch flag, online state, default files, and file edits.
+     */
     fun isSimilar(other: CloudServerVersion): Boolean {
         return typeId == other.typeId &&
             projectName == other.projectName &&
@@ -87,6 +59,10 @@ class CloudServerVersion(
         return version.compareTo(other.version)
     }
 
+    /**
+     * Creates a deep copy of this version with a new [projectName][name] and a fresh [uniqueId].
+     * Mutable collections are copied so the new instance is independent.
+     */
     fun copy(name: String): CloudServerVersion {
         return CloudServerVersion(
             UUID.randomUUID(),

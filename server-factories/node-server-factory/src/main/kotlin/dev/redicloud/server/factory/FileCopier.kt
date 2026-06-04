@@ -3,6 +3,7 @@ package dev.redicloud.server.factory
 import dev.redicloud.api.utils.CONNECTORS_FOLDER
 import dev.redicloud.api.utils.STATIC_FOLDER
 import dev.redicloud.api.utils.TEMP_SERVER_FOLDER
+import dev.redicloud.api.utils.doFileEdits
 import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.CloudServer

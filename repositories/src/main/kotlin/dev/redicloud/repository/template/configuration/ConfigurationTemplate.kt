@@ -6,6 +6,11 @@ import dev.redicloud.api.template.configuration.ICloudConfigurationTemplate
 import java.util.*
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Default implementation of [ICloudConfigurationTemplate].
+ * Stores all settings needed to create and auto-scale cloud servers,
+ * including process configuration inherited from [ProcessConfiguration][dev.redicloud.api.utils.ProcessConfiguration].
+ */
 @Suppress("LongParameterList")
 class ConfigurationTemplate(
     override val uniqueId: UUID = UUID.randomUUID(),
@@ -40,6 +45,10 @@ class ConfigurationTemplate(
 
     override fun compareTo(other: ICloudConfigurationTemplate): Int = startPriority.compareTo(other.startPriority)
 
+    /**
+     * Creates a shallow copy of this template with a new [name] and a fresh [uniqueId].
+     * Collection properties (fileTemplateIds, nodeIds, jvmArguments, etc.) are shared references.
+     */
     fun copy(name: String): ICloudConfigurationTemplate {
         return ConfigurationTemplate(
             uniqueId = UUID.randomUUID(),
