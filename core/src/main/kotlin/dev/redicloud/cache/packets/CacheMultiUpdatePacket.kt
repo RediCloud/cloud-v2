@@ -3,6 +3,14 @@ package dev.redicloud.cache.packets
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.utils.gson.gson
 
+/**
+ * Packet that updates multiple entries in a cluster cache in a single operation.
+ *
+ * When received, deserializes each value from JSON and applies all updates to the local cache.
+ * Null values in [toUpdate] remove the corresponding entries.
+ *
+ * @property toUpdate a map of cache keys to their JSON-serialized new values (null to remove)
+ */
 class CacheMultiUpdatePacket(
     name: String,
     val toUpdate: Map<String, String?>

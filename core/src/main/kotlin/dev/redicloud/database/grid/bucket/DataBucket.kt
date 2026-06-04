@@ -4,6 +4,16 @@ import dev.redicloud.api.database.grid.bucket.IDataBucket
 import dev.redicloud.database.DatabaseConnection
 import kotlin.time.Duration
 
+/**
+ * A data bucket backed by a Redisson bucket, providing atomic get/set/delete
+ * operations on a single Redis key.
+ *
+ * Supports expiration, conditional set (if-exists / if-absent), and get-and-modify operations.
+ *
+ * @param V the value type stored in this bucket
+ * @param key the Redis key identifying this bucket
+ * @param databaseConnection the database connection providing the Redisson client
+ */
 class DataBucket<V>(
     override val key: String,
     databaseConnection: DatabaseConnection

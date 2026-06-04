@@ -3,6 +3,11 @@ package dev.redicloud.cache.tasks
 import dev.redicloud.cache.ClusterCache
 import dev.redicloud.tasks.CloudTask
 
+/**
+ * Periodic task that evicts expired entries from all registered cluster caches.
+ *
+ * Iterates over every [ClusterCache] and removes entries whose cache duration has elapsed.
+ */
 class InvalidCacheTask : CloudTask() {
 
     override suspend fun execute(): Boolean {

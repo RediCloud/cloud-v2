@@ -7,6 +7,14 @@ import dev.redicloud.console.Console
 import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
 import dev.redicloud.utils.toConsoleValue
 
+/**
+ * Console-based implementation of [IVersionHandlerListener].
+ *
+ * Displays animated progress indicators and captures subprocess output
+ * in console screens during version download, patch, and connector operations.
+ *
+ * @param console the console instance for rendering animations and screens
+ */
 class ConsoleVersionHandlerListener(
     private val console: Console
 ) : IVersionHandlerListener {

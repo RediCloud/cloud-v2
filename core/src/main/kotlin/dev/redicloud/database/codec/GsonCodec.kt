@@ -11,6 +11,13 @@ import org.redisson.client.protocol.Decoder
 import org.redisson.client.protocol.Encoder
 import java.nio.charset.Charset
 
+/**
+ * Redisson codec that uses Gson for serialization and deserialization.
+ *
+ * Each value is wrapped in a [GsonPackage] containing the fully-qualified class name
+ * and the JSON representation, enabling type-safe deserialization without prior
+ * knowledge of the stored type.
+ */
 object GsonCodec : BaseCodec() {
 
     private val charset: Charset = Charsets.UTF_8
@@ -44,6 +51,13 @@ object GsonCodec : BaseCodec() {
     override fun getValueDecoder() = decoder
 }
 
+/**
+ * Wrapper that pairs a serialized JSON value with its originating class name
+ * for type-safe deserialization by [GsonCodec].
+ *
+ * @property clazz the fully-qualified class name of the serialized object
+ * @property json the JSON representation of the object
+ */
 data class GsonPackage(
     val clazz: String,
     val json: JsonElement

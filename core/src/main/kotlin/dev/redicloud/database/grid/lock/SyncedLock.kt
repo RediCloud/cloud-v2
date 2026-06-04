@@ -5,6 +5,15 @@ import dev.redicloud.database.DatabaseConnection
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 
+/**
+ * Distributed lock backed by a Redisson lock, synchronized across the Redis cluster.
+ *
+ * Provides locking, unlocking, and introspection operations on a named lock
+ * identified by [key].
+ *
+ * @param key the Redis key identifying this lock
+ * @param databaseConnection the database connection providing the Redisson client
+ */
 class SyncedLock(
     override val key: String,
     databaseConnection: DatabaseConnection

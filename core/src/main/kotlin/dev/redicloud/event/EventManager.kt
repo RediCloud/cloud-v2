@@ -16,19 +16,39 @@ import kotlin.reflect.full.callSuspend
 import kotlin.reflect.full.declaredMemberFunctions
 import kotlin.reflect.full.findAnnotation
 
+/**
+ * Central event dispatcher that supports both local and distributed event firing.
+ *
+ * Events can be published globally, to specific service types, or fired locally only.
+ * Distributed events are delivered via [PacketManager] using [CloudEventPacket].
+ * Listeners are registered by scanning for [CloudEventListener]-annotated functions.
+ *
+ * @param identifier a unique identifier for this event manager instance
+ * @param packetManager optional packet manager for distributed event delivery; null for local-only
+ */
 class EventManager(
     override val identifier: String,
     val packetManager: PacketManager?
 ) : IEventManager {
 
     companion object {
+        /** Logger for the event subsystem. */
         val LOGGER = LogManager.logger(EventManager::class)
         private val MANAGERS = mutableMapOf<String, EventManager>()
 
+        /**
+         * Retrieves a registered [EventManager] by its identifier.
+         *
+         * @param identifier the manager identifier
+         * @return the manager instance, or null if not found
+         */
         fun getManager(identifier: String): EventManager? = MANAGERS[identifier]
     }
 
+    /** Map of event types to their registered handler methods. */
     val handlers: MutableMap<KClass<*>, MutableList<EventHandlerMethod>> = HashMap()
+
+    /** Fair reentrant lock guarding handler registration and removal. */
     val lock = ReentrantLock(true)
 
     init {
@@ -38,6 +58,11 @@ class EventManager(
         }
     }
 
+    /**
+     * Removes all event handlers loaded by the given [classLoader].
+     *
+     * @param classLoader the class loader whose handlers should be unregistered
+     */
     fun unregister(classLoader: ClassLoader) {
         lock.withLock {
             handlers.values.forEach { list ->

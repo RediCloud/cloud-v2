@@ -3,6 +3,16 @@ package dev.redicloud.database.grid.list
 import dev.redicloud.api.database.grid.list.ISyncedMutableList
 import dev.redicloud.database.DatabaseConnection
 
+/**
+ * Mutable list backed by a Redisson [org.redisson.api.RList], synchronized with Redis.
+ *
+ * Extends [SyncedList] with write operations (add, remove, set, clear) that are
+ * reflected in the distributed Redis store.
+ *
+ * @param E the element type
+ * @param key the Redis key identifying this list
+ * @param databaseConnection the database connection providing the Redisson client
+ */
 class SyncedMutableList<E>(
     key: String,
     databaseConnection: DatabaseConnection

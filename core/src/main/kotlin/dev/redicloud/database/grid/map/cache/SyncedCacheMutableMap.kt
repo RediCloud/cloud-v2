@@ -3,6 +3,17 @@ package dev.redicloud.database.grid.map.cache
 import dev.redicloud.api.database.grid.map.cache.ISyncedCacheMutableMap
 import dev.redicloud.database.DatabaseConnection
 
+/**
+ * Mutable cached map backed by a Redisson map, synchronized with Redis.
+ *
+ * Extends [SyncedCacheMap] with write operations that propagate to the
+ * distributed Redis store.
+ *
+ * @param K the key type
+ * @param V the value type
+ * @param key the Redis key identifying this map
+ * @param databaseConnection the database connection providing the Redisson client
+ */
 class SyncedCacheMutableMap<K, V>(
     key: String,
     databaseConnection: DatabaseConnection

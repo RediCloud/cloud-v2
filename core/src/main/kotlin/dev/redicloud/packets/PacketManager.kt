@@ -22,6 +22,17 @@ import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Core packet manager that handles pub/sub communication between cloud services.
+ *
+ * Manages packet registration, listener dispatch, and publishing to service-specific,
+ * broadcast, typed, and category communication channels via Redisson topics.
+ * Incoming packets are deserialized using Gson and dispatched to registered listeners
+ * and response handlers on a dedicated coroutine scope.
+ *
+ * @param databaseConnection the active database connection for topic access
+ * @param serviceId the identity of the owning service
+ */
 @Suppress("TooManyFunctions")
 class PacketManager(
     private val databaseConnection: DatabaseConnection,
@@ -55,6 +66,10 @@ class PacketManager(
         }
     }
 
+    /**
+     * Subscribes to all communication channels (service, broadcast, and typed topics).
+     * Must be called after construction to start receiving packets.
+     */
     suspend fun connect() {
         serviceTopic.subscribe(PackedPacket::class.java, messageListener)
         broadcastTopic.subscribe(PackedPacket::class.java, messageListener)
@@ -104,6 +119,9 @@ class PacketManager(
         }
     }
 
+    /**
+     * Unsubscribes from all channels and cancels the packet coroutine scope.
+     */
     suspend fun disconnect() {
         serviceTopic.unsubscribeAll()
         broadcastTopic.unsubscribeAll()
@@ -112,6 +130,13 @@ class PacketManager(
         packetScope.cancel()
     }
 
+    /**
+     * Registers a category-specific communication channel.
+     *
+     * Can only be called once. Subsequent calls will throw an [IllegalStateException].
+     *
+     * @param name the category channel name to register
+     */
     suspend fun registerCategoryChannel(name: String) {
         check(this.categoryChannelName == null) { "Category channel is already registered!" }
         this.categoryChannelName = name
@@ -148,6 +173,11 @@ class PacketManager(
         listeners.remove(listener)
     }
 
+    /**
+     * Unregisters all listeners and packet classes loaded by the given [classLoader].
+     *
+     * @param classLoader the class loader whose registrations should be removed
+     */
     fun unregister(classLoader: ClassLoader) {
         listeners.removeIf { it.javaClass.classLoader == classLoader }
         registeredPackets.removeIf { it.java.classLoader == classLoader }

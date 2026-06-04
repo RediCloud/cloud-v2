@@ -3,6 +3,15 @@ package dev.redicloud.cache.packets
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.utils.gson.gson
 
+/**
+ * Packet that updates a single entry in a cluster cache.
+ *
+ * When received, deserializes the value from JSON and updates the local cache.
+ * A null [valueJson] removes the entry from the cache.
+ *
+ * @property key the cache key to update
+ * @property valueJson the JSON-serialized new value, or null to remove the entry
+ */
 class CacheUpdatePacket(
     name: String,
     val key: String,

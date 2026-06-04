@@ -4,11 +4,21 @@ import dev.redicloud.api.database.grid.list.ISyncedList
 import dev.redicloud.database.DatabaseConnection
 import org.redisson.api.RList
 
+/**
+ * Read-only list backed by a Redisson [RList], synchronized with Redis.
+ *
+ * All read operations delegate directly to the distributed list identified by [key].
+ *
+ * @param E the element type
+ * @param key the Redis key identifying this list
+ * @param databaseConnection the database connection providing the Redisson client
+ */
 open class SyncedList<E>(
     final override val key: String,
     databaseConnection: DatabaseConnection
 ) : ISyncedList<E> {
 
+    /** The underlying Redisson list handle. */
     protected val handle: RList<E> = databaseConnection.client.getList(key)
 
     override val size: Int

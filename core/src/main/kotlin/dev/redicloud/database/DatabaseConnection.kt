@@ -29,6 +29,20 @@ import org.redisson.Redisson
 import org.redisson.api.RedissonClient
 import org.redisson.config.Config
 
+/**
+ * Redisson-based implementation of [IDatabaseConnection].
+ *
+ * Manages connection to a Redis instance (single or cluster mode) and provides
+ * factory methods for distributed data structures such as maps, lists, locks, and buckets.
+ * Connection pool sizes are automatically halved for Minecraft server service types.
+ *
+ * @param config the database configuration containing nodes, credentials, and mode
+ * @param serviceId the identity of the service owning this connection
+ * @param connectionPoolSize maximum number of connections in the pool
+ * @param connectionMinimumIdleSize minimum number of idle connections maintained
+ * @param subscriptionConnectionPoolSize maximum number of subscription connections
+ * @param subscriptionConnectionMinimumIdleSize minimum number of idle subscription connections
+ */
 class DatabaseConnection(
     config: DatabaseConfiguration,
     override val serviceId: ServiceId,
@@ -174,6 +188,7 @@ class DatabaseConnection(
         return DataBucket(key, this)
     }
 
+    /** The underlying Redisson client. Throws if not connected. */
     val client: RedissonClient
         get() = _client ?: error("Not connected to redis!")
 }

@@ -5,6 +5,16 @@ import dev.redicloud.api.packets.AbstractPacket
 import dev.redicloud.api.packets.IPacketManager
 import dev.redicloud.utils.gson.gson
 
+/**
+ * Packet that carries a serialized [CloudEvent] across the cluster.
+ *
+ * When received, it deserializes the event and fires it locally on the
+ * [EventManager] identified by [managerIdentifier].
+ *
+ * @property eventData the JSON-serialized event payload
+ * @property eventClazz the fully-qualified class name of the event for deserialization
+ * @property managerIdentifier the identifier of the target [EventManager]
+ */
 class CloudEventPacket(
     val eventData: String,
     val eventClazz: String,

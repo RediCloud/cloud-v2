@@ -10,6 +10,15 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Tracks and dispatches responses to a previously published packet.
+ *
+ * Supports both callback-based ([waitForResponse]) and suspending ([waitBlocking])
+ * response collection, with a configurable timeout (default 15 seconds).
+ *
+ * @param manager the packet manager that owns this response tracker
+ * @param packet the original packet awaiting responses
+ */
 class PacketResponse(
     override val manager: PacketManager,
     override val packet: AbstractPacket
