@@ -1,9 +1,9 @@
 package dev.redicloud.repository.service
 
+import dev.redicloud.api.cache.IClusterCacheObject
 import dev.redicloud.api.service.ICloudService
 import dev.redicloud.api.service.ICloudServiceSession
 import dev.redicloud.api.service.ServiceId
-import dev.redicloud.cache.IClusterCacheObject
 import dev.redicloud.utils.isIpv4
 import dev.redicloud.utils.isIpv6
 

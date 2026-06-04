@@ -4,7 +4,6 @@ import dev.redicloud.api.commands.*
 import dev.redicloud.api.utils.CONNECTORS_FOLDER
 import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.console.commands.ConsoleActor
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionType
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
@@ -13,6 +12,7 @@ import dev.redicloud.service.base.suggester.CloudConnectorFileNameSelector
 import dev.redicloud.service.base.suggester.CloudServerVersionTypeSuggester
 import dev.redicloud.service.base.suggester.ServerVersionHandlerSuggester
 import dev.redicloud.utils.*
+import dev.redicloud.utils.toConsoleValue
 import java.io.File
 import java.net.URL
 import java.util.*
@@ -154,7 +154,7 @@ class CloudServerVersionTypeCommand(
             return
         }
         val file = path ?: URL(url).fileName
-        if (type.defaultFiles.any { it.value.lowercase() == file.lowercase() }) {
+        if (type.defaultFiles.any { it.value.equals(file, ignoreCase = true) }) {
             actor.sendMessage(
                 "§cThe file with the url ${
                     toConsoleValue(
@@ -193,7 +193,7 @@ class CloudServerVersionTypeCommand(
         @CommandParameter("type", true, CloudServerVersionTypeSuggester::class) type: CloudServerVersionType,
         @CommandParameter("url") url: String
     ) {
-        if (type.defaultFiles.none { it.value.lowercase() == url.lowercase() }) {
+        if (type.defaultFiles.none { it.value.equals(url, ignoreCase = true) }) {
             actor.sendMessage(
                 "§cThe file with the url '$url' is not added to the version ${toConsoleValue(type.name)}!"
             )

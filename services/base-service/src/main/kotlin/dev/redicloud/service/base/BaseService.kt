@@ -14,6 +14,7 @@ import dev.redicloud.api.service.ServiceId
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.api.service.server.ICloudServerRepository
+import dev.redicloud.api.tasks.ICloudTaskManager
 import dev.redicloud.api.template.configuration.ICloudConfigurationTemplateRepository
 import dev.redicloud.api.template.file.ICloudFileTemplateRepository
 import dev.redicloud.api.utils.injector
@@ -275,6 +276,7 @@ abstract class BaseService(
         bind(java.util.logging.Logger::class).annotatedWith(Names.named("root")).toInstance(LogManager.rootLogger())
         bind(java.util.logging.Logger::class).annotatedWith(Names.named("service")).toInstance(LOGGER)
         bind(CloudTaskManager::class).toInstance(taskManager)
+        bind(ICloudTaskManager::class.java).toInstance(taskManager)
         if (System.getProperty("redicloud.inject.redisson", "true").toBooleanStrictOrNull() == true) {
             bind(RedissonClient::class).toInstance(databaseConnection.client)
         }

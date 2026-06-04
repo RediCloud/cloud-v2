@@ -1,13 +1,13 @@
 package dev.redicloud.repository.server.version
 
+import dev.redicloud.api.cache.IClusterCacheObject
 import dev.redicloud.api.version.ICloudServerVersion
 import dev.redicloud.api.version.IServerVersion
-import dev.redicloud.cache.IClusterCacheObject
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.version.serverversion.ServerVersion
 import dev.redicloud.utils.ConfigurationFileEditor
 import dev.redicloud.utils.gson.GsonInterface
+import dev.redicloud.utils.toConsoleValue
 import java.io.File
 import java.util.UUID
 
@@ -33,7 +33,7 @@ class CloudServerVersion(
 ) : Comparable<CloudServerVersion>, IClusterCacheObject, ICloudServerVersion {
 
     companion object {
-        private val logger = LogManager.Companion.logger(CloudServerVersion::class)
+        private val logger = LogManager.logger(CloudServerVersion::class)
     }
 
     override val displayName: String

@@ -5,7 +5,6 @@ import dev.redicloud.api.events.internal.node.NodeDisconnectEvent
 import dev.redicloud.api.events.internal.node.NodeSuspendedEvent
 import dev.redicloud.api.events.listen
 import dev.redicloud.api.utils.factory.*
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.node.NodeRepository
@@ -15,6 +14,7 @@ import dev.redicloud.server.factory.utils.*
 import dev.redicloud.tasks.CloudTask
 import dev.redicloud.utils.ConcurrentBatch
 import dev.redicloud.utils.coroutineExceptionHandler
+import dev.redicloud.utils.toConsoleValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.SupervisorJob

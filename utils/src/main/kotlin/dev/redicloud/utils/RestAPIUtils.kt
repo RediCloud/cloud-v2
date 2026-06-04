@@ -7,15 +7,27 @@ import io.ktor.http.*
 /**
  * Fetches a text file from the GitHub repository's raw content URL.
  *
+ * Tries the commit-pinned URL first. If that returns a 404 (e.g. local
+ * dev builds with unpushed commits), falls back to the branch-based URL.
+ *
  * Used by version repositories to load api-files (server-versions.json, etc.)
- * from the repository at the configured branch.
+ * from the repository.
  */
 suspend fun getTextFromGitHub(path: String): String {
-    val response = httpClient.get {
-        url("${getRawUserContentUrl()}/$path")
+    val baseUrl = "https://raw.githubusercontent.com/${getGithubUser()}/${getGithubRepository()}"
+    val commitRef = GIT.takeIf { it != "unknown" }
+    val branchRef = getGithubBranch()
+
+    if (commitRef != null) {
+        val response = httpClient.get { url("$baseUrl/$commitRef/$path") }
+        if (response.status.isSuccess()) return response.bodyAsText()
     }
-    check(response.status.isSuccess()) { "Failed to fetch $path from GitHub: HTTP ${response.status}" }
-    return response.bodyAsText()
+
+    val fallbackResponse = httpClient.get { url("$baseUrl/$branchRef/$path") }
+    check(fallbackResponse.status.isSuccess()) {
+        "Failed to fetch $path from GitHub: HTTP ${fallbackResponse.status}"
+    }
+    return fallbackResponse.bodyAsText()
 }
 
 /**

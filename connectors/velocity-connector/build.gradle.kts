@@ -37,15 +37,12 @@ repositories {
 
 dependencies {
     shade(project(":apis:base-api"))
-    shade(project(":cache"))
+    shade(project(":core"))
     shade(project(":services:base-service"))
     shade(project(":services:minecraft-server-service"))
     shade(project(":services:proxy-server-service"))
     shade(project(":repositories"))
-    shade(project(":database"))
     shade(project(":utils"))
-    shade(project(":events"))
-    shade(project(":packets"))
     shade(project(":commands:command-api"))
     shade(project(":logging"))
     shade(project(":console"))

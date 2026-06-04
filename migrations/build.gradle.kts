@@ -10,7 +10,7 @@ repositories {
 
 dependencies {
     compileOnly(project(":apis:base-api"))
-    compileOnly(project(":database"))
+    compileOnly(project(":core"))
     compileOnly(project(":utils"))
     compileOnly(project(":logging"))
 

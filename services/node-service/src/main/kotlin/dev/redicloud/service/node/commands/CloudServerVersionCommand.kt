@@ -4,7 +4,6 @@ import dev.redicloud.api.commands.*
 import dev.redicloud.api.exceptions.CloudVersionException
 import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.console.commands.ConsoleActor
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.java.version.CloudJavaVersion
 import dev.redicloud.repository.java.version.JavaVersionRepository
 import dev.redicloud.repository.server.ServerRepository
@@ -18,6 +17,7 @@ import dev.redicloud.service.base.suggester.*
 import dev.redicloud.service.node.repository.node.LOGGER
 import dev.redicloud.utils.fileName
 import dev.redicloud.utils.isValidUrl
+import dev.redicloud.utils.toConsoleValue
 import dev.redicloud.utils.toSymbol
 import java.net.URL
 import java.util.*
@@ -130,9 +130,9 @@ class CloudServerVersionCommand(
             return
         }
         if (version.version.versionTypes.isNotEmpty() &&
-            version.version.versionTypes.none { it.lowercase() == type.name.lowercase() } &&
+            version.version.versionTypes.none { it.equals(type.name, ignoreCase = true) } &&
             version.version.versionTypes.filter { it.startsWith("!") }
-                .any { it.replaceFirst("!", "").lowercase() == type.name.lowercase() }
+                .any { it.replaceFirst("!", "").equals(type.name, ignoreCase = true) }
         ) {
             actor.sendMessage(
                 "§cThe type ${
@@ -368,7 +368,7 @@ class CloudServerVersionCommand(
             return
         }
         val file = path ?: URL(url).fileName
-        if (version.defaultFiles.any { it.value.lowercase() == file.lowercase() }) {
+        if (version.defaultFiles.any { it.value.equals(file, ignoreCase = true) }) {
             actor.sendMessage(
                 "§cThe file with the url '$url' is already added to the version ${
                     toConsoleValue(
@@ -401,7 +401,7 @@ class CloudServerVersionCommand(
             )
             return
         }
-        if (version.defaultFiles.none { it.value.lowercase() == url.lowercase() }) {
+        if (version.defaultFiles.none { it.value.equals(url, ignoreCase = true) }) {
             actor.sendMessage(
                 "§cThe file with the url '$url' is not added to the version ${toConsoleValue(version.displayName)}!"
             )

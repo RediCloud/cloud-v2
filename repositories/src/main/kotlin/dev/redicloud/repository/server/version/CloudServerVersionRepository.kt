@@ -2,7 +2,6 @@ package dev.redicloud.repository.server.version
 
 import dev.redicloud.api.service.ServiceType
 import dev.redicloud.api.version.*
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.database.DatabaseConnection
 import dev.redicloud.logging.LogManager
 import dev.redicloud.packets.PacketManager
@@ -13,6 +12,7 @@ import dev.redicloud.utils.getTextFromGitHub
 import dev.redicloud.utils.gson.fromJsonToList
 import dev.redicloud.utils.gson.gson
 import dev.redicloud.utils.gson.gsonInterfaceFactory
+import dev.redicloud.utils.toConsoleValue
 import kotlinx.coroutines.CoroutineScope
 import java.util.*
 import kotlin.time.Duration.Companion.minutes

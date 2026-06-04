@@ -1,5 +1,6 @@
 package dev.redicloud.console.jline
 
+import dev.redicloud.api.console.ICloudConsole
 import dev.redicloud.console.Console
 import dev.redicloud.console.animation.AbstractConsoleAnimation
 import dev.redicloud.console.commands.ConsoleCommandManager
@@ -7,12 +8,12 @@ import dev.redicloud.console.utils.Screen
 import org.fusesource.jansi.Ansi
 
 @Suppress("TooManyFunctions")
-interface IConsole {
+interface IConsole : ICloudConsole {
 
     var printingEnabled: Boolean
     var matchingHistorySearch: Boolean
     var prompt: String
-    val commandManager: ConsoleCommandManager
+    override val commandManager: ConsoleCommandManager
     var lineFormat: String
     val saveLogToFile: Boolean
     val uninstallAnsiOnClose: Boolean
@@ -57,9 +58,9 @@ interface IConsole {
 
     fun commandInputValue(commandInputValue: String)
 
-    fun enableCommands()
+    override fun enableCommands()
 
-    fun disableCommands()
+    override fun disableCommands()
 
     @Suppress("LongParameterList")
     fun writeRaw(
@@ -76,9 +77,13 @@ interface IConsole {
 
     fun forceWriteLine(text: String, source: Screen? = null, history: Boolean = true): Console
 
+    override fun forceWriteLine(text: String): ICloudConsole = forceWriteLine(text, null, true)
+
     fun writeLine(text: String, source: Screen? = null, history: Boolean = true): Console
 
-    fun hasColorSupport(): Boolean
+    override fun writeLine(text: String): ICloudConsole = writeLine(text, null, true)
+
+    override fun hasColorSupport(): Boolean
 
     fun resetPrompt()
 
@@ -86,7 +91,7 @@ interface IConsole {
 
     fun emptyPrompt()
 
-    fun clearScreen()
+    override fun clearScreen()
 
     fun close(processExit: Boolean = false)
 }

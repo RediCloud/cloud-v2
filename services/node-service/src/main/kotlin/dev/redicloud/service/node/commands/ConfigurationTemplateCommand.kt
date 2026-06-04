@@ -2,7 +2,6 @@ package dev.redicloud.service.node.commands
 
 import dev.redicloud.api.commands.*
 import dev.redicloud.console.commands.ConsoleActor
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.ServerRepository
@@ -18,6 +17,7 @@ import dev.redicloud.service.base.suggester.FileTemplateSuggester
 import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
 import dev.redicloud.utils.fileName
 import dev.redicloud.utils.isValidUrl
+import dev.redicloud.utils.toConsoleValue
 import dev.redicloud.utils.toSymbol
 import java.net.URL
 import java.util.*
@@ -293,7 +293,7 @@ class ConfigurationTemplateCommand(
             return
         }
         val file = path ?: URL(url).fileName
-        if (template.defaultFiles.any { it.value.lowercase() == file.lowercase() }) {
+        if (template.defaultFiles.any { it.value.equals(file, ignoreCase = true) }) {
             actor.sendMessage(
                 "§cThe file with the url ${toConsoleValue(
                     url,
@@ -316,7 +316,7 @@ class ConfigurationTemplateCommand(
         @CommandParameter("name", true, ConfigurationTemplateSuggester::class) template: ConfigurationTemplate,
         @CommandParameter("url") url: String
     ) {
-        if (template.defaultFiles.none { it.value.lowercase() == url.lowercase() }) {
+        if (template.defaultFiles.none { it.value.equals(url, ignoreCase = true) }) {
             actor.sendMessage(
                 "§cThe file with the url ${toConsoleValue(
                     url

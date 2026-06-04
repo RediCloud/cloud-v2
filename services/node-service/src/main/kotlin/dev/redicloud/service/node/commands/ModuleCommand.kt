@@ -3,12 +3,12 @@ package dev.redicloud.service.node.commands
 import dev.redicloud.api.commands.*
 import dev.redicloud.api.modules.ModuleLifeCycle
 import dev.redicloud.console.commands.ConsoleActor
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.modules.ModuleHandler
 import dev.redicloud.modules.repository.ModuleWebRepository
 import dev.redicloud.modules.suggesters.*
 import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.mapTo
+import dev.redicloud.utils.toConsoleValue
 import dev.redicloud.utils.toSymbol
 
 @Command("module")

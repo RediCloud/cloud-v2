@@ -7,7 +7,6 @@ group = "dev.redicloud.module"
 dependencies {
 
     compileOnly(project(":apis:base-api"))
-    compileOnly(project(":console"))
     compileOnly(project(":logging"))
     compileOnly(project(":utils"))
     dependency(libs.ktor.client.cio)
@@ -19,7 +18,7 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation(project(":repositories"))
     testImplementation(project(":apis:base-api"))
-    testImplementation(project(":cache"))
+    testImplementation(project(":core"))
     testImplementation(project(":utils"))
     testImplementation(project(":logging"))
     testImplementation(libs.kotlinx.coroutines)

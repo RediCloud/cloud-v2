@@ -9,7 +9,7 @@ dependencies {
     compileOnly(project(":console"))
     compileOnly(project(":logging"))
     compileOnly(project(":utils"))
-    compileOnly(project(":database"))
+    compileOnly(project(":core"))
 
     dependency(libs.javalin)
 }

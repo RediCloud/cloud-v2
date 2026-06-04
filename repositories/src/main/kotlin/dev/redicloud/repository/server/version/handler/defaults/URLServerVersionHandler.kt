@@ -8,12 +8,9 @@ import dev.redicloud.api.service.node.ICloudNodeRepository
 import dev.redicloud.api.utils.ProcessConfiguration
 import dev.redicloud.api.utils.TEMP_SERVER_VERSION_FOLDER
 import dev.redicloud.api.version.*
-import dev.redicloud.console.Console
-import dev.redicloud.console.animation.impl.line.AnimatedLineAnimation
-import dev.redicloud.console.utils.ScreenProcessHandler
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.utils.*
+import dev.redicloud.utils.toConsoleValue
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.client.statement.readRawBytes
@@ -33,15 +30,14 @@ open class URLServerVersionHandler(
     protected val serverVersionRepository: ICloudServerVersionRepository,
     protected val serverVersionTypeRepository: ICloudServerVersionTypeRepository,
     protected val nodeRepository: ICloudNodeRepository,
-    protected val console: Console,
     protected val javaVersionRepository: ICloudJavaVersionRepository,
     override val default: Boolean = true,
-    override val name: String = "urldownloader"
+    override val name: String = "urldownloader",
+    protected val listener: IVersionHandlerListener? = null
 ) : IServerVersionHandler {
 
     companion object {
         private val logger = LogManager.logger(URLServerVersionHandler::class)
-        private const val ANIMATION_TICK_MS = 200L
         private const val PATCH_PORT_RANGE_START = 40000
         private const val PATCH_PORT_RANGE_END = 60000
     }
@@ -53,23 +49,8 @@ open class URLServerVersionHandler(
     }
 
     override suspend fun download(version: ICloudServerVersion, force: Boolean, lock: Boolean): File {
-        var canceled = false
-        var downloaded = false
+        listener?.onDownloadStart(version)
         var error = false
-        val animation = AnimatedLineAnimation(
-            console,
-            ANIMATION_TICK_MS
-        ) {
-            if (canceled) {
-                null
-            } else if (downloaded) {
-                canceled = true
-                "Downloaded version %hc%${version.displayName}§8: ${if (error) "§4✘" else "§2✓"}"
-            } else {
-                "Downloading version %hc%${version.displayName}§8: %tc%%loading%"
-            }
-        }
-        console.startAnimation(animation)
         return getLock(version).withOptionalLock(lock) {
             val jar = getJar(version)
             @Suppress("TooGenericExceptionCaught")
@@ -84,7 +65,7 @@ open class URLServerVersionHandler(
                 error = true
                 throw CloudVersionException("Failed to download version ${version.displayName}", e)
             } finally {
-                downloaded = true
+                listener?.onDownloadComplete(version, error)
             }
             jar
         }
@@ -232,23 +213,8 @@ open class URLServerVersionHandler(
 
     override suspend fun patch(version: ICloudServerVersion, lock: Boolean) {
         if (!version.patch) return
-        var canceled = false
-        var patched = false
+        listener?.onPatchStart(version)
         var error = false
-        val animation = AnimatedLineAnimation(
-            console,
-            ANIMATION_TICK_MS
-        ) {
-            if (canceled) {
-                null
-            } else if (patched) {
-                canceled = true
-                "Patching version %tc%${toConsoleValue(version.displayName)}§8: ${if (error) "§4✘" else "§2✓"}"
-            } else {
-                "Patching version %tc%${toConsoleValue(version.displayName)}§8: %tc%%loading%"
-            }
-        }
-        console.startAnimation(animation)
         getLock(version).withOptionalLock(lock) {
             @Suppress("TooGenericExceptionCaught")
             try {
@@ -283,7 +249,7 @@ open class URLServerVersionHandler(
                 error = true
                 throw CloudVersionException("Failed to patch version ${version.displayName}", e)
             } finally {
-                patched = true
+                listener?.onPatchComplete(version, error)
             }
         }
     }
@@ -320,8 +286,7 @@ open class URLServerVersionHandler(
         processBuilder.directory(tempDir)
         withContext(Dispatchers.IO) {
             val process = processBuilder.start()
-            val screen = console.createScreen("patch_${version.displayName}")
-            ScreenProcessHandler(process, screen)
+            listener?.onProcessStart("patch_${version.displayName}", process)
             process.waitFor(5.minutes.inWholeMilliseconds, TimeUnit.MILLISECONDS)
         }
     }

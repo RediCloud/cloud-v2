@@ -10,8 +10,8 @@ import dev.redicloud.api.utils.CloudInjectable
 import dev.redicloud.api.version.ICloudServerVersionRepository
 import dev.redicloud.api.version.ICloudServerVersionTypeRepository
 import dev.redicloud.api.version.IServerVersionHandler
+import dev.redicloud.api.version.IVersionHandlerListener
 import dev.redicloud.api.version.IVersionRepository
-import dev.redicloud.console.Console
 import dev.redicloud.logging.LogManager
 
 class PaperMcUpdaterModule : CloudModule(), CloudInjectable {
@@ -31,7 +31,7 @@ class PaperMcUpdaterModule : CloudModule(), CloudInjectable {
         serverVersionTypeRepository: ICloudServerVersionTypeRepository,
         javaVersionRepository: ICloudJavaVersionRepository,
         versionRepository: IVersionRepository,
-        console: Console
+        listener: IVersionHandlerListener
     ) {
         requester = PaperMcApiRequester(versionRepository)
         handler = PaperMcServerVersionHandler(
@@ -39,8 +39,8 @@ class PaperMcUpdaterModule : CloudModule(), CloudInjectable {
             serverVersionTypeRepository,
             javaVersionRepository,
             requester,
-            console,
-            logger
+            logger,
+            listener = listener
         )
         IServerVersionHandler.registerHandler(handler)
     }

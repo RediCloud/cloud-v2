@@ -11,7 +11,6 @@ import dev.redicloud.api.utils.ProcessConfiguration
 import dev.redicloud.api.utils.ProcessHandler
 import dev.redicloud.api.version.IServerVersionHandler
 import dev.redicloud.console.utils.ScreenProcessHandler
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.event.EventManager
 import dev.redicloud.logging.LogManager
 import dev.redicloud.logging.getDefaultLogLevel
@@ -26,6 +25,7 @@ import dev.redicloud.service.base.utils.ClusterConfiguration
 import dev.redicloud.utils.blockPort
 import dev.redicloud.utils.findFreePort
 import dev.redicloud.utils.freePort
+import dev.redicloud.utils.toConsoleValue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

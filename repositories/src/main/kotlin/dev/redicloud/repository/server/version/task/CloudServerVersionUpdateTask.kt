@@ -1,11 +1,11 @@
 package dev.redicloud.repository.server.version.task
 
 import dev.redicloud.api.version.IServerVersionHandler
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.logging.LogManager
 import dev.redicloud.repository.server.version.CloudServerVersionRepository
 import dev.redicloud.repository.server.version.CloudServerVersionTypeRepository
 import dev.redicloud.tasks.CloudTask
+import dev.redicloud.utils.toConsoleValue
 
 class CloudServerVersionUpdateTask(
     private val silent: Boolean,

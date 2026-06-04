@@ -4,7 +4,6 @@ import dev.redicloud.api.commands.*
 import dev.redicloud.api.commands.BooleanSuggester
 import dev.redicloud.api.service.server.CloudServerState
 import dev.redicloud.console.commands.ConsoleActor
-import dev.redicloud.console.utils.toConsoleValue
 import dev.redicloud.repository.node.CloudNode
 import dev.redicloud.repository.node.NodeRepository
 import dev.redicloud.repository.server.CloudServer
@@ -14,6 +13,7 @@ import dev.redicloud.server.factory.ServerFactory
 import dev.redicloud.service.base.suggester.CloudServerSuggester
 import dev.redicloud.service.base.suggester.ConfigurationTemplateSuggester
 import dev.redicloud.service.base.suggester.RegisteredCloudNodeSuggester
+import dev.redicloud.utils.toConsoleValue
 import dev.redicloud.utils.toSymbol
 
 @Command("server")

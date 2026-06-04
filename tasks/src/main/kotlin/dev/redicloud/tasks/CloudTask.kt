@@ -1,5 +1,6 @@
 package dev.redicloud.tasks
 
+import dev.redicloud.api.tasks.ICloudTask
 import dev.redicloud.tasks.executor.CloudTaskExecutor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -8,9 +9,9 @@ import kotlinx.coroutines.sync.withLock
 import java.util.*
 import java.util.logging.Level
 
-abstract class CloudTask(private val useLock: Boolean = true) {
+abstract class CloudTask(private val useLock: Boolean = true) : ICloudTask {
 
-    val id: UUID = UUID.randomUUID()
+    override val id: UUID = UUID.randomUUID()
     private var canceled = false
     private var executors: MutableList<CloudTaskExecutor> = mutableListOf()
     private var executeCount: Int = 0
@@ -19,7 +20,7 @@ abstract class CloudTask(private val useLock: Boolean = true) {
     private val finishListener = mutableListOf<() -> Unit>()
     private val mutex = Mutex()
 
-    abstract suspend fun execute(): Boolean
+    abstract override suspend fun execute(): Boolean
 
     internal fun preExecute(source: CloudTaskExecutor): Job? {
         if (canceled) return null
@@ -66,10 +67,10 @@ abstract class CloudTask(private val useLock: Boolean = true) {
         executors.add(executor)
     }
 
-    fun isCanceled(): Boolean = canceled
-    fun isStarted(): Boolean = started
+    override fun isCanceled(): Boolean = canceled
+    override fun isStarted(): Boolean = started
 
-    fun cancel() {
+    override fun cancel() {
         canceled = true
         executors.forEach { it.cancel() }
         finish()
@@ -81,7 +82,7 @@ abstract class CloudTask(private val useLock: Boolean = true) {
         finishListener.forEach { it() }
     }
 
-    fun onFinished(block: () -> Unit) {
+    override fun onFinished(block: () -> Unit) {
         finishListener.add(block)
     }
 }
