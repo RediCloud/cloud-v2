@@ -20,9 +20,7 @@ Set the max players for a configuration template.
 ct edit <name> maxplayers <count>
 ```
 
-{% hint style="info" %}
-Some versions such as minestom does not support this by default. You can implementate your [custom player provided](../development/api/custom-player-provider.md) on the server.
-{% endhint %}
+> **Info:** Some versions such as minestom does not support this by default. You can implementate your [custom player provided](../development/api/custom-player-provider.md) on the server.
 
 
 
@@ -50,9 +48,7 @@ You can add these with `ct edit <version> files add <url> [path]` and remove the
 
 Example: `ct edit bedwars files add https://link.to/bedwars.config config/bedwars.config`
 
-{% hint style="warning" %}
-Currently not implemented for configuration templates
-{% endhint %}
+> **Warning:** Currently not implemented for configuration templates
 
 
 
@@ -106,9 +102,7 @@ You can specify which file templates should be used by a configuration template 
 
 The files from the template are copied into the server directory when the server starts
 
-{% content-ref url="file-templates.md" %}
-[file-templates.md](file-templates.md)
-{% endcontent-ref %}
+See [file-templates.md](file-templates.md)
 
 ## Start node
 
@@ -152,9 +146,7 @@ It is often helpful to automatically start servers with a certain number of play
 
 `ct edit <name> percentToStartNew <percent>`
 
-{% hint style="warning" %}
-Currently not implemented
-{% endhint %}
+> **Warning:** Currently not implemented
 
 
 

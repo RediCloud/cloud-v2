@@ -14,9 +14,7 @@ Various modules can be uploaded to module repositories. These repos can be added
 
 All modules present in the repo can be installed directly using the install command.
 
-{% hint style="warning" %}
-There is currently no self-hosting software for own module repositories
-{% endhint %}
+> **Warning:** There is currently no self-hosting software for own module repositories
 
 
 

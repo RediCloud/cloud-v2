@@ -14,9 +14,7 @@ The redicloud test framework offers the possibility to test/debug plugins within
 
 ## Example
 
-{% hint style="warning" %}
-Dont forget to add the [redicloud repository](repository.md) to your repository-list
-{% endhint %}
+> **Warning:** Dont forget to add the [redicloud repository](repository.md) to your repository-list
 
 ```kotlin
 // build.gradle.kts

@@ -18,9 +18,7 @@ This displays the cloud version, channel, build number, and git commit. This inf
 The `version upgrade` command will upgrade **all connected nodes** in the cluster automatically.
 A live status overview shows the progress per node during the upgrade.
 
-{% hint style="info" %}
-The `versions/` folder should be deleted regularly
-{% endhint %}
+> **Info:** The `versions/` folder should be deleted regularly
 
 ## Upgrade your cloud (to specific version)
 
@@ -30,9 +28,7 @@ The `versions/` folder should be deleted regularly
 4. Shut down the entire cluster
 5. Restart all nodes -- migrations will run automatically on first startup
 
-{% hint style="info" %}
-The `versions/` folder should be deleted regularly
-{% endhint %}
+> **Info:** The `versions/` folder should be deleted regularly
 
 ## Download verification
 

@@ -22,9 +22,7 @@ You can set a version handler to a server version. This handler is there for dow
 
 Further information on how to create your own version handler can be found [HERE](server-version-types.md#version-handler). You can find out how to assign this to a version [HERE](../development/api/server-version-handlers.md).
 
-{% content-ref url="server-version-types.md" %}
-[server-version-types.md](server-version-types.md)
-{% endcontent-ref %}
+See [server-version-types.md](server-version-types.md)
 
 
 

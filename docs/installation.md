@@ -71,6 +71,4 @@ Example:
 ./start.sh --debug
 ```
 
-{% hint style="warning" %}
-The node requires Java 21+ to start. It is possible to configure different Java versions (8-21) for individual server instances.
-{% endhint %}
+> **Warning:** The node requires Java 21+ to start. It is possible to configure different Java versions (8-21) for individual server instances.
