@@ -177,10 +177,10 @@ jobs:
           }
           MANIFEST_TAIL
 
-      - name: GPG sign manifest
-        if: ${{ secrets.GPG_PRIVATE_KEY != '' }}
-        env:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+       - name: GPG sign manifest
+         if: ${{ env.GPG_PRIVATE_KEY != '' }}
+         env:
+           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
         run: |
           echo "$GPG_PRIVATE_KEY" | gpg --batch --import
           gpg --batch --yes --pinentry-mode loopback \
