@@ -156,7 +156,7 @@ jobs:
             if $FIRST; then
               FIRST=false
             else
-              echo "," >> manifest.json
+               echo "," >> manifest.json
             fi
             printf '    "%s": {"sha256": "%s", "size": %s, "type": "%s"}' \
               "$KEY" "$HASH" "$SIZE" "$TYPE" >> manifest.json
@@ -168,10 +168,10 @@ jobs:
           }
           MANIFEST_TAIL
 
-       - name: GPG sign manifest
-         if: ${{ env.GPG_PRIVATE_KEY != '' }}
-         env:
-           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+      - name: GPG sign manifest
+        if: ${{ env.GPG_PRIVATE_KEY != '' }}
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
         run: |
           echo "$GPG_PRIVATE_KEY" | gpg --batch --import
           gpg --batch --yes --pinentry-mode loopback \
