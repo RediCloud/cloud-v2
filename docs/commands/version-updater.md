@@ -66,3 +66,4 @@ On the next restart, the node will start with the correct version and run any pe
 * `version releases <channel>` -- list releases for a channel
 * `version upgrade` -- upgrade to the latest version
 * `version upgrade <channel> <version>` -- upgrade to a specific version
+* `version downloaded` -- list locally downloaded versions
