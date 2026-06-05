@@ -268,6 +268,27 @@ jobs:
           [[ -n "$CI_BUILD" ]] && CHANGELOG="${CHANGELOG}\n#### CI / Build\n${CI_BUILD}\n"
           [[ -n "$OTHER" ]] && CHANGELOG="${CHANGELOG}\n#### Other\n${OTHER}\n"
 
+          # Detect new contributors (first-time committers in this range)
+          NEW_CONTRIBUTORS=""
+          if [[ -n "$PREV_TAG" ]]; then
+            declare -A SEEN_AUTHORS
+            while IFS= read -r author; do
+              [[ -z "$author" ]] && continue
+              # Check if this author has commits before the previous tag
+              PRIOR_COUNT=$(git log --author="$author" --oneline "${PREV_TAG}" -- 2>/dev/null | wc -l)
+              if [[ "$PRIOR_COUNT" -eq 0 ]] && [[ -z "${SEEN_AUTHORS[$author]+x}" ]]; then
+                SEEN_AUTHORS["$author"]=1
+                # Try to find GitHub username from merge commit
+                GH_USER=$(git log --merges --author="$author" --format="%s" ${RANGE} 2>/dev/null | grep -oP '(?<=from )[^/]+' | head -1)
+                if [[ -n "$GH_USER" ]]; then
+                  NEW_CONTRIBUTORS="${NEW_CONTRIBUTORS}\n- @${GH_USER} made their first contribution"
+                else
+                  NEW_CONTRIBUTORS="${NEW_CONTRIBUTORS}\n- ${author} made their first contribution"
+                fi
+              fi
+            done < <(git log --format="%aN" --no-merges ${RANGE} 2>/dev/null | sort -u)
+          fi
+
           {
             echo "body<<BODY_EOF"
             echo "### Quick Install"
@@ -277,8 +298,7 @@ jobs:
             echo ""
             echo "### Upgrade"
             echo '```'
-            echo "version download stable ${VERSION}"
-            echo "version switch stable ${VERSION}"
+            echo "version upgrade stable ${VERSION}"
             echo '```'
             echo ""
             echo "### Verification"
@@ -289,6 +309,11 @@ jobs:
             echo ""
             echo "### Changelog"
             echo -e "$CHANGELOG"
+            if [[ -n "$NEW_CONTRIBUTORS" ]]; then
+              echo "### New Contributors"
+              echo -e "$NEW_CONTRIBUTORS"
+              echo ""
+            fi
             if [[ -n "$COMPARE_URL" ]]; then
               echo "**Full Changelog**: ${COMPARE_URL}"
             fi
